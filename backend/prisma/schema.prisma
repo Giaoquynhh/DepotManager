@@ -15,6 +15,7 @@ model User {
     phone            String?
     role             String   // legacy single-role; giữ để tương thích
     roles            Json?    // mảng roles theo spec
+    permissions      Json?    // danh sách chức năng được cấp (mảng string)
     tenant_id        String?
     partner_id       String?
     status           String   // INVITED | ACTIVE | DISABLED | LOCKED | INVITED_EXPIRED

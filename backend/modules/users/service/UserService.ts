@@ -93,6 +93,11 @@ export class UserService {
 	async update(actor: any, id: string, data: any) {
 		const user = await repo.findById(id);
 		if (!user) throw new Error('User không tồn tại');
+
+		// Defense-in-depth: chặn tự đổi vai trò/chức năng
+		if (String(actor._id) === String(id) && (typeof data.role !== 'undefined' || typeof data.permissions !== 'undefined')) {
+			throw new Error('Không thể tự đổi vai trò/chức năng của chính mình');
+		}
 		// Tenant boundary for Customer Admin
 		if (actor.role === 'CustomerAdmin' && user.tenant_id !== actor.tenant_id) throw new Error('Không có quyền');
 		// Role change rule
@@ -100,12 +105,25 @@ export class UserService {
 			// Only high roles can change role
 			throw new Error('Không có quyền đổi vai trò');
 		}
+		// Permissions change rule
+		if (data.permissions && actor.role !== 'SystemAdmin' && actor.role !== 'BusinessAdmin') {
+			throw new Error('Không có quyền đổi chức năng');
+		}
+
+		// Chuẩn hóa permissions (unique, trimmed, max 50) — Joi đã validate pattern/size, đây là lớp phòng vệ bổ sung
+		if (Array.isArray(data.permissions)) {
+			const uniq = Array.from(new Set((data.permissions as string[]).map((s) => String(s).trim())));
+			data.permissions = uniq.slice(0, 50);
+		}
 		// Prevent tenant/partner change without high privileges
 		if ((data.tenant_id || data.partner_id) && actor.role !== 'SystemAdmin' && actor.role !== 'BusinessAdmin') {
 			throw new Error('Không có quyền đổi scope');
 		}
 		const updated = await repo.updateById(id, data);
-		await audit(String(actor._id as any), data.role ? 'USER.ROLE_CHANGED' : 'USER.UPDATED', 'USER', id, { fields: Object.keys(data) });
+		const event = data.role
+			? 'USER.ROLE_CHANGED'
+			: (data.permissions ? 'USER.PERMISSION_CHANGED' : 'USER.UPDATED');
+		await audit(String(actor._id as any), event, 'USER', id, { fields: Object.keys(data) });
 		return updated;
 	}
 
