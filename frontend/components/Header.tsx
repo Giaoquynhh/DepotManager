@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
 import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isBusinessAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole } from '@utils/rbac';
+import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 
 interface User {
   email?: string;
   role?: string;
+  permissions?: string[];
 }
 
 export default function Header() {
@@ -22,6 +24,27 @@ export default function Header() {
   const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{top:number; right:number}>({ top: 0, right: 12 });
 
+  // Helper: load profile and permissions
+  const loadMe = async (silent = true) => {
+    try {
+      if (!silent) setIsLoading(true);
+      const response = await api.get('/auth/me');
+      setMe({
+        email: response.data?.email,
+        role: response.data?.role || response.data?.roles?.[0],
+        permissions: Array.isArray(response.data?.permissions) ? response.data.permissions : undefined
+      });
+    } catch (e) {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+      } catch {}
+      setHasToken(false);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
+
   // Initialize auth state
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -30,22 +53,7 @@ export default function Header() {
       setHasToken(hasValidToken);
 
       if (hasValidToken) {
-        api.get('/auth/me')
-          .then(response => {
-            setMe({
-              email: response.data?.email,
-              role: response.data?.role || response.data?.roles?.[0]
-            });
-          })
-          .catch(() => {
-            // Token might be invalid, clear it
-            localStorage.removeItem('token');
-            localStorage.removeItem('refresh_token');
-            setHasToken(false);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
+        loadMe(false);
       } else {
         setIsLoading(false);
       }
@@ -61,6 +69,46 @@ export default function Header() {
       }
     }
   }, []);
+
+  // Auto-refresh permissions on tab focus/visibility/route change
+  useEffect(() => {
+    if (!hasToken) return;
+    const onFocus = () => { loadMe(true); };
+    const onVisible = () => {
+      try {
+        if (document.visibilityState === 'visible') loadMe(true);
+      } catch {}
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    try {
+      // Next.js router events
+      router.events?.on('routeChangeComplete', onFocus);
+    } catch {}
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      try {
+        router.events?.off('routeChangeComplete', onFocus);
+      } catch {}
+    };
+  }, [hasToken, router.events]);
+
+  // Periodic polling (visible tab only) to keep permissions fresh without manual reload
+  useEffect(() => {
+    if (!hasToken) return;
+    let timer: any;
+    const tick = () => {
+      try {
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          loadMe(true);
+        }
+      } catch {}
+      timer = setTimeout(tick, 15000); // 15s interval
+    };
+    timer = setTimeout(tick, 15000);
+    return () => { if (timer) clearTimeout(timer); };
+  }, [hasToken]);
 
   // Handle sidebar state changes
   useEffect(() => {
@@ -344,8 +392,15 @@ export default function Header() {
         <nav className={`sidebar${navOpen ? '' : ' closed'}`} role="navigation" aria-label="Menu chính">
           <div className="sidebar-content">
             
+            {/* Helper: permission-aware gating */}
             {/* Users & Partners Module */}
-            {canViewUsersPartners(me?.role) && (
+            {(() => {
+              const allow = canViewUsersPartners(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'users_partners.view')
+                : allow;
+              return ok;
+            })() && (
               <Link className="sidebar-link" href="/UsersPartners">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -357,8 +412,30 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Requests Module */}
-            {(isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role) || isBusinessAdmin(me?.role)) && (
+            {/* Role Permissions Module */}
+            {(() => {
+              const allow = isSystemAdmin(me?.role) || isBusinessAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'permissions.manage')
+                : allow;
+              return ok;
+            })() && (
+              <Link className="sidebar-link" href="/Permissions">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>Phân quyền</span>
+              </Link>
+            )}
+
+            {/* Requests Depot Module */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role) || isBusinessAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'requests.depot')
+                : allow;
+              return ok;
+            })() && (
               <Link className="sidebar-link" href="/Requests/Depot">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -370,7 +447,14 @@ export default function Header() {
               </Link>
             )}
             
-            {isCustomerRole(me?.role) && (
+            {/* Requests Customer Module */}
+            {(() => {
+              const allow = isCustomerRole(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'requests.customer')
+                : allow;
+              return ok;
+            })() && (
               <Link className="sidebar-link" href="/Requests/Customer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -382,7 +466,13 @@ export default function Header() {
             )}
 
             {/* Gate Module */}
-            {(canUseGate(me?.role) || isSecurity(me?.role)) && (
+            {(() => {
+              const allow = canUseGate(me?.role) || isSecurity(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'gate.use')
+                : allow;
+              return ok;
+            })() && (
               <Link className="sidebar-link" href="/Gate">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -393,9 +483,14 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Yard & Containers Module */}
-            {(isSaleAdmin(me?.role) || isYardManager(me?.role) || isSystemAdmin(me?.role)) && (
-              <>
+            {/* Yard Module */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isYardManager(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'yard.view')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/Yard">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -404,6 +499,16 @@ export default function Header() {
                   </svg>
                   <span>Bãi (Yard)</span>
                 </Link>
+            )}
+
+            {/* Containers Module */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isYardManager(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/ContainersPage">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="4" width="18" height="14" rx="2" ry="2"></rect>
@@ -413,11 +518,16 @@ export default function Header() {
                   </svg>
                   <span>Quản lý container</span>
                 </Link>
-              </>
             )}
 
             {/* Forklift Module - Xe nâng */}
-            {(isSaleAdmin(me?.role) || isYardManager(me?.role) || isSystemAdmin(me?.role)) && (
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isYardManager(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'forklift.view')
+                : allow;
+              return ok;
+            })() && (
               <Link className="sidebar-link" href="/Forklift">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -431,15 +541,30 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Maintenance Module */}
-            {(isSaleAdmin(me?.role) || isMaintenanceManager(me?.role) || isSystemAdmin(me?.role)) && (
-              <>
+            {/* Maintenance - Repairs */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isMaintenanceManager(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'maintenance.repairs')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/Maintenance/Repairs">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                   </svg>
                   <span>Bảo trì - Phiếu sửa chữa</span>
                 </Link>
+            )}
+
+            {/* Maintenance - Inventory */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isMaintenanceManager(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'maintenance.inventory')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/Maintenance/Inventory">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -451,12 +576,16 @@ export default function Header() {
                 </svg>
                   <span>Bảo trì - Tồn kho</span>
                 </Link>
-              </>
             )}
 
-            {/* Finance Module */}
-            {(isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role)) && (
-              <>
+            {/* Finance - Invoices */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'finance.invoices')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/finance/invoices">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -467,6 +596,15 @@ export default function Header() {
                   </svg>
                   <span>Tài chính - Hóa đơn</span>
                 </Link>
+            )}
+            {/* Finance - Create Invoice */}
+            {(() => {
+              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'finance.create_invoice')
+                : allow;
+              return ok;
+            })() && (
                 <Link className="sidebar-link" href="/finance/invoices/new">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -476,10 +614,16 @@ export default function Header() {
                   </svg>
                   <span>Tài chính - Tạo hóa đơn</span>
                 </Link>
-              </>
             )}
 
             {/* Reports Module */}
+            {(() => {
+              const allow = true; // reports visible by default today
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'reports.view')
+                : allow;
+              return ok;
+            })() && (
             <Link className="sidebar-link" href="/Reports">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 17H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path>
@@ -490,8 +634,16 @@ export default function Header() {
               </svg>
               <span>Báo cáo</span>
             </Link>
+            )}
 
             {/* Account */}
+            {(() => {
+              const allow = true; // account visible by default
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'account.view')
+                : allow;
+              return ok;
+            })() && (
             <Link className="sidebar-link" href="/Account">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -499,6 +651,7 @@ export default function Header() {
               </svg>
               <span>Tài khoản</span>
             </Link>
+            )}
           </div>
         </nav>
       )}
