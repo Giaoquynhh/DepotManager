@@ -72,39 +72,101 @@ export class ReportsRepository {
     return buckets;
   }
 
-  async containerList(params: { q?: string; status?: string; type?: string; page: number; pageSize: number }){
-    const where: any = {};
-    if (params.q){ where.OR = [ { container_no: { contains: params.q, mode: 'insensitive' } } ]; }
-    if (params.status){
-      // status theo slot
-      where.slotStatus = params.status;
-    }
-    // Join giữa ContainerMeta và vị trí hiện tại (YardSlot)
-    const raw = await prisma.$queryRawUnsafe<any[]>(
-      `
-      SELECT cm.container_no,
+  async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; page: number; pageSize: number }){
+    // Hợp nhất: ServiceRequest mới nhất + RepairTicket đã CHECKED (bảo trì)
+    const raw = await prisma.$queryRaw<any[]>`
+      WITH latest_sr AS (
+        SELECT DISTINCT ON (sr.container_no)
+               sr.container_no,
+               sr.status as service_status,
+               sr.gate_checked_at as gate_checked_at,
+               sr.driver_name as driver_name,
+               sr.license_plate as license_plate,
+               sr.gate_ref as gate_ref,
+               sr."createdAt" as created_at
+        FROM "ServiceRequest" sr
+        ORDER BY sr.container_no, sr."createdAt" DESC
+      ),
+      rt_checked AS (
+        SELECT DISTINCT ON (rt.container_no)
+               rt.container_no,
+               TRUE as repair_checked,
+               rt."updatedAt" as updated_at
+        FROM "RepairTicket" rt
+        WHERE rt.status::text = 'CHECKED'
+        ORDER BY rt.container_no, rt."updatedAt" DESC
+      ),
+      base_containers AS (
+        SELECT container_no FROM latest_sr
+        UNION
+        SELECT container_no FROM rt_checked
+      )
+      SELECT bc.container_no,
              cm.dem_date, cm.det_date,
-             ys.status as slot_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name
-      FROM "ContainerMeta" cm
-      LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = cm.container_no
+             ys.status as slot_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name,
+             ls.service_status as service_status,
+             ls.gate_checked_at as service_gate_checked_at,
+             ls.driver_name as service_driver_name,
+             ls.license_plate as service_license_plate,
+             ls.gate_ref as service_gate_ref,
+             COALESCE(rt.repair_checked, FALSE) as repair_checked
+      FROM base_containers bc
+      LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
+      LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
+      LEFT JOIN "ContainerMeta" cm ON cm.container_no = bc.container_no
+      LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
       LEFT JOIN "YardBlock" yb ON yb.id = ys.block_id
       LEFT JOIN "Yard" y ON y.id = yb.yard_id
-      WHERE ($1::text IS NULL OR cm.container_no ILIKE '%'||$1||'%')
-        AND ($2::text IS NULL OR ys.status = $2)
-      ORDER BY cm.container_no
-      LIMIT $3 OFFSET $4
-      `,
-      params.q ?? null,
-      params.status ?? null,
-      params.pageSize,
-      (params.page-1) * params.pageSize
-    );
-    const total = (await prisma.$queryRawUnsafe<any[]>(
-      `SELECT COUNT(*)::int as cnt FROM "ContainerMeta" cm LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = cm.container_no
-       WHERE ($1::text IS NULL OR cm.container_no ILIKE '%'||$1||'%') AND ($2::text IS NULL OR ys.status = $2)`,
-      params.q ?? null,
-      params.status ?? null
-    ))[0]?.cnt || 0;
+      WHERE (${params.q ?? null} IS NULL OR bc.container_no ILIKE '%' || ${params.q ?? null} || '%')
+        AND (${params.status ?? null} IS NULL OR ys.status = ${params.status ?? null})
+        AND (
+          ${params.service_status ?? null} IS NULL OR
+          (${params.service_status ?? null} = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          (${params.service_status ?? null} <> 'CHECKED' AND ls.service_status = ${params.service_status ?? null})
+        )
+      ORDER BY bc.container_no
+      LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
+    `;
+    const total = (await prisma.$queryRaw<any[]>`
+      WITH latest_sr AS (
+        SELECT DISTINCT ON (sr.container_no)
+               sr.container_no,
+               sr.status as service_status,
+               sr.gate_checked_at as gate_checked_at,
+               sr.driver_name as driver_name,
+               sr.license_plate as license_plate,
+               sr.gate_ref as gate_ref,
+               sr."createdAt" as created_at
+        FROM "ServiceRequest" sr
+        ORDER BY sr.container_no, sr."createdAt" DESC
+      ),
+      rt_checked AS (
+        SELECT DISTINCT ON (rt.container_no)
+               rt.container_no,
+               TRUE as repair_checked,
+               rt."updatedAt" as updated_at
+        FROM "RepairTicket" rt
+        WHERE rt.status::text = 'CHECKED'
+        ORDER BY rt.container_no, rt."updatedAt" DESC
+      ),
+      base_containers AS (
+        SELECT container_no FROM latest_sr
+        UNION
+        SELECT container_no FROM rt_checked
+      )
+      SELECT COUNT(*)::int as cnt
+      FROM base_containers bc
+      LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
+      LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
+      LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
+      WHERE (${params.q ?? null} IS NULL OR bc.container_no ILIKE '%' || ${params.q ?? null} || '%')
+        AND (${params.status ?? null} IS NULL OR ys.status = ${params.status ?? null})
+        AND (
+          ${params.service_status ?? null} IS NULL OR
+          (${params.service_status ?? null} = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          (${params.service_status ?? null} <> 'CHECKED' AND ls.service_status = ${params.service_status ?? null})
+        )
+    `)[0]?.cnt || 0;
     return { items: raw, total, page: params.page, pageSize: params.pageSize };
   }
 }

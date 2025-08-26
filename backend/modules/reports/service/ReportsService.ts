@@ -101,7 +101,7 @@ export class ReportsService {
   async listContainers(_user: AuthUser, query: any){
     const page = Math.max(1, parseInt(String(query.page||'1'),10));
     const pageSize = Math.min(200, Math.max(1, parseInt(String(query.pageSize||'20'),10)));
-    return repo.containerList({ q: query.q as string|undefined, status: query.status as string|undefined, type: query.type as string|undefined, page, pageSize });
+    return repo.containerList({ q: query.q as string|undefined, status: query.status as string|undefined, type: query.type as string|undefined, service_status: query.service_status as string|undefined, page, pageSize });
   }
 }
 

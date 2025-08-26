@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middlewares/auth';
 import service from '../service/ReportsService';
-import { dashboardQuerySchema, customReportSchema, exportSchema } from '../dto/ReportDtos';
+import { dashboardQuerySchema, customReportSchema, exportSchema, containerListQuerySchema } from '../dto/ReportDtos';
 
 class ReportsController {
   async dashboard(req: AuthRequest, res: Response){
@@ -26,7 +26,9 @@ class ReportsController {
   }
 
   async containers(req: AuthRequest, res: Response){
-    try{ return res.json(await service.listContainers(req.user!, req.query)); }
+    const { error, value } = containerListQuerySchema.validate(req.query);
+    if (error) return res.status(400).json({ message: error.message });
+    try{ return res.json(await service.listContainers(req.user!, value)); }
     catch(e:any){ return res.status(400).json({ message: e.message }); }
   }
 }

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, RepairStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -19,8 +19,7 @@ async function main(){
 		}
 	});
 	console.log('Seeded SystemAdmin:', email, password);
-
-	// Seed minimal Yard layout for demo if missing
+	// Khôi phục layout bãi cố định (dữ liệu thật): tạo Yard/Block/Slot nếu chưa có
 	const yards = await prisma.yard.count();
 	if (yards === 0) {
 		const yard = await prisma.yard.create({ data: { name: 'Depot A' } });
@@ -28,74 +27,85 @@ async function main(){
 			const block = await prisma.yardBlock.create({ data: { yard_id: yard.id, code: `B${bi}` } });
 			const slots = new Array(20).fill(0).map((_, idx) => ({
 				block_id: block.id,
-				code: `${block.code}-${idx+1}`,
+				code: `${block.code}-${idx + 1}`,
 				status: 'EMPTY',
 				near_gate: 20 - idx,
 				avoid_main: idx % 5 === 0 ? 1 : 0,
-				is_odd: (idx % 2) === 1
+				is_odd: (idx % 2) === 1,
+				tier_capacity: 5
 			}));
 			await prisma.yardSlot.createMany({ data: slots });
 		}
-		console.log('Seeded Yard layout sample (Depot A)');
+		console.log('Seeded Yard layout (Depot A, B1-B2, 20 slots/block)');
+	} else {
+		console.log('Yard layout already exists, skipping.');
 	}
 
-	// Enrich mock data: set a few slots to different statuses and create container meta & forklift tasks
-	const slots = await prisma.yardSlot.findMany({ take: 40, orderBy: { code: 'asc' } });
-	if (slots.length > 0) {
-		const containerNos = ['TGHU1234567','MSCU7654321','CMAU2468135','ONEU9753186','HLCU1122334'];
-		const now = new Date();
-		// Mark first 5 as OCCUPIED
-		for (let i = 0; i < Math.min(5, slots.length); i++) {
-			await prisma.yardSlot.update({ where: { id: slots[i].id }, data: { status: 'OCCUPIED', occupant_container_no: containerNos[i % containerNos.length] } });
-			// container meta with dem/det around now
-			await prisma.containerMeta.upsert({
-				where: { container_no: containerNos[i % containerNos.length] },
-				update: {},
-				create: {
-					container_no: containerNos[i % containerNos.length],
-					dem_date: new Date(now.getTime() + (i - 2) * 24*3600*1000), // some past, some future
+	// Seed dữ liệu mẫu cho báo cáo containers CHECKED (bật bằng SEED_DEMO=true)
+	const enableDemo = process.env.SEED_DEMO === 'true';
+	if (enableDemo) try {
+		const admin = await prisma.user.findUnique({ where: { email } });
 
-					det_date: new Date(now.getTime() + (i - 1) * 24*3600*1000)
+		// A. Container đã Gate CHECKED (có ServiceRequest.gate_checked_at)
+		const containerA = 'TGHU1234567';
+		const existsA = await prisma.serviceRequest.findFirst({
+			where: { container_no: containerA, gate_checked_at: { not: null } }
+		});
+		if (!existsA && admin) {
+			await prisma.serviceRequest.create({
+				data: {
+					created_by: admin.id,
+					type: 'IMPORT',
+					container_no: containerA,
+					status: 'GATE_IN',
+					gate_checked_at: new Date(),
+					gate_checked_by: admin.id,
+					driver_name: 'Nguyễn Văn A',
+					license_plate: '51H-123.45'
 				}
 			});
-		}
-		// Next 3 RESERVED with expire
-		for (let i = 5; i < Math.min(8, slots.length); i++) {
-			await prisma.yardSlot.update({ where: { id: slots[i].id }, data: { status: 'RESERVED', reserved_expire_at: new Date(now.getTime() + 30*60*1000) } });
-		}
-		// Next 2 under maintenance
-		for (let i = 8; i < Math.min(10, slots.length); i++) {
-			await prisma.yardSlot.update({ where: { id: slots[i].id }, data: { status: 'UNDER_MAINTENANCE' } });
+
+			// Thử đặt container vào một slot trống để có trạng thái IN_YARD
+			const emptySlot = await prisma.yardSlot.findFirst({ where: { status: 'EMPTY' } });
+			if (emptySlot) {
+				await prisma.yardSlot.update({
+					where: { id: emptySlot.id },
+					data: { status: 'OCCUPIED', occupant_container_no: containerA }
+				});
+				console.log('Placed container in yard:', containerA, emptySlot.code);
+			}
+
+			console.log('Seeded ServiceRequest (gate checked):', containerA);
+		} else {
+			console.log('ServiceRequest (gate checked) exists:', containerA);
 		}
 
-		// Forklift tasks demo
-		if (slots.length >= 7) {
-			await prisma.forkliftTask.createMany({ data: [
-				{ container_no: containerNos[0], from_slot_id: slots[0].id, to_slot_id: slots[6].id, status: 'PENDING', created_by: 'system' },
-				{ container_no: containerNos[1], from_slot_id: slots[1].id, to_slot_id: slots[5].id, status: 'IN_PROGRESS', created_by: 'system' },
-				{ container_no: containerNos[2], from_slot_id: slots[2].id, to_slot_id: slots[4].id, status: 'COMPLETED', created_by: 'system' },
-				{ container_no: containerNos[3], from_slot_id: slots[3].id, to_slot_id: slots[7].id, status: 'CANCELLED', cancel_reason: 'Khách đổi lệnh', created_by: 'system' }
-			] });
+		// B. Container đã Repair CHECKED (RepairTicket.status = CHECKED)
+		const containerB = 'MSCU7654321';
+		const existsB = await prisma.repairTicket.findFirst({
+			where: { container_no: containerB, status: RepairStatus.CHECKED }
+		});
+		if (!existsB && admin) {
+			await prisma.repairTicket.create({
+				data: {
+					code: 'RT-DEMO-CHECKED-1',
+					container_no: containerB,
+					created_by: admin.id,
+					status: RepairStatus.CHECKED,
+					problem_description: 'Demo checked repair'
+				}
+			});
+			console.log('Seeded RepairTicket CHECKED:', containerB);
+		} else {
+			console.log('RepairTicket CHECKED exists:', containerB);
 		}
-		console.log('Seeded mock occupancy, container meta, and forklift tasks');
+	} catch (e) {
+		console.error('Seed demo data error:', e);
+	} else {
+		console.log('Skip demo seed (SEED_DEMO != true)');
 	}
 
-	// Seed Module 6: Inventory & Equipment
-	const eqCount = await prisma.equipment.count();
-	if (eqCount === 0) {
-		await prisma.equipment.createMany({ data: [
-			{ code: 'CONT-001', type: 'CONTAINER', status: 'ACTIVE' },
-			{ code: 'EQP-01', type: 'EQUIPMENT', status: 'ACTIVE' }
-		] });
-	}
-	const invCount = await prisma.inventoryItem.count();
-	if (invCount === 0) {
-		await prisma.inventoryItem.createMany({ data: [
-			{ name: 'Sơn chống rỉ', uom: 'lit', qty_on_hand: 50, reorder_point: 10, unit_price: 150000 },
-			{ name: 'Đinh tán', uom: 'pcs', qty_on_hand: 1000, reorder_point: 200, unit_price: 500 },
-			{ name: 'Ron cao su', uom: 'pcs', qty_on_hand: 500, reorder_point: 100, unit_price: 2500 }
-		] });
-	}
+	console.log('Seed completed.');
 }
 
 main().finally(()=>prisma.$disconnect());

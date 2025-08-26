@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface Slot {
   id: string;
@@ -31,6 +31,16 @@ interface YardMapProps {
 }
 
 export default function YardMap({ yard, onSlotClick, suggestedSlots = [], selectedSlotId }: YardMapProps) {
+  // Tự động scroll tới slot đang được chọn để UX tốt hơn
+  useEffect(() => {
+    if (!selectedSlotId) return;
+    if (typeof document === 'undefined') return;
+    const el = document.querySelector(`[data-slot-id="${selectedSlotId}"]`);
+    if (el && 'scrollIntoView' in el) {
+      (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+  }, [selectedSlotId]);
+
   const getSlotColor = (slot: Slot) => {
     if (slot.isSelected) return '#3b82f6'; // Xanh dương đậm cho slot được chọn
     if (slot.isSuggested) return '#93c5fd'; // Xanh dương nhạt cho slot gợi ý
@@ -83,8 +93,20 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
       <div className="yard-blocks">
         {yard.blocks.map((block) => (
           <div key={block.id} className="yard-block">
-            <div className="block-header">
+            <div className="block-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span className="block-code">{block.code}</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {block.slots.reduce((sum, s) => sum + (s.occupied_count || 0), 0) > 0 && (
+                  <span className="badge badge-occ" title="Tổng container trong block">
+                    O:{block.slots.reduce((sum, s) => sum + (s.occupied_count || 0), 0)}
+                  </span>
+                )}
+                {block.slots.reduce((sum, s) => sum + (s.hold_count || 0), 0) > 0 && (
+                  <span className="badge badge-hold" title="Tổng HOLD trong block">
+                    H:{block.slots.reduce((sum, s) => sum + (s.hold_count || 0), 0)}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="block-slots">
               {block.slots.map((slot) => {
@@ -99,6 +121,7 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
                       backgroundColor: getSlotColor({ ...slot, isSuggested, isSelected }),
                       border: getSlotBorder({ ...slot, isSuggested, isSelected }),
                     }}
+                    data-slot-id={slot.id}
                     title={getSlotTooltip(slot)}
                     onClick={() => handleSlotClick(slot)}
                   >

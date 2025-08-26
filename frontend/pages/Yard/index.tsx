@@ -2,14 +2,18 @@ import Header from '@components/Header';
 import Card from '@components/Card';
 import useSWR, { mutate } from 'swr';
 import { yardApi } from '@services/yard';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { YardMap, StackDetailsModal } from '@components/yard';
 
 // Dùng stack map mới
 const fetcher = async () => yardApi.stackMap();
 
 export default function YardPage() {
-  const { data: map } = useSWR('yard_map', fetcher, { refreshInterval: 5000 });
+  const { data: map } = useSWR('yard_map', fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: false,
+    dedupingInterval: 3000,
+  });
   const [activeSlot, setActiveSlot] = useState<{ id: string; code: string } | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
   const [searchContainer, setSearchContainer] = useState('');
@@ -50,6 +54,22 @@ export default function YardPage() {
   };
 
   const transformedMap = transformMapData(map);
+  const isLoading = map === undefined;
+  const isEmpty = Array.isArray(transformedMap) && transformedMap.length === 0;
+
+  const stats = useMemo(() => {
+    if (!transformedMap) return { totalBlocks: 0, totalSlots: 0, totalOcc: 0, totalHold: 0 };
+    const yard = transformedMap[0];
+    let totalSlots = 0, totalOcc = 0, totalHold = 0;
+    (yard?.blocks || []).forEach((b: any) => {
+      totalSlots += (b?.slots || []).length;
+      (b?.slots || []).forEach((s: any) => {
+        totalOcc += s?.occupied_count || 0;
+        totalHold += s?.hold_count || 0;
+      });
+    });
+    return { totalBlocks: (yard?.blocks || []).length, totalSlots, totalOcc, totalHold };
+  }, [transformedMap]);
 
   return (
     <>
@@ -66,6 +86,22 @@ export default function YardPage() {
           {/* Left Column - Yard Map */}
           <div className="yard-left">
             <Card title="Sơ đồ bãi">
+              {/* Toolbar: thống kê nhanh + hành động */}
+              <div className="yard-toolbar">
+                <div className="yard-stats">
+                  <span className="badge" title="Số block">Block: {stats.totalBlocks}</span>
+                  <span className="badge" title="Tổng slot">Slots: {stats.totalSlots}</span>
+                  <span className="badge badge-occ" title="Tổng container trong bãi">O:{stats.totalOcc}</span>
+                  <span className="badge badge-hold" title="Tổng HOLD trong bãi">H:{stats.totalHold}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn" onClick={() => mutate('yard_map')}>🔄 Refresh</button>
+                  {selectedSlotId && (
+                    <button className="btn btn-secondary" onClick={() => { setSelectedSlotId(''); }}>Bỏ chọn</button>
+                  )}
+                </div>
+              </div>
+
               {/* Locate Container */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
                 <input
@@ -112,11 +148,6 @@ export default function YardPage() {
                 >
                   🔎 Locate
                 </button>
-                {selectedSlotId && (
-                  <button className="btn btn-secondary" onClick={() => { setSelectedSlotId(''); }}>
-                    Bỏ chọn
-                  </button>
-                )}
               </div>
               {locateError && (
                 <div className="message-banner error" style={{ marginBottom: 12 }}>
@@ -124,14 +155,28 @@ export default function YardPage() {
                   <button className="close-btn" onClick={() => setLocateError('')}>×</button>
                 </div>
               )}
-              {!transformedMap && <div>Đang tải…</div>}
-              {transformedMap && (
-                <YardMap
-                  yard={transformedMap[0]}
-                  onSlotClick={(slot) => { setSelectedSlotId(slot.id); setActiveSlot({ id: slot.id, code: slot.code }); }}
-                  suggestedSlots={[]}
-                  selectedSlotId={selectedSlotId}
-                />
+              {isLoading && (
+                <div className="skeleton" aria-busy="true" aria-live="polite">
+                  <div className="skeleton-line lg"></div>
+                  <div className="skeleton-line md"></div>
+                  <div className="skeleton-line md"></div>
+                  <div className="skeleton-line lg"></div>
+                </div>
+              )}
+              {!isLoading && (
+                isEmpty ? (
+                  <div className="empty-state" style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Chưa có dữ liệu bãi</div>
+                    <div className="muted">Hãy tạo Yard/Block/Slot để hiển thị sơ đồ bãi.</div>
+                  </div>
+                ) : (
+                  <YardMap
+                    yard={transformedMap[0]}
+                    onSlotClick={(slot) => { setSelectedSlotId(slot.id); setActiveSlot({ id: slot.id, code: slot.code }); }}
+                    suggestedSlots={[]}
+                    selectedSlotId={selectedSlotId}
+                  />
+                )
               )}
             </Card>
           </div>

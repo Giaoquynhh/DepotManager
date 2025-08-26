@@ -15,7 +15,7 @@ export const reportsApi = {
     const resp = await api.post('/reports/export', { type, format, filename, filters: filters || {} }, { responseType: 'blob' });
     return resp.data as Blob;
   }
-  ,async listContainers(params: { q?: string; status?: string; page?: number; pageSize?: number }){
+  ,async listContainers(params: { q?: string; status?: string; type?: string; service_status?: string; page?: number; pageSize?: number }){
     const { data } = await api.get('/reports/containers', { params });
     return data as { items: any[]; total: number; page: number; pageSize: number };
   }
