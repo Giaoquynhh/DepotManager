@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-export const api = axios.create({ baseURL: 'http://localhost:1000' });
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000';
+export const api = axios.create({ baseURL: API_BASE });
 
 export async function feLog(message: string, meta?: any){
 	try{
@@ -11,7 +12,10 @@ export async function feLog(message: string, meta?: any){
 api.interceptors.request.use((config)=>{
 	if (typeof window !== 'undefined'){
 		const token = localStorage.getItem('token');
-		if (token) config.headers = { ...(config.headers||{}), Authorization: `Bearer ${token}` };
+		if (token) {
+			if (!config.headers) config.headers = {} as any;
+			(config.headers as any)['Authorization'] = `Bearer ${token}`;
+		}
 	}
 	return config;
 });
@@ -27,14 +31,15 @@ api.interceptors.response.use(r => r, async (error) => {
 			const refresh_token = localStorage.getItem('refresh_token');
 			const user_id = localStorage.getItem('user_id');
 			if (refresh_token && user_id) {
-				const resp = await axios.post('http://localhost:1000/auth/refresh', { user_id, refresh_token });
+				const resp = await axios.post(`${API_BASE}/auth/refresh`, { user_id, refresh_token });
 				localStorage.setItem('token', resp.data.access_token);
 				localStorage.setItem('refresh_token', resp.data.refresh_token);
 				pending.forEach(fn => fn(resp.data.access_token));
 				pending = [];
 				isRefreshing = false;
 				const cfg = error.config;
-				cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${resp.data.access_token}` };
+				if (!cfg.headers) cfg.headers = {} as any;
+				(cfg.headers as any)['Authorization'] = `Bearer ${resp.data.access_token}`;
 				return axios(cfg);
 			}
 		}catch(e){
@@ -45,7 +50,8 @@ api.interceptors.response.use(r => r, async (error) => {
 		return new Promise((resolve) => {
 			pending.push((t: string)=>{
 				const cfg = error.config;
-				cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${t}` };
+				if (!cfg.headers) cfg.headers = {} as any;
+				(cfg.headers as any)['Authorization'] = `Bearer ${t}`;
 				resolve(axios(cfg));
 			});
 		});

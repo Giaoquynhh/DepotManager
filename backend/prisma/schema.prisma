@@ -227,14 +227,43 @@ model YardSlot {
     is_odd      Boolean  @default(false)
     occupant_container_no String?
     reserved_expire_at   DateTime?
+    // Stack coordinates & capacity
+    row_label   String?
+    row_index   Int?
+    col_index   Int?
+    tier_capacity Int    @default(5)
     updatedAt   DateTime @updatedAt
 
     block       YardBlock @relation(fields: [block_id], references: [id])
-    from_tasks  ForkliftTask[] @relation("from_slot")
-    to_tasks    ForkliftTask[] @relation("to_slot")
+    placements  YardPlacement[]
+  from_tasks  ForkliftTask[] @relation("from_slot")
+  to_tasks    ForkliftTask[] @relation("to_slot")
 
-    @@index([block_id])
-    @@index([occupant_container_no])
+  @@index([block_id])
+  @@index([occupant_container_no])
+  @@index([status])
+}
+
+model YardPlacement {
+  id            String   @id @default(cuid())
+  slot_id       String
+  tier          Int
+  container_no  String?
+  status        String   // HOLD | OCCUPIED | REMOVED
+  hold_expires_at DateTime?
+  placed_at     DateTime @default(now())
+  removed_at    DateTime?
+  created_by    String
+  updatedAt     DateTime @updatedAt
+
+  slot          YardSlot @relation(fields: [slot_id], references: [id])
+
+  @@unique([slot_id, tier], name: "slot_tier_unique")
+  @@index([container_no])
+  @@index([status])
+  @@index([hold_expires_at])
+  @@index([slot_id, status])
+  @@index([status, hold_expires_at])
 }
 
 model ContainerMeta {

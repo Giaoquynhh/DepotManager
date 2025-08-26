@@ -2,14 +2,30 @@ import { Router } from 'express';
 import controller from './YardController';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { requireRoles } from '../../../shared/middlewares/rbac';
+import { validate, holdSchema, confirmSchema, releaseSchema, removeByContainerSchema } from '../validator/YardValidators';
 
 const router = Router();
 
-router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin'));
+// Mặc định yêu cầu xác thực
+router.use(authenticate);
+
+// Read-only endpoints cho mọi user đã xác thực
 router.get('/map', (req, res) => controller.map(req as any, res));
 router.get('/container/:container_no', (req, res) => controller.container(req as any, res));
-router.get('/suggest-position', (req, res) => controller.suggest(req as any, res));
-router.patch('/assign-position', (req, res) => controller.assign(req as any, res));
+
+// Stacking routes
+router.get('/stack/map', (req, res) => controller.stackMap(req as any, res));
+router.get('/stack/slot/:slot_id', (req, res) => controller.stackDetails(req as any, res));
+router.get('/stack/container/:container_no', (req, res) => controller.stackLookup(req as any, res));
+
+// Write endpoints — yêu cầu SaleAdmin/SystemAdmin
+router.get('/suggest-position', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.suggest(req as any, res));
+router.patch('/assign-position', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.assign(req as any, res));
+
+router.post('/stack/hold', requireRoles('SaleAdmin','SystemAdmin'), validate(holdSchema), (req, res) => controller.hold(req as any, res));
+router.post('/stack/confirm', requireRoles('SaleAdmin','SystemAdmin'), validate(confirmSchema), (req, res) => controller.confirm(req as any, res));
+router.post('/stack/release', requireRoles('SaleAdmin','SystemAdmin'), validate(releaseSchema), (req, res) => controller.release(req as any, res));
+router.post('/stack/remove-by-container', requireRoles('SaleAdmin','SystemAdmin'), validate(removeByContainerSchema), (req, res) => controller.removeByContainer(req as any, res));
 
 export default router;
 

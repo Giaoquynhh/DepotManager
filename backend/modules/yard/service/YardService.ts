@@ -1,5 +1,6 @@
-import { prisma } from '../../../shared/config/database';
+import { prisma, appConfig } from '../../../shared/config/database';
 import { audit } from '../../../shared/middlewares/audit';
+import { Prisma } from '@prisma/client';
 
 export class YardService {
 	async getMap() {
@@ -44,6 +45,191 @@ export class YardService {
 		if (!['EMPTY','RESERVED'].includes(slot.status)) throw new Error('Slot không khả dụng');
 		const updated = await prisma.yardSlot.update({ where: { id: slot_id }, data: { status: 'OCCUPIED', occupant_container_no: container_no, reserved_expire_at: null } });
 		await audit(actor._id, 'YARD.POSITION_ASSIGNED', 'YARD_SLOT', slot_id, { container_no });
+		return updated;
+	}
+
+	// ==========================
+	// Stacking (multi-tier) APIs
+	// ==========================
+
+	private isHoldActive(p: any, now: Date) {
+		return p.status === 'HOLD' && (!p.hold_expires_at || new Date(p.hold_expires_at) > now);
+	}
+
+	async getStackMap() {
+		const now = new Date();
+		// Đếm số OCCUPIED và HOLD(active) theo slot_id bằng groupBy
+		const [occCounts, holdCounts] = await Promise.all([
+			prisma.yardPlacement.groupBy({
+				by: ['slot_id'],
+				where: { status: 'OCCUPIED', removed_at: null },
+				_count: { _all: true }
+			}),
+			prisma.yardPlacement.groupBy({
+				by: ['slot_id'],
+				where: { status: 'HOLD', OR: [ { hold_expires_at: null }, { hold_expires_at: { gt: now } } ] },
+				_count: { _all: true }
+			})
+		]);
+		const occMap = new Map<string, number>(occCounts.map((c: any) => [c.slot_id, c._count._all]));
+		const holdMap = new Map<string, number>(holdCounts.map((c: any) => [c.slot_id, c._count._all]));
+
+		const yards = await prisma.yard.findMany({
+			include: { blocks: { include: { slots: true } } }
+		});
+		return yards.map((y: any) => ({
+			...y,
+			blocks: y.blocks.map((b: any) => ({
+				...b,
+				slots: b.slots.map((s: any) => ({
+					...s,
+					occupied_count: occMap.get(s.id) || 0,
+					hold_count: holdMap.get(s.id) || 0
+				}))
+			}))
+		}));
+	}
+
+	async getStackDetails(slot_id: string) {
+		const slot = await prisma.yardSlot.findUnique({
+			where: { id: slot_id },
+			include: { placements: { orderBy: { tier: 'asc' } }, block: { include: { yard: true } } }
+		});
+		if (!slot) throw new Error('Slot không tồn tại');
+		return slot;
+	}
+
+	async findContainerLocation(container_no: string) {
+		const place = await prisma.yardPlacement.findFirst({
+			where: { container_no, status: { in: ['HOLD','OCCUPIED'] } },
+			include: { slot: { include: { block: { include: { yard: true } } } } }
+		});
+		return place;
+	}
+
+	private async pickAvailableTier(slot: any, now: Date): Promise<number> {
+		const cap: number = slot.tier_capacity || 5;
+		for (let t = 1; t <= cap; t++) {
+			const found = slot.placements?.find((p: any) => p.tier === t);
+			if (!found) return t;
+			if (found.status === 'REMOVED') return t;
+			if (this.isHoldActive(found, now)) continue; // đang hold
+			if (found.status === 'OCCUPIED') continue; // đang chiếm
+		}
+		throw new Error('Không còn tier trống trong stack');
+	}
+
+	async hold(actor: any, slot_id: string, tier?: number) {
+		const now = new Date();
+		const placed = await prisma.$transaction(async (tx) => {
+			const slot = await tx.yardSlot.findUnique({ where: { id: slot_id }, include: { placements: true } });
+			if (!slot) throw new Error('Slot không tồn tại');
+			const cap: number = slot.tier_capacity ?? 5;
+			let targetTier = tier;
+			const placements = slot.placements || [];
+			const maxOccupied = Math.max(0, ...placements.filter((p: any) => p.status === 'OCCUPIED' && !p.removed_at).map((p: any) => p.tier));
+			const allowedTier = maxOccupied + 1;
+			if (allowedTier > cap) throw new Error('Không còn tier trống trong stack');
+
+			if (targetTier) {
+				if (targetTier < 1 || targetTier > cap) throw new Error('Tier không hợp lệ');
+				if (targetTier !== allowedTier) {
+					throw new Error(`Tier không hợp lệ: chỉ được HOLD tại tier kế tiếp ${allowedTier}`);
+				}
+				const existingTier = placements.find((p: any) => p.tier === targetTier);
+				if (existingTier) {
+					if (existingTier.status === 'OCCUPIED' && !existingTier.removed_at) {
+						throw new Error('Tier đang OCCUPIED, không thể HOLD');
+					}
+					if (this.isHoldActive(existingTier, now)) {
+						throw new Error('Tier đang HOLD, không thể HOLD trùng');
+					}
+				}
+			} else {
+				const existingAtAllowed = placements.find((p: any) => p.tier === allowedTier);
+				if (existingAtAllowed && this.isHoldActive(existingAtAllowed, now)) {
+					throw new Error('Tier kế tiếp đang HOLD, không thể HOLD tầng cao hơn');
+				}
+				targetTier = allowedTier;
+			}
+			const expires = new Date(now.getTime() + (appConfig.reserveTtlMinutes || 15) * 60 * 1000);
+			return tx.yardPlacement.upsert({
+				where: { slot_tier_unique: { slot_id, tier: targetTier! } },
+				update: { status: 'HOLD', container_no: null, hold_expires_at: expires, removed_at: null, created_by: actor._id },
+				create: { slot_id, tier: targetTier!, status: 'HOLD', container_no: null, hold_expires_at: expires, created_by: actor._id }
+			});
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		await audit(actor._id, 'YARD.HOLD', 'YARD_SLOT', slot_id, { tier: placed.tier });
+		return placed;
+	}
+
+	async confirm(actor: any, slot_id: string, tier: number, container_no: string) {
+		if (!container_no) throw new Error('Thiếu container_no');
+		const now = new Date();
+		const updated = await prisma.$transaction(async (tx) => {
+			const existing = await tx.yardPlacement.findUnique({ where: { slot_tier_unique: { slot_id, tier } } });
+			if (!existing || existing.status !== 'HOLD' || (existing.hold_expires_at && new Date(existing.hold_expires_at) <= now)) {
+				throw new Error('Tier chưa HOLD hoặc đã hết hạn');
+			}
+			// Ngăn container đã OCCUPIED ở vị trí khác
+			const dup = await tx.yardPlacement.findFirst({ where: { container_no, status: 'OCCUPIED' } });
+			if (dup) throw new Error('Container đã OCCUPIED ở một vị trí khác');
+
+			// Ràng buộc stacking: không thể confirm nếu có vật cản ở tier cao hơn
+			const slot = await tx.yardSlot.findUnique({ where: { id: slot_id }, include: { placements: true } });
+			if (!slot) throw new Error('Slot không tồn tại');
+			const placements = slot.placements || [];
+			const higherBlocking = placements.find((p: any) => p.tier > tier && ((p.status === 'OCCUPIED' && !p.removed_at) || this.isHoldActive(p, now)));
+			if (higherBlocking) throw new Error('Vi phạm stacking: tồn tại container/hold ở tier cao hơn');
+			// Ràng buộc: các tier phía dưới phải OCCUPIED liên tục
+			for (let i = 1; i < tier; i++) {
+				const below = placements.find((p: any) => p.tier === i);
+				if (!below || below.status !== 'OCCUPIED' || below.removed_at) {
+					throw new Error('Vi phạm stacking: các tier phía dưới chưa được OCCUPIED liên tục');
+				}
+			}
+			return tx.yardPlacement.update({
+				where: { slot_tier_unique: { slot_id, tier } },
+				data: { status: 'OCCUPIED', container_no, hold_expires_at: null, placed_at: now }
+			});
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		await audit(actor._id, 'YARD.CONFIRM', 'YARD_SLOT', slot_id, { tier, container_no });
+		return updated;
+	}
+
+	async release(actor: any, slot_id: string, tier: number) {
+		const existing = await prisma.yardPlacement.findUnique({ where: { slot_tier_unique: { slot_id, tier } } });
+		if (!existing || existing.status !== 'HOLD') throw new Error('Không ở trạng thái HOLD');
+		const updated = await prisma.yardPlacement.update({
+			where: { slot_tier_unique: { slot_id, tier } },
+			data: { status: 'REMOVED', hold_expires_at: null, container_no: null, removed_at: new Date() }
+		});
+		await audit(actor._id, 'YARD.RELEASE', 'YARD_SLOT', slot_id, { tier });
+		return updated;
+	}
+
+	async removeByContainer(actor: any, container_no: string) {
+		const now = new Date();
+		const updated = await prisma.$transaction(async (tx) => {
+			const placement = await tx.yardPlacement.findFirst({ where: { container_no, status: 'OCCUPIED' } });
+			if (!placement) throw new Error('Container không ở trạng thái OCCUPIED');
+			const higher = await tx.yardPlacement.findFirst({
+				where: {
+					slot_id: placement.slot_id,
+					tier: { gt: placement.tier },
+					OR: [
+						{ status: 'OCCUPIED' },
+						{ status: 'HOLD', hold_expires_at: { gt: now } }
+					]
+				}
+			});
+			if (higher) throw new Error('Vi phạm LIFO: Tồn tại container ở tier cao hơn');
+			return tx.yardPlacement.update({
+				where: { slot_tier_unique: { slot_id: placement.slot_id, tier: placement.tier } },
+				data: { status: 'REMOVED', removed_at: new Date() }
+			});
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		await audit(actor._id, 'YARD.REMOVE', 'YARD_SLOT', updated.slot_id, { tier: updated.tier, container_no });
 		return updated;
 	}
 }

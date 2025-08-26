@@ -6,6 +6,9 @@ interface Slot {
   status: 'EMPTY' | 'RESERVED' | 'OCCUPIED' | 'UNDER_MAINTENANCE' | 'EXPORT';
   isSuggested?: boolean;
   isSelected?: boolean;
+  // Thuộc tính mới từ stack map
+  occupied_count?: number;
+  hold_count?: number;
 }
 
 interface Block {
@@ -32,6 +35,10 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
     if (slot.isSelected) return '#3b82f6'; // Xanh dương đậm cho slot được chọn
     if (slot.isSuggested) return '#93c5fd'; // Xanh dương nhạt cho slot gợi ý
     
+    // Ưu tiên hiển thị theo số lượng stack nếu có dữ liệu
+    if ((slot.occupied_count || 0) > 0) return '#94a3b8'; // Xám đậm khi có OCCUPIED trong stack
+    if ((slot.hold_count || 0) > 0) return '#fde68a'; // Vàng khi có HOLD trong stack
+
     switch (slot.status) {
       case 'EMPTY': return '#e2e8f0'; // Xám nhạt cho slot trống
       case 'RESERVED': return '#fde68a'; // Vàng cho slot đã đặt
@@ -56,12 +63,13 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
       'UNDER_MAINTENANCE': 'Bảo trì',
       'EXPORT': 'Xuất khẩu'
     };
-    
-    return `${slot.code} - ${statusMap[slot.status]}`;
+    const occ = slot.occupied_count || 0;
+    const hold = slot.hold_count || 0;
+    return `${slot.code} - ${statusMap[slot.status]} | O:${occ} H:${hold}`;
   };
 
   const handleSlotClick = (slot: Slot) => {
-    if (slot.status === 'EMPTY' && onSlotClick) {
+    if (onSlotClick) {
       onSlotClick(slot);
     }
   };
@@ -103,6 +111,18 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
                     {isSelected && (
                       <span className="selected-label">Selected</span>
                     )}
+                    {(slot.occupied_count || slot.hold_count) && (
+                      <div style={{ position: 'absolute', right: 4, bottom: 4, display: 'flex', gap: 4 }}>
+                        {!!slot.occupied_count && (
+                          <span style={{ background: '#64748b', color: '#fff', padding: '0 4px', borderRadius: 4, fontSize: 10 }}
+                                title="Occupied count">O:{slot.occupied_count}</span>
+                        )}
+                        {!!slot.hold_count && (
+                          <span style={{ background: '#f59e0b', color: '#111827', padding: '0 4px', borderRadius: 4, fontSize: 10 }}
+                                title="Hold count">H:{slot.hold_count}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -115,6 +135,10 @@ export default function YardMap({ yard, onSlotClick, suggestedSlots = [], select
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#e2e8f0' }}></div>
           <span>Trống</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: '#fde68a' }}></div>
+          <span>Hold (Đã đặt)</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#93c5fd' }}></div>
