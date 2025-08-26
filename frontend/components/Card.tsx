@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 interface CardProps {
   title?: string;
+  subtitle?: string;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -12,6 +13,7 @@ interface CardProps {
 
 export default function Card({ 
   title, 
+  subtitle,
   children, 
   actions, 
   className = '',
@@ -42,9 +44,10 @@ export default function Card({
 
   return (
     <div className={classes}>
-      {title && (
+      {(title || subtitle) && (
         <div className="card-header">
-          <h3 className="card-title">{title}</h3>
+          {title && <h3 className="card-title">{title}</h3>}
+          {subtitle && <p className="card-subtitle">{subtitle}</p>}
           {actions && <div className="card-actions">{actions}</div>}
         </div>
       )}

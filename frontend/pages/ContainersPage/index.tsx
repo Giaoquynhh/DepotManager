@@ -4,19 +4,16 @@ import Card from '@components/Card';
 import useSWR from 'swr';
 import { useState } from 'react';
 import { reportsApi } from '@services/reports';
- 
 
 function ContainersList(){
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
-  const [gateFilter, setGateFilter] = useState<'ALL'|'CHECKED'>('CHECKED');
   const [page, setPage] = useState(1);
   const pageSize = 20;
-  const key = ['containers_page', q, status, gateFilter, page].join(':');
-  const { data, mutate } = useSWR(key, async ()=> {
+  const key = ['containers_page', q, status, page].join(':');
+  const { data, mutate, error } = useSWR(key, async ()=> {
     const backendStatus = status === 'IN_YARD' ? 'OCCUPIED' : undefined;
     const params: any = { q: q || undefined, status: backendStatus, page, pageSize };
-    if (gateFilter === 'CHECKED') params.service_status = 'CHECKED';
     return reportsApi.listContainers(params);
   });
 
@@ -24,22 +21,27 @@ function ContainersList(){
     const inYard = !!it.slot_code;
     return { ...it, derived_status: inYard ? 'IN_YARD' : 'WAITING' };
   });
+  // Lọc theo trạng thái (không lọc nguồn kiểm tra)
   const filteredItems = status === 'WAITING' ? items.filter((i:any)=>i.derived_status==='WAITING') : status === 'IN_YARD' ? items.filter((i:any)=>i.derived_status==='IN_YARD') : items;
 
   return (
     <>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 220px 220px', gap:12, marginBottom:12}}>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 220px', gap:12, marginBottom:12}}>
         <input placeholder="Tìm container_no" value={q} onChange={e=>{ setQ(e.target.value); setPage(1); mutate(); }} />
         <select value={status} onChange={e=>{ setStatus(e.target.value); setPage(1); mutate(); }}>
           <option value="">Tất cả trạng thái</option>
           <option value="WAITING">Đang chờ sắp xếp</option>
           <option value="IN_YARD">Ở trong bãi</option>
         </select>
-        <select value={gateFilter} onChange={e=>{ setGateFilter(e.target.value as any); setPage(1); mutate(); }}>
-          <option value="CHECKED">Chỉ container đã kiểm tra</option>
-          <option value="ALL">Tất cả (không lọc kiểm tra)</option>
-        </select>
       </div>
+      {error && (
+        <div style={{marginBottom:12, border:'1px solid #fecaca', background:'#fef2f2', color:'#7f1d1d', padding:10, borderRadius:8}}>
+          Lỗi tải dữ liệu: {((error as any)?.response?.data?.message) || ((error as any)?.message) || 'Không xác định'}
+        </div>
+      )}
+      {!data && !error && (
+        <div className="muted" style={{marginBottom:12}}>Đang tải dữ liệu...</div>
+      )}
       <div style={{overflow:'hidden', borderRadius:12, border:'1px solid #e8eef6'}}>
         <table className="table">
           <thead style={{background:'#f7f9ff'}}><tr><th>Container</th><th>Yard</th><th>Block</th><th>Slot</th><th>Trạng thái</th><th>Gate</th><th>DEM</th><th>DET</th></tr></thead>
@@ -47,7 +49,7 @@ function ContainersList(){
             {filteredItems.length === 0 ? (
               <tr>
                 <td colSpan={8} style={{ textAlign:'center', color:'#64748b' }}>
-                  Không có container phù hợp bộ lọc.
+                  {data ? 'Không có container phù hợp bộ lọc.' : (error ? 'Không thể tải dữ liệu.' : 'Đang tải...')}
                 </td>
               </tr>
             ) : filteredItems.map((it:any)=>(
@@ -114,7 +116,7 @@ export default function ContainersPage(){
     <>
       <Header />
       <main className="container">
-        <Card title="Containers">
+        <Card title="Quản lý container" subtitle="Hiển thị các container đã CHECKED từ phiếu sửa chữa (mặc định)">
           <ContainersList />
         </Card>
       </main>

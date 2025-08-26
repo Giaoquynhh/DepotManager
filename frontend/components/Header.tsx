@@ -406,11 +406,12 @@ export default function Header() {
                 </Link>
                 <Link className="sidebar-link" href="/ContainersPage">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8z"></path>
-                    <path d="M3.27 6.96L12 12.01l8.73-5.05"></path>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    <rect x="3" y="4" width="18" height="14" rx="2" ry="2"></rect>
+                    <path d="M3 8h18"></path>
+                    <path d="M7 4v4"></path>
+                    <path d="M17 4v4"></path>
                   </svg>
-                  <span>Container</span>
+                  <span>Quản lý container</span>
                 </Link>
               </>
             )}

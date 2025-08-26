@@ -100,6 +100,12 @@ export class ReportsRepository {
         SELECT container_no FROM latest_sr
         UNION
         SELECT container_no FROM rt_checked
+      ),
+      params AS (
+        SELECT
+          CAST(${params.q ?? null} AS TEXT)             AS q,
+          CAST(${params.status ?? null} AS TEXT)        AS status,
+          CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
       SELECT bc.container_no,
              cm.dem_date, cm.det_date,
@@ -117,12 +123,13 @@ export class ReportsRepository {
       LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
       LEFT JOIN "YardBlock" yb ON yb.id = ys.block_id
       LEFT JOIN "Yard" y ON y.id = yb.yard_id
-      WHERE (${params.q ?? null} IS NULL OR bc.container_no ILIKE '%' || ${params.q ?? null} || '%')
-        AND (${params.status ?? null} IS NULL OR ys.status = ${params.status ?? null})
+      CROSS JOIN params p
+      WHERE (p.q IS NULL OR bc.container_no ILIKE ('%' || p.q || '%'))
+        AND (p.status IS NULL OR ys.status::text = p.status)
         AND (
-          ${params.service_status ?? null} IS NULL OR
-          (${params.service_status ?? null} = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
-          (${params.service_status ?? null} <> 'CHECKED' AND ls.service_status = ${params.service_status ?? null})
+          p.service_status IS NULL OR
+          (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
         )
       ORDER BY bc.container_no
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
@@ -153,18 +160,25 @@ export class ReportsRepository {
         SELECT container_no FROM latest_sr
         UNION
         SELECT container_no FROM rt_checked
+      ),
+      params AS (
+        SELECT
+          CAST(${params.q ?? null} AS TEXT)             AS q,
+          CAST(${params.status ?? null} AS TEXT)        AS status,
+          CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
       SELECT COUNT(*)::int as cnt
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
       LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
-      WHERE (${params.q ?? null} IS NULL OR bc.container_no ILIKE '%' || ${params.q ?? null} || '%')
-        AND (${params.status ?? null} IS NULL OR ys.status = ${params.status ?? null})
+      CROSS JOIN params p
+      WHERE (p.q IS NULL OR bc.container_no ILIKE ('%' || p.q || '%'))
+        AND (p.status IS NULL OR ys.status::text = p.status)
         AND (
-          ${params.service_status ?? null} IS NULL OR
-          (${params.service_status ?? null} = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
-          (${params.service_status ?? null} <> 'CHECKED' AND ls.service_status = ${params.service_status ?? null})
+          p.service_status IS NULL OR
+          (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
         )
     `)[0]?.cnt || 0;
     return { items: raw, total, page: params.page, pageSize: params.pageSize };
