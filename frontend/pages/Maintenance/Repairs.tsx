@@ -158,6 +158,40 @@ export default function RepairsPage() {
     }
   };
 
+  const handleStartRepair = async (id: string) => {
+    setMsg('');
+    try {
+      // Gọi API để tiến hành sửa chữa
+      const result = await maintenanceApi.startRepair(id);
+      setMsg(result.message || 'Đã tiến hành sửa chữa thành công');
+      
+      // Refresh danh sách để cập nhật trạng thái
+      mutate(key);
+      
+      // Hiển thị thông báo
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e: any) {
+      setMsg(e?.response?.data?.message || 'Lỗi khi tiến hành sửa chữa');
+    }
+  };
+
+  const handleCompleteRepair = async (id: string) => {
+    setMsg('');
+    try {
+      // Gọi API để hoàn thành sửa chữa
+      const result = await maintenanceApi.completeRepair(id);
+      setMsg(result.message || 'Đã hoàn thành sửa chữa thành công');
+      
+      // Refresh danh sách để cập nhật trạng thái
+      mutate(key);
+      
+      // Hiển thị thông báo
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e: any) {
+      setMsg(e?.response?.data?.message || 'Lỗi khi hoàn thành sửa chữa');
+    }
+  };
+
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);
     mutate(key);
@@ -210,6 +244,8 @@ export default function RepairsPage() {
             onUnrepairable={handleUnrepairable}
             onEditInvoice={handleEditInvoice}
             onRequestConfirmation={handleRequestConfirmation}
+            onStartRepair={handleStartRepair}
+            onCompleteRepair={handleCompleteRepair}
           />
         </Card>
 

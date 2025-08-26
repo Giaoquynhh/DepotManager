@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '@components/Modal';
 import { yardApi } from '@services/yard';
+import { reportsApi } from '@services/reports';
 
 interface StackDetailsModalProps {
   visible: boolean;
@@ -41,6 +42,12 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
   const [inputByTier, setInputByTier] = useState<Record<number, string>>({});
   const [globalContainerNo, setGlobalContainerNo] = useState('');
   const [now, setNow] = useState<number>(Date.now());
+  
+  // State cho container filter
+  const [showContainerFilter, setShowContainerFilter] = useState(false);
+  const [availableContainers, setAvailableContainers] = useState<Array<{container_no: string, service_gate_checked_at: string}>>([]);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [focusedTier, setFocusedTier] = useState<number | null>(null);
 
   const load = async () => {
     if (!visible || !slotId) return;
@@ -61,6 +68,33 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Fetch containers đang chờ sắp xếp
+  const fetchAvailableContainers = async () => {
+    try {
+      setFilterLoading(true);
+      const data = await reportsApi.listContainers({
+        service_status: 'CHECKED',
+        page: 1,
+        pageSize: 100
+      });
+      
+      // Lọc chỉ lấy container có derived_status = 'WAITING' (đang chờ sắp xếp)
+      const waitingContainers = data.items.filter((item: any) => {
+        if (item.service_status === 'CHECKED' || item.repair_checked === true) {
+          const inYard = !!item.slot_code;
+          return !inYard; // Chỉ lấy container chưa được sắp xếp vào slot
+        }
+        return false;
+      });
+      
+      setAvailableContainers(waitingContainers);
+    } catch (error) {
+      console.error('Error fetching available containers:', error);
+    } finally {
+      setFilterLoading(false);
+    }
+  };
 
   const occTopTier = useMemo(() => {
     if (!details) return null;
@@ -84,6 +118,10 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
       await yardApi.hold(slotId);
       await load();
       onActionDone?.();
+      
+      // Sau khi HOLD thành công, hiển thị container filter
+      setShowContainerFilter(true);
+      await fetchAvailableContainers();
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Lỗi HOLD');
     } finally {
@@ -139,6 +177,20 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
     }
   };
 
+  // Select container từ filter
+  const handleSelectContainer = (containerNo: string) => {
+    // Nếu có tier đang được focus, điền vào tier đó
+    if (focusedTier !== null) {
+      setInputByTier(prev => ({ ...prev, [focusedTier]: containerNo }));
+    } else {
+      // Nếu không có tier nào được focus, điền vào global input
+      setGlobalContainerNo(containerNo);
+    }
+    
+    setShowContainerFilter(false);
+    setFocusedTier(null);
+  };
+
   const formatRemain = (expires?: string | null) => {
     if (!expires) return '';
     const ms = new Date(expires).getTime() - now;
@@ -169,16 +221,9 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
         <button type="button" className="btn btn-primary" onClick={handleHold} disabled={loading}>
           ➕ HOLD tier kế tiếp
         </button>
-        <button type="button" className="btn" onClick={load} disabled={loading} title="Tải lại chi tiết">
-          🔄 Refresh
-        </button>
-        <input
-          placeholder="Container No (dùng nhanh cho Confirm)"
-          value={globalContainerNo}
-          onChange={e => setGlobalContainerNo(e.target.value)}
-          style={{ flex: 1, minWidth: 220 }}
-        />
       </div>
+
+
 
       <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, maxHeight: '60vh', overflow: 'auto' }}>
         {[...Array(Math.max(capacity || 0, (details?.placements?.length || 0)))].map((_, idx) => {
@@ -206,19 +251,103 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {status === 'HOLD' && activeHold && (
                   <>
-                    <input
-                      placeholder="Container No"
-                      value={inputByTier[tier] || ''}
-                      onChange={e => setInputByTier(s => ({ ...s, [tier]: e.target.value }))}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleConfirm(tier); } }}
-                      style={{ width: 160 }}
-                    />
-                    <button className="btn btn-primary" disabled={loading} onClick={() => handleConfirm(tier)}>
-                      ✅ Confirm
-                    </button>
-                    <button className="btn btn-secondary" disabled={loading} onClick={() => handleRelease(tier)}>
-                      ❌ Release
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input
+                          placeholder="Container No"
+                          value={inputByTier[tier] || ''}
+                          onChange={e => setInputByTier(s => ({ ...s, [tier]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleConfirm(tier); } }}
+                          style={{ width: 160 }}
+                        />
+                        <button 
+                          type="button" 
+                          className="btn btn-outline" 
+                          onClick={() => {
+                            setFocusedTier(tier);
+                            setShowContainerFilter(!showContainerFilter);
+                            if (!showContainerFilter) {
+                              fetchAvailableContainers();
+                            }
+                          }}
+                          title="Filter containers cho tier này"
+                          style={{ fontSize: '10px', padding: '2px 6px' }}
+                        >
+                          🔍
+                        </button>
+                      </div>
+                      
+                      {/* Container Filter cho tier này */}
+                      {showContainerFilter && focusedTier === tier && (
+                        <div style={{ 
+                          border: '1px solid #e5e7eb', 
+                          borderRadius: 6, 
+                          padding: 8, 
+                          background: '#f9fafb',
+                          maxHeight: '150px',
+                          overflow: 'auto'
+                        }}>
+                          
+                          {filterLoading ? (
+                            <div style={{ textAlign: 'center', padding: '10px', color: '#6b7280', fontSize: '11px' }}>
+                              Đang tải...
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                            {availableContainers
+                .slice(0, 5) // Chỉ hiển thị tối đa 5 container
+                .map(container => (
+                                  <div
+                                    key={container.container_no}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '4px 8px',
+                                      border: '1px solid #e5e7eb',
+                                      borderRadius: 4,
+                                      background: 'white',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      fontSize: '11px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = '#f3f4f6';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'white';
+                                    }}
+                                    onClick={() => handleSelectContainer(container.container_no)}
+                                  >
+                                    <span style={{ fontWeight: 600 }}>{container.container_no}</span>
+                                    <span style={{ fontSize: '10px', color: '#6b7280' }}>
+                                      {container.service_gate_checked_at ? 
+                                        new Date(container.service_gate_checked_at).toLocaleDateString() : 
+                                        'Sửa chữa'
+                                      }
+                                    </span>
+                                  </div>
+                                ))
+                              }
+                                            {availableContainers.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '8px', color: '#6b7280', fontSize: '10px' }}>
+                  Không có container
+                </div>
+              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div style={{ display: 'flex', gap: 4 }}>
+                                                <button className="btn btn-primary" disabled={loading} onClick={() => handleConfirm(tier)}>
+                          ✅ Confirm
+                        </button>
+                        <button className="btn btn-secondary" disabled={loading} onClick={() => handleRelease(tier)}>
+                          ❌ Release
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
                 {status === 'OCCUPIED' && isTopOcc && p?.container_no && (

@@ -1,18 +1,38 @@
 import { useState, useEffect } from 'react';
 import Header from '@components/Header';
 import { api } from '@services/api';
+import { forkliftApi } from '@services/forklift';
 import { isSaleAdmin, isYardManager, isSystemAdmin } from '@utils/rbac';
 
 interface ForkliftTask {
   id: string;
   container_no: string;
-  task_type: 'LOAD' | 'UNLOAD' | 'MOVE';
+  from_slot_id?: string;
+  to_slot_id?: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  assigned_forklift?: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  created_at: string;
-  updated_at: string;
-  notes?: string;
+  assigned_driver_id?: string;
+  created_by: string;
+  cancel_reason?: string;
+  createdAt: string;
+  updatedAt: string;
+  from_slot?: {
+    code: string;
+    block: {
+      code: string;
+      yard: {
+        name: string;
+      };
+    };
+  };
+  to_slot?: {
+    code: string;
+    block: {
+      code: string;
+      yard: {
+        name: string;
+      };
+    };
+  };
 }
 
 export default function Forklift() {
@@ -47,6 +67,7 @@ export default function Forklift() {
     try {
       setLoading(true);
       const response = await api.get('/forklift/tasks');
+      console.log('🔍 Forklift tasks data:', response.data);
       setTasks(response.data || []);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Không thể tải danh sách công việc xe nâng');
@@ -77,6 +98,19 @@ export default function Forklift() {
     }
   };
 
+  const deleteTask = async (taskId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa task này?')) return;
+    
+    try {
+      await forkliftApi.deleteTask(taskId);
+      // Reload danh sách sau khi xóa
+      loadForkliftTasks();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Không thể xóa task');
+      console.error('Delete task error:', err);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'bg-yellow-100 text-yellow-800';
@@ -87,23 +121,7 @@ export default function Forklift() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'bg-red-100 text-red-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getTaskTypeLabel = (type: string) => {
-    switch (type) {
-      case 'LOAD': return 'Xếp hàng';
-      case 'UNLOAD': return 'Dỡ hàng';
-      case 'MOVE': return 'Di chuyển';
-      default: return type;
-    }
-  };
 
   if (error && !userRole) {
     return (
@@ -181,12 +199,11 @@ export default function Forklift() {
                   <thead>
                     <tr>
                       <th>Container</th>
-                      <th>Loại công việc</th>
+                      <th>Vị trí nguồn</th>
+                      <th>Vị trí đích</th>
                       <th>Trạng thái</th>
-                      <th>Độ ưu tiên</th>
-                      <th>Xe nâng được gán</th>
+                      <th>Tài xế</th>
                       <th>Thời gian tạo</th>
-                      <th>Ghi chú</th>
                       <th>Thao tác</th>
                     </tr>
                   </thead>
@@ -196,30 +213,36 @@ export default function Forklift() {
                         <td>
                           <span className="container-id">{task.container_no}</span>
                         </td>
+                                                 <td>
+                           {task.from_slot && task.from_slot.yard && task.from_slot.block ? (
+                             <span className="location-info">
+                               {task.from_slot.yard.name} / {task.from_slot.block.code} / {task.from_slot.code}
+                             </span>
+                           ) : (
+                             <span className="text-gray-400">Bên ngoài</span>
+                           )}
+                         </td>
+                                                 <td>
+                           {task.to_slot && task.to_slot.yard && task.to_slot.block ? (
+                             <span className="location-info">
+                               {task.to_slot.yard.name} / {task.to_slot.block.code} / {task.to_slot.code}
+                             </span>
+                           ) : (
+                             <span className="text-gray-400">-</span>
+                           )}
+                         </td>
+                         <td>
+                           <span className={`badge badge-md ${getStatusColor(task.status)}`}>
+                             {task.status === 'PENDING' && 'Chờ xử lý'}
+                             {task.status === 'IN_PROGRESS' && 'Đang thực hiện'}
+                             {task.status === 'COMPLETED' && 'Hoàn thành'}
+                             {task.status === 'CANCELLED' && 'Đã hủy'}
+                           </span>
+                         </td>
                         <td>
-                          <span className="type-label">
-                            {getTaskTypeLabel(task.task_type)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge badge-md ${getStatusColor(task.status)}`}>
-                            {task.status === 'PENDING' && 'Chờ xử lý'}
-                            {task.status === 'IN_PROGRESS' && 'Đang thực hiện'}
-                            {task.status === 'COMPLETED' && 'Hoàn thành'}
-                            {task.status === 'CANCELLED' && 'Đã hủy'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge badge-md ${getPriorityColor(task.priority)}`}>
-                            {task.priority === 'HIGH' && 'Cao'}
-                            {task.priority === 'MEDIUM' && 'Trung bình'}
-                            {task.priority === 'LOW' && 'Thấp'}
-                          </span>
-                        </td>
-                        <td>
-                          {task.assigned_forklift ? (
+                          {task.assigned_driver_id ? (
                             <span className="badge badge-info">
-                              {task.assigned_forklift}
+                              {task.assigned_driver_id}
                             </span>
                           ) : (
                             <span className="text-gray-400">Chưa gán</span>
@@ -227,15 +250,8 @@ export default function Forklift() {
                         </td>
                         <td>
                           <span className="eta-date">
-                            {new Date(task.created_at).toLocaleString('vi-VN')}
+                            {new Date(task.createdAt).toLocaleString('vi-VN')}
                           </span>
-                        </td>
-                        <td>
-                          {task.notes ? (
-                            <span className="text-sm">{task.notes}</span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
                         </td>
                         <td>
                           <div className="action-buttons">
@@ -263,14 +279,23 @@ export default function Forklift() {
                                 Hoàn thành
                               </button>
                             )}
-                            {!task.assigned_forklift && (
-                              <button
-                                className="btn btn-sm btn-info"
-                                onClick={() => assignForklift(task.id, 'FL001')} // Tạm thời hardcode
-                              >
-                                Gán xe
-                              </button>
-                            )}
+                                                         {!task.assigned_driver_id && task.status !== 'CANCELLED' && (
+                               <button
+                                 className="btn btn-sm btn-info"
+                                 onClick={() => assignForklift(task.id, 'DR001')} // Tạm thời hardcode
+                               >
+                                 Gán tài xế
+                               </button>
+                             )}
+                             {task.status === 'CANCELLED' && (
+                               <button
+                                 className="btn btn-sm btn-danger"
+                                 onClick={() => deleteTask(task.id)}
+                                 title="Xóa task đã hủy"
+                               >
+                                 🗑️ Xóa
+                               </button>
+                             )}
                           </div>
                         </td>
                       </tr>

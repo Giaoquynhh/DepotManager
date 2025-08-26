@@ -14,6 +14,8 @@
 
 ## 3) State machine
 - `CHECKING → PENDING_ACCEPT | REJECTED` (phase sau: REPAIRING → CHECKED)
+- **Cập nhật v2025-01-27**: Thêm trạng thái `ACCEPT` vào `RepairStatus` enum
+- Workflow hoàn chỉnh: `CHECKING → PENDING_ACCEPT → ACCEPT → REPAIRING → CHECKED`
 
 ## 4) API
 - Repairs
@@ -25,6 +27,9 @@
   - `POST /maintenance/repairs/:id/complete-check`
   - `POST /maintenance/repairs/:id/invoice` ⭐ **MỚI**: Tạo hóa đơn sửa chữa
   - `GET /maintenance/repairs/:id/invoice` ⭐ **MỚI**: Xem hóa đơn sửa chữa
+  - `POST /maintenance/repairs/:id/confirmation-request` ⭐ **MỚI v2025-01-27**: Gửi yêu cầu xác nhận từ khách hàng
+  - `POST /maintenance/repairs/:id/start-repair` ⭐ **MỚI v2025-01-27**: Tiến hành sửa chữa
+  - `POST /maintenance/repairs/:id/complete-repair` ⭐ **MỚI v2025-01-27**: Hoàn thành sửa chữa
 - Inventory
   - `GET /maintenance/inventory/items`
   - `POST /maintenance/inventory/items` ⭐ **MỚI**
@@ -97,6 +102,50 @@ async getRepairInvoice(repairTicketId: string) {
 - **Backend**: API `POST /maintenance/inventory/items` 
 - **Validation**: Tên và ĐVT là bắt buộc, các trường số không âm
 - **Audit**: Ghi log `INVENTORY.CREATED` khi tạo mới
+
+## 12) Tính năng mới (v2025-01-27)
+
+### Cập nhật RepairStatus enum
+- **Thêm trạng thái**: `ACCEPT` vào `RepairStatus` enum
+- **Vị trí**: Ngay sau `PENDING_ACCEPT` và trước `REPAIRING`
+- **Migration**: Chạy `prisma migrate dev` để cập nhật database
+
+### Workflow sửa chữa hoàn chỉnh
+1. **CHECKING** → "Đạt chuẩn" → **CHECKED**
+2. **CHECKING** → "Không đạt chuẩn" → Tạo hóa đơn → **PENDING_ACCEPT**
+3. **PENDING_ACCEPT** → Customer chấp nhận → **ACCEPT**
+4. **ACCEPT** → "🔧 Tiến hành sửa chữa" → **REPAIRING**
+5. **REPAIRING** → "✅ Hoàn thành" → **CHECKED**
+
+### API endpoints mới
+- **`POST /maintenance/repairs/:id/confirmation-request`**: Gửi yêu cầu xác nhận từ khách hàng
+- **`POST /maintenance/repairs/:id/start-repair`**: Tiến hành sửa chữa (ACCEPT → REPAIRING)
+- **`POST /maintenance/repairs/:id/complete-repair`**: Hoàn thành sửa chữa (REPAIRING → CHECKED)
+
+### Service methods mới
+```typescript
+// Gửi yêu cầu xác nhận
+async sendConfirmationRequest(actor: any, repairTicketId: string)
+
+// Tiến hành sửa chữa
+async startRepair(actor: any, repairTicketId: string)
+
+// Hoàn thành sửa chữa
+async completeRepair(actor: any, repairTicketId: string)
+
+// Đồng bộ trạng thái RepairTicket với ServiceRequest
+async syncRepairTicketStatus(containerNo: string)
+```
+
+### Validation và Security
+- **Role-based access**: Chỉ `SaleAdmin` và `SystemAdmin` mới có thể thực hiện các action
+- **Status validation**: Kiểm tra trạng thái hiện tại trước khi cho phép chuyển đổi
+- **Audit logging**: Ghi lại tất cả các thay đổi trạng thái với thông tin chi tiết
+
+### Tích hợp với ServiceRequest
+- **Đồng bộ trạng thái**: Khi `ServiceRequest` được accept, `RepairTicket` tương ứng cũng được cập nhật thành `ACCEPT`
+- **Logic đồng bộ**: Tự động tìm và cập nhật `RepairTicket` dựa trên `container_no`
+- **Error handling**: Xử lý lỗi gracefully để không ảnh hưởng đến flow chính
 
 ## 12) Trạng thái PENDING_ACCEPT (v2025-08-26)
 

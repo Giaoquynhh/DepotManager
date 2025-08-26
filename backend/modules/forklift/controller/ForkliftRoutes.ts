@@ -9,6 +9,7 @@ router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin'));
 router.get('/tasks', (req, res) => controller.list(req as any, res));
 router.post('/assign', (req, res) => controller.assign(req as any, res));
 router.patch('/task/:id/status', (req, res) => controller.update(req as any, res));
+router.delete('/task/:id', (req, res) => controller.delete(req as any, res));
 
 export default router;
 

@@ -19,7 +19,9 @@ export class RequestStateMachine {
     'GATE_IN',
     'CHECKING',
     'REJECTED',
-    'COMPLETED'
+    'COMPLETED',
+    'PENDING_ACCEPT',
+    'ACCEPT'
   ];
 
   private static readonly TRANSITIONS: StateTransition[] = [
@@ -116,6 +118,25 @@ export class RequestStateMachine {
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
       requiresReason: true,
       description: 'Hoàn thành kiểm tra - không đạt chuẩn'
+    },
+    {
+      from: 'PENDING_ACCEPT',
+      to: 'ACCEPT',
+      allowedRoles: ['CustomerAdmin', 'CustomerUser'],
+      description: 'Customer chấp nhận hóa đơn sửa chữa'
+    },
+    {
+      from: 'PENDING_ACCEPT',
+      to: 'REJECTED',
+      allowedRoles: ['CustomerAdmin', 'CustomerUser'],
+      requiresReason: true,
+      description: 'Customer từ chối hóa đơn sửa chữa'
+    },
+    {
+      from: 'ACCEPT',
+      to: 'CHECKED',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin', 'System'],
+      description: 'Hoàn thành sửa chữa - đồng bộ từ RepairTicket'
     }
   ];
 

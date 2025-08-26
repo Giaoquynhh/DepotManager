@@ -96,7 +96,7 @@ export class MaintenanceController {
     }
   }
 
-  async downloadRepairInvoicePDF(req: Request, res: Response) {
+  async downloadRepairInvoicePDF(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
       
@@ -177,6 +177,73 @@ export class MaintenanceController {
       res.status(500).json({
         success: false,
         message: 'Lỗi khi gửi yêu cầu xác nhận: ' + error.message
+      });
+    }
+  }
+
+  // Đồng bộ trạng thái RepairTicket (for testing)
+  async syncRepairTicketStatus(req: AuthRequest, res: Response) {
+    try {
+      const { container_no } = req.body;
+      
+      if (!container_no) {
+        return res.status(400).json({
+          success: false,
+          message: 'Container number là bắt buộc'
+        });
+      }
+
+      const result = await service.syncRepairTicketStatus(container_no);
+
+      res.json({
+        success: true,
+        message: result ? 'Đã đồng bộ trạng thái RepairTicket thành công' : 'Không tìm thấy dữ liệu để đồng bộ',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi đồng bộ trạng thái: ' + error.message
+      });
+    }
+  }
+
+  // Tiến hành sửa chữa
+  async startRepair(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const result = await service.startRepair(req.user!, id);
+
+      res.json({
+        success: true,
+        message: 'Đã tiến hành sửa chữa thành công',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi tiến hành sửa chữa: ' + error.message
+      });
+    }
+  }
+
+  // Hoàn thành sửa chữa
+  async completeRepair(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const result = await service.completeRepair(req.user!, id);
+
+      res.json({
+        success: true,
+        message: 'Đã hoàn thành sửa chữa thành công',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi hoàn thành sửa chữa: ' + error.message
       });
     }
   }

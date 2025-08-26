@@ -12,6 +12,10 @@ export const forkliftApi = {
   async updateStatus(id: string, status: string, reason?: string) {
     const { data } = await api.patch(`/forklift/task/${id}/status`, { status, reason });
     return data;
+  },
+  async deleteTask(id: string) {
+    const { data } = await api.delete(`/forklift/task/${id}`);
+    return data;
   }
 };
 

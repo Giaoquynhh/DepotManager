@@ -9,9 +9,11 @@ interface RepairTableProps {
   onUnrepairable: (id: string) => void;
   onEditInvoice: (id: string) => void;
   onRequestConfirmation: (id: string) => void;
+  onStartRepair: (id: string) => void;
+  onCompleteRepair: (id: string) => void;
 }
 
-export default function RepairTable({ repairs, onPassStandard, onFailStandard, onRepairable, onUnrepairable, onEditInvoice, onRequestConfirmation }: RepairTableProps) {
+export default function RepairTable({ repairs, onPassStandard, onFailStandard, onRepairable, onUnrepairable, onEditInvoice, onRequestConfirmation, onStartRepair, onCompleteRepair }: RepairTableProps) {
   const fmt = (n: any) => {
     const num = Number(n || 0);
     return num.toLocaleString('vi-VN');
@@ -66,17 +68,20 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                   fontWeight: '500',
                                      background: r.status === 'CHECKING' ? '#fbbf24' :
                               r.status === 'PENDING_ACCEPT' ? '#f59e0b' :
+                              r.status === 'ACCEPT' ? '#10b981' :
                               r.status === 'REPAIRING' ? '#3b82f6' :
                               r.status === 'CHECKED' ? '#10b981' :
                               r.status === 'REJECTED' ? '#ef4444' : '#fee2e2',
                   color: r.status === 'CHECKING' ? '#78350f' :
                          r.status === 'PENDING_ACCEPT' ? '#92400e' :
+                         r.status === 'ACCEPT' ? '#065f46' :
                          r.status === 'REPAIRING' ? '#1e40af' :
                          r.status === 'CHECKED' ? '#065f46' : 
                          r.status === 'REJECTED' ? '#991b1b' : '#991b1b'
                 }}>
                                      {r.status === 'CHECKING' ? 'Đang kiểm tra' :
                     r.status === 'PENDING_ACCEPT' ? 'Chờ chấp nhận' :
+                    r.status === 'ACCEPT' ? 'Đã chấp nhận' :
                     r.status === 'REPAIRING' ? 'Đang sửa chữa' :
                     r.status === 'CHECKED' ? 'Đã kiểm tra' :
                     r.status === 'REJECTED' ? 'Đã từ chối' : 'Không xác định'}
@@ -113,42 +118,82 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                   </span>
                 )}
               </td>
-              <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                             <td style={{ padding: '12px 8px', textAlign: 'center' }}>
 
-                {r.status === 'PENDING_ACCEPT' && (
-                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button 
-                      onClick={() => onEditInvoice(r.id)}
-                      style={{
-                        padding: '4px 8px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        background: '#3b82f6',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                      title="Sửa hóa đơn sửa chữa"
-                    >
-                      ✏️ Sửa hóa đơn
-                    </button>
-                    <button 
-                      onClick={() => onRequestConfirmation(r.id)}
-                      style={{
-                        padding: '4px 8px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        background: '#f59e0b',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                      title="Gửi yêu cầu xác nhận từ khách hàng"
-                    >
-                      📧 Gửi yêu cầu xác nhận
-                    </button>
-                  </div>
-                )}
+                 {r.status === 'PENDING_ACCEPT' && (
+                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                     <button 
+                       onClick={() => onEditInvoice(r.id)}
+                       style={{
+                         padding: '4px 8px',
+                         border: 'none',
+                         borderRadius: '4px',
+                         background: '#3b82f6',
+                         color: 'white',
+                         cursor: 'pointer',
+                         fontSize: '12px'
+                       }}
+                       title="Sửa hóa đơn sửa chữa"
+                     >
+                       ✏️ Sửa hóa đơn
+                     </button>
+                     <button 
+                       onClick={() => onRequestConfirmation(r.id)}
+                       style={{
+                         padding: '4px 8px',
+                         border: 'none',
+                         borderRadius: '4px',
+                         background: '#f59e0b',
+                         color: 'white',
+                         cursor: 'pointer',
+                         fontSize: '12px'
+                       }}
+                       title="Gửi yêu cầu xác nhận từ khách hàng"
+                     >
+                       📧 Gửi yêu cầu xác nhận
+                     </button>
+                   </div>
+                 )}
+
+                 {r.status === 'ACCEPT' && (
+                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                     <button 
+                       onClick={() => onStartRepair(r.id)}
+                       style={{
+                         padding: '4px 8px',
+                         border: 'none',
+                         borderRadius: '4px',
+                         background: '#10b981',
+                         color: 'white',
+                         cursor: 'pointer',
+                         fontSize: '12px'
+                       }}
+                       title="Tiến hành sửa chữa"
+                     >
+                       🔧 Tiến hành sửa chữa
+                     </button>
+                   </div>
+                 )}
+
+                 {r.status === 'REPAIRING' && (
+                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                     <button 
+                       onClick={() => onCompleteRepair(r.id)}
+                       style={{
+                         padding: '4px 8px',
+                         border: 'none',
+                         borderRadius: '4px',
+                         background: '#059669',
+                         color: 'white',
+                         cursor: 'pointer',
+                         fontSize: '12px'
+                       }}
+                       title="Hoàn thành sửa chữa"
+                     >
+                       ✅ Hoàn thành
+                     </button>
+                   </div>
+                 )}
                 {r.status === 'CHECKING' && !r.manager_comment?.includes('không đạt chuẩn') && (
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                     <button 

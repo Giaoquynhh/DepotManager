@@ -10,6 +10,7 @@ import SearchBar from '@components/SearchBar';
 import AppointmentModal from '@components/AppointmentModal';
 import UploadModal from '@components/UploadModal';
 import SupplementMini from '@components/SupplementMini';
+import { useCustomerActions } from './hooks/useCustomerActions';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
@@ -22,9 +23,10 @@ export default function CustomerRequests() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterType, setFilterType] = useState('all');
 	const { data, error, isLoading } = useSWR('/requests?page=1&limit=20', fetcher);
-	const [msg, setMsg] = useState<{ text: string; ok: boolean }|null>(null);
-	const [loadingId, setLoadingId] = useState<string>('');
-	const [me, setMe] = useState<any>(null);
+	
+	// Use customer actions hook
+	const [customerState, customerActions] = useCustomerActions();
+	const { msg, loadingId, me } = customerState;
 
 	const handleCreateSuccess = () => {
 		setShowCreateModal(false);
@@ -35,10 +37,7 @@ export default function CustomerRequests() {
 		setShowCreateModal(false);
 	};
 
-	// Load user info
-	useEffect(() => {
-		api.get('/auth/me').then(r => setMe(r.data)).catch(() => {});
-	}, []);
+	// Load user info - now handled by useCustomerActions hook
 
 	const handleSearch = (query: string) => {
 		setSearchQuery(query);
@@ -51,30 +50,30 @@ export default function CustomerRequests() {
 	};
 
 	const softDeleteRequest = async (id: string, scope: 'depot' | 'customer') => {
-		setMsg(null);
-		setLoadingId(id + 'DELETE');
+		customerActions.setMsg(null);
+		customerActions.setLoadingId(id + 'DELETE');
 		try {
 			await api.delete(`/requests/${id}?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `Đã xóa khỏi danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			customerActions.setMsg({ text: `Đã xóa khỏi danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Xóa thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			customerActions.setMsg({ text: `Xóa thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 		} finally {
-			setLoadingId('');
+			customerActions.setLoadingId('');
 		}
 	};
 
 	const restoreRequest = async (id: string, scope: 'depot' | 'customer') => {
-		setMsg(null);
-		setLoadingId(id + 'RESTORE');
+		customerActions.setMsg(null);
+		customerActions.setLoadingId(id + 'RESTORE');
 		try {
 			await api.post(`/requests/${id}/restore?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `Đã khôi phục trong danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			customerActions.setMsg({ text: `Đã khôi phục trong danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Khôi phục thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			customerActions.setMsg({ text: `Khôi phục thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 		} finally {
-			setLoadingId('');
+			customerActions.setLoadingId('');
 		}
 	};
 
@@ -104,20 +103,20 @@ export default function CustomerRequests() {
 		mutate('/requests?page=1&limit=20');
 		
 		// Hiển thị thông báo thành công với thông tin về việc tự động chuyển tiếp
-		setMsg({ 
+		customerActions.setMsg({ 
 			text: '✅ Upload tài liệu bổ sung thành công! 📤 Yêu cầu đã được tự động chuyển tiếp sang FORWARDED.', 
 			ok: true 
 		});
 		
 		// Tự động ẩn thông báo sau 5 giây
 		setTimeout(() => {
-			setMsg(null);
+			customerActions.setMsg(null);
 		}, 5000);
 	};
 
 	const handleUploadSuccess = () => {
 		mutate('/requests?page=1&limit=20');
-		setMsg({ text: 'Upload file thành công!', ok: true });
+		customerActions.setMsg({ text: 'Upload file thành công!', ok: true });
 	};
 
 	const requestsWithActions = filteredData?.map((item: any) => ({
@@ -126,7 +125,10 @@ export default function CustomerRequests() {
 			softDeleteRequest,
 			restoreRequest,
 			loadingId,
-			handleOpenSupplementPopup
+			handleOpenSupplementPopup,
+			handleViewInvoice: customerActions.handleViewInvoice,
+			handleAccept: customerActions.handleAccept,
+			handleRejectByCustomer: customerActions.handleRejectByCustomer
 		}
 	}));
 

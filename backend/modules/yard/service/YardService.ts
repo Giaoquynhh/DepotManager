@@ -188,10 +188,26 @@ export class YardService {
 					throw new Error('Vi phạm stacking: các tier phía dưới chưa được OCCUPIED liên tục');
 				}
 			}
-			return tx.yardPlacement.update({
+			
+			// Cập nhật placement thành OCCUPIED
+			const updatedPlacement = await tx.yardPlacement.update({
 				where: { slot_tier_unique: { slot_id, tier } },
 				data: { status: 'OCCUPIED', container_no, hold_expires_at: null, placed_at: now }
 			});
+			
+			// Tạo ForkliftTask để di chuyển container vào vị trí
+			await tx.forkliftTask.create({
+				data: {
+					container_no: container_no,
+					from_slot_id: null, // Container từ bên ngoài vào
+					to_slot_id: slot_id, // Vị trí đích
+					status: 'PENDING',
+					assigned_driver_id: null,
+					created_by: actor._id
+				}
+			});
+			
+			return updatedPlacement;
 		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 		await audit(actor._id, 'YARD.CONFIRM', 'YARD_SLOT', slot_id, { tier, container_no });
 		return updated;

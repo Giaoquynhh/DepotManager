@@ -13,6 +13,8 @@ Tài liệu này mô tả chi tiết các thay đổi UI/UX được thực hi�
 ✅ Transition mượt mà (0.2s ease-in-out)  
 ✅ Responsive design (desktop-first)  
 ✅ Component modularity (không có file > 400 dòng)  
+✅ **MỚI v2025-01-27**: Maintenance workflow hoàn chỉnh với các action buttons  
+✅ **MỚI v2025-01-27**: ContainersPage logic hoàn thiện với derived_status filtering  
 
 ---
 
@@ -73,7 +75,53 @@ import { theme } from '@/styles/theme';
 
 ## 🧩 Components Refactored
 
-### 1. Button Component (`components/Button.tsx`)
+### 1. ContainersPage Logic Enhancement (`pages/ContainersPage/index.tsx`)
+**Cập nhật:** Hoàn thiện logic derived_status và filtering
+
+**Thay đổi chính:**
+- ✅ **Logic derived_status hoàn thiện**: Chỉ container có `service_status = 'CHECKED'` hoặc `repair_checked = true` mới có `derived_status`
+- ✅ **Filtering logic cải tiến**: Chỉ hiển thị container đã được kiểm tra (có derived_status)
+- ✅ **Trạng thái hiển thị rõ ràng**: "Đang chờ sắp xếp", "Ở trong bãi", "Chưa kiểm tra"
+- ✅ **UI filter indicator**: Checkbox hiển thị rõ logic lọc
+
+**Logic mới:**
+```typescript
+const items = (data?.items || []).map((it:any) => {
+  // Chỉ container có trạng thái CHECKED mới có derived_status
+  if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+    const inYard = !!it.slot_code;
+    return { ...it, derived_status: inYard ? 'IN_YARD' : 'WAITING' };
+  } else {
+    // Container chưa được kiểm tra - không có derived_status
+    return { ...it, derived_status: null };
+  }
+});
+
+// Lọc theo trạng thái (chỉ lấy container đã được kiểm tra)
+const filteredItems = status === 'WAITING' ? 
+  items.filter((i:any) => i.derived_status === 'WAITING') : 
+  status === 'IN_YARD' ? 
+  items.filter((i:any) => i.derived_status === 'IN_YARD') : 
+  items.filter((i:any) => i.derived_status !== null); // Chỉ lấy container có derived_status
+```
+
+**Trạng thái hiển thị:**
+```typescript
+{it.derived_status ? (
+  // Container đã kiểm tra - hiển thị "Đang chờ sắp xếp" hoặc "Ở trong bãi"
+  <span>Đang chờ sắp xếp</span>
+) : (
+  // Container chưa kiểm tra - hiển thị "Chưa kiểm tra"
+  <span>Chưa kiểm tra</span>
+)}
+```
+
+**Kết quả:**
+- **Container có `service_status = 'CHECKED'`** → Có `derived_status = 'WAITING'` hoặc `'IN_YARD'`
+- **Container có `repair_checked = true`** → Có `derived_status = 'WAITING'` hoặc `'IN_YARD'`
+- **Container chưa kiểm tra** → `derived_status = null` → Hiển thị "Chưa kiểm tra"
+
+### 2. Button Component (`components/Button.tsx`)
 **Cập nhật:** Enhanced với variants và features mới
 
 **Thay đổi:**
@@ -906,6 +954,7 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 
 **Pages Refactored:**
 - `manageContainer/frontend/pages/Maintenance/Repairs.tsx` - Complete refactor với modal system
+- `manageContainer/frontend/pages/ContainersPage/index.tsx` - Logic hoàn thiện với derived_status filtering
 
 **Documentation:**
 - `manageContainer/frontend/docs/UI_REFACTOR_DOCUMENTATION.md` - This file (updated)
@@ -913,7 +962,7 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 - `manageContainer/frontend/docs/COMPONENT_SYSTEM.md` - Component usage guide
 - `manageContainer/frontend/docs/APPOINTMENT_MINI_SYSTEM.md` - Appointment system documentation (new)
 
-**Total Files Modified:** 28 files (3 backend + 25 frontend)
+**Total Files Modified:** 29 files (3 backend + 26 frontend)
 - **New Components Added:** 4 appointment components
 - **Bug Fixes Applied:** 4 critical runtime errors
 - **Form Validation Enhanced:** ETA field made required
@@ -921,6 +970,8 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 - **Container Processing Flow:** Auto-remove processed containers from waiting list
 - **Backend Schema Updated:** equipment_id made optional in repair tickets
 - **Documentation Updated:** 2 files updated, 1 file added
+- **MỚI v2025-01-27**: Maintenance workflow hoàn chỉnh với 3 action buttons mới
+- **MỚI v2025-01-27**: ContainersPage logic hoàn thiện với derived_status filtering
 
 **Backend Requirements Added:**
 - **Gate Module:** 4 new files cần tạo cho container management
@@ -929,6 +980,19 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 - **API Endpoints:** 2 new endpoints cho search và status update, 1 updated endpoint cho create repair
 - **Authentication:** Role-based access control cho Gate operations
 - **Database Migration:** equipment_id column trong RepairTicket table đã được chuyển thành NULLABLE
+
+**MỚI v2025-01-27 - Maintenance Workflow Enhancement:**
+- **RepairStatus Enum:** Thêm trạng thái `ACCEPT` vào database schema
+- **New API Endpoints:** 3 endpoints mới cho maintenance workflow
+- **Service Methods:** 4 methods mới trong MaintenanceService
+- **Frontend Actions:** 3 action buttons mới trong RepairTable component
+- **Status Synchronization:** Tự động đồng bộ RepairTicket với ServiceRequest
+
+**MỚI v2025-01-27 - ContainersPage Logic Enhancement:**
+- **Derived Status Logic:** Chỉ container có `service_status = 'CHECKED'` hoặc `repair_checked = true` mới có `derived_status`
+- **Filtering Logic:** Chỉ hiển thị container đã được kiểm tra (có derived_status)
+- **Status Display:** 3 trạng thái rõ ràng: "Đang chờ sắp xếp", "Ở trong bãi", "Chưa kiểm tra"
+- **UI Filter Indicator:** Checkbox hiển thị rõ logic lọc chỉ container đã kiểm tra
 
 ---
 
@@ -946,5 +1010,5 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 
 ---
 
-*Tài liệu được cập nhật lần cuối: 2024-08-19*  
-*Version: 1.3.0 - Container Processing Flow + Equipment ID Optional*
+*Tài liệu được cập nhật lần cuối: 2025-01-27*  
+*Version: 1.5.0 - ContainersPage Logic Enhancement + Complete Status Filtering*

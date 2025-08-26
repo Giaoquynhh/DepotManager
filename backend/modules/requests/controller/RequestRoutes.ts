@@ -40,6 +40,9 @@ const router = Router();
 router.post('/', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin'), upload.single('document'), (req, res) => ((req as any).user?.role === 'SaleAdmin' ? controller.createBySale(req as any, res) : controller.create(req as any, res)));
 router.get('/', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','Accountant','SystemAdmin'), (req, res) => controller.list(req as any, res));
 
+// Get single request by ID
+router.get('/:id', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','Accountant','SystemAdmin'), (req, res) => controller.getById(req as any, res));
+
 
 
 // Status changes (SaleAdmin/SystemAdmin)
@@ -68,6 +71,10 @@ router.patch('/:id/update-appointment', requireRoles('SaleAdmin','SystemAdmin'),
 router.patch('/:id/add-info', requireRoles('CustomerAdmin','CustomerUser'), (req, res) => controller.addInfoToRequest(req as any, res));
 router.patch('/:id/send-to-gate', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.sendToGate(req as any, res));
 router.patch('/:id/complete', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.completeRequest(req as any, res));
+
+// Customer actions for PENDING_ACCEPT requests
+router.patch('/:id/accept', requireRoles('CustomerAdmin','CustomerUser'), (req, res) => controller.acceptRequest(req as any, res));
+router.patch('/:id/reject-by-customer', requireRoles('CustomerAdmin','CustomerUser'), (req, res) => controller.rejectByCustomer(req as any, res));
 
 // Helper routes
 router.get('/:id/transitions', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','SystemAdmin'), (req, res) => controller.getValidTransitions(req as any, res));

@@ -87,6 +87,18 @@ export const maintenanceApi = {
   async sendConfirmationRequest(repairTicketId: string) {
     const { data } = await api.post(`/maintenance/repairs/${repairTicketId}/confirmation-request`);
     return data;
+  },
+
+  // Tiến hành sửa chữa
+  async startRepair(repairTicketId: string) {
+    const { data } = await api.post(`/maintenance/repairs/${repairTicketId}/start-repair`);
+    return data;
+  },
+
+  // Hoàn thành sửa chữa
+  async completeRepair(repairTicketId: string) {
+    const { data } = await api.post(`/maintenance/repairs/${repairTicketId}/complete-repair`);
+    return data;
   }
 };
 

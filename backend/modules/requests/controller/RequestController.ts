@@ -49,6 +49,10 @@ export class RequestController {
 		if (error) return res.status(400).json({ message: error.message });
 		try { return res.json(await service.list(req.user!, value)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
+
+	async getById(req: AuthRequest, res: Response) {
+		try { return res.json(await service.getById(req.user!, req.params.id)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+	}
 	async updateStatus(req: AuthRequest, res: Response) {
 		const { error, value } = updateRequestStatusSchema.validate(req.body);
 		if (error) return res.status(400).json({ message: error.message });
@@ -135,6 +139,17 @@ export class RequestController {
 
 	async getAppointmentInfo(req: AuthRequest, res: Response) {
 		try { return res.json(await service.getAppointmentInfo(req.params.id)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+	}
+
+	// Customer actions for PENDING_ACCEPT requests
+	async acceptRequest(req: AuthRequest, res: Response) {
+		try { return res.json(await service.acceptRequest(req.user!, req.params.id)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+	}
+
+	async rejectByCustomer(req: AuthRequest, res: Response) {
+		const { error, value } = rejectRequestSchema.validate(req.body);
+		if (error) return res.status(400).json({ message: error.message });
+		try { return res.json(await service.rejectByCustomer(req.user!, req.params.id, value.reason)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
 }
 

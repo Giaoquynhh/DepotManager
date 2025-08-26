@@ -3,7 +3,14 @@ import { audit } from '../../../shared/middlewares/audit';
 
 export class ForkliftService {
 	async list(status?: string) {
-		return prisma.forkliftTask.findMany({ where: status? { status } : {}, orderBy: { createdAt: 'desc' } });
+		return prisma.forkliftTask.findMany({ 
+			where: status ? { status } : {}, 
+			include: {
+				from_slot: { include: { block: { include: { yard: true } } } },
+				to_slot: { include: { block: { include: { yard: true } } } }
+			},
+			orderBy: { createdAt: 'desc' } 
+		});
 	}
 
 	async assign(actor: any, payload: { container_no: string; from_slot_id?: string; to_slot_id?: string; driver_id?: string; }) {
@@ -26,6 +33,16 @@ export class ForkliftService {
 		const updated = await prisma.forkliftTask.update({ where: { id }, data });
 		await audit(actor._id, 'FORKLIFT.STATUS', 'TASK', id, { status, reason });
 		return updated;
+	}
+
+	async deleteTask(actor: any, id: string) {
+		const task = await prisma.forkliftTask.findUnique({ where: { id } });
+		if (!task) throw new Error('Task không tồn tại');
+		if (task.status !== 'CANCELLED') throw new Error('Chỉ có thể xóa task đã hủy');
+		
+		await prisma.forkliftTask.delete({ where: { id } });
+		await audit(actor._id, 'FORKLIFT.DELETE', 'TASK', id, { container_no: task.container_no });
+		return { message: 'Task đã được xóa thành công' };
 	}
 }
 

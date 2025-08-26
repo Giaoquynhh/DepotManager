@@ -644,6 +644,171 @@ export class MaintenanceService {
       throw new Error('Lỗi khi gửi yêu cầu xác nhận: ' + error.message);
     }
   }
+
+  // Đồng bộ trạng thái RepairTicket khi ServiceRequest được accept
+  async syncRepairTicketStatus(containerNo: string) {
+    try {
+      console.log('🔄 Syncing repair ticket status for container:', containerNo);
+      
+      // Tìm ServiceRequest với trạng thái ACCEPT
+      const serviceRequest = await prisma.serviceRequest.findFirst({
+        where: {
+          container_no: containerNo,
+          status: 'ACCEPT'
+        }
+      });
+
+      if (!serviceRequest) {
+        console.log('❌ No ServiceRequest found with ACCEPT status for container:', containerNo);
+        return null;
+      }
+
+      console.log('✅ Found ServiceRequest with ACCEPT status:', serviceRequest.id);
+
+      // Tìm RepairTicket tương ứng
+      const repairTicket = await prisma.repairTicket.findFirst({
+        where: {
+          container_no: containerNo,
+          status: 'PENDING_ACCEPT'
+        }
+      });
+
+      if (!repairTicket) {
+        console.log('❌ No RepairTicket found with PENDING_ACCEPT status for container:', containerNo);
+        return null;
+      }
+
+      console.log('✅ Found RepairTicket with PENDING_ACCEPT status:', repairTicket.id);
+
+      // Cập nhật trạng thái RepairTicket thành ACCEPT
+      const updatedRepairTicket = await prisma.repairTicket.update({
+        where: { id: repairTicket.id },
+        data: { 
+          status: 'ACCEPT' as any,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log('✅ Updated RepairTicket status to ACCEPT:', updatedRepairTicket.id);
+      
+      // Audit log
+      await audit(serviceRequest.created_by, 'REPAIR.SYNCED_TO_ACCEPT', 'REPAIR', updatedRepairTicket.id, {
+        service_request_id: serviceRequest.id,
+        container_no: containerNo
+      });
+
+      return updatedRepairTicket;
+    } catch (error) {
+      console.error('❌ Error syncing repair ticket status:', error);
+      throw error;
+    }
+  }
+
+  // Tiến hành sửa chữa - chuyển trạng thái từ ACCEPT sang REPAIRING
+  async startRepair(actor: any, repairTicketId: string) {
+    try {
+      console.log('🔧 Starting repair for ticket:', repairTicketId);
+      
+      // Kiểm tra phiếu sửa chữa tồn tại
+      const repairTicket = await prisma.repairTicket.findUnique({
+        where: { id: repairTicketId }
+      });
+
+      if (!repairTicket) {
+        throw new Error('Phiếu sửa chữa không tồn tại');
+      }
+
+      if (repairTicket.status !== 'ACCEPT') {
+        throw new Error('Chỉ có thể tiến hành sửa chữa khi phiếu ở trạng thái "Đã chấp nhận"');
+      }
+
+      // Cập nhật trạng thái thành REPAIRING
+      const updatedRepairTicket = await prisma.repairTicket.update({
+        where: { id: repairTicketId },
+        data: { 
+          status: 'REPAIRING' as any,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log('✅ Updated RepairTicket status to REPAIRING:', updatedRepairTicket.id);
+      
+      // Audit log
+      await audit(actor._id, 'REPAIR.STARTED', 'REPAIR', repairTicketId, {
+        container_no: repairTicket.container_no,
+        old_status: repairTicket.status,
+        new_status: 'REPAIRING'
+      });
+
+      return updatedRepairTicket;
+    } catch (error) {
+      console.error('❌ Error starting repair:', error);
+      throw error;
+    }
+  }
+
+  // Hoàn thành sửa chữa - chuyển trạng thái từ REPAIRING sang CHECKED
+  async completeRepair(actor: any, repairTicketId: string) {
+    try {
+      console.log('✅ Completing repair for ticket:', repairTicketId);
+      
+      // Kiểm tra phiếu sửa chữa tồn tại
+      const repairTicket = await prisma.repairTicket.findUnique({
+        where: { id: repairTicketId }
+      });
+
+      if (!repairTicket) {
+        throw new Error('Phiếu sửa chữa không tồn tại');
+      }
+
+      if (repairTicket.status !== 'REPAIRING') {
+        throw new Error('Chỉ có thể hoàn thành sửa chữa khi phiếu ở trạng thái "Đang sửa chữa"');
+      }
+
+      // Cập nhật trạng thái thành CHECKED
+      const updatedRepairTicket = await prisma.repairTicket.update({
+        where: { id: repairTicketId },
+        data: { 
+          status: 'CHECKED' as any,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log('✅ Updated RepairTicket status to CHECKED:', updatedRepairTicket.id);
+      
+      // Đồng bộ trạng thái ServiceRequest thành CHECKED
+      if (repairTicket.container_no) {
+        try {
+          await prisma.serviceRequest.updateMany({
+            where: { 
+              container_no: repairTicket.container_no,
+              status: { in: ['ACCEPT', 'PENDING_ACCEPT'] } // Chỉ cập nhật nếu đang ở ACCEPT hoặc PENDING_ACCEPT
+            },
+            data: { 
+              status: 'CHECKED',
+              updatedAt: new Date()
+            }
+          });
+          console.log('✅ Successfully synced ServiceRequest status to CHECKED for container:', repairTicket.container_no);
+        } catch (error) {
+          console.error('❌ Error syncing ServiceRequest status:', error);
+          // Không throw error để không ảnh hưởng đến việc hoàn thành sửa chữa
+        }
+      }
+      
+      // Audit log
+      await audit(actor._id, 'REPAIR.COMPLETED', 'REPAIR', repairTicketId, {
+        container_no: repairTicket.container_no,
+        old_status: repairTicket.status,
+        new_status: 'CHECKED'
+      });
+
+      return updatedRepairTicket;
+    } catch (error) {
+      console.error('❌ Error completing repair:', error);
+      throw error;
+    }
+  }
 }
 
 export default new MaintenanceService();

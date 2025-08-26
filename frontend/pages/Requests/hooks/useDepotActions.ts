@@ -355,8 +355,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 			setMsg({ text: 'Đã gửi xác nhận cho khách hàng thành công', ok: true });
 			
-			// Tự động mở chat với khách hàng sau khi gửi xác nhận
-			setActiveChatRequests(prev => new Set(prev).add(id));
+			// Không tự động mở chat với khách hàng sau khi gửi xác nhận
+			// setActiveChatRequests(prev => new Set(prev).add(id));
 		} catch (e: any) {
 			setMsg({ text: `Gửi xác nhận thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 		} finally {

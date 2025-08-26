@@ -74,6 +74,7 @@ export class ReportsRepository {
 
   async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; page: number; pageSize: number }){
     // Hợp nhất: ServiceRequest mới nhất + RepairTicket đã CHECKED (bảo trì)
+    // Khi service_status = 'CHECKED': chỉ trả về container đã kiểm tra (có gate_checked_at hoặc repair_checked = TRUE)
     const raw = await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
         SELECT DISTINCT ON (sr.container_no)
@@ -109,18 +110,21 @@ export class ReportsRepository {
       )
       SELECT bc.container_no,
              cm.dem_date, cm.det_date,
-             ys.status as slot_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name,
+             yp.status as placement_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name,
              ls.service_status as service_status,
              ls.gate_checked_at as service_gate_checked_at,
              ls.driver_name as service_driver_name,
              ls.license_plate as service_license_plate,
              ls.gate_ref as service_gate_ref,
-             COALESCE(rt.repair_checked, FALSE) as repair_checked
+             COALESCE(rt.repair_checked, FALSE) as repair_checked,
+             rt.updated_at as repair_updated_at,
+             yp.tier as placement_tier
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
       LEFT JOIN "ContainerMeta" cm ON cm.container_no = bc.container_no
-      LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
+      LEFT JOIN "YardPlacement" yp ON yp.container_no = bc.container_no AND yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
+      LEFT JOIN "YardSlot" ys ON ys.id = yp.slot_id
       LEFT JOIN "YardBlock" yb ON yb.id = ys.block_id
       LEFT JOIN "Yard" y ON y.id = yb.yard_id
       CROSS JOIN params p
@@ -128,7 +132,9 @@ export class ReportsRepository {
         AND (p.status IS NULL OR ys.status::text = p.status)
         AND (
           p.service_status IS NULL OR
+          -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          -- Lấy container theo service_status khác
           (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
         )
       ORDER BY bc.container_no
@@ -177,7 +183,9 @@ export class ReportsRepository {
         AND (p.status IS NULL OR ys.status::text = p.status)
         AND (
           p.service_status IS NULL OR
+          -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          -- Lấy container theo service_status khác
           (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
         )
     `)[0]?.cnt || 0;

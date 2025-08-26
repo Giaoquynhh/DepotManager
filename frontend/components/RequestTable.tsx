@@ -21,7 +21,10 @@ interface RequestTableProps {
       loadingId?: string;
       changeStatus?: (id: string, status: string) => void;
       sendPayment?: (id: string) => void;
-      		handleOpenSupplementPopup?: (id: string) => void;
+      handleOpenSupplementPopup?: (id: string) => void;
+      handleViewInvoice?: (id: string) => void;
+      handleAccept?: (id: string) => void;
+      handleRejectByCustomer?: (id: string, reason: string) => void;
       actLabel?: Record<string, string>;
     };
   })[];
@@ -42,7 +45,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
       REJECTED: { label: 'Từ chối', className: 'status-rejected' },
       IN_YARD: { label: 'Trong kho', className: 'status-in-yard' },
-      LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' }
+      LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
+      PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
+      ACCEPT: { label: 'Đã chấp nhận', className: 'status-accept' }
     };
 
     const config = statusConfig[status] || { label: status, className: 'status-default' };
@@ -288,6 +293,59 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                         >
                           {item.actions.loadingId === item.id + 'PAY' ? '⏳' : '💰'} Thanh toán
                         </button>
+                      )}
+
+                      {/* Actions for PENDING_ACCEPT requests (Customer only) */}
+                      {item.status === 'PENDING_ACCEPT' && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
+                        <>
+                                                     <button
+                             className="btn btn-sm btn-info"
+                             disabled={item.actions.loadingId === item.id + 'VIEW_INVOICE'}
+                             onClick={() => {
+                               if (item.actions?.handleViewInvoice) {
+                                 item.actions.handleViewInvoice(item.id, item.container_no);
+                               } else {
+                                 alert('Tính năng xem hóa đơn đang được phát triển!');
+                               }
+                             }}
+                             title="Xem hóa đơn sửa chữa"
+                           >
+                             {item.actions.loadingId === item.id + 'VIEW_INVOICE' ? '⏳' : '📄'} Xem hóa đơn
+                           </button>
+                          <button
+                            className="btn btn-sm btn-success"
+                            disabled={item.actions.loadingId === item.id + 'ACCEPT'}
+                            onClick={() => {
+                              if (window.confirm('Bạn có chắc chắn muốn chấp nhận hóa đơn sửa chữa này?')) {
+                                if (item.actions?.handleAccept) {
+                                  item.actions.handleAccept(item.id);
+                                } else {
+                                  alert('Tính năng chấp nhận đang được phát triển!');
+                                }
+                              }
+                            }}
+                            title="Chấp nhận hóa đơn sửa chữa"
+                          >
+                            {item.actions.loadingId === item.id + 'ACCEPT' ? '⏳' : '✅'} Chấp nhận
+                          </button>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            disabled={item.actions.loadingId === item.id + 'REJECT'}
+                            onClick={() => {
+                              const reason = window.prompt('Nhập lý do từ chối:');
+                              if (reason) {
+                                if (item.actions?.handleRejectByCustomer) {
+                                  item.actions.handleRejectByCustomer(item.id, reason);
+                                } else {
+                                  alert('Tính năng từ chối đang được phát triển!');
+                                }
+                              }
+                            }}
+                            title="Từ chối hóa đơn sửa chữa"
+                          >
+                            {item.actions.loadingId === item.id + 'REJECT' ? '⏳' : '❌'} Từ chối
+                          </button>
+                        </>
                       )}
 
                       {/* Soft delete for REJECTED requests */}

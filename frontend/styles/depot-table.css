@@ -73,6 +73,11 @@
   color: #9a3412;
 }
 
+.status-accept {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
 .status-checking {
   background-color: #fef3c7;
   color: #92400e;
