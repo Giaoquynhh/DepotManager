@@ -206,7 +206,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       }
     } catch (error: any) {
       console.error('Lỗi khi xử lý kết quả kiểm tra:', error);
-      alert(`Lỗi khi xử lý kết quả kiểm tra: ${error.message}`);
+      alert(`Lỗi khi xử lý kết quả kiểm tra: ${error?.message || 'Không xác định'}`);
     }
   };
 
@@ -314,7 +314,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       }
     } catch (error: any) {
       console.error('Lỗi khi xử lý tùy chọn thất bại:', error);
-      alert(`Lỗi khi xử lý tùy chọn thất bại: ${error.message}`);
+      alert(`Lỗi khi xử lý tùy chọn thất bại: ${error?.message || 'Không xác định'}`);
     }
   };
 
