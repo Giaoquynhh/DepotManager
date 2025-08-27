@@ -6,8 +6,37 @@ export class ForkliftService {
 		return prisma.forkliftTask.findMany({ 
 			where: status ? { status } : {}, 
 			include: {
-				from_slot: { include: { block: { include: { yard: true } } } },
-				to_slot: { include: { block: { include: { yard: true } } } }
+				from_slot: { 
+					include: { 
+						block: { 
+							include: { 
+								yard: true 
+							} 
+						},
+						placements: {
+							where: {
+								container_no: { not: null },
+								status: { in: ['OCCUPIED', 'HOLD'] }
+							},
+							orderBy: { tier: 'desc' }
+						}
+					} 
+				},
+				to_slot: { 
+					include: { 
+						block: { 
+							include: { 
+								yard: true 
+							} 
+						},
+						placements: {
+							where: {
+								status: { in: ['EMPTY', 'RESERVED'] }
+							},
+							orderBy: { tier: 'asc' }
+						}
+					} 
+				}
 			},
 			orderBy: { createdAt: 'desc' } 
 		});
@@ -43,6 +72,25 @@ export class ForkliftService {
 		await prisma.forkliftTask.delete({ where: { id } });
 		await audit(actor._id, 'FORKLIFT.DELETE', 'TASK', id, { container_no: task.container_no });
 		return { message: 'Task đã được xóa thành công' };
+	}
+
+	// Thêm method mới để lấy thông tin vị trí chi tiết
+	async getLocationDetails(slotId: string | null) {
+		if (!slotId) return null;
+		
+		const slot = await prisma.yardSlot.findUnique({
+			where: { id: slotId },
+			include: {
+				block: {
+					include: { yard: true }
+				},
+				placements: {
+					orderBy: { tier: 'asc' }
+				}
+			}
+		});
+		
+		return slot;
 	}
 }
 

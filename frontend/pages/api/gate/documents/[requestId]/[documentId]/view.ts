@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Gọi API backend để lấy file
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:1000';
+         const backendUrl = process.env.BACKEND_URL || '/backend';
     const backendEndpoint = `${backendUrl}/gate/requests/${requestId}/documents/${documentId}/view`;
     
     console.log('🚀 Backend Call:', {

@@ -5,11 +5,22 @@ import { requireRoles } from '../../../shared/middlewares/rbac';
 
 const router = Router();
 
-router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin'));
-router.get('/tasks', (req, res) => controller.list(req as any, res));
-router.post('/assign', (req, res) => controller.assign(req as any, res));
-router.patch('/task/:id/status', (req, res) => controller.update(req as any, res));
-router.delete('/task/:id', (req, res) => controller.delete(req as any, res));
+router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin','YardManager'));
+
+// List all forklift jobs
+router.get('/jobs', (req, res) => controller.listJobs(req, res));
+
+// Assign driver to a job
+router.patch('/jobs/:jobId/assign-driver', (req, res) => controller.assignDriver(req as any, res));
+
+// Start a job
+router.patch('/jobs/:jobId/start', (req, res) => controller.startJob(req as any, res));
+
+// Complete a job
+router.patch('/jobs/:jobId/complete', (req, res) => controller.completeJob(req as any, res));
+
+// Cancel a job
+router.patch('/jobs/:jobId/cancel', (req, res) => controller.cancelJob(req as any, res));
 
 export default router;
 

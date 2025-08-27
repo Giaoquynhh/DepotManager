@@ -13,7 +13,8 @@ export type AppRole =
   | 'Security'
   | 'YardManager'
   | 'MaintenanceManager'
-  | 'Accountant';
+  | 'Accountant'
+  | 'Driver';
 
 export interface AuthUser {
 	_id: string;

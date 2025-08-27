@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
-import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isBusinessAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole } from '@utils/rbac';
+import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isBusinessAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver } from '@utils/rbac';
 import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 
@@ -537,7 +537,28 @@ export default function Header() {
                   <circle cx="6" cy="6" r="1"></circle>
                   <circle cx="18" cy="6" r="1"></circle>
                 </svg>
-                <span>Xe nâng</span>
+                <span>Quản lý xe nâng</span>
+              </Link>
+            )}
+
+            {/* Driver Dashboard Module - Bảng điều khiển */}
+            {(() => {
+              const allow = isDriver(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'driver.dashboard')
+                : allow;
+              return ok;
+            })() && (
+              <Link className="sidebar-link" href="/DriverDashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="9" x2="9" y2="9.01"></line>
+                  <line x1="15" y1="9" x2="15" y2="9.01"></line>
+                  <line x1="9" y1="15" x2="9" y2="15.01"></line>
+                  <line x1="15" y1="15" x2="15" y2="15.01"></line>
+                  <line x1="9" y1="12" x2="15" y2="12"></line>
+                </svg>
+                <span>Bảng điều khiển</span>
               </Link>
             )}
 

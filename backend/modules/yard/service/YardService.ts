@@ -165,6 +165,13 @@ export class YardService {
 
 	async confirm(actor: any, slot_id: string, tier: number, container_no: string) {
 		if (!container_no) throw new Error('Thiếu container_no');
+		
+		// Kiểm tra container có tồn tại và có trạng thái "Đang chờ sắp xếp" không
+		const containerStatus = await this.validateContainerForYardPlacement(container_no);
+		if (!containerStatus.canPlace) {
+			throw new Error(containerStatus.reason);
+		}
+		
 		const now = new Date();
 		const updated = await prisma.$transaction(async (tx) => {
 			const existing = await tx.yardPlacement.findUnique({ where: { slot_tier_unique: { slot_id, tier } } });
@@ -198,19 +205,83 @@ export class YardService {
 			// Tạo ForkliftTask để di chuyển container vào vị trí
 			await tx.forkliftTask.create({
 				data: {
-					container_no: container_no,
-					from_slot_id: null, // Container từ bên ngoài vào
-					to_slot_id: slot_id, // Vị trí đích
+					container_no,
+					to_slot_id: slot_id,
 					status: 'PENDING',
-					assigned_driver_id: null,
 					created_by: actor._id
 				}
 			});
 			
 			return updatedPlacement;
 		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		
 		await audit(actor._id, 'YARD.CONFIRM', 'YARD_SLOT', slot_id, { tier, container_no });
 		return updated;
+	}
+
+	// Thêm method mới để validate container trước khi cho phép đặt vào yard
+	private async validateContainerForYardPlacement(container_no: string): Promise<{canPlace: boolean, reason?: string}> {
+		try {
+			// Kiểm tra container có tồn tại trong hệ thống không
+			const containerExists = await prisma.$queryRaw<any[]>`
+				WITH latest_sr AS (
+					SELECT DISTINCT ON (sr.container_no)
+						   sr.container_no,
+						   sr.status as service_status,
+						   sr.gate_checked_at as gate_checked_at
+					FROM "ServiceRequest" sr
+					ORDER BY sr.container_no, sr."createdAt" DESC
+				),
+				rt_checked AS (
+					SELECT DISTINCT ON (rt.container_no)
+						   rt.container_no,
+						   TRUE as repair_checked
+					FROM "RepairTicket" rt
+					WHERE rt.status::text = 'CHECKED'
+					ORDER BY rt.container_no, rt."updatedAt" DESC
+				)
+				SELECT 
+					COALESCE(sr.container_no, rt.container_no) as container_no,
+					sr.service_status,
+					sr.gate_checked_at,
+					COALESCE(rt.repair_checked, FALSE) as repair_checked
+				FROM latest_sr sr
+				FULL OUTER JOIN rt_checked rt ON rt.container_no = sr.container_no
+				WHERE sr.container_no = ${container_no} OR rt.container_no = ${container_no}
+			`;
+			
+			if (containerExists.length === 0) {
+				return { canPlace: false, reason: 'Container không tồn tại trong hệ thống' };
+			}
+			
+			const container = containerExists[0];
+			
+			// Kiểm tra container đã được kiểm tra chưa (CHECKED)
+			const isChecked = container.gate_checked_at || container.repair_checked;
+			if (!isChecked) {
+				return { canPlace: false, reason: 'Container chưa được kiểm tra (CHECKED)' };
+			}
+			
+			// Kiểm tra container đã được đặt vào yard chưa
+			const existingPlacement = await prisma.yardPlacement.findFirst({
+				where: { 
+					container_no, 
+					status: 'OCCUPIED',
+					removed_at: null
+				}
+			});
+			
+			if (existingPlacement) {
+				return { canPlace: false, reason: 'Container đã được đặt vào yard tại vị trí khác' };
+			}
+			
+			// Container hợp lệ để đặt vào yard
+			return { canPlace: true };
+			
+		} catch (error) {
+			console.error('Error validating container for yard placement:', error);
+			return { canPlace: false, reason: 'Lỗi kiểm tra container' };
+		}
 	}
 
 	async release(actor: any, slot_id: string, tier: number) {

@@ -7,6 +7,15 @@ export const requireRoles = (...roles: AppRole[]) => (req: AuthRequest, res: Res
 	next();
 };
 
+// Helper functions for role checking
+export const isSystemAdmin = (role?: string): boolean => String(role) === 'SystemAdmin';
+export const isBusinessAdmin = (role?: string): boolean => String(role) === 'BusinessAdmin';
+export const isSaleAdmin = (role?: string): boolean => String(role) === 'SaleAdmin';
+export const isYardManager = (role?: string): boolean => String(role) === 'YardManager';
+export const isMaintenanceManager = (role?: string): boolean => String(role) === 'MaintenanceManager';
+export const isAccountant = (role?: string): boolean => String(role) === 'Accountant';
+export const isDriver = (role?: string): boolean => String(role) === 'Driver';
+
 export const enforceTenantScope = (req: AuthRequest, res: Response, next: NextFunction) => {
 	if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
 	// Customer Admin/User must be scoped to their tenant on list/search

@@ -1,4 +1,4 @@
-export type AppRole = 'SystemAdmin' | 'BusinessAdmin' | 'HRManager' | 'SaleAdmin' | 'CustomerAdmin' | 'CustomerUser' | 'PartnerAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant';
+export type AppRole = 'SystemAdmin' | 'BusinessAdmin' | 'HRManager' | 'SaleAdmin' | 'CustomerAdmin' | 'CustomerUser' | 'PartnerAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver';
 
 export function homeFor(role: AppRole): string {
     if (canViewUsersPartners(role)) return '/UsersPartners';
@@ -44,3 +44,4 @@ export function isPartnerAdmin(role?: string): boolean { return String(role) ===
 export function isSecurity(role?: string): boolean { return String(role) === 'Security'; }
 export function isYardManager(role?: string): boolean { return String(role) === 'YardManager'; }
 export function isMaintenanceManager(role?: string): boolean { return String(role) === 'MaintenanceManager'; }
+export function isDriver(role?: string): boolean { return String(role) === 'Driver'; }

@@ -96,6 +96,39 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
     }
   };
 
+  // Thêm state để track container validation
+  const [containerValidation, setContainerValidation] = useState<Record<number, {isValid: boolean, message: string}>>({});
+
+  // Validate container input
+  const validateContainerInput = (tier: number, containerNo: string): {isValid: boolean, message: string} => {
+    if (!containerNo || containerNo.trim().length < 4) {
+      return { isValid: false, message: 'Vui lòng nhập số container hợp lệ (>= 4 ký tự)' };
+    }
+    
+    // Kiểm tra container có trong danh sách available không
+    const isAvailable = availableContainers.some(container => 
+      container.container_no.toLowerCase() === containerNo.trim().toLowerCase()
+    );
+    
+    if (!isAvailable) {
+      return { isValid: false, message: 'Container không có trong danh sách đang chờ sắp xếp' };
+    }
+    
+    return { isValid: true, message: '' };
+  };
+
+  // Update validation khi input thay đổi
+  const handleContainerInputChange = (tier: number, value: string) => {
+    setInputByTier(prev => ({ ...prev, [tier]: value }));
+    
+    if (value.trim()) {
+      const validation = validateContainerInput(tier, value);
+      setContainerValidation(prev => ({ ...prev, [tier]: validation }));
+    } else {
+      setContainerValidation(prev => ({ ...prev, [tier]: { isValid: true, message: '' } }));
+    }
+  };
+
   const occTopTier = useMemo(() => {
     if (!details) return null;
     const occ = details.placements.filter(p => p.status === 'OCCUPIED' && !p.removed_at);
@@ -131,15 +164,37 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
 
   const handleConfirm = async (tier: number, containerNo?: string) => {
     const value = (containerNo ?? inputByTier[tier] ?? globalContainerNo).trim();
-    if (!value || value.length < 4) { setError('Vui lòng nhập số container hợp lệ (>= 4 ký tự)'); return; }
+    
+    // Kiểm tra validation trước khi gửi request
+    const validation = validateContainerInput(tier, value);
+    if (!validation.isValid) {
+      setError(validation.message);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError('');
       await yardApi.confirm(slotId, tier, value);
       await load();
       onActionDone?.();
+      
+      // Clear input và validation sau khi thành công
+      setInputByTier(prev => ({ ...prev, [tier]: '' }));
+      setContainerValidation(prev => ({ ...prev, [tier]: { isValid: true, message: '' } }));
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || 'Lỗi CONFIRM');
+      const errorMessage = e?.response?.data?.message || e?.message || 'Lỗi CONFIRM';
+      setError(errorMessage);
+      
+      // Nếu lỗi từ backend validation, cập nhật validation state
+      if (errorMessage.includes('Container không tồn tại') || 
+          errorMessage.includes('Container chưa được kiểm tra') ||
+          errorMessage.includes('Container đã được đặt vào yard')) {
+        setContainerValidation(prev => ({ 
+          ...prev, 
+          [tier]: { isValid: false, message: errorMessage } 
+        }));
+      }
     } finally {
       setLoading(false);
     }
@@ -182,6 +237,9 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
     // Nếu có tier đang được focus, điền vào tier đó
     if (focusedTier !== null) {
       setInputByTier(prev => ({ ...prev, [focusedTier]: containerNo }));
+      // Cập nhật validation cho tier này
+      const validation = validateContainerInput(focusedTier, containerNo);
+      setContainerValidation(prev => ({ ...prev, [focusedTier]: validation }));
     } else {
       // Nếu không có tier nào được focus, điền vào global input
       setGlobalContainerNo(containerNo);
@@ -221,6 +279,16 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
         <button type="button" className="btn btn-primary" onClick={handleHold} disabled={loading}>
           ➕ HOLD tier kế tiếp
         </button>
+        <div style={{ 
+          fontSize: '12px', 
+          color: '#374151', 
+          background: '#f0f9ff', 
+          padding: '6px 12px', 
+          borderRadius: '6px',
+          border: '1px solid #0ea5e9'
+        }}>
+          ℹ️ Chỉ nhận container có trạng thái "Đang chờ sắp xếp" (CHECKED)
+        </div>
       </div>
 
 
@@ -256,7 +324,7 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                         <input
                           placeholder="Container No"
                           value={inputByTier[tier] || ''}
-                          onChange={e => setInputByTier(s => ({ ...s, [tier]: e.target.value }))}
+                          onChange={e => handleContainerInputChange(tier, e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleConfirm(tier); } }}
                           style={{ width: 160 }}
                         />
@@ -277,6 +345,21 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                         </button>
                       </div>
                       
+                      {/* Hiển thị validation message */}
+                      {containerValidation[tier] && !containerValidation[tier].isValid && (
+                        <div style={{ 
+                          color: '#dc2626', 
+                          fontSize: '11px', 
+                          marginTop: '2px',
+                          padding: '2px 4px',
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          borderRadius: '4px'
+                        }}>
+                          {containerValidation[tier].message}
+                        </div>
+                      )}
+                      
                       {/* Container Filter cho tier này */}
                       {showContainerFilter && focusedTier === tier && (
                         <div style={{ 
@@ -294,9 +377,9 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                             </div>
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                            {availableContainers
-                .slice(0, 5) // Chỉ hiển thị tối đa 5 container
-                .map(container => (
+                              {availableContainers
+                                .slice(0, 5) // Chỉ hiển thị tối đa 5 container
+                                .map(container => (
                                   <div
                                     key={container.container_no}
                                     style={{
@@ -329,18 +412,22 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                                   </div>
                                 ))
                               }
-                                            {availableContainers.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '8px', color: '#6b7280', fontSize: '10px' }}>
-                  Không có container
-                </div>
-              )}
+                              {availableContainers.length === 0 && (
+                                <div style={{ textAlign: 'center', padding: '8px', color: '#6b7280', fontSize: '10px' }}>
+                                  Không có container đang chờ sắp xếp
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                       )}
                       
                       <div style={{ display: 'flex', gap: 4 }}>
-                                                <button className="btn btn-primary" disabled={loading} onClick={() => handleConfirm(tier)}>
+                        <button 
+                          className="btn btn-primary" 
+                          disabled={loading || !containerValidation[tier]?.isValid || !inputByTier[tier]?.trim()} 
+                          onClick={() => handleConfirm(tier)}
+                        >
                           ✅ Confirm
                         </button>
                         <button className="btn btn-secondary" disabled={loading} onClick={() => handleRelease(tier)}>

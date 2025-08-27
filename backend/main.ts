@@ -23,6 +23,7 @@ import chatRoutes from './modules/chat/controller/ChatRoutes';
 import gateRoutes from './modules/gate/controller/GateRoutes';
 import yardRoutes from './modules/yard/controller/YardRoutes';
 import forkliftRoutes from './modules/forklift/controller/ForkliftRoutes';
+import driverDashboardRoutes from './modules/driver-dashboard/controller/DriverDashboardRoutes';
 import containerRoutes from './modules/containers/controller/ContainerRoutes';
 import maintenanceRoutes from './modules/maintenance/controller/MaintenanceRoutes';
 import financeRoutes from './modules/finance/controller/FinanceRoutes';
@@ -32,7 +33,32 @@ const app = express();
 const server = createServer(app);
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+	origin: function (origin, callback) {
+		// Allow requests with no origin (like mobile apps or curl requests)
+		if (!origin) return callback(null, true);
+		
+		// Allow localhost and ngrok domains
+		const allowedOrigins = [
+			'http://localhost:3000',
+			'http://localhost:5000',
+			'http://localhost:5002',
+			'https://localhost:3000',
+			'https://localhost:5000',
+			'https://localhost:5002'
+		];
+		
+		// Allow ngrok domains (any domain ending with .ngrok.io or .ngrok-free.app)
+		if (origin.includes('ngrok.io') || origin.includes('ngrok-free.app') || allowedOrigins.includes(origin)) {
+			return callback(null, true);
+		}
+		
+		callback(new Error('Not allowed by CORS'));
+	},
+	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
+}));
 
 // Logging to file
 const logDir = path.join(process.cwd(), 'logs');
@@ -42,6 +68,15 @@ app.use(morgan('combined', { stream: accessLogStream }));
 app.use(morgan('dev'));
 
 app.use(express.json());
+
+// Debug middleware for ngrok
+app.use((req, res, next) => {
+	console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+	console.log('Headers:', req.headers);
+	console.log('Origin:', req.headers.origin);
+	console.log('User-Agent:', req.headers['user-agent']);
+	next();
+});
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -62,6 +97,7 @@ app.use('/chat', authenticate, chatRoutes);
 app.use('/gate', authenticate, gateRoutes);
 app.use('/yard', yardRoutes);
 app.use('/forklift', forkliftRoutes);
+app.use('/driver-dashboard', driverDashboardRoutes);
 app.use('/containers', containerRoutes);
 app.use('/maintenance', maintenanceRoutes);
 app.use('/finance', financeRoutes);
