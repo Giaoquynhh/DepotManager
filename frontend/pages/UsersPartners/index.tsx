@@ -160,6 +160,7 @@ export default function UsersPartners(){
                                                         <option value="BusinessAdmin">BusinessAdmin</option>
                                                         <option value="HRManager">HRManager</option>
                                                         <option value="SaleAdmin">SaleAdmin</option>
+                                                        <option value="Driver">Driver (Tài xế)</option>
                                                     </select>
                                                     <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
                                                         <button className="btn btn-outline" onClick={()=>setShowEmpForm(false)}>Đóng</button>
@@ -219,6 +220,7 @@ export default function UsersPartners(){
                                                                    u.role === 'BusinessAdmin' ? '#7c3aed' :
                                                                    u.role === 'HRManager' ? '#059669' :
                                                                    u.role === 'SaleAdmin' ? '#ea580c' :
+                                                                   u.role === 'Driver' ? '#0891b2' :
                                                                    u.role === 'CustomerAdmin' ? '#0891b2' : '#6b7280',
                                                         color: 'white',
                                                         padding: '4px 8px',
@@ -380,6 +382,7 @@ export default function UsersPartners(){
 										<option value="BusinessAdmin">BusinessAdmin</option>
 										<option value="HRManager">HRManager</option>
 										<option value="SaleAdmin">SaleAdmin</option>
+										<option value="Driver">Driver (Tài xế)</option>
 									</select>
                                     <button 
                                         className="btn" 

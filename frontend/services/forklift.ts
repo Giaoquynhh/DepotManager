@@ -5,14 +5,22 @@ export const forkliftApi = {
     const { data } = await api.get('/forklift/tasks', { params: { status } });
     return data as any[];
   },
+  
+  async getLocationDetails(slotId: string) {
+    const { data } = await api.get(`/forklift/location/${slotId}`);
+    return data;
+  },
+  
   async assign(payload: { container_no: string; from_slot_id?: string; to_slot_id?: string; driver_id?: string; }) {
     const { data } = await api.post('/forklift/assign', payload);
     return data;
   },
+  
   async updateStatus(id: string, status: string, reason?: string) {
     const { data } = await api.patch(`/forklift/task/${id}/status`, { status, reason });
     return data;
   },
+  
   async deleteTask(id: string) {
     const { data } = await api.delete(`/forklift/task/${id}`);
     return data;

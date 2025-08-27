@@ -4,7 +4,7 @@ import repo from '../repository/UserRepository';
 import { audit } from '../../../shared/middlewares/audit';
 import { AppRole } from '../../../shared/middlewares/auth';
 
-const INTERNAL_ROLES: AppRole[] = ['SystemAdmin','BusinessAdmin','HRManager','SaleAdmin'];
+const INTERNAL_ROLES: AppRole[] = ['SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','Driver'];
 const CUSTOMER_ROLES: AppRole[] = ['CustomerAdmin','CustomerUser'];
 
 export class UserService {

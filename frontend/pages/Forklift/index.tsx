@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Header from '@components/Header';
 import { api } from '@services/api';
-import { forkliftApi } from '@services/forklift';
 import { isSaleAdmin, isYardManager, isSystemAdmin } from '@utils/rbac';
+import AssignDriverModal from '@components/Forklift/AssignDriverModal';
 
 interface ForkliftTask {
   id: string;
@@ -15,23 +15,50 @@ interface ForkliftTask {
   cancel_reason?: string;
   createdAt: string;
   updatedAt: string;
+  driver?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
   from_slot?: {
+    id: string;
     code: string;
+    row_label?: string;
+    row_index?: number;
+    col_index?: number;
+    tier_capacity?: number;
     block: {
       code: string;
       yard: {
         name: string;
       };
     };
+    placements?: Array<{
+      id: string;
+      tier: number;
+      container_no?: string;
+      status: string;
+    }>;
   };
   to_slot?: {
+    id: string;
     code: string;
+    row_label?: string;
+    row_index?: number;
+    col_index?: number;
+    tier_capacity?: number;
     block: {
       code: string;
       yard: {
         name: string;
       };
     };
+    placements?: Array<{
+      id: string;
+      tier: number;
+      container_no?: string;
+      status: string;
+    }>;
   };
 }
 
@@ -40,6 +67,8 @@ export default function Forklift() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<ForkliftTask | null>(null);
 
   useEffect(() => {
     // Lấy thông tin user role
@@ -66,9 +95,9 @@ export default function Forklift() {
   const loadForkliftTasks = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/forklift/tasks');
-      console.log('🔍 Forklift tasks data:', response.data);
-      setTasks(response.data || []);
+      const response = await api.get('/forklift/jobs');
+      console.log('🔍 Forklift jobs data:', response.data);
+      setTasks(response.data.data || []);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Không thể tải danh sách công việc xe nâng');
       console.error('Load tasks error:', err);
@@ -77,53 +106,79 @@ export default function Forklift() {
     }
   };
 
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+  const handleAssignDriver = (task: ForkliftTask) => {
+    setSelectedTask(task);
+    setAssignModalOpen(true);
+  };
+
+  const handleDriverAssigned = (driverId: string) => {
+    // Update the task in the list with the new driver
+    if (selectedTask) {
+      setTasks(prev => prev.map(task => 
+        task.id === selectedTask.id 
+          ? { ...task, assigned_driver_id: driverId }
+          : task
+      ));
+    }
+    loadForkliftTasks(); // Refresh the list
+  };
+
+  const handleStartJob = async (taskId: string) => {
     try {
-      await api.patch(`/forklift/task/${taskId}/status`, { status: newStatus });
-      // Reload danh sách sau khi cập nhật
+      await api.patch(`/forklift/jobs/${taskId}/start`);
       loadForkliftTasks();
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể cập nhật trạng thái');
-      console.error('Update status error:', err);
+      alert(err?.response?.data?.message || 'Không thể bắt đầu công việc');
     }
   };
 
-  const assignForklift = async (taskId: string, forkliftId: string) => {
+  const handleCompleteJob = async (taskId: string) => {
     try {
-      await api.patch(`/forklift/assign`, { task_id: taskId, forklift_id: forkliftId });
+      await api.patch(`/forklift/jobs/${taskId}/complete`);
       loadForkliftTasks();
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể gán xe nâng');
-      console.error('Assign forklift error:', err);
+      alert(err?.response?.data?.message || 'Không thể hoàn thành công việc');
     }
   };
 
-  const deleteTask = async (taskId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa task này?')) return;
-    
+  const handleCancelJob = async (taskId: string) => {
+    const reason = prompt('Lý do hủy công việc:');
+    if (!reason) return;
+
     try {
-      await forkliftApi.deleteTask(taskId);
-      // Reload danh sách sau khi xóa
+      await api.patch(`/forklift/jobs/${taskId}/cancel`, { reason });
       loadForkliftTasks();
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể xóa task');
-      console.error('Delete task error:', err);
+      alert(err?.response?.data?.message || 'Không thể hủy công việc');
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'Chờ xử lý';
+      case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'CANCELLED': return 'Đã hủy';
+      default: return status;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800';
-      case 'COMPLETED': return 'bg-green-100 text-green-800';
-      case 'CANCELLED': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'PENDING': return 'badge-yellow';
+      case 'IN_PROGRESS': return 'badge-blue';
+      case 'COMPLETED': return 'badge-green';
+      case 'CANCELLED': return 'badge-red';
+      default: return 'badge-gray';
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN');
+  };
 
-
-  if (error && !userRole) {
+  if (error) {
     return (
       <>
         <Header />
@@ -213,44 +268,27 @@ export default function Forklift() {
                         <td>
                           <span className="container-id">{task.container_no}</span>
                         </td>
-                                                 <td>
-                           {task.from_slot && task.from_slot.yard && task.from_slot.block ? (
-                             <span className="location-info">
-                               {task.from_slot.yard.name} / {task.from_slot.block.code} / {task.from_slot.code}
-                             </span>
-                           ) : (
-                             <span className="text-gray-400">Bên ngoài</span>
-                           )}
-                         </td>
-                                                 <td>
-                           {task.to_slot && task.to_slot.yard && task.to_slot.block ? (
-                             <span className="location-info">
-                               {task.to_slot.yard.name} / {task.to_slot.block.code} / {task.to_slot.code}
-                             </span>
-                           ) : (
-                             <span className="text-gray-400">-</span>
-                           )}
-                         </td>
-                         <td>
-                           <span className={`badge badge-md ${getStatusColor(task.status)}`}>
-                             {task.status === 'PENDING' && 'Chờ xử lý'}
-                             {task.status === 'IN_PROGRESS' && 'Đang thực hiện'}
-                             {task.status === 'COMPLETED' && 'Hoàn thành'}
-                             {task.status === 'CANCELLED' && 'Đã hủy'}
-                           </span>
-                         </td>
                         <td>
-                          {task.assigned_driver_id ? (
-                            <span className="badge badge-info">
-                              {task.assigned_driver_id}
-                            </span>
+                          <span className="location-text">{task.from_slot?.code || 'Bên ngoài'}</span>
+                        </td>
+                        <td>
+                          <span className="location-text">{task.to_slot?.code || 'Bên ngoài'}</span>
+                        </td>
+                        <td>
+                          <span className={`badge badge-md ${getStatusColor(task.status)}`}>
+                            {getStatusText(task.status)}
+                          </span>
+                        </td>
+                        <td>
+                          {task.driver ? (
+                            <span className="driver-name">{task.driver.full_name}</span>
                           ) : (
                             <span className="text-gray-400">Chưa gán</span>
                           )}
                         </td>
                         <td>
                           <span className="eta-date">
-                            {new Date(task.createdAt).toLocaleString('vi-VN')}
+                            {formatDate(task.createdAt)}
                           </span>
                         </td>
                         <td>
@@ -259,13 +297,13 @@ export default function Forklift() {
                               <>
                                 <button
                                   className="btn btn-sm btn-primary"
-                                  onClick={() => updateTaskStatus(task.id, 'IN_PROGRESS')}
+                                  onClick={() => handleStartJob(task.id)}
                                 >
                                   Bắt đầu
                                 </button>
                                 <button
                                   className="btn btn-sm btn-outline"
-                                  onClick={() => updateTaskStatus(task.id, 'CANCELLED')}
+                                  onClick={() => handleCancelJob(task.id)}
                                 >
                                   Hủy
                                 </button>
@@ -274,28 +312,17 @@ export default function Forklift() {
                             {task.status === 'IN_PROGRESS' && (
                               <button
                                 className="btn btn-sm btn-success"
-                                onClick={() => updateTaskStatus(task.id, 'COMPLETED')}
+                                onClick={() => handleCompleteJob(task.id)}
                               >
                                 Hoàn thành
                               </button>
                             )}
-                                                         {!task.assigned_driver_id && task.status !== 'CANCELLED' && (
-                               <button
-                                 className="btn btn-sm btn-info"
-                                 onClick={() => assignForklift(task.id, 'DR001')} // Tạm thời hardcode
-                               >
-                                 Gán tài xế
-                               </button>
-                             )}
-                             {task.status === 'CANCELLED' && (
-                               <button
-                                 className="btn btn-sm btn-danger"
-                                 onClick={() => deleteTask(task.id)}
-                                 title="Xóa task đã hủy"
-                               >
-                                 🗑️ Xóa
-                               </button>
-                             )}
+                            <button
+                              className="btn btn-sm btn-info"
+                              onClick={() => handleAssignDriver(task)}
+                            >
+                              Gán tài xế
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -307,6 +334,25 @@ export default function Forklift() {
           </div>
         </div>
       </main>
+
+      {/* Assign Driver Modal */}
+      {selectedTask && (
+        <AssignDriverModal
+          isOpen={assignModalOpen}
+          onClose={() => {
+            setAssignModalOpen(false);
+            setSelectedTask(null);
+          }}
+          onAssign={handleDriverAssigned}
+          jobData={{
+            id: selectedTask.id,
+            container_no: selectedTask.container_no,
+            source_location: selectedTask.from_slot?.code || 'Vị trí nguồn',
+            destination_location: selectedTask.to_slot?.code || 'Vị trí đích',
+            status: selectedTask.status
+          }}
+        />
+      )}
     </>
   );
 }
