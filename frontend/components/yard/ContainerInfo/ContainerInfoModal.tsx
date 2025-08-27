@@ -102,7 +102,7 @@ export const ContainerInfoModal: React.FC<ContainerInfoModalProps> = ({
 
   if (showPDFSlip) {
     return (
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay yard-modal" onClick={onClose}>
         <div className="modal-content pdf-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h3 className="modal-title">Phiếu đặt container</h3>
@@ -131,7 +131,7 @@ export const ContainerInfoModal: React.FC<ContainerInfoModalProps> = ({
 
   if (showPositionSuggestions) {
     return (
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay yard-modal" onClick={onClose}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h3 className="modal-title">Gợi ý vị trí</h3>
@@ -178,7 +178,7 @@ export const ContainerInfoModal: React.FC<ContainerInfoModalProps> = ({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay yard-modal" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3 className="modal-title">Thông tin Container</h3>

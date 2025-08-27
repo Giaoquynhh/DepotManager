@@ -24,7 +24,7 @@ export default function ConfirmPositionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay yard-modal">
       <div className="modal-content confirm-position-modal">
         <div className="modal-header">
           <h3>Xác nhận vị trí</h3>

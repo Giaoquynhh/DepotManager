@@ -1,28 +1,23 @@
 /* Gate Module Styles - Modern Design với màu Navy */
 .main-content {
+  position: absolute;
+  top: var(--header-clearance);
+  right: 0;
+  left: 0;
   padding: var(--space-6);
-  max-width: 1400px;
-  margin: 0 auto;
-  margin-left: 250px; /* Margin mặc định khi sidebar mở */
-  transition: all 0.3s ease-in-out;
-  width: calc(100% - 250px);
-  transform: translateX(0);
+  transition: left 0.3s ease-in-out;
+  overflow-y: auto;
+  height: calc(100% - var(--header-clearance));
 }
 
 /* Khi sidebar bị ẩn - Giao diện to hơn */
 .main-content.sidebar-hidden {
-  margin-left: 0 !important;
-  width: 100% !important;
-  transform: translateX(0);
-  max-width: 100%;
+  left: 0;
 }
 
 /* Khi sidebar mở - Giao diện nhỏ hơn */
 .main-content.sidebar-visible {
-  margin-left: 250px !important;
-  width: calc(100% - 250px) !important;
-  transform: translateX(0);
-  max-width: calc(100% - 250px);
+  left: 260px;
 }
 
 /* Dashboard Header - Sử dụng màu Navy */
@@ -36,7 +31,7 @@
   box-shadow: var(--shadow-xl);
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease-in-out;
+  transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 /* Khi sidebar ẩn - Header to hơn */
@@ -91,7 +86,7 @@
   box-shadow: var(--shadow-lg);
   margin-bottom: var(--space-6);
   border: 1px solid var(--color-gray-100);
-  transition: all 0.3s ease-in-out;
+  transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 /* Khi sidebar ẩn - Search section to hơn */
@@ -1042,28 +1037,22 @@
 /* Responsive Design */
 @media (max-width: 1024px) {
   .main-content {
-    margin-left: 200px;
-    width: calc(100% - 200px);
+    transform: translateX(0) !important;
   }
   
   .main-content.sidebar-visible {
-    margin-left: 200px !important;
-    width: calc(100% - 200px) !important;
-    max-width: calc(100% - 200px);
+    transform: translateX(0) !important;
   }
 }
 
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0;
-    width: 100%;
+    transform: translateX(0) !important;
     padding: var(--space-4);
   }
   
   .main-content.sidebar-visible {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100%;
+    transform: translateX(0) !important;
   }
   
   .dashboard-header {

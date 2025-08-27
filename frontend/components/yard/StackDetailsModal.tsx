@@ -209,6 +209,7 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
       visible={visible}
       onCancel={onCancel}
       size="lg"
+      className="yard-modal"
     >
       {error && (
         <div className="message-banner error" style={{ marginBottom: 12 }}>

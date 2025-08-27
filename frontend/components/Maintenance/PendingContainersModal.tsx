@@ -33,7 +33,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       // Chỉ lấy container có trạng thái GATE_IN
-      const response = await fetch('http://localhost:1000/gate/requests/search?status=GATE_IN&limit=100', {
+      const response = await fetch('/backend/gate/requests/search?status=GATE_IN&limit=100', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       }
 
       // Cập nhật request status thành CHECKING
-      const updateResponse = await fetch(`http://localhost:1000/requests/${requestId}/status`, {
+      const updateResponse = await fetch(`/backend/requests/${requestId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -166,7 +166,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
           try {
             const token = localStorage.getItem('token');
             if (token) {
-              await fetch(`http://localhost:1000/requests/${requestId}/status`, {
+              await fetch(`/backend/requests/${requestId}/status`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -204,9 +204,9 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
           }));
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Lỗi khi xử lý kết quả kiểm tra:', error);
-      alert(`Lỗi khi xử lý kết quả kiểm tra: ${error.message}`);
+      alert(`Lỗi khi xử lý kết quả kiểm tra: ${error?.message || 'Không xác định'}`);
     }
   };
 
@@ -232,7 +232,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
           try {
             const token = localStorage.getItem('token');
             if (token) {
-              await fetch(`http://localhost:1000/requests/${requestId}/status`, {
+              await fetch(`/backend/requests/${requestId}/status`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -267,7 +267,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
               throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
             }
             
-            const response = await fetch(`http://localhost:1000/maintenance/equipments?type=CONTAINER&code=${container?.container_no}`, {
+            const response = await fetch(`/backend/maintenance/equipments?type=CONTAINER&code=${container?.container_no}`, {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -312,9 +312,9 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
         
         findEquipmentForContainer();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Lỗi khi xử lý tùy chọn thất bại:', error);
-      alert(`Lỗi khi xử lý tùy chọn thất bại: ${error.message}`);
+      alert(`Lỗi khi xử lý tùy chọn thất bại: ${error?.message || 'Không xác định'}`);
     }
   };
 
@@ -355,7 +355,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          await fetch(`http://localhost:1000/requests/${selectedContainerForRepair.id}/status`, {
+          await fetch(`/backend/requests/${selectedContainerForRepair.id}/status`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`,

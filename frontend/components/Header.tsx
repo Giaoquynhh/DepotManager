@@ -195,6 +195,7 @@ export default function Header() {
   // Component state calculations
   const showLogout = hasToken && router.pathname !== '/Login';
   const showSidebar = hasToken && router.pathname !== '/Login' && router.pathname !== '/Register';
+  const isAuthPage = router.pathname === '/Login' || router.pathname === '/Register';
 
   // Debug logging
   useEffect(() => {
@@ -211,7 +212,7 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="container header-inner">
+      <div className={`container header-inner${isAuthPage ? ' auth-center' : ''}`}>
         {/* Navigation Toggle Button */}
         {showSidebar && (
           <button 

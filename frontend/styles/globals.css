@@ -82,6 +82,11 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
   
+  /* Layout constants */
+  --header-height: 76px; /* Tổng chiều cao header chuẩn */
+  --header-offset: 0px;  /* Không tạo khoảng hở để liền mạch với sidebar */
+  --header-clearance: calc(var(--header-height) + var(--header-offset));
+  
   /* Spacing - 8px token system */
   --space-1: 4px;
   --space-2: 8px;
@@ -124,6 +129,7 @@ body {
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
+  overflow-x: hidden; /* Ngăn scrollbar ngang khi dịch chuyển bằng transform */
 }
 
 a, a:visited { 
@@ -133,6 +139,7 @@ a, a:visited {
 
 .container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: var(--space-6);
 }
@@ -148,24 +155,34 @@ a, a:visited {
   z-index: 1100;
 }
 
+/* Khi có sidebar, làm header liền mạch với sidebar: bỏ shadow và dùng cùng nền gradient */
+body.with-sidebar .header {
+  box-shadow: none;
+  /* Dùng màu navy đặc để liền mạch với điểm bắt đầu gradient của sidebar */
+  background: var(--color-bg-navy);
+}
+
 /* Header Inner Layout */
 .header-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-4);
   position: relative;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-6);
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--space-3);
+  /* Tổng chiều cao header = padding-top/bottom của .header (12px + 12px) + min-height này = 76px */
+  min-height: 52px;
 }
 
 /* Navigation Toggle Button */
 .nav-toggle {
-  position: absolute;
-  left: var(--space-4);
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
+  left: 0;
+  top: 0;
+  transform: none;
   background: var(--color-white);
   color: var(--color-navy-primary);
   border: none;
@@ -179,17 +196,18 @@ a, a:visited {
   justify-content: center;
   width: 40px;
   height: 40px;
-  z-index: 1001;
+  z-index: 1;
+  grid-column: 1;
 }
 
 .nav-toggle:hover {
-  transform: translateY(-50%) scale(1.05);
+  transform: scale(1.05);
   box-shadow: var(--shadow-lg);
   background: var(--color-gray-50);
 }
 
 .nav-toggle:active {
-  transform: translateY(-50%) scale(0.98);
+  transform: scale(0.98);
 }
 
 .nav-toggle-icon {
@@ -203,7 +221,9 @@ a, a:visited {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-left: var(--space-12); /* Space for nav toggle */
+  margin-left: 0;
+  min-width: 0;
+  grid-column: 2;
 }
 
 .header-logo-link {
@@ -227,6 +247,9 @@ a, a:visited {
   font-size: var(--font-size-2xl);
   color: var(--color-text-inverse);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Header Actions Section */
@@ -236,6 +259,9 @@ a, a:visited {
   gap: var(--space-4);
   visibility: visible;
   opacity: 1;
+  justify-self: end;
+  min-width: max-content;
+  grid-column: 3;
 }
 
 .user-info {
@@ -693,7 +719,7 @@ button, input, select {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 76px; /* Header height adjusted */
+  top: var(--header-clearance); /* Header height + offset */
   bottom: 0;
   width: 240px;
   background: linear-gradient(180deg, var(--color-bg-navy) 0%, var(--color-navy-dark) 100%);
@@ -761,8 +787,28 @@ button, input, select {
 /* Responsive Layout - Desktop first approach */
 @media (min-width: 1024px) {
   body.with-sidebar .container {
-    margin-left: 260px; /* Sidebar width + margin */
+    /* Các quy tắc margin-left và width cũ đã được gỡ bỏ để tránh xung đột với transform của .main-content */
+    width: 100%;
     transition: var(--transition-default);
+  }
+
+  /* Keep header frame stable regardless of sidebar state */
+  .header .header-inner {
+    margin-left: 0; /* avoid container offset */
+    width: 100%;
+    padding-left: 0; /* fixed left padding = 0 */
+  }
+
+  /* Balance left spacing for the X (nav toggle) on desktop */
+  .header .nav-toggle {
+    margin-left: var(--space-4); /* 16px breathing space from the very left, aligned with sidebar padding */
+  }
+
+  /* Header align flush-left when sidebar is present */
+  body.with-sidebar .header .header-inner {
+    margin-left: 0; /* override container offset */
+    width: 100%;    /* full width header */
+    padding-left: 0; /* flush to left edge */
   }
 }
 
@@ -784,13 +830,13 @@ button, input, select {
   
   .sidebar {
     position: fixed;
-    top: 76px;
+    top: var(--header-clearance);
     left: 0;
     right: 0;
     bottom: auto;
     width: 100%;
     height: auto;
-    max-height: calc(100vh - 76px);
+    max-height: calc(100vh - var(--header-clearance));
     flex-direction: column;
     gap: var(--space-2);
     background: var(--color-bg-navy);
@@ -828,16 +874,16 @@ button, input, select {
   
   .header-inner {
     padding: 0 var(--space-4);
+    grid-template-columns: 36px 1fr auto;
   }
   
   .nav-toggle {
-    left: var(--space-3);
     width: 36px;
     height: 36px;
   }
   
   .header-brand {
-    margin-left: var(--space-10);
+    margin-left: 0;
   }
   
   .header-title {
@@ -2184,29 +2230,43 @@ button, input, select {
 
 /* Main Content Layout */
 .main-content {
+  position: absolute;
+  top: var(--header-clearance); /* Giữ vị trí dưới header */
+  right: 0;
+  left: 0;
   padding: var(--space-6);
-  max-width: 1400px;
-  margin: 0 auto;
-  margin-left: 250px; /* Space for the fixed sidebar */
-  transition: margin-left 0.3s ease-in-out;
+  transition: left 0.3s ease-in-out;
+  overflow-y: auto; /* Cho phép cuộn nội dung */
+  height: calc(100% - var(--header-clearance));
 }
 
 .main-content.full-width {
-  margin-left: 0; /* When sidebar is hidden */
+  transform: translateX(0) !important; /* When sidebar is hidden */
 }
 
 /* Khi sidebar bị ẩn - Giao diện to hơn */
 .main-content.sidebar-hidden {
-  margin-left: 0 !important; /* Force margin 0 */
-  width: 100% !important; /* Sử dụng toàn bộ width */
-  max-width: 100%; /* Mở rộng tối đa */
+  left: 0;
 }
 
 /* Khi sidebar mở - Giao diện nhỏ hơn */
 .main-content.sidebar-visible {
-  margin-left: 250px !important; /* Force margin 250px */
-  width: calc(100% - 250px) !important; /* Điều chỉnh width khi sidebar mở */
-  max-width: calc(100% - 250px); /* Giới hạn width */
+  left: 260px; /* Dịch theo độ rộng sidebar */
+}
+
+/* Prevent double offset: keep inner containers centered when using .main-content */
+.main-content .container {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1400px; /* Giới hạn chiều rộng của nội dung bên trong */
+}
+
+/* On desktop, override sidebar offset for containers nested in main content */
+@media (min-width: 1024px) {
+  body.with-sidebar .main-content .container {
+    margin-left: auto; /* Tự động căn giữa, vô hiệu hóa margin-left 260px kế thừa */
+    width: 100%;
+  }
 }
 
 /* ETA Input Styling */
@@ -2276,29 +2336,206 @@ button, input, select {
 @media (max-width: 1024px) {
   .main-content {
     padding: var(--space-4);
-    margin-left: 0 !important; /* Force margin 0 trên màn hình nhỏ */
-    width: 100% !important; /* Force width 100% */
+    transform: translateX(0) !important; /* Không dịch trên màn hình nhỏ */
   }
   
   .main-content.sidebar-visible,
   .main-content.sidebar-hidden {
-    margin-left: 0 !important; /* Không cần margin trên màn hình nhỏ */
-    width: 100% !important; /* Sử dụng toàn bộ width */
-    max-width: 100% !important; /* Mở rộng tối đa */
+    transform: translateX(0) !important; /* Giữ cố định nội dung */
+    max-width: 100% !important; /* Mở rộng tối đa trên màn hình nhỏ */
   }
 }
 
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0 !important; /* Force margin 0 trên mobile */
-    width: 100% !important; /* Force width 100% */
+    transform: translateX(0) !important; /* Không dịch trên mobile */
     padding: var(--space-3); /* Giảm padding trên mobile */
   }
   
   .main-content.sidebar-visible,
   .main-content.sidebar-hidden {
-    margin-left: 0 !important; /* Không cần margin trên mobile */
-    width: 100% !important; /* Sử dụng toàn bộ width */
+    transform: translateX(0) !important; /* Không dịch trên mobile */
     max-width: 100% !important; /* Mở rộng tối đa */
   }
+}
+
+/* Auth Pages - Login/Register */
+.header-inner.auth-center {
+  justify-content: center;
+  /* Mở rộng header full-width chỉ cho trang Login/Register */
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  /* Phù hợp với Grid: chỉ 1 cột, căn giữa nội dung */
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center; /* đảm bảo căn giữa theo trục dọc */
+}
+
+.header-inner.auth-center .header-brand {
+  margin-left: 0;
+  justify-self: center;
+  grid-column: 1; /* ghi đè grid-column:2 ở trạng thái mặc định */
+}
+
+.header-inner.auth-center .header-actions {
+  display: none;
+}
+
+/* Ẩn nav-toggle nếu vì lý do nào đó vẫn tồn tại trong auth pages */
+.header-inner.auth-center .nav-toggle {
+  display: none !important;
+}
+
+.auth-hero {
+  background:
+    radial-gradient( circle at 20% 20%, #e6f0ff 0%, transparent 40%),
+    radial-gradient( circle at 80% 30%, #eaf7ff 0%, transparent 45%),
+    linear-gradient(135deg, #f5f7fb 0%, #eef2ff 100%);
+  min-height: calc(100vh - 76px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.auth-card {
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-gray-100);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-bg-primary);
+}
+
+.auth-card h2 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.auth-card .muted {
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+}
+
+.input-icon {
+  position: relative;
+}
+
+.input-icon svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-gray-500);
+  pointer-events: none;
+}
+
+.input-icon input {
+  padding-left: 40px !important;
+  height: 44px;
+  border-radius: 12px;
+  border-color: var(--color-gray-300);
+  background: #ffffff;
+}
+
+.input-icon.has-action input {
+  padding-right: 44px !important;
+}
+
+.input-icon input:hover {
+  border-color: var(--color-gray-500);
+}
+
+.input-icon input:focus {
+  border-color: #0d3b66;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.15);
+}
+
+/* Input right action button (e.g., show/hide password) */
+.input-icon .input-action {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-gray-600);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.input-icon .input-action:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-800);
+}
+
+.input-icon .input-action:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.15);
+}
+
+.btn-login {
+  background: linear-gradient(135deg, #0d3b66 0%, #145a9e 100%) !important;
+  color: #ffffff !important;
+  height: 44px;
+  border-radius: 12px !important;
+}
+
+.btn-login:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.auth-link {
+  font-size: 13px;
+  color: #4f7fbf;
+  text-align: center;
+}
+
+.auth-link a {
+  color: #4f7fbf;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+.form-error {
+  color: var(--color-red-600);
+  font-size: 13px;
+  padding: 8px 10px;
+  background: var(--color-red-100);
+  border: 1px solid var(--color-red-200);
+  border-radius: 10px;
+}
+
+/* Auth form helpers */
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-gray-600);
+  margin-bottom: 6px;
+}
+
+.section-head {
+  margin-bottom: 16px;
+  text-align: center;
 }
