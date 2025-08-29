@@ -12,12 +12,12 @@ function ContainersList(){
   const pageSize = 20;
   const key = ['containers_page', q, status, page].join(':');
   const { data, mutate, error } = useSWR(key, async ()=> {
-    const backendStatus = status === 'IN_YARD' ? 'OCCUPIED' : undefined;
-    // Chỉ lấy container có trạng thái CHECKED (đã kiểm tra)
+    // Luôn lấy tất cả container có trạng thái CHECKED và IN_YARD
+    // Filter sẽ được thực hiện ở frontend dựa trên derived_status
     const params: any = { 
       q: q || undefined, 
-      status: backendStatus, 
-      service_status: 'CHECKED', // Chỉ lấy container đã CHECKED
+      status: undefined, // Không filter theo backend status
+      service_status: undefined, // Lấy tất cả container (CHECKED và IN_YARD)
       page, 
       pageSize 
     };
@@ -25,7 +25,13 @@ function ContainersList(){
   });
 
   const items = (data?.items || []).map((it:any) => {
-    // Chỉ container có trạng thái CHECKED mới có derived_status
+    // Kiểm tra trạng thái IN_YARD trước (đã được duyệt trên Forklift)
+    if (it.service_status === 'IN_YARD') {
+      // Container đã được duyệt và đặt vào vị trí trong bãi
+      return { ...it, derived_status: 'IN_YARD' };
+    }
+    
+    // Kiểm tra container có trạng thái CHECKED hoặc repair_checked
     if (it.service_status === 'CHECKED' || it.repair_checked === true) {
       const inYard = !!it.slot_code;
       if (inYard) {
@@ -35,7 +41,8 @@ function ContainersList(){
         return { ...it, derived_status: 'ASSIGNED' };
       } else {
         // Container chưa có slot_code - đang chờ sắp xếp
-        return { ...it, derived_status: 'WAITING' };
+        // Trạng thái này sẽ là "Chờ xếp chỗ" (PENDING)
+        return { ...it, derived_status: 'PENDING' };
       }
     } else {
       // Container chưa được kiểm tra - không có derived_status
@@ -43,11 +50,13 @@ function ContainersList(){
     }
   });
   
-  // Lọc theo trạng thái (chỉ lấy container đã được kiểm tra)
-  const filteredItems = status === 'WAITING' ? 
-    items.filter((i:any) => i.derived_status === 'WAITING') : 
+  // Lọc theo derived_status (đơn giản hơn, chỉ filter ở frontend)
+  const filteredItems = status === 'PENDING' ? 
+    items.filter((i:any) => i.derived_status === 'PENDING') : 
     status === 'ASSIGNED' ? 
     items.filter((i:any) => i.derived_status === 'ASSIGNED') : 
+    status === 'IN_YARD' ? 
+    items.filter((i:any) => i.derived_status === 'IN_YARD') : 
     items.filter((i:any) => i.derived_status !== null); // Chỉ lấy container có derived_status
 
   return (
@@ -65,8 +74,9 @@ function ContainersList(){
           style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, minWidth:160}}
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="WAITING">Đang chờ sắp xếp</option>
+          <option value="PENDING">Chờ xếp chỗ</option>
           <option value="ASSIGNED">Đã xếp chỗ trong bãi</option>
+          <option value="IN_YARD">Đã ở trong bãi</option>
         </select>
                  <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'#f0f9ff', border:'1px solid #0ea5e9', borderRadius:6}}>
            <input 
@@ -77,7 +87,7 @@ function ContainersList(){
              style={{margin:0}}
            />
            <label htmlFor="show-checked-only" style={{fontSize:14, color:'#0369a1', cursor:'default', fontWeight:500}}>
-             Chỉ hiển thị container đã kiểm tra (CHECKED) - Có derived_status
+             Filter theo derived_status: PENDING, ASSIGNED, IN_YARD (Frontend filtering)
            </label>
          </div>
       </div>
@@ -109,22 +119,25 @@ function ContainersList(){
                    <div style={{display:'flex', flexDirection:'column'}}>
                      {it.derived_status ? (
                        <>
-                         <span
-                           style={{
-                             background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : '#fff7e6',
-                             color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : '#664d03',
-                             padding:'4px 8px',
-                             borderRadius:8,
-                             fontWeight:700,
-                             width:'fit-content'
-                           }}
-                         >
-                           {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 'Đang chờ sắp xếp'}
-                         </span>
-                         {it.derived_status==='ASSIGNED' && (
-                           <small className="muted" style={{marginTop:4}}>
-                             Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
-                         )}
+                                                   <span
+                            style={{
+                              background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : 
+                                         it.derived_status==='IN_YARD' ? '#dcfce7' : '#fff7e6',
+                              color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : 
+                                    it.derived_status==='IN_YARD' ? '#166534' : '#664d03',
+                              padding:'4px 8px',
+                              borderRadius:8,
+                              fontWeight:700,
+                              width:'fit-content'
+                            }}
+                          >
+                            {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
+                             it.derived_status==='IN_YARD' ? 'Đã ở trong bãi' : 'Chờ xếp chỗ'}
+                          </span>
+                          {(it.derived_status==='ASSIGNED' || it.derived_status==='IN_YARD') && (
+                            <small className="muted" style={{marginTop:4}}>
+                              Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
+                          )}
                        </>
                      ) : (
                        <span
@@ -177,7 +190,7 @@ export default function ContainersPage(){
     <>
       <Header />
       <main className="container">
-                 <Card title="Quản lý container" subtitle="Hiển thị các container đã kiểm tra (CHECKED) - Chỉ container có derived_status mới hiển thị">
+                 <Card title="Quản lý container" subtitle="Hiển thị tất cả container - Filter theo derived_status (PENDING/ASSIGNED/IN_YARD)">
           <ContainersList />
         </Card>
       </main>

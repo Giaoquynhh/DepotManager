@@ -24,6 +24,11 @@ Tài liệu này mô tả chi tiết việc implement Request State Machine theo
 - `SENT_TO_GATE` → Đã chuyển sang Gate
 - `REJECTED` → Bị từ chối
 - `COMPLETED` → Hoàn tất
+- `ACCEPT` → Đã chấp nhận
+- `CHECKED` → Đã kiểm tra
+- `POSITIONED` → Đã xếp chỗ trong bãi
+- `FORKLIFTING` → Đang nâng/hạ container
+- `IN_YARD` → Đã ở trong bãi
 
 ### 2. Appointment Service
 **File:** `modules/requests/service/AppointmentService.ts`
@@ -151,6 +156,9 @@ SCHEDULED_INFO_ADDED: 'cyan'
 SENT_TO_GATE: 'purple'
 REJECTED: 'red'
 COMPLETED: 'green'
+POSITIONED: 'blue'
+FORKLIFTING: 'orange'
+IN_YARD: 'green'
 
 // Mô tả tiếng Việt
 PENDING: 'Chờ xử lý'
@@ -159,6 +167,9 @@ SCHEDULED_INFO_ADDED: 'Đã bổ sung thông tin'
 SENT_TO_GATE: 'Đã chuyển sang Gate'
 REJECTED: 'Bị từ chối'
 COMPLETED: 'Hoàn tất'
+POSITIONED: 'Đã xếp chỗ trong bãi'
+FORKLIFTING: 'Đang nâng/hạ container'
+IN_YARD: 'Đã ở trong bãi'
 ```
 
 ### System Messages
@@ -169,6 +180,9 @@ Mỗi transition sẽ tự động gửi system message vào chat room:
 - 🚪 Yêu cầu đã được chuyển tiếp sang Gate
 - ❌ Yêu cầu bị từ chối: [lý do]
 - ✅ Yêu cầu đã hoàn tất
+- 📍 Container đã được xếp chỗ trong bãi
+- 🚛 Tài xế đang nâng/hạ container
+- 🏭 Container đã được đặt vào vị trí trong bãi
 
 ## 🔒 Security & Validation
 
@@ -335,29 +349,115 @@ curl -X PATCH http://localhost:1000/requests/:id/schedule \
 - [ ] Add bulk operations cho Depot
 - [ ] Implement auto-completion rules
 
+## 🚛 Container Yard Workflow Integration
+
+### 6.3.1) New Status Flow
+Hệ thống đã được mở rộng với các trạng thái mới để quản lý workflow container trong bãi:
+
+**Workflow mới:**
+1. **CHECKED** → **POSITIONED** (Yard Confirm)
+   - Trigger: Click "Confirm" button trên Yard page (`http://localhost:5002/Yard`)
+   - Action: Cập nhật `ServiceRequest.status` từ `CHECKED` → `POSITIONED`
+   - Side effect: Tạo `ForkliftTask` với `status = 'PENDING'`
+   - System message: "📍 Container đã được xếp chỗ trong bãi"
+
+2. **POSITIONED** → **FORKLIFTING** (Driver Start)
+   - Trigger: Click "Bắt đầu" button trên DriverDashboard (`http://localhost:5002/DriverDashboard`)
+   - Action: Cập nhật `ServiceRequest.status` từ `POSITIONED` → `FORKLIFTING`
+   - Side effect: Cập nhật `ForkliftTask.status` từ `PENDING` → `IN_PROGRESS`
+   - System message: "🚛 Tài xế đang nâng/hạ container"
+   - Note: Message thay đổi theo loại request:
+     - **Import**: "đang nâng container"
+     - **Export**: "đang hạ container"
+
+3. **FORKLIFTING** → **IN_YARD** (Forklift Approval)
+   - Trigger: Click "Duyệt" button trên Forklift page (`http://localhost:5002/Forklift`)
+   - Action: Cập nhật `ServiceRequest.status` từ `FORKLIFTING` → `IN_YARD`
+   - Side effect: Cập nhật `ForkliftTask.status` thành `COMPLETED`
+   - System message: "🏭 Container đã được đặt vào vị trí trong bãi"
+
+### 6.3.2) State Machine Updates
+**RequestStateMachine** đã được cập nhật với:
+
+**Valid States mới:**
+- `POSITIONED` → Đã xếp chỗ trong bãi
+- `FORKLIFTING` → Đang nâng/hạ container  
+- `IN_YARD` → Đã ở trong bãi
+
+**Transitions mới:**
+```typescript
+{
+  from: 'CHECKED',
+  to: 'POSITIONED',
+  allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+  description: 'Container đã được xếp chỗ trong bãi'
+},
+{
+  from: 'POSITIONED',
+  to: 'FORKLIFTING',
+  allowedRoles: ['Driver', 'SaleAdmin', 'SystemAdmin'],
+  description: 'Tài xế bắt đầu nâng/hạ container'
+},
+{
+  from: 'FORKLIFTING',
+  to: 'IN_YARD',
+  allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+  description: 'Container đã được đặt vào vị trí trong bãi'
+}
+```
+
+**System Messages mới:**
+- `POSITIONED`: "📍 Container đã được xếp chỗ trong bãi"
+- `FORKLIFTING`: "🚛 Tài xế đang nâng/hạ container"
+- `IN_YARD`: "🏭 Container đã được đặt vào vị trí trong bãi"
+
+**State Colors mới:**
+- `POSITIONED`: `blue` (Đã xếp chỗ trong bãi)
+- `FORKLIFTING`: `orange` (Đang nâng/hạ container)
+- `IN_YARD`: `green` (Đã ở trong bãi)
+
+### 6.3.3) Frontend Integration
+**ContainersPage** sử dụng logic `derived_status` để hiển thị trạng thái container:
+
+**Priority Order:**
+1. **`IN_YARD`** (cao nhất) - Container đã được duyệt trên Forklift
+2. **`ASSIGNED`** - Container có `slot_code` (đã confirm trên Yard)
+3. **`PENDING`** - Container chưa có `slot_code` (chưa confirm trên Yard)
+4. **`null`** - Container chưa được kiểm tra
+
+**Frontend Filtering Strategy:**
+- Filter được thực hiện hoàn toàn ở frontend dựa trên `derived_status`
+- API luôn trả về tất cả container cần thiết
+- Performance tốt hơn vì chỉ gọi API một lần
+
 ## 🔗 Related Files
 
 ### Core Implementation
-- `modules/requests/service/RequestStateMachine.ts` - State machine logic
+- `modules/requests/service/RequestStateMachine.ts` - State machine logic với trạng thái mới
 - `modules/requests/service/AppointmentService.ts` - Appointment management
 - `modules/requests/service/RequestService.ts` - Main service với state machine
+
+### Yard & Forklift Integration
+- `modules/yard/service/YardService.ts` - Yard confirm logic (CHECKED → POSITIONED)
+- `modules/driver-dashboard/service/DriverDashboardService.ts` - Driver start logic (POSITIONED → FORKLIFTING)
+- `modules/forklift/controller/ForkliftController.ts` - Forklift approval logic (FORKLIFTING → IN_YARD)
 
 ### API Layer
 - `modules/requests/controller/RequestController.ts` - API endpoints
 - `modules/requests/controller/RequestRoutes.ts` - Route definitions
-- `modules/requests/dto/RequestDtos.ts` - Validation schemas
+- `modules/requests/dto/RequestDtos.ts` - Validation schemas với trạng thái mới
 
 ### Database
-- `prisma/schema.prisma` - Updated schema
-- `prisma/migrations/20250816212950_update_request_status_enum/` - Migration
+- `prisma/schema.prisma` - Updated schema với trạng thái mới
+- `prisma/migrations/` - Migration cho status enum updates
 
 ### Documentation
 - `docs/REQUEST_STATE_MACHINE_IMPLEMENTATION.md` - This file
-- `docs/MODULE_3_REQUESTS.md` - Module overview
+- `docs/MODULE_3_REQUESTS.md` - Module overview với Container Yard Workflow
 
 ---
 
 **Ngày tạo:** 2024-08-16  
-**Phiên bản:** 1.0.0  
+**Phiên bản:** 2.0.0 - Container Yard Workflow Integration  
 **Tác giả:** Development Team  
-**Trạng thái:** ✅ Hoàn thành implementation và debug
+**Trạng thái:** ✅ Hoàn thành implementation và debug + Container Yard Workflow

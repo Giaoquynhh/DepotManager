@@ -560,13 +560,36 @@ export class ForkliftController {
 				});
 			}
 
-			// Cập nhật trạng thái sang COMPLETED
-			const updatedJob = await prisma.forkliftTask.update({
-				where: { id: jobId },
-				data: { 
-					status: 'COMPLETED',
-					updatedAt: new Date()
+			// Thực hiện transaction để cập nhật cả forklift task và service request
+			const updatedJob = await prisma.$transaction(async (tx) => {
+				// Cập nhật trạng thái forklift task sang COMPLETED
+				const updatedForkliftTask = await tx.forkliftTask.update({
+					where: { id: jobId },
+					data: { 
+						status: 'COMPLETED',
+						updatedAt: new Date()
+					}
+				});
+
+				// Cập nhật ServiceRequest từ FORKLIFTING sang IN_YARD
+				if (job.container_no) {
+					const latestRequest = await tx.serviceRequest.findFirst({
+						where: { container_no: job.container_no },
+						orderBy: { createdAt: 'desc' }
+					});
+
+					if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+						await tx.serviceRequest.update({
+							where: { id: latestRequest.id },
+							data: { 
+								status: 'IN_YARD',
+								updatedAt: new Date()
+							}
+						});
+					}
 				}
+
+				return updatedForkliftTask;
 			});
 
 			// Ghi log audit

@@ -155,14 +155,38 @@ export class DriverDashboardService {
 			}
 		}
 
-		// Cập nhật trạng thái task
-		const updatedTask = await prisma.forkliftTask.update({
-			where: { id: taskId },
-			data: {
-				status,
-				...(notes && { notes }),
-				updatedAt: new Date()
+		// Thực hiện transaction để cập nhật cả forklift task và service request
+		const updatedTask = await prisma.$transaction(async (tx) => {
+			// Cập nhật trạng thái forklift task
+			const updatedForkliftTask = await tx.forkliftTask.update({
+				where: { id: taskId },
+				data: {
+					status,
+					...(notes && { notes }),
+					updatedAt: new Date()
+				}
+			});
+
+			// Nếu forklift task chuyển từ PENDING sang IN_PROGRESS, 
+			// cập nhật ServiceRequest từ POSITIONED sang FORKLIFTING
+			if (task.status === 'PENDING' && status === 'IN_PROGRESS' && task.container_no) {
+				const latestRequest = await tx.serviceRequest.findFirst({
+					where: { container_no: task.container_no },
+					orderBy: { createdAt: 'desc' }
+				});
+
+				if (latestRequest && latestRequest.status === 'POSITIONED') {
+					await tx.serviceRequest.update({
+						where: { id: latestRequest.id },
+						data: { 
+							status: 'FORKLIFTING',
+							updatedAt: new Date()
+						}
+					});
+				}
 			}
+
+			return updatedForkliftTask;
 		});
 
 		// Ghi log audit

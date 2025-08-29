@@ -211,6 +211,23 @@ export class YardService {
 					created_by: actor._id
 				}
 			});
+
+			// Cập nhật request status từ CHECKED sang POSITIONED
+			// Tìm ServiceRequest mới nhất của container này
+			const latestRequest = await tx.serviceRequest.findFirst({
+				where: { container_no },
+				orderBy: { createdAt: 'desc' }
+			});
+
+			if (latestRequest && latestRequest.status === 'CHECKED') {
+				await tx.serviceRequest.update({
+					where: { id: latestRequest.id },
+					data: { 
+						status: 'POSITIONED',
+						updatedAt: now
+					}
+				});
+			}
 			
 			return updatedPlacement;
 		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

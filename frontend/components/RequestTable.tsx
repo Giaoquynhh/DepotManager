@@ -44,7 +44,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
       EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
       REJECTED: { label: 'Từ chối', className: 'status-rejected' },
-      IN_YARD: { label: 'Trong kho', className: 'status-in-yard' },
+      POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
+      FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' },
+      IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
       LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
       PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
       ACCEPT: { label: 'Đã chấp nhận', className: 'status-accept' }

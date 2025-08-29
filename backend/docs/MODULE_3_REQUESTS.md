@@ -8,7 +8,7 @@ Mục tiêu: quản lý vòng đời yêu cầu dịch vụ container (tạo →
   - Type: EIR | LOLO | INVOICE | SUPPLEMENT | INITIAL_DOC
 - `PaymentRequest(id, request_id, created_by, status, createdAt)`
 
-Status: PENDING | RECEIVED | SCHEDULED | SCHEDULED_INFO_ADDED | FORWARDED | SENT_TO_GATE | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD
+Status: PENDING | RECEIVED | SCHEDULED | SCHEDULED_INFO_ADDED | FORWARDED | SENT_TO_GATE | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | POSITIONED | FORKLIFTING | IN_YARD
 
 ## 2) RBAC
 - CustomerAdmin/CustomerUser: tạo/list yêu cầu trong tenant; xem chứng từ của tenant; upload tài liệu bổ sung khi status = SCHEDULED.
@@ -43,6 +43,9 @@ Base: `/requests` (JWT)
     - `SENT_TO_GATE → COMPLETED`
     - `COMPLETED → EXPORTED | IN_YARD`
     - `IN_YARD → LEFT_YARD`
+    - `CHECKED → POSITIONED` (Khi confirm trên Yard page)
+    - `POSITIONED → FORKLIFTING` (Khi tài xế click "Bắt đầu" trên DriverDashboard)
+    - `FORKLIFTING → IN_YARD` (Khi duyệt trên Forklift page)
     - `LEFT_YARD`/`EXPORTED`/`REJECTED` là trạng thái cuối (không chuyển tiếp)
   - Yêu cầu nhập `reason` khi chuyển sang `REJECTED`
 
@@ -182,9 +185,12 @@ Hệ thống tự động hiển thị thông báo trạng thái trong chat:
 | CANCELLED | ❌ Đơn hàng đã bị hủy | ❌ |
 | IN_YARD | 🏭 Container đã vào kho | 🏭 |
 | LEFT_YARD | 🚛 Container đã rời kho | 🚛 |
+| POSITIONED | 📍 Container đã được xếp chỗ trong bãi | 📍 |
+| FORKLIFTING | 🚛 Tài xế đang nâng/hạ container | 🚛 |
+| IN_YARD | 🏭 Container đã được đặt vào vị trí trong bãi | 🏭 |
 
 #### 6.2.3.2) Chat Restrictions
-- **Chỉ cho phép chat** khi trạng thái: `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `EXPORTED`
+- **Chỉ cho phép chat** khi trạng thái: `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `EXPORTED`, `POSITIONED`, `FORKLIFTING`, `IN_YARD`
 - **Không cho phép chat** khi trạng thái: `PENDING`, `REJECTED`, `CANCELLED`
 - **System messages** được gửi cho mọi trạng thái (không bị giới hạn)
 
@@ -198,6 +204,81 @@ Mỗi chat room hiển thị welcome message với thông tin:
 Khi đơn hàng bị từ chối:
 - Hiển thị lý do từ chối trong system message
 - Hiển thị lý do trong warning banner
+
+### 6.3) Container Yard Workflow Integration
+
+#### 6.3.1) New Status Flow
+Hệ thống đã được mở rộng với các trạng thái mới để quản lý workflow container trong bãi:
+
+**Workflow mới:**
+1. **CHECKED** → **POSITIONED** (Yard Confirm)
+   - Trigger: Click "Confirm" button trên Yard page (`http://localhost:5002/Yard`)
+   - Action: Cập nhật `ServiceRequest.status` từ `CHECKED` → `POSITIONED`
+   - Side effect: Tạo `ForkliftTask` với `status = 'PENDING'`
+   - System message: "📍 Container đã được xếp chỗ trong bãi"
+
+2. **POSITIONED** → **FORKLIFTING** (Driver Start)
+   - Trigger: Click "Bắt đầu" button trên DriverDashboard (`http://localhost:5002/DriverDashboard`)
+   - Action: Cập nhật `ServiceRequest.status` từ `POSITIONED` → `FORKLIFTING`
+   - Side effect: Cập nhật `ForkliftTask.status` từ `PENDING` → `IN_PROGRESS`
+   - System message: "🚛 Tài xế đang nâng/hạ container"
+   - Note: Message thay đổi theo loại request:
+     - **Import**: "đang nâng container"
+     - **Export**: "đang hạ container"
+
+3. **FORKLIFTING** → **IN_YARD** (Forklift Approval)
+   - Trigger: Click "Duyệt" button trên Forklift page (`http://localhost:5002/Forklift`)
+   - Action: Cập nhật `ServiceRequest.status` từ `FORKLIFTING` → `IN_YARD`
+   - Side effect: Cập nhật `ForkliftTask.status` thành `COMPLETED`
+   - System message: "🏭 Container đã được đặt vào vị trí trong bãi"
+
+#### 6.3.2) Frontend Derived Status Logic
+**ContainersPage** sử dụng logic `derived_status` để hiển thị trạng thái container:
+
+**Priority Order:**
+1. **`IN_YARD`** (cao nhất) - Container đã được duyệt trên Forklift
+2. **`ASSIGNED`** - Container có `slot_code` (đã confirm trên Yard)
+3. **`PENDING`** - Container chưa có `slot_code` (chưa confirm trên Yard)
+4. **`null`** - Container chưa được kiểm tra
+
+**API Call Strategy:**
+- **Filter "Tất cả trạng thái"**: Lấy container có `service_status = 'CHECKED'`
+- **Filter "Chờ xếp chỗ" (PENDING)**: Lấy container có `service_status = 'CHECKED'`
+- **Filter "Đã xếp chỗ trong bãi" (ASSIGNED)**: Lấy container có `service_status = 'CHECKED'`
+- **Filter "Đã ở trong bãi" (IN_YARD)**: Lấy container có `service_status = 'IN_YARD'`
+
+**Frontend Filtering:**
+- Filter được thực hiện hoàn toàn ở frontend dựa trên `derived_status`
+- API luôn trả về tất cả container cần thiết
+- Performance tốt hơn vì chỉ gọi API một lần
+
+#### 6.3.3) Database Schema Updates
+**ServiceRequest table:**
+- `status` field đã được mở rộng để hỗ trợ: `POSITIONED`, `FORKLIFTING`, `IN_YARD`
+
+**ForkliftTask table:**
+- `status` field: `PENDING` → `IN_PROGRESS` → `COMPLETED`
+- `container_no`: Reference đến container được xử lý
+- `created_by`: User tạo task
+- `approved_by`: User duyệt task
+- `approved_at`: Thời gian duyệt
+
+#### 6.3.4) Role-Based Access Control
+**Yard Operations:**
+- **SaleAdmin/SystemAdmin**: Có thể confirm container (CHECKED → POSITIONED)
+
+**Driver Operations:**
+- **Driver/SaleAdmin/SystemAdmin**: Có thể bắt đầu forklift task (POSITIONED → FORKLIFTING)
+
+**Forklift Approval:**
+- **SaleAdmin/SystemAdmin**: Có thể duyệt forklift job (FORKLIFTING → IN_YARD)
+
+#### 6.3.5) State Machine Validation
+**RequestStateMachine** đã được cập nhật với:
+- **Valid States**: Thêm `POSITIONED`, `FORKLIFTING`, `IN_YARD`
+- **Transitions**: Định nghĩa các chuyển đổi trạng thái hợp lệ
+- **Role Validation**: Kiểm tra quyền thực hiện transition
+- **System Messages**: Tự động tạo message cho mỗi trạng thái mới
 - Disable chat input và nút gửi tin nhắn
 
 ### 6.3) Soft-Delete Functionality

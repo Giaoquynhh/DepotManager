@@ -45,11 +45,13 @@ export default function DepotRequestTable({
 			COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
 			EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
 			REJECTED: { label: 'Từ chối', className: 'status-rejected' },
-			IN_YARD: { label: 'Trong kho', className: 'status-in-yard' },
+			IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
 			LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
 			PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
 			CHECKING: { label: 'Đang kiểm tra', className: 'status-checking' },
-			CHECKED: { label: 'Đã kiểm tra', className: 'status-checked' }
+			CHECKED: { label: 'Đã kiểm tra', className: 'status-checked' },
+			POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
+			FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' }
 		};
 
 		const config = statusConfig[status] || { label: status, className: 'status-default' };

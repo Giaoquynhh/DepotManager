@@ -21,7 +21,11 @@ export class RequestStateMachine {
     'REJECTED',
     'COMPLETED',
     'PENDING_ACCEPT',
-    'ACCEPT'
+    'ACCEPT',
+    'CHECKED',
+    'POSITIONED', 
+    'FORKLIFTING', // Trạng thái mới: đang nâng/hạ container
+    'IN_YARD' // Trạng thái mới: đã ở trong bãi
   ];
 
   private static readonly TRANSITIONS: StateTransition[] = [
@@ -118,6 +122,24 @@ export class RequestStateMachine {
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
       requiresReason: true,
       description: 'Hoàn thành kiểm tra - không đạt chuẩn'
+    },
+    {
+      from: 'CHECKED',
+      to: 'POSITIONED',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      description: 'Container đã được xếp chỗ trong bãi'
+    },
+    {
+      from: 'POSITIONED',
+      to: 'FORKLIFTING',
+      allowedRoles: ['Driver', 'SaleAdmin', 'SystemAdmin'],
+      description: 'Tài xế bắt đầu nâng/hạ container'
+    },
+    {
+      from: 'FORKLIFTING',
+      to: 'IN_YARD',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      description: 'Container đã được đặt vào vị trí trong bãi'
     },
     {
       from: 'PENDING_ACCEPT',
@@ -257,6 +279,15 @@ export class RequestStateMachine {
           case 'COMPLETED':
             systemMessage = '✅ Yêu cầu đã hoàn tất';
             break;
+          case 'POSITIONED':
+            systemMessage = '📍 Container đã được xếp chỗ trong bãi';
+            break;
+          case 'FORKLIFTING':
+            systemMessage = '🚛 Tài xế đang nâng/hạ container';
+            break;
+          case 'IN_YARD':
+            systemMessage = '🏭 Container đã được đặt vào vị trí trong bãi';
+            break;
           default:
             systemMessage = `🔄 Trạng thái đã thay đổi thành: ${newState}`;
         }
@@ -272,9 +303,12 @@ export class RequestStateMachine {
       'PENDING': 'Chờ xử lý',
       'SCHEDULED': 'Đã đặt lịch hẹn',
       'SCHEDULED_INFO_ADDED': 'Đã bổ sung thông tin',
-      'SENT_TO_GATE': 'Đã chuyển sang Gate',
-      'REJECTED': 'Bị từ chối',
-      'COMPLETED': 'Hoàn tất'
+              'SENT_TO_GATE': 'Đã chuyển sang Gate',
+        'REJECTED': 'Bị từ chối',
+        'COMPLETED': 'Hoàn tất',
+        'POSITIONED': 'Đã xếp chỗ trong bãi',
+        'FORKLIFTING': 'Đang nâng/hạ container',
+        'IN_YARD': 'Đã ở trong bãi'
     };
     return descriptions[state] || state;
   }
@@ -284,9 +318,12 @@ export class RequestStateMachine {
       'PENDING': 'yellow',
       'SCHEDULED': 'blue',
       'SCHEDULED_INFO_ADDED': 'cyan',
-      'SENT_TO_GATE': 'purple',
-      'REJECTED': 'red',
-      'COMPLETED': 'green'
+              'SENT_TO_GATE': 'purple',
+        'REJECTED': 'red',
+        'COMPLETED': 'green',
+        'POSITIONED': 'blue',
+        'FORKLIFTING': 'orange',
+        'IN_YARD': 'green'
     };
     return colors[state] || 'gray';
   }
