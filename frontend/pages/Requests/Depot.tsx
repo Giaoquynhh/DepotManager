@@ -4,11 +4,11 @@ import useSWR from 'swr';
 import { api } from '@services/api';
 import Modal from '@components/Modal';
 import Button from '@components/Button';
+import RequestTable from '@components/RequestTable';
 import SearchBar from '@components/SearchBar';
 import AppointmentModal from '@components/AppointmentModal';
 import AppointmentMini from '@components/appointment/AppointmentMini';
 import SupplementDocuments from '@components/SupplementDocuments';
-import DepotRequestTable from './components/DepotRequestTable';
 import DocumentViewerModal from './components/DocumentViewerModal';
 import { useDepotActions } from './hooks/useDepotActions';
 
@@ -150,30 +150,10 @@ export default function DepotRequests() {
 				</div>
 
 				{/* Request Table with Actions */}
-				<DepotRequestTable
-					data={requestsWithActions}
+				<RequestTable 
+					data={requestsWithActions} 
 					loading={isLoading}
 					userRole={state.me?.role || state.me?.roles?.[0]}
-					onDocumentClick={actions.handleDocumentClick}
-					onToggleSupplement={actions.toggleSupplement}
-					onChangeAppointment={actions.handleChangeAppointment}
-					onReject={actions.handleReject}
-					onChangeStatus={actions.changeStatus}
-					onSendPayment={actions.sendPayment}
-					onSoftDelete={(id: string, scope: string) => actions.softDeleteRequest(id, scope as 'depot' | 'customer')}
-					onViewInvoice={actions.handleViewInvoice}
-					onSendCustomerConfirmation={actions.handleSendCustomerConfirmation}
-					loadingId={state.loadingId}
-					actLabel={{
-						RECEIVED: 'Tiếp nhận',
-						REJECTED: 'Từ chối',
-						COMPLETED: 'Hoàn tất',
-						EXPORTED: 'Đã xuất kho'
-					}}
-					// Chat props
-					activeChatRequests={state.activeChatRequests}
-					onToggleChat={actions.toggleChat}
-					onCloseChat={actions.closeChat}
 				/>
 
 				{/* Status Message */}
