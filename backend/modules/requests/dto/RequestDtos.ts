@@ -2,7 +2,11 @@ import Joi from 'joi';
 
 export const createRequestSchema = Joi.object({
 	type: Joi.string().valid('IMPORT','EXPORT','CONVERT').required(),
-	container_no: Joi.string().min(4).max(20).required(),
+	container_no: Joi.when('type', {
+		is: 'IMPORT',
+		then: Joi.string().min(4).max(20).required(),
+		otherwise: Joi.string().min(4).max(20).optional()
+	}),
 	eta: Joi.date().required()
 });
 

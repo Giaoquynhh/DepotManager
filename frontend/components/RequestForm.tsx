@@ -22,17 +22,43 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
     setLoading(true);
     setMessage('');
 
+    // Validation dựa trên loại yêu cầu
+    if (form.type === 'IMPORT') {
+      if (!form.container_no.trim()) {
+        setMessage('Mã định danh container là bắt buộc cho yêu cầu nhập');
+        setLoading(false);
+        return;
+      }
+      if (!selectedFile) {
+        setMessage('Chứng từ là bắt buộc cho yêu cầu nhập');
+        setLoading(false);
+        return;
+      }
+    }
+    
+    if (!form.etaDate || !form.etaTime) {
+      setMessage('Thời gian dự kiến (ETA) là bắt buộc');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Tạo FormData để upload file
       const formData = new FormData();
       formData.append('type', form.type);
-      formData.append('container_no', form.container_no);
+      
+      // Chỉ gửi container_no và document cho loại IMPORT
+      if (form.type === 'IMPORT') {
+        formData.append('container_no', form.container_no);
+        if (selectedFile) {
+          formData.append('document', selectedFile);
+        }
+      }
+      
+      // ETA luôn được gửi cho cả 2 loại
       if (form.etaDate && form.etaTime) {
         const etaDateTime = `${form.etaDate}T${form.etaTime}`;
         formData.append('eta', etaDateTime);
-      }
-      if (selectedFile) {
-        formData.append('document', selectedFile);
       }
 
       await api.post('/requests', formData, {
@@ -96,22 +122,60 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
         >
           <option value="IMPORT">Nhập</option>
           <option value="EXPORT">Xuất</option>
-          <option value="CONVERT">Chuyển đổi</option>
         </select>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="container_no">Mã định danh container</label>
-        <input 
-          id="container_no"
-          type="text"
-          placeholder="Nhập mã container..." 
-          value={form.container_no} 
-          onChange={e => setForm({...form, container_no: e.target.value})}
-          required
-        />
-      </div>
+      {/* Luồng Nhập - hiển thị khi type = IMPORT */}
+      {form.type === 'IMPORT' && (
+        <>
+          <div className="form-group">
+            <label htmlFor="container_no">Mã định danh container <span className="required">*</span></label>
+            <input 
+              id="container_no"
+              type="text"
+              placeholder="Nhập mã container..." 
+              value={form.container_no} 
+              onChange={e => setForm({...form, container_no: e.target.value})}
+            />
+          </div>
 
+          <div className="form-group">
+            <label htmlFor="document">Chứng từ (PDF/Ảnh) <span className="required">*</span></label>
+            <div className="file-upload-container">
+              <input
+                id="document"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+                className="file-input"
+              />
+              <label htmlFor="document" className="file-upload-label">
+                <span className="file-upload-icon">📎</span>
+                <span className="file-upload-text">
+                  {selectedFile ? selectedFile.name : 'Chọn file chứng từ...'}
+                </span>
+              </label>
+            </div>
+            {selectedFile && (
+              <div className="file-preview">
+                <span className="file-name">{selectedFile.name}</span>
+                <button 
+                  type="button" 
+                  onClick={removeFile}
+                  className="file-remove"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <small className="file-hint">
+              Định dạng: PDF, JPG, PNG. Kích thước tối đa: 10MB
+            </small>
+          </div>
+        </>
+      )}
+
+      {/* ETA - hiển thị cho cả 2 loại */}
       <div className="form-group">
         <label htmlFor="eta">Thời gian dự kiến (ETA) <span className="required">*</span></label>
         <div className="eta-inputs">
@@ -134,40 +198,6 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
             />
           </div>
         </div>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="document">Chứng từ (PDF/Ảnh)</label>
-        <div className="file-upload-container">
-          <input
-            id="document"
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleFileChange}
-            className="file-input"
-          />
-          <label htmlFor="document" className="file-upload-label">
-            <span className="file-upload-icon">📎</span>
-            <span className="file-upload-text">
-              {selectedFile ? selectedFile.name : 'Chọn file chứng từ...'}
-            </span>
-          </label>
-        </div>
-        {selectedFile && (
-          <div className="file-preview">
-            <span className="file-name">{selectedFile.name}</span>
-            <button 
-              type="button" 
-              onClick={removeFile}
-              className="file-remove"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-        <small className="file-hint">
-          Định dạng: PDF, JPG, PNG. Kích thước tối đa: 10MB
-        </small>
       </div>
 
       {message && (

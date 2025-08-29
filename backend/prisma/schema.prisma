@@ -84,10 +84,10 @@ model ServiceRequest {
     tenant_id     String?
     created_by    String
     type          String   // IMPORT | EXPORT | CONVERT
-                      container_no  String
-                  eta           DateTime?
-                  status        String   // PENDING | SCHEDULED | FORWARDED | GATE_IN | CHECKING | GATE_REJECTED | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | PENDING_ACCEPT | ACCEPT | CHECKED | POSITIONED | FORKLIFTING | IN_YARD
-                  forwarded_at    DateTime?
+    container_no  String?  // Optional cho EXPORT
+    eta           DateTime?
+    status        String   // PENDING | SCHEDULED | FORWARDED | GATE_IN | CHECKING | GATE_REJECTED | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | PENDING_ACCEPT | ACCEPT | CHECKED | POSITIONED | FORKLIFTING | IN_YARD
+    forwarded_at    DateTime?
     forwarded_by    String?
     gate_checked_at DateTime?
     gate_checked_by String?

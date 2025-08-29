@@ -7,19 +7,29 @@ import RequestStateMachine from './RequestStateMachine';
 import appointmentService from './AppointmentService';
 
 export class RequestService {
-	async createByCustomer(actor: any, payload: { type: string; container_no: string; eta?: Date }, file?: Express.Multer.File) {
+	async createByCustomer(actor: any, payload: { type: string; container_no?: string; eta?: Date }, file?: Express.Multer.File) {
+		// Kiểm tra logic business: IMPORT cần container_no và file, EXPORT chỉ cần ETA
+		if (payload.type === 'IMPORT') {
+			if (!payload.container_no) {
+				throw new Error('Mã định danh container là bắt buộc cho yêu cầu nhập');
+			}
+			if (!file) {
+				throw new Error('Chứng từ là bắt buộc cho yêu cầu nhập');
+			}
+		}
+
 		const data = {
 			tenant_id: actor.tenant_id || null,
 			created_by: actor._id,
 			type: payload.type,
-			container_no: payload.container_no,
+			container_no: payload.container_no || null, // Có thể null cho EXPORT
 			eta: payload.eta || null,
 			status: 'PENDING',
 			history: [{ at: new Date().toISOString(), by: actor._id, action: 'CREATE' }]
 		};
 		const req = await repo.create(data);
 		
-		// Xử lý upload file nếu có
+		// Xử lý upload file chỉ khi có file (IMPORT)
 		if (file) {
 			const uploadDir = path.join(process.cwd(), 'uploads');
 			if (!fs.existsSync(uploadDir)) {
