@@ -68,7 +68,7 @@ export class DriverDashboardService {
 		const tasks = await prisma.forkliftTask.findMany({
 			where: {
 				assigned_driver_id: driverId,
-				status: { in: ['PENDING', 'IN_PROGRESS'] }
+				status: { in: ['PENDING', 'IN_PROGRESS', 'PENDING_APPROVAL'] }
 			},
 			include: {
 				from_slot: {
@@ -83,7 +83,7 @@ export class DriverDashboardService {
 				}
 			},
 			orderBy: [
-				{ status: 'asc' }, // IN_PROGRESS trước, PENDING sau
+				{ status: 'asc' }, // IN_PROGRESS trước, PENDING sau, PENDING_APPROVAL cuối
 				{ createdAt: 'asc' }
 			]
 		});
@@ -131,6 +131,28 @@ export class DriverDashboardService {
 
 		if (!task) {
 			throw new Error('Task not found or not assigned to this driver');
+		}
+
+		// Kiểm tra validation khi hoàn thành task
+		if (status === 'COMPLETED') {
+			if (!task.cost || task.cost <= 0) {
+				throw new Error('Không thể hoàn thành task: Chi phí chưa được nhập hoặc không hợp lệ');
+			}
+			
+			if (!task.report_status) {
+				throw new Error('Không thể hoàn thành task: Báo cáo chưa được gửi');
+			}
+		}
+
+		// Kiểm tra validation khi chuyển sang chờ duyệt
+		if (status === 'PENDING_APPROVAL') {
+			if (!task.cost || task.cost <= 0) {
+				throw new Error('Không thể chuyển sang chờ duyệt: Chi phí chưa được nhập hoặc không hợp lệ');
+			}
+			
+			if (!task.report_status) {
+				throw new Error('Không thể chuyển sang chờ duyệt: Báo cáo chưa được gửi');
+			}
 		}
 
 		// Cập nhật trạng thái task

@@ -15,18 +15,16 @@ interface DashboardData {
 
 interface ForkliftTask {
   id: string;
-  container_no: string;
+  task_name: string;
   from_slot_id?: string;
   to_slot_id?: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
   assigned_driver_id?: string;
   created_by: string;
-  notes?: string;
-  cost?: number; // Chi phí dịch vụ xe nâng
-  report_status?: string; // Trạng thái báo cáo: PENDING, SUBMITTED, APPROVED, REJECTED
-  report_image?: string; // Đường dẫn file ảnh báo cáo
-  createdAt: string;
-  updatedAt: string;
+  cost?: number;
+  report_status?: string;
+  created_at: string;
+  updated_at: string;
   from_slot?: {
     id: string;
     code: string;
@@ -79,8 +77,12 @@ export default function DriverDashboard() {
       setDashboardData(dashboard);
       setAssignedTasks(tasks);
       setTaskHistory(history);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dashboard data:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải dữ liệu';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -88,28 +90,102 @@ export default function DriverDashboard() {
 
   const handleStatusUpdate = async (taskId: string, newStatus: string, notes?: string) => {
     try {
+      // Kiểm tra validation khi chuyển sang chờ duyệt
+      if (newStatus === 'PENDING_APPROVAL') {
+        const task = assignedTasks.find(t => t.id === taskId);
+        if (!task) {
+          alert('Không tìm thấy thông tin công việc');
+          return;
+        }
+        
+        if (!task.cost || task.cost <= 0) {
+          alert('Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt');
+          return;
+        }
+        
+        if (!task.report_status) {
+          alert('Vui lòng gửi báo cáo trước khi chuyển sang chờ duyệt');
+          return;
+        }
+      }
+      
       await driverDashboardApi.updateTaskStatus(taskId, newStatus, notes);
       // Reload data after update
       await loadDashboardData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating task status:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
+      alert(errorMessage);
     }
   };
 
   // Hàm xử lý cập nhật chi phí
   const handleCostUpdate = async (taskId: string, newCost: number) => {
     try {
+      // Kiểm tra chi phí trước khi gửi
+      if (!newCost || newCost <= 0) {
+        alert('Vui lòng nhập chi phí hợp lệ (lớn hơn 0)');
+        return;
+      }
+      
+      if (newCost > 1000000000) { // Giới hạn 1 tỷ VNĐ
+        alert('Chi phí quá cao. Vui lòng kiểm tra lại');
+        return;
+      }
+      
+      // Kiểm tra chi phí có phải là số nguyên không
+      if (!Number.isInteger(newCost)) {
+        alert('Chi phí phải là số nguyên');
+        return;
+      }
+      
+      // Kiểm tra chi phí có phải là số dương không
+      if (newCost < 0) {
+        alert('Chi phí không thể là số âm');
+        return;
+      }
+      
+      // Kiểm tra nếu task đang ở trạng thái chờ duyệt
+      const task = assignedTasks.find(t => t.id === taskId);
+      if (task?.status === 'PENDING_APPROVAL') {
+        const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật chi phí? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+        if (!confirmUpdate) {
+          return;
+        }
+      }
+      
       await driverDashboardApi.updateTaskCost(taskId, newCost);
       setEditingCost(null);
       await loadDashboardData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating task cost:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật chi phí';
+      alert(errorMessage);
+    } finally {
+      // Đảm bảo rằng trạng thái editing được reset
+      setEditingCost(null);
     }
   };
 
   // Hàm xử lý upload ảnh báo cáo
   const handleImageUpload = async (taskId: string) => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      alert('Vui lòng chọn file ảnh trước khi upload');
+      return;
+    }
+    
+    // Kiểm tra nếu task đang ở trạng thái chờ duyệt
+    const task = assignedTasks.find(t => t.id === taskId);
+    if (task?.status === 'PENDING_APPROVAL') {
+      const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật báo cáo? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+      if (!confirmUpdate) {
+        return;
+      }
+    }
     
     try {
       setUploadingImage(taskId);
@@ -120,18 +196,61 @@ export default function DriverDashboard() {
       setSelectedFile(null);
       setUploadingImage(null);
       await loadDashboardData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi upload ảnh báo cáo';
+      alert(errorMessage);
       setUploadingImage(null);
+    } finally {
+      // Đảm bảo rằng trạng thái upload được reset
+      if (uploadingImage === taskId) {
+        setUploadingImage(null);
+      }
+      // Đảm bảo rằng file được reset
+      setSelectedFile(null);
     }
   };
 
   // Hàm xử lý chọn file
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setUploadingImage(taskId);
+    try {
+      const file = event.target.files?.[0];
+      if (file) {
+        // Kiểm tra loại file
+        if (!file.type.startsWith('image/')) {
+          alert('Vui lòng chọn file ảnh (JPG, PNG, GIF, etc.)');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        // Kiểm tra kích thước file (giới hạn 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          alert('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        // Kiểm tra tên file
+        if (file.name.length > 100) {
+          alert('Tên file quá dài. Vui lòng đổi tên file ngắn hơn');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        setSelectedFile(file);
+        setUploadingImage(taskId);
+      }
+    } catch (error) {
+      console.error('Error selecting file:', error);
+      alert('Có lỗi xảy ra khi chọn file');
+      event.target.value = ''; // Reset input
+      setSelectedFile(null);
     }
   };
 
@@ -139,6 +258,7 @@ export default function DriverDashboard() {
     switch (status) {
       case 'PENDING': return 'badge-yellow';
       case 'IN_PROGRESS': return 'badge-blue';
+      case 'PENDING_APPROVAL': return 'badge-orange';
       case 'COMPLETED': return 'badge-green';
       case 'CANCELLED': return 'badge-red';
       default: return 'badge-gray';
@@ -149,6 +269,7 @@ export default function DriverDashboard() {
     switch (status) {
       case 'PENDING': return 'Chờ thực hiện';
       case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'PENDING_APPROVAL': return 'Chờ duyệt';
       case 'COMPLETED': return 'Hoàn thành';
       case 'CANCELLED': return 'Đã hủy';
       default: return status;
@@ -574,17 +695,19 @@ export default function DriverDashboard() {
                                        Chưa có
                                      </span>
                                    )}
-                                   <button
-                                     className="btn btn-sm btn-outline"
-                                     style={{
-                                       fontSize: '10px',
-                                       padding: '2px 6px',
-                                       marginTop: '4px'
-                                     }}
-                                     onClick={() => setEditingCost(task.id)}
-                                   >
-                                     {task.cost ? 'Sửa' : 'Thêm'}
-                                   </button>
+                                                                       {task.status !== 'PENDING_APPROVAL' && (
+                                      <button
+                                        className="btn btn-sm btn-outline"
+                                        style={{
+                                          fontSize: '10px',
+                                          padding: '2px 6px',
+                                          marginTop: '4px'
+                                        }}
+                                        onClick={() => setEditingCost(task.id)}
+                                      >
+                                        {task.cost ? 'Sửa' : 'Thêm'}
+                                      </button>
+                                    )}
                                  </div>
                                )}
                              </div>
@@ -708,17 +831,19 @@ export default function DriverDashboard() {
                                        Chưa có
                                      </span>
                                    )}
-                                   <button
-                                     className="btn btn-sm btn-primary"
-                                     style={{
-                                       fontSize: '10px',
-                                       padding: '2px 6px',
-                                       marginTop: '4px'
-                                     }}
-                                     onClick={() => setUploadingImage(task.id)}
-                                   >
-                                     Gửi tài liệu
-                                   </button>
+                                                                       {task.status !== 'PENDING_APPROVAL' && (
+                                      <button
+                                        className="btn btn-sm btn-primary"
+                                        style={{
+                                          fontSize: '10px',
+                                          padding: '2px 6px',
+                                          marginTop: '4px'
+                                        }}
+                                        onClick={() => setUploadingImage(task.id)}
+                                      >
+                                        Gửi tài liệu
+                                      </button>
+                                    )}
                                  </div>
                                )}
                              </div>
@@ -744,11 +869,31 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button
-                                  onClick={() => handleStatusUpdate(task.id, 'COMPLETED')}
-                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleStatusUpdate(task.id, 'PENDING_APPROVAL')}
+                                  className={`btn btn-sm ${
+                                    task.cost && task.cost > 0 && task.report_status 
+                                      ? 'btn-success' 
+                                      : 'btn-disabled'
+                                  }`}
+                                  disabled={!task.cost || task.cost <= 0 || !task.report_status}
+                                  title={
+                                    !task.cost || task.cost <= 0 
+                                      ? 'Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt'
+                                      : !task.report_status 
+                                        ? 'Vui lòng gửi báo cáo trước khi chuyển sang chờ duyệt'
+                                        : 'Click để chuyển sang chờ duyệt'
+                                  }
                                 >
                                   Hoàn thành
                                 </button>
+                              )}
+                              {task.status === 'PENDING_APPROVAL' && (
+                                <div style={{ textAlign: 'center' }}>
+                                  <div className="badge badge-orange mb-2">Chờ duyệt</div>
+                                  <div style={{ fontSize: '12px', color: '#666' }}>
+                                    Đã gửi để duyệt
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </td>

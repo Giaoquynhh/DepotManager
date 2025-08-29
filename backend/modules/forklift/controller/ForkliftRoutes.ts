@@ -22,6 +22,12 @@ router.patch('/jobs/:jobId/begin-work', (req, res) => controller.beginWork(req a
 // Complete a job
 router.patch('/jobs/:jobId/complete', (req, res) => controller.completeJob(req as any, res));
 
+// Approve a job (changes status from PENDING_APPROVAL to COMPLETED)
+router.patch('/jobs/:jobId/approve', (req, res) => controller.approveJob(req as any, res));
+
+// Update cost for a job
+router.patch('/jobs/:jobId/cost', (req, res) => controller.updateCost(req as any, res));
+
 // Update report status and image
 router.patch('/jobs/:jobId/report', (req, res) => controller.updateReport(req as any, res));
 

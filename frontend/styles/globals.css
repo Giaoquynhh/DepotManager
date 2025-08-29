@@ -647,6 +647,23 @@ body.with-sidebar .header {
 
 .btn-icon{display:inline-flex;align-items:center}
 
+/* Disabled button state */
+.btn-disabled {
+  background: var(--color-gray-400) !important;
+  color: var(--color-gray-600) !important;
+  border-color: var(--color-gray-400) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+.btn-disabled:hover {
+  background: var(--color-gray-400) !important;
+  color: var(--color-gray-600) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .grid{display:grid;gap:16px}
 @media(min-width:840px){.grid-cols-2{grid-template-columns:1fr 1fr}.grid-cols-3{grid-template-columns:repeat(3,1fr)}}
 .table{width:100%;border-collapse:collapse}
@@ -1525,6 +1542,36 @@ button, input, select {
 
 .badge-info {
   background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.badge-yellow {
+  background: var(--color-warning);
+  color: var(--color-navy-primary);
+}
+
+.badge-orange {
+  background: #f97316;
+  color: var(--color-white);
+}
+
+.badge-blue {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.badge-green {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.badge-red {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.badge-gray {
+  background: var(--color-gray-500);
   color: var(--color-white);
 }
 

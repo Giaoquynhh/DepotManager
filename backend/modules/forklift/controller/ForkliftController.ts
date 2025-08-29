@@ -528,13 +528,94 @@ export class ForkliftController {
 		}
 	}
 
+	async approveJob(req: AuthRequest, res: Response) {
+		try {
+			const { jobId } = req.params;
+
+			const job = await prisma.forkliftTask.findUnique({
+				where: { id: jobId }
+			});
+
+			if (!job) {
+				return res.status(404).json({ message: 'Forklift job not found' });
+			}
+
+			// Kiểm tra trạng thái hiện tại
+			if (job.status !== 'PENDING_APPROVAL') {
+				return res.status(400).json({ 
+					message: 'Chỉ có thể duyệt công việc ở trạng thái CHỜ DUYỆT' 
+				});
+			}
+
+			// Kiểm tra chi phí và báo cáo đã được nhập
+			if (!job.cost || job.cost <= 0) {
+				return res.status(400).json({ 
+					message: 'Không thể duyệt: Chi phí chưa được nhập hoặc không hợp lệ' 
+				});
+			}
+
+			if (!job.report_status) {
+				return res.status(400).json({ 
+					message: 'Không thể duyệt: Báo cáo chưa được gửi' 
+				});
+			}
+
+			// Cập nhật trạng thái sang COMPLETED
+			const updatedJob = await prisma.forkliftTask.update({
+				where: { id: jobId },
+				data: { 
+					status: 'COMPLETED',
+					updatedAt: new Date()
+				}
+			});
+
+			// Ghi log audit
+			await audit(req.user!._id, 'FORKLIFT_JOB_APPROVED', 'FORKLIFT_TASK', jobId, { 
+				previous_status: job.status,
+				new_status: 'COMPLETED',
+				approved_at: new Date()
+			});
+
+			return res.json({
+				success: true,
+				message: 'Công việc đã được duyệt thành công',
+				data: updatedJob
+			});
+
+		} catch (error) {
+			console.error('Error approving job:', error);
+			return res.status(500).json({ message: 'Internal server error' });
+		}
+	}
+
 	async updateCost(req: AuthRequest, res: Response) {
 		try {
 			const { jobId } = req.params;
 			const { cost } = req.body;
 
-			if (cost === undefined || cost < 0) {
-				return res.status(400).json({ message: 'Cost must be a positive number' });
+			// Validation: Chi phí phải là số nguyên không âm
+			if (cost === undefined || cost === null) {
+				return res.status(400).json({ message: 'Chi phí không được để trống' });
+			}
+
+			// Kiểm tra có phải là số không
+			if (isNaN(cost) || typeof cost !== 'number') {
+				return res.status(400).json({ message: 'Chi phí phải là số' });
+			}
+
+			// Kiểm tra có phải là số nguyên không
+			if (!Number.isInteger(cost)) {
+				return res.status(400).json({ message: 'Chi phí phải là số nguyên' });
+			}
+
+			// Kiểm tra có phải là số không âm không
+			if (cost < 0) {
+				return res.status(400).json({ message: 'Chi phí không thể là số âm' });
+			}
+
+			// Kiểm tra giới hạn chi phí (1 tỷ VNĐ)
+			if (cost > 1000000000) {
+				return res.status(400).json({ message: 'Chi phí quá cao. Vui lòng kiểm tra lại' });
 			}
 
 			const job = await prisma.forkliftTask.findUnique({
@@ -547,7 +628,10 @@ export class ForkliftController {
 
 			const updatedJob = await prisma.forkliftTask.update({
 				where: { id: jobId },
-				data: { cost: parseFloat(cost) }
+				data: { 
+					cost: cost,
+					updatedAt: new Date()
+				}
 			});
 
 			await audit(req.user!._id, 'FORKLIFT_COST_UPDATED', 'FORKLIFT_TASK', jobId, { 
@@ -557,7 +641,7 @@ export class ForkliftController {
 
 			return res.json({
 				success: true,
-				message: 'Cost updated successfully',
+				message: 'Chi phí đã được cập nhật thành công',
 				data: updatedJob
 			});
 

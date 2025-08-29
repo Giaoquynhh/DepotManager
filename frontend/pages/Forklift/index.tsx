@@ -9,7 +9,7 @@ interface ForkliftTask {
   container_no: string;
   from_slot_id?: string;
   to_slot_id?: string;
-  status: 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
   assigned_driver_id?: string;
   created_by: string;
   cancel_reason?: string;
@@ -261,6 +261,15 @@ export default function Forklift() {
     }
   };
 
+  const handleApproveJob = async (taskId: string) => {
+    try {
+      await api.patch(`/forklift/jobs/${taskId}/approve`);
+      loadForkliftTasks();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Không thể duyệt công việc');
+    }
+  };
+
   const handleCancelJob = async (taskId: string) => {
     const reason = prompt('Lý do hủy công việc:');
     if (!reason) return;
@@ -278,17 +287,19 @@ export default function Forklift() {
       case 'PENDING': return 'Chờ xử lý';
       case 'ASSIGNED': return 'Xe nâng đã nhận';
       case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'PENDING_APPROVAL': return 'Chờ duyệt';
       case 'COMPLETED': return 'Hoàn thành';
       case 'CANCELLED': return 'Đã hủy';
       default: return status;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: self) => {
     switch (status) {
       case 'PENDING': return 'badge-yellow';
       case 'ASSIGNED': return 'badge-orange';
       case 'IN_PROGRESS': return 'badge-blue';
+      case 'PENDING_APPROVAL': return 'badge-orange';
       case 'COMPLETED': return 'badge-green';
       case 'CANCELLED': return 'badge-red';
       default: return 'badge-gray';
@@ -628,6 +639,11 @@ export default function Forklift() {
                                color: '#1e40af',
                                borderColor: '#3b82f6'
                              }),
+                             ...(task.status === 'PENDING_APPROVAL' && {
+                               backgroundColor: '#fed7aa',
+                               color: '#ea580c',
+                               borderColor: '#f97316'
+                             }),
                              ...(task.status === 'COMPLETED' && {
                                backgroundColor: '#d1fae5',
                                color: '#065f46',
@@ -857,6 +873,23 @@ export default function Forklift() {
                                  ✅ Hoàn thành
                                </button>
                              )}
+                             
+                                                           {task.status === 'PENDING_APPROVAL' && (
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  style={{
+                                    width: '100%',
+                                    margin: '0',
+                                    padding: '6px 8px',
+                                    fontSize: '11px',
+                                    fontWeight: '600'
+                                  }}
+                                  onClick={() => handleApproveJob(task.id)}
+                                  title="Duyệt và hoàn thành công việc"
+                                >
+                                  ✅ Duyệt
+                                </button>
+                              )}
                             {/* Gán tài xế lần đầu */}
                             {task.status === 'PENDING' && !task.assigned_driver_id && (
                               <button
@@ -890,7 +923,7 @@ export default function Forklift() {
                                  🔄 Gán lại tài xế
                                </button>
                             )}
-                             {(task.status === 'PENDING' || task.status === 'ASSIGNED' || task.status === 'IN_PROGRESS') && (
+                             {(task.status === 'PENDING' || task.status === 'ASSIGNED' || task.status === 'IN_PROGRESS' || task.status === 'PENDING_APPROVAL') && (
                                <button
                                  className="btn btn-sm btn-warning"
                                  style={{
@@ -960,15 +993,15 @@ export default function Forklift() {
             <div style={modalStyles.modalBody}>
               <div style={modalStyles.formGroup}>
                 <label htmlFor="cost" style={modalStyles.formLabel}>Chi phí (VNĐ):</label>
-                <input
-                  type="number"
-                  id="cost"
-                  style={modalStyles.formInput}
-                  placeholder="Nhập chi phí"
-                  defaultValue={selectedTask.cost || 0}
-                  min="0"
-                  step="1000"
-                />
+                                 <input
+                   type="number"
+                   id="cost"
+                   style={modalStyles.formInput}
+                   placeholder="Nhập chi phí (số nguyên)"
+                   defaultValue={selectedTask.cost || 0}
+                   min="0"
+                   step="1"
+                 />
               </div>
             </div>
             <div style={modalStyles.modalFooter}>
@@ -981,20 +1014,49 @@ export default function Forklift() {
               >
                 Hủy
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  const costInput = document.getElementById('cost') as HTMLInputElement;
-                  const cost = parseFloat(costInput.value);
-                  if (cost >= 0) {
-                    handleUpdateCost(selectedTask.id, cost);
-                  } else {
-                    alert('Chi phí phải là số dương');
-                  }
-                }}
-              >
-                Cập nhật
-              </button>
+                             <button
+                 className="btn btn-primary"
+                 onClick={() => {
+                   const costInput = document.getElementById('cost') as HTMLInputElement;
+                   const costValue = costInput.value.trim();
+                   
+                   // Kiểm tra có nhập gì không
+                   if (!costValue) {
+                     alert('Vui lòng nhập chi phí');
+                     return;
+                   }
+                   
+                   // Kiểm tra có phải là số không
+                   if (isNaN(Number(costValue))) {
+                     alert('Chi phí phải là số');
+                     return;
+                   }
+                   
+                   const cost = parseInt(costValue);
+                   
+                   // Kiểm tra có phải là số nguyên không
+                   if (!Number.isInteger(cost)) {
+                     alert('Chi phí phải là số nguyên');
+                     return;
+                   }
+                   
+                   // Kiểm tra có phải là số không âm không
+                   if (cost < 0) {
+                     alert('Chi phí không thể là số âm');
+                     return;
+                   }
+                   
+                   // Kiểm tra giới hạn chi phí (1 tỷ VNĐ)
+                   if (cost > 1000000000) {
+                     alert('Chi phí quá cao. Vui lòng kiểm tra lại');
+                     return;
+                   }
+                   
+                   handleUpdateCost(selectedTask.id, cost);
+                 }}
+               >
+                 Cập nhật
+               </button>
             </div>
           </div>
         </div>

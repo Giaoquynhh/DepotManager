@@ -280,7 +280,7 @@ model ForkliftTask {
     container_no   String
     from_slot_id   String?
     to_slot_id     String?
-    status         String   // PENDING | ASSIGNED | IN_PROGRESS | COMPLETED | CANCELLED
+    status         String   // PENDING | ASSIGNED | IN_PROGRESS | PENDING_APPROVAL | COMPLETED | CANCELLED
     assigned_driver_id String?
     created_by     String
     cancel_reason  String?
