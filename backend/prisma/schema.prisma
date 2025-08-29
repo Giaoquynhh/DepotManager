@@ -280,10 +280,13 @@ model ForkliftTask {
     container_no   String
     from_slot_id   String?
     to_slot_id     String?
-    status         String   // PENDING | IN_PROGRESS | COMPLETED | CANCELLED
+    status         String   // PENDING | ASSIGNED | IN_PROGRESS | COMPLETED | CANCELLED
     assigned_driver_id String?
     created_by     String
     cancel_reason  String?
+    cost           Float?   @default(0)  // Chi phí dịch vụ xe nâng
+    report_status  String?  // Trạng thái báo cáo: PENDING, SUBMITTED, APPROVED, REJECTED
+    report_image   String?  // Đường dẫn file ảnh báo cáo
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
 

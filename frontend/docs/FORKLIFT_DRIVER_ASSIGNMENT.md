@@ -28,9 +28,9 @@ Hệ thống cho phép quản lý viên gán tài xế cho các công việc xe 
 ```
 GET    /forklift/jobs                    # Lấy danh sách công việc
 PATCH  /forklift/jobs/:jobId/assign-driver  # Gán tài xế
-PATCH  /forklift/jobs/:jobId/start       # Bắt đầu công việc
 PATCH  /forklift/jobs/:jobId/complete    # Hoàn thành công việc
 PATCH  /forklift/jobs/:jobId/cancel      # Hủy công việc
+PATCH  /forklift/jobs/:jobId/cost        # Cập nhật chi phí
 ```
 
 ### Frontend Components
@@ -55,6 +55,65 @@ Backend → WebSocket → Driver → Browser Notification + UI Notification
 ### 3. Cập Nhật Trạng Thái
 ```
 Quản lý viên → Chọn hành động → Backend cập nhật → Frontend refresh
+```
+
+## Action Management
+
+### Available Actions by Status (Updated)
+```typescript
+// TRẠNG THÁI PENDING
+actions: ['cancel', 'assign_driver', 'update_cost']
+// ❌ REMOVED: 'start' action
+// ❌ REMOVED: 'complete' action
+
+// TRẠNG THÁI IN_PROGRESS  
+actions: ['assign_driver', 'update_cost']
+// ❌ REMOVED: 'complete' action
+
+// TRẠNG THÁI COMPLETED
+actions: ['assign_driver', 'update_cost']
+
+// TRẠNG THÁI CANCELLED
+actions: ['assign_driver', 'update_cost']
+```
+
+### Frontend Button Mapping
+```typescript
+// Cột "Hành động" trong bảng Forklift
+const renderActions = (task: ForkliftTask) => {
+  switch (task.status) {
+    case 'PENDING':
+      return [
+        <button key="cancel">❌ Hủy</button>,
+        <button key="assign">👤 Gán tài xế</button>,
+        <button key="cost">💰 Chỉnh sửa chi phí</button>
+      ];
+    case 'IN_PROGRESS':
+      return [
+        <div key="status">Đang thực hiện</div>,
+        <button key="assign">👤 Gán tài xế</button>,
+        <button key="cost">💰 Chỉnh sửa chi phí</button>
+      ];
+    default:
+      return [
+        <button key="assign">👤 Gán tài xế</button>,
+        <button key="cost">💰 Chỉnh sửa chi phí</button>
+      ];
+  }
+};
+```
+
+### Action Flow Changes
+```typescript
+// TRƯỚC ĐÂY:
+// PENDING → [BẮT ĐẦU] → IN_PROGRESS → [HOÀN THÀNH] → COMPLETED
+
+// BÂY GIỜ:
+// PENDING → [HỦY] → CANCELLED
+// IN_PROGRESS → Hiển thị "Đang thực hiện"
+
+// Không còn action "Hoàn thành" trong giao diện
+// Chỉ có thể hủy công việc từ PENDING
 ```
 
 ## Cấu hình

@@ -22,6 +22,9 @@ interface ForkliftTask {
   assigned_driver_id?: string;
   created_by: string;
   notes?: string;
+  cost?: number; // Chi phí dịch vụ xe nâng
+  report_status?: string; // Trạng thái báo cáo: PENDING, SUBMITTED, APPROVED, REJECTED
+  report_image?: string; // Đường dẫn file ảnh báo cáo
   createdAt: string;
   updatedAt: string;
   from_slot?: {
@@ -40,6 +43,12 @@ interface ForkliftTask {
       yard: { name: string };
     };
   };
+  container_info?: {
+    driver_name?: string;
+    license_plate?: string;
+    status?: string;
+    type?: string;
+  };
 }
 
 export default function DriverDashboard() {
@@ -48,6 +57,11 @@ export default function DriverDashboard() {
   const [taskHistory, setTaskHistory] = useState<ForkliftTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'history'>('overview');
+  
+  // State cho việc nhập chi phí và upload ảnh
+  const [editingCost, setEditingCost] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -79,6 +93,45 @@ export default function DriverDashboard() {
       await loadDashboardData();
     } catch (error) {
       console.error('Error updating task status:', error);
+    }
+  };
+
+  // Hàm xử lý cập nhật chi phí
+  const handleCostUpdate = async (taskId: string, newCost: number) => {
+    try {
+      await driverDashboardApi.updateTaskCost(taskId, newCost);
+      setEditingCost(null);
+      await loadDashboardData();
+    } catch (error) {
+      console.error('Error updating task cost:', error);
+    }
+  };
+
+  // Hàm xử lý upload ảnh báo cáo
+  const handleImageUpload = async (taskId: string) => {
+    if (!selectedFile) return;
+    
+    try {
+      setUploadingImage(taskId);
+      const formData = new FormData();
+      formData.append('report_image', selectedFile);
+      
+      await driverDashboardApi.uploadReportImage(taskId, formData);
+      setSelectedFile(null);
+      setUploadingImage(null);
+      await loadDashboardData();
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploadingImage(null);
+    }
+  };
+
+  // Hàm xử lý chọn file
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setUploadingImage(taskId);
     }
   };
 
@@ -311,6 +364,8 @@ export default function DriverDashboard() {
                         <th>Container</th>
                         <th>Từ vị trí</th>
                         <th>Đến vị trí</th>
+                        <th>Chi phí</th>
+                        <th>Báo cáo</th>
                         <th>Trạng thái</th>
                         <th>Thao tác</th>
                       </tr>
@@ -318,17 +373,79 @@ export default function DriverDashboard() {
                     <tbody>
                       {assignedTasks.map((task) => (
                         <tr key={task.id} className="table-row">
+                          {/* Cột Container */}
                           <td>
                             <span className="container-id">{task.container_no}</span>
                           </td>
+                          
+                          {/* Cột Từ vị trí - Hiển thị thông tin tài xế */}
                           <td>
-                            <span className="location-text">
-                              {task.from_slot 
-                                ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : 'Bên ngoài'
-                              }
-                            </span>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px',
+                              padding: '4px'
+                            }}>
+                              {task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Tài xế:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#dbeafe',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.driver_name}
+                                    </span>
+                                  </div>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Biển số:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.license_plate}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="location-text">
+                                  {task.from_slot 
+                                    ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
+                                    : 'Bên ngoài'
+                                  }
+                                </span>
+                              )}
+                            </div>
                           </td>
+                          
+                          {/* Cột Đến vị trí - Hiển thị vị trí đích */}
                           <td>
                             <span className="location-text">
                               {task.to_slot 
@@ -337,11 +454,284 @@ export default function DriverDashboard() {
                               }
                             </span>
                           </td>
+                          
+                                                     {/* Cột Chi phí - Có thể nhập liệu */}
+                           <td>
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}>
+                               {editingCost === task.id ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#fef3c7',
+                                   borderRadius: '6px',
+                                   border: '1px solid #f59e0b'
+                                 }}>
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     placeholder="Nhập chi phí"
+                                     className="input input-sm"
+                                     data-task-id={task.id}
+                                     style={{
+                                       width: '100px',
+                                       textAlign: 'center',
+                                       fontSize: '12px'
+                                     }}
+                                     defaultValue={task.cost || ''}
+                                     onKeyPress={(e) => {
+                                       if (e.key === 'Enter') {
+                                         const value = parseInt((e.target as HTMLInputElement).value);
+                                         if (!isNaN(value) && value >= 0) {
+                                           handleCostUpdate(task.id, value);
+                                         }
+                                       }
+                                     }}
+                                   />
+                                   <div style={{
+                                     display: 'flex',
+                                     gap: '4px'
+                                   }}>
+                                                                        <button
+                                     className="btn btn-sm btn-success"
+                                     style={{ fontSize: '10px', padding: '2px 6px' }}
+                                     onClick={() => {
+                                       const input = document.querySelector(`input[data-task-id="${task.id}"]`) as HTMLInputElement;
+                                       if (!input) {
+                                         console.error('Input not found for task:', task.id);
+                                         return;
+                                       }
+                                       const value = parseInt(input.value || '0');
+                                       console.log('Saving cost:', { taskId: task.id, value, inputValue: input.value });
+                                       if (!isNaN(value) && value >= 0) {
+                                         handleCostUpdate(task.id, value);
+                                       } else {
+                                         alert('Vui lòng nhập số hợp lệ');
+                                       }
+                                     }}
+                                   >
+                                     Lưu
+                                   </button>
+                                     <button
+                                       className="btn btn-sm btn-outline"
+                                       style={{ fontSize: '10px', padding: '2px 6px' }}
+                                       onClick={() => setEditingCost(null)}
+                                     >
+                                       Hủy
+                                     </button>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '4px',
+                                   padding: '6px'
+                                 }}>
+                                   {task.cost && task.cost > 0 ? (
+                                     <div style={{
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       alignItems: 'center',
+                                       gap: '4px',
+                                       padding: '6px',
+                                       backgroundColor: '#f0fdf4',
+                                       borderRadius: '4px',
+                                       border: '1px solid #bbf7d0'
+                                     }}>
+                                       <span style={{ 
+                                         color: '#059669', 
+                                         fontWeight: '700',
+                                         fontSize: '14px',
+                                         fontFamily: 'monospace'
+                                       }}>
+                                         {task.cost.toLocaleString('vi-VN')}
+                                       </span>
+                                       <span style={{
+                                         fontSize: '10px',
+                                         color: '#16a34a',
+                                         backgroundColor: '#dcfce7',
+                                         padding: '2px 4px',
+                                         borderRadius: '2px',
+                                         fontWeight: '600'
+                                       }}>
+                                         VNĐ
+                                       </span>
+                                     </div>
+                                   ) : (
+                                     <span style={{ 
+                                       color: '#94a3b8', 
+                                       fontSize: '12px',
+                                       fontStyle: 'italic'
+                                     }}>
+                                       Chưa có
+                                     </span>
+                                   )}
+                                   <button
+                                     className="btn btn-sm btn-outline"
+                                     style={{
+                                       fontSize: '10px',
+                                       padding: '2px 6px',
+                                       marginTop: '4px'
+                                     }}
+                                     onClick={() => setEditingCost(task.id)}
+                                   >
+                                     {task.cost ? 'Sửa' : 'Thêm'}
+                                   </button>
+                                 </div>
+                               )}
+                             </div>
+                           </td>
+                          
+                                                     {/* Cột Báo cáo - Có thể upload ảnh */}
+                           <td>
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}>
+                               {uploadingImage === task.id ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#fef3c7',
+                                   borderRadius: '6px',
+                                   border: '1px solid #f59e0b'
+                                 }}>
+                                   <input
+                                     type="file"
+                                     accept="image/*"
+                                     className="input input-sm"
+                                     style={{
+                                       fontSize: '10px',
+                                       width: '120px'
+                                     }}
+                                     onChange={(e) => handleFileSelect(e, task.id)}
+                                   />
+                                   {selectedFile && (
+                                     <div style={{
+                                       display: 'flex',
+                                       gap: '4px'
+                                     }}>
+                                       <button
+                                         className="btn btn-sm btn-success"
+                                         style={{ fontSize: '10px', padding: '2px 6px' }}
+                                         onClick={() => handleImageUpload(task.id)}
+                                       >
+                                         Gửi
+                                       </button>
+                                       <button
+                                         className="btn btn-sm btn-outline"
+                                         style={{ fontSize: '10px', padding: '2px 6px' }}
+                                         onClick={() => {
+                                           setSelectedFile(null);
+                                           setUploadingImage(null);
+                                         }}
+                                       >
+                                         Hủy
+                                       </button>
+                                       </div>
+                                   )}
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '4px',
+                                   padding: '6px'
+                                 }}>
+                                   {task.report_status ? (
+                                     <div style={{
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       alignItems: 'center',
+                                       gap: '4px',
+                                       padding: '6px',
+                                       backgroundColor: '#fef3c7',
+                                       borderRadius: '4px',
+                                       border: '1px solid #f59e0b'
+                                     }}>
+                                       <span style={{ 
+                                         color: '#92400e', 
+                                         fontWeight: '600',
+                                         fontSize: '12px'
+                                       }}>
+                                         {task.report_status}
+                                       </span>
+                                       {task.report_image && (
+                                         <button
+                                           className="btn btn-sm btn-outline"
+                                           style={{
+                                             fontSize: '10px',
+                                             padding: '2px 4px'
+                                           }}
+                                           onClick={() => {
+                                             // Tạo URL đầy đủ cho backend
+                                             if (task.report_image) {
+                                               let imageUrl;
+                                               if (task.report_image.startsWith('http')) {
+                                                 imageUrl = task.report_image;
+                                               } else if (task.report_image.startsWith('/uploads/')) {
+                                                 // Sử dụng static file serving
+                                                 imageUrl = `http://localhost:1000${task.report_image}`;
+                                               } else {
+                                                 // Sử dụng route reports
+                                                 const filename = task.report_image.split('/').pop();
+                                                 imageUrl = `http://localhost:1000/driver-dashboard/reports/${filename}`;
+                                               }
+                                               console.log('Opening image URL:', imageUrl);
+                                               window.open(imageUrl, '_blank');
+                                             }
+                                           }}
+                                         >
+                                           Xem ảnh
+                                         </button>
+                                       )}
+                                     </div>
+                                   ) : (
+                                     <span style={{ 
+                                       color: '#94a3b8', 
+                                       fontSize: '12px',
+                                       fontStyle: 'italic'
+                                     }}>
+                                       Chưa có
+                                     </span>
+                                   )}
+                                   <button
+                                     className="btn btn-sm btn-primary"
+                                     style={{
+                                       fontSize: '10px',
+                                       padding: '2px 6px',
+                                       marginTop: '4px'
+                                     }}
+                                     onClick={() => setUploadingImage(task.id)}
+                                   >
+                                     Gửi tài liệu
+                                   </button>
+                                 </div>
+                               )}
+                             </div>
+                           </td>
+                          
+                          {/* Cột Trạng thái - Hiển thị trạng thái công việc */}
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
                               {getStatusText(task.status)}
                             </span>
                           </td>
+                          
+                          {/* Cột Thao tác - Hiển thị các nút hành động */}
                           <td>
                             <div className="action-buttons">
                               {task.status === 'PENDING' && (
@@ -397,12 +787,69 @@ export default function DriverDashboard() {
                             <span className="container-id">{task.container_no}</span>
                           </td>
                           <td>
-                            <span className="location-text">
-                              {task.from_slot 
-                                ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : 'Bên ngoài'
-                              }
-                            </span>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px',
+                              padding: '4px'
+                            }}>
+                              {task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Tài xế:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#dbeafe',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.driver_name}
+                                    </span>
+                                  </div>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Biển số:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.license_plate}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="location-text">
+                                  {task.from_slot 
+                                    ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
+                                    : 'Bên ngoài'
+                                  }
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td>
                             <span className="location-text">

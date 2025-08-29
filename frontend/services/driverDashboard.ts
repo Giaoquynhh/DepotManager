@@ -26,5 +26,23 @@ export const driverDashboardApi = {
   async getTaskHistory() {
     const { data } = await api.get('/driver-dashboard/tasks/history');
     return data;
+  },
+
+  // Cập nhật chi phí task
+  async updateTaskCost(taskId: string, cost: number) {
+    const { data } = await api.patch(`/driver-dashboard/tasks/${taskId}/cost`, { 
+      cost 
+    });
+    return data;
+  },
+
+  // Upload ảnh báo cáo
+  async uploadReportImage(taskId: string, formData: FormData) {
+    const { data } = await api.post(`/driver-dashboard/tasks/${taskId}/report`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return data;
   }
 };
