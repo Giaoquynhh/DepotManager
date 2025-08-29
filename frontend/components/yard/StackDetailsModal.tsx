@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '@components/Modal';
 import { yardApi } from '@services/yard';
 import { reportsApi } from '@services/reports';
+import { authApi } from '@services/auth';
 
 interface StackDetailsModalProps {
   visible: boolean;
@@ -48,6 +49,27 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
   const [availableContainers, setAvailableContainers] = useState<Array<{container_no: string, service_gate_checked_at: string}>>([]);
   const [filterLoading, setFilterLoading] = useState(false);
   const [focusedTier, setFocusedTier] = useState<number | null>(null);
+  
+  // State cho SystemAdmin
+  const [isSystemAdmin, setIsSystemAdmin] = useState(false);
+  const [systemAdminContainerInput, setSystemAdminContainerInput] = useState<Record<number, string>>({});
+
+  // Kiểm tra role của user hiện tại
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const userData = await authApi.me();
+        setIsSystemAdmin(userData?.role === 'SystemAdmin');
+      } catch (error) {
+        console.error('Error checking user role:', error);
+        setIsSystemAdmin(false);
+      }
+    };
+    
+    if (visible) {
+      checkUserRole();
+    }
+  }, [visible]);
 
   const load = async () => {
     if (!visible || !slotId) return;
@@ -105,7 +127,12 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
       return { isValid: false, message: 'Vui lòng nhập số container hợp lệ (>= 4 ký tự)' };
     }
     
-    // Kiểm tra container có trong danh sách available không
+    // SystemAdmin có thể nhập container tùy ý
+    if (isSystemAdmin) {
+      return { isValid: true, message: '' };
+    }
+    
+    // Kiểm tra container có trong danh sách available không (cho các role khác)
     const isAvailable = availableContainers.some(container => 
       container.container_no.toLowerCase() === containerNo.trim().toLowerCase()
     );
@@ -288,7 +315,11 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
           borderRadius: '6px',
           border: '1px solid #0ea5e9'
         }}>
-          ℹ️ Chỉ nhận container có trạng thái "Đang chờ sắp xếp" (CHECKED)
+          {isSystemAdmin ? (
+            '🔑 SystemAdmin: Có thể nhập container tùy ý'
+          ) : (
+            'ℹ️ Chỉ nhận container có trạng thái "Đang chờ sắp xếp" (CHECKED)'
+          )}
         </div>
       </div>
 
@@ -321,6 +352,21 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                 {status === 'HOLD' && activeHold && (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200 }}>
+                      {/* SystemAdmin có thể nhập container tùy ý */}
+                      {isSystemAdmin && (
+                        <div style={{ 
+                          background: '#f0f9ff', 
+                          border: '1px solid #0ea5e9', 
+                          borderRadius: '6px', 
+                          padding: '8px', 
+                          marginBottom: '8px',
+                          fontSize: '12px',
+                          color: '#0369a1'
+                        }}>
+                          🔑 SystemAdmin: Có thể nhập container tùy ý
+                        </div>
+                      )}
+                      
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <input
                           placeholder="Container No"
@@ -329,21 +375,23 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleConfirm(tier); } }}
                           style={{ width: 160 }}
                         />
-                        <button 
-                          type="button" 
-                          className="btn btn-outline" 
-                          onClick={() => {
-                            setFocusedTier(tier);
-                            setShowContainerFilter(!showContainerFilter);
-                            if (!showContainerFilter) {
-                              fetchAvailableContainers();
-                            }
-                          }}
-                          title="Filter containers cho tier này"
-                          style={{ fontSize: '10px', padding: '2px 6px' }}
-                        >
-                          🔍
-                        </button>
+                        {!isSystemAdmin && (
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            onClick={() => {
+                              setFocusedTier(tier);
+                              setShowContainerFilter(!showContainerFilter);
+                              if (!showContainerFilter) {
+                                fetchAvailableContainers();
+                              }
+                            }}
+                            title="Filter containers cho tier này"
+                            style={{ fontSize: '10px', padding: '2px 6px' }}
+                          >
+                            🔍
+                          </button>
+                        )}
                       </div>
                       
                       {/* Hiển thị validation message */}
@@ -361,8 +409,8 @@ export const StackDetailsModal: React.FC<StackDetailsModalProps> = ({ visible, s
                         </div>
                       )}
                       
-                      {/* Container Filter cho tier này */}
-                      {showContainerFilter && focusedTier === tier && (
+                      {/* Container Filter cho tier này (chỉ cho non-SystemAdmin) */}
+                      {!isSystemAdmin && showContainerFilter && focusedTier === tier && (
                         <div style={{ 
                           border: '1px solid #e5e7eb', 
                           borderRadius: 6, 

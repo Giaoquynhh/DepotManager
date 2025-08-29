@@ -101,6 +101,17 @@ export class ReportsRepository {
         SELECT container_no FROM latest_sr
         UNION
         SELECT container_no FROM rt_checked
+        UNION
+        -- Thêm container được SystemAdmin nhập trực tiếp vào bãi (có YardPlacement nhưng không có ServiceRequest/RepairTicket)
+        SELECT DISTINCT yp.container_no 
+        FROM "YardPlacement" yp 
+        WHERE yp.status = 'OCCUPIED' 
+          AND yp.removed_at IS NULL
+          AND yp.container_no NOT IN (
+            SELECT container_no FROM latest_sr
+            UNION
+            SELECT container_no FROM rt_checked
+          )
       ),
       params AS (
         SELECT
@@ -111,7 +122,7 @@ export class ReportsRepository {
       SELECT bc.container_no,
              cm.dem_date, cm.det_date,
              yp.status as placement_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name,
-             ls.service_status as service_status,
+             COALESCE(ls.service_status, 'SYSTEM_ADMIN_ADDED') as service_status,
              ls.gate_checked_at as service_gate_checked_at,
              ls.driver_name as service_driver_name,
              ls.license_plate as service_license_plate,
@@ -135,7 +146,7 @@ export class ReportsRepository {
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
+          (p.service_status <> 'CHECKED' AND (ls.service_status::text = p.service_status OR (ls.service_status IS NULL AND p.service_status = 'SYSTEM_ADMIN_ADDED')))
         )
       ORDER BY bc.container_no
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
@@ -166,6 +177,17 @@ export class ReportsRepository {
         SELECT container_no FROM latest_sr
         UNION
         SELECT container_no FROM rt_checked
+        UNION
+        -- Thêm container được SystemAdmin nhập trực tiếp vào bãi (có YardPlacement nhưng không có ServiceRequest/RepairTicket)
+        SELECT DISTINCT yp.container_no 
+        FROM "YardPlacement" yp 
+        WHERE yp.status = 'OCCUPIED' 
+          AND yp.removed_at IS NULL
+          AND yp.container_no NOT IN (
+            SELECT container_no FROM latest_sr
+            UNION
+            SELECT container_no FROM rt_checked
+          )
       ),
       params AS (
         SELECT
@@ -186,7 +208,7 @@ export class ReportsRepository {
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
+          (p.service_status <> 'CHECKED' AND (ls.service_status::text = p.service_status OR (ls.service_status IS NULL AND p.service_status = 'SYSTEM_ADMIN_ADDED')))
         )
     `)[0]?.cnt || 0;
     return { items: raw, total, page: params.page, pageSize: params.pageSize };

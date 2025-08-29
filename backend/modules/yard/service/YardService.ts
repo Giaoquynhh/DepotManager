@@ -166,10 +166,17 @@ export class YardService {
 	async confirm(actor: any, slot_id: string, tier: number, container_no: string) {
 		if (!container_no) throw new Error('Thiếu container_no');
 		
-		// Kiểm tra container có tồn tại và có trạng thái "Đang chờ sắp xếp" không
-		const containerStatus = await this.validateContainerForYardPlacement(container_no);
-		if (!containerStatus.canPlace) {
-			throw new Error(containerStatus.reason);
+		// SystemAdmin có thể nhập container tùy ý
+		const isSystemAdmin = actor.role === 'SystemAdmin';
+		
+
+		
+		// Kiểm tra container có tồn tại và có trạng thái "Đang chờ sắp xếp" không (chỉ cho non-SystemAdmin)
+		if (!isSystemAdmin) {
+			const containerStatus = await this.validateContainerForYardPlacement(container_no);
+			if (!containerStatus.canPlace) {
+				throw new Error(containerStatus.reason);
+			}
 		}
 		
 		const now = new Date();
@@ -202,31 +209,38 @@ export class YardService {
 				data: { status: 'OCCUPIED', container_no, hold_expires_at: null, placed_at: now }
 			});
 			
-			// Tạo ForkliftTask để di chuyển container vào vị trí
-			await tx.forkliftTask.create({
-				data: {
-					container_no,
-					to_slot_id: slot_id,
-					status: 'PENDING',
-					created_by: actor._id
-				}
-			});
 
-			// Cập nhật request status từ CHECKED sang POSITIONED
-			// Tìm ServiceRequest mới nhất của container này
-			const latestRequest = await tx.serviceRequest.findFirst({
-				where: { container_no },
-				orderBy: { createdAt: 'desc' }
-			});
-
-			if (latestRequest && latestRequest.status === 'CHECKED') {
-				await tx.serviceRequest.update({
-					where: { id: latestRequest.id },
-					data: { 
-						status: 'POSITIONED',
-						updatedAt: now
+			
+			// Tạo ForkliftTask để di chuyển container vào vị trí (chỉ cho non-SystemAdmin)
+			if (!isSystemAdmin) {
+				await tx.forkliftTask.create({
+					data: {
+						container_no,
+						to_slot_id: slot_id,
+						status: 'PENDING',
+						created_by: actor._id
 					}
 				});
+
+				// Cập nhật request status từ CHECKED sang POSITIONED
+				// Tìm ServiceRequest mới nhất của container này
+				const latestRequest = await tx.serviceRequest.findFirst({
+					where: { container_no },
+					orderBy: { createdAt: 'desc' }
+				});
+
+				if (latestRequest && latestRequest.status === 'CHECKED') {
+					await tx.serviceRequest.update({
+						where: { id: latestRequest.id },
+						data: { 
+							status: 'POSITIONED',
+							updatedAt: now
+						}
+					});
+				}
+			} else {
+				// SystemAdmin: Container sẽ có trạng thái "Container rỗng có trong bãi"
+				// Không cần tạo ForkliftTask, container sẽ được đặt trực tiếp vào bãi
 			}
 			
 			return updatedPlacement;

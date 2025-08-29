@@ -1,5 +1,6 @@
 import Header from '@components/Header';
 import Card from '@components/Card';
+import TestContainerEmpty from '@components/TestContainerEmpty';
 
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -12,52 +13,57 @@ function ContainersList(){
   const pageSize = 20;
   const key = ['containers_page', q, status, page].join(':');
   const { data, mutate, error } = useSWR(key, async ()=> {
-    // Luôn lấy tất cả container có trạng thái CHECKED và IN_YARD
-    // Filter sẽ được thực hiện ở frontend dựa trên derived_status
+    const backendStatus = status === 'IN_YARD' ? 'OCCUPIED' : undefined;
+    // Lấy tất cả container (không chỉ CHECKED) để bao gồm cả container SystemAdmin nhập
     const params: any = { 
       q: q || undefined, 
-      status: undefined, // Không filter theo backend status
-      service_status: undefined, // Lấy tất cả container (CHECKED và IN_YARD)
+      status: backendStatus, 
+      // Bỏ service_status filter để lấy cả container SystemAdmin nhập
       page, 
       pageSize 
     };
-    return reportsApi.listContainers(params);
+    
+    return await reportsApi.listContainers(params);
   });
 
   const items = (data?.items || []).map((it:any) => {
-    // Kiểm tra trạng thái IN_YARD trước (đã được duyệt trên Forklift)
-    if (it.service_status === 'IN_YARD') {
-      // Container đã được duyệt và đặt vào vị trí trong bãi
-      return { ...it, derived_status: 'IN_YARD' };
-    }
+    const inYard = !!it.slot_code;
     
-    // Kiểm tra container có trạng thái CHECKED hoặc repair_checked
-    if (it.service_status === 'CHECKED' || it.repair_checked === true) {
-      const inYard = !!it.slot_code;
-      if (inYard) {
-        // Container có slot_code - đã xếp chỗ trong bãi
-        // Khi container được confirm trên Yard, nó sẽ có slot_code
-        // Trạng thái này sẽ là "Đã xếp chỗ trong bãi" (ASSIGNED)
+    if (inYard) {
+      // Container có slot_code - đã xếp chỗ trong bãi
+      if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+        // Container đã được kiểm tra (CHECKED) - trạng thái bình thường
         return { ...it, derived_status: 'ASSIGNED' };
+      } else if (it.service_status === 'SYSTEM_ADMIN_ADDED') {
+        // Container được SystemAdmin nhập trực tiếp vào bãi
+        return { ...it, derived_status: 'EMPTY_IN_YARD' };
       } else {
-        // Container chưa có slot_code - đang chờ sắp xếp
-        // Trạng thái này sẽ là "Chờ xếp chỗ" (PENDING)
-        return { ...it, derived_status: 'PENDING' };
+        // Container KHÔNG có service_status = 'CHECKED' nhưng có slot_code
+        // => Đây là container được SystemAdmin nhập tùy ý
+        return { ...it, derived_status: 'EMPTY_IN_YARD' };
       }
     } else {
-      // Container chưa được kiểm tra - không có derived_status
-      return { ...it, derived_status: null };
+      // Container chưa có slot_code
+      if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+        // Container đã kiểm tra nhưng chưa xếp chỗ - đang chờ sắp xếp
+        return { ...it, derived_status: 'WAITING' };
+      } else {
+        // Container chưa được kiểm tra - không có derived_status
+        return { ...it, derived_status: null };
+      }
     }
   });
   
-  // Lọc theo derived_status (đơn giản hơn, chỉ filter ở frontend)
-  const filteredItems = status === 'PENDING' ? 
-    items.filter((i:any) => i.derived_status === 'PENDING') : 
+  // Lọc theo trạng thái
+  const filteredItems = status === 'WAITING' ? 
+    items.filter((i:any) => i.derived_status === 'WAITING') : 
     status === 'ASSIGNED' ? 
     items.filter((i:any) => i.derived_status === 'ASSIGNED') : 
-    status === 'IN_YARD' ? 
-    items.filter((i:any) => i.derived_status === 'IN_YARD') : 
-    items.filter((i:any) => i.derived_status !== null); // Chỉ lấy container có derived_status
+    status === 'EMPTY_IN_YARD' ?
+    items.filter((i:any) => i.derived_status === 'EMPTY_IN_YARD') : // Container rỗng có trong bãi
+    items.filter((i:any) => i.derived_status !== null); // Lấy tất cả container có derived_status
+  
+
 
   return (
     <>
@@ -74,22 +80,22 @@ function ContainersList(){
           style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, minWidth:160}}
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="PENDING">Chờ xếp chỗ</option>
+          <option value="WAITING">Đang chờ sắp xếp</option>
           <option value="ASSIGNED">Đã xếp chỗ trong bãi</option>
-          <option value="IN_YARD">Đã ở trong bãi</option>
+          <option value="EMPTY_IN_YARD">Container rỗng có trong bãi</option>
         </select>
-                 <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'#f0f9ff', border:'1px solid #0ea5e9', borderRadius:6}}>
-           <input 
-             type="checkbox" 
-             id="show-checked-only" 
-             checked={true} 
-             disabled={true}
-             style={{margin:0}}
-           />
-           <label htmlFor="show-checked-only" style={{fontSize:14, color:'#0369a1', cursor:'default', fontWeight:500}}>
-             Filter theo derived_status: PENDING, ASSIGNED, IN_YARD (Frontend filtering)
-           </label>
-         </div>
+                           <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'#f0f9ff', border:'1px solid #0ea5e9', borderRadius:6}}>
+            <input 
+              type="checkbox" 
+              id="show-checked-only" 
+              checked={true} 
+              disabled={true}
+              style={{margin:0}}
+            />
+            <label htmlFor="show-checked-only" style={{fontSize:14, color:'#0369a1', cursor:'default', fontWeight:500}}>
+              Hiển thị tất cả container - Bao gồm cả container SystemAdmin nhập
+            </label>
+          </div>
       </div>
       {error && (
         <div style={{marginBottom:12, border:'1px solid #fecaca', background:'#fef2f2', color:'#7f1d1d', padding:10, borderRadius:8}}>
@@ -119,25 +125,25 @@ function ContainersList(){
                    <div style={{display:'flex', flexDirection:'column'}}>
                      {it.derived_status ? (
                        <>
-                                                   <span
-                            style={{
-                              background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : 
-                                         it.derived_status==='IN_YARD' ? '#dcfce7' : '#fff7e6',
-                              color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : 
-                                    it.derived_status==='IN_YARD' ? '#166534' : '#664d03',
-                              padding:'4px 8px',
-                              borderRadius:8,
-                              fontWeight:700,
-                              width:'fit-content'
-                            }}
-                          >
-                            {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
-                             it.derived_status==='IN_YARD' ? 'Đã ở trong bãi' : 'Chờ xếp chỗ'}
-                          </span>
-                          {(it.derived_status==='ASSIGNED' || it.derived_status==='IN_YARD') && (
-                            <small className="muted" style={{marginTop:4}}>
-                              Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
-                          )}
+                         <span
+                           style={{
+                             background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : 
+                                        it.derived_status==='EMPTY_IN_YARD' ? '#fef3c7' : '#fff7e6',
+                             color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : 
+                                   it.derived_status==='EMPTY_IN_YARD' ? '#92400e' : '#664d03',
+                             padding:'4px 8px',
+                             borderRadius:8,
+                             fontWeight:700,
+                             width:'fit-content'
+                           }}
+                         >
+                           {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
+                            it.derived_status==='EMPTY_IN_YARD' ? 'Container rỗng có trong bãi' : 'Đang chờ sắp xếp'}
+                         </span>
+                         {(it.derived_status==='ASSIGNED' || it.derived_status==='EMPTY_IN_YARD') && (
+                           <small className="muted" style={{marginTop:4}}>
+                             Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
+                         )}
                        </>
                      ) : (
                        <span
@@ -155,19 +161,24 @@ function ContainersList(){
                      )}
                    </div>
                  </td>
-                <td>
-                  <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                    {it.service_gate_checked_at && (
-                      <small className="muted">
-                        Lúc: {new Date(it.service_gate_checked_at).toLocaleString()} | Biển số: {it.service_license_plate || '-'} | Tài xế: {it.service_driver_name || '-'}</small>
-                    )}
-                    {!it.service_gate_checked_at && it.repair_checked && (
-                      <small className="muted">
-                        Lúc: {new Date(it.repair_updated_at).toLocaleString()} | Đã kiểm tra qua phiếu sửa chữa
-                      </small>
-                    )}
-                  </div>
-                </td>
+                                 <td>
+                   <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                     {it.service_gate_checked_at && (
+                       <small className="muted">
+                         Lúc: {new Date(it.service_gate_checked_at).toLocaleString()} | Biển số: {it.service_license_plate || '-'} | Tài xế: {it.service_driver_name || '-'}</small>
+                       )}
+                     {!it.service_gate_checked_at && it.repair_checked && (
+                       <small className="muted">
+                         Lúc: {new Date(it.repair_updated_at).toLocaleString()} | Đã kiểm tra qua phiếu sửa chữa
+                       </small>
+                     )}
+                     {it.derived_status === 'EMPTY_IN_YARD' && (
+                       <small className="muted" style={{color: '#92400e', fontStyle: 'italic'}}>
+                         Container được SystemAdmin nhập trực tiếp vào bãi
+                       </small>
+                     )}
+                   </div>
+                 </td>
               </tr>
             ))}
           </tbody>
@@ -186,11 +197,14 @@ function ContainersList(){
 }
 
 export default function ContainersPage(){
+  const { mutate } = useSWR('containers_page');
+  
   return (
     <>
       <Header />
       <main className="container">
-                 <Card title="Quản lý container" subtitle="Hiển thị tất cả container - Filter theo derived_status (PENDING/ASSIGNED/IN_YARD)">
+        <TestContainerEmpty onTest={() => mutate()} />
+        <Card title="Quản lý container" subtitle="Hiển thị tất cả container - Bao gồm cả container được SystemAdmin nhập trực tiếp vào bãi">
           <ContainersList />
         </Card>
       </main>
