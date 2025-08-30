@@ -27,6 +27,102 @@ export class InvoiceService {
     return data;
   }
 
+  async listWithDetails(actor: any, query: any){
+    const where: any = {};
+    if (query.status) where.status = query.status;
+    if (query.customer_id) where.customer_id = query.customer_id;
+    if (query.from || query.to) where.issue_date = { gte: query.from? new Date(query.from): undefined, lte: query.to? new Date(query.to): undefined };
+    
+    const data = await prisma.invoice.findMany({ 
+      where, 
+      orderBy: { issue_date: 'desc' },
+      include: {
+        items: true,
+        allocations: true
+      }
+    });
+
+    // Lấy thông tin ServiceRequest và Customer cho mỗi invoice
+    const enrichedData = await Promise.all(data.map(async (invoice) => {
+      let serviceRequest = null;
+      let customer = null;
+      
+      // Lấy thông tin ServiceRequest nếu có source_id
+      if (invoice.source_module === 'REQUESTS' && invoice.source_id) {
+        serviceRequest = await prisma.serviceRequest.findUnique({
+          where: { id: invoice.source_id },
+          select: {
+            id: true,
+            type: true,
+            container_no: true,
+            status: true,
+            tenant_id: true,
+            created_by: true
+          }
+        });
+        
+        // Lấy thông tin User tạo request (customer)
+        if (serviceRequest?.created_by) {
+          const user = await prisma.user.findUnique({
+            where: { id: serviceRequest.created_by },
+            select: {
+              id: true,
+              full_name: true,
+              email: true,
+              role: true
+            }
+          });
+          
+          customer = {
+            id: user?.id,
+            name: user?.full_name || user?.email,
+            tax_code: serviceRequest.tenant_id?.toString()
+          };
+        }
+      }
+      
+      // Fallback: Lấy thông tin Customer từ customer_id nếu có
+      if (!customer && invoice.customer_id) {
+        customer = await prisma.customer.findUnique({
+          where: { id: invoice.customer_id },
+          select: {
+            id: true,
+            name: true,
+            tax_code: true
+          }
+        });
+      }
+
+      return {
+        ...invoice,
+        serviceRequest,
+        customer
+      };
+    }));
+
+    return enrichedData;
+  }
+
+  async getContainersNeedInvoice(actor: any) {
+    // Lấy danh sách container cần tạo hóa đơn (chưa có hóa đơn)
+    const containers = await prisma.serviceRequest.findMany({
+      where: {
+        status: {
+          in: ['IN_YARD', 'IN_CAR', 'GATE_OUT']
+        }
+        // TODO: Thêm has_invoice: false sau khi TypeScript error được giải quyết
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Filter bằng code để chỉ lấy container chưa có hóa đơn
+    const filteredContainers = containers.filter(container => !(container as any).has_invoice);
+
+    return filteredContainers;
+  }
+
   async create(actor: any, payload: any){
     const totals = this.calcTotals(payload.items);
     const inv = await prisma.invoice.create({ data: {
@@ -39,7 +135,9 @@ export class InvoiceService {
       tax_amount: totals.tax_amount as any,
       total_amount: totals.total_amount as any,
       notes: payload.notes || null,
-      created_by: actor._id
+      created_by: actor._id,
+      source_module: payload.source_module || 'REQUESTS',
+      source_id: payload.source_id || null
     }});
     for (const it of payload.items){
       const qty = r3(it.qty); const price = r4(it.unit_price);

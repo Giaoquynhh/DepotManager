@@ -15,6 +15,8 @@ export const createInvoiceSchema = Joi.object({
   issue_date: Joi.date().optional(),
   due_date: Joi.date().optional(),
   notes: Joi.string().allow('').optional(),
+  source_module: Joi.string().optional(),
+  source_id: Joi.string().optional(),
   items: Joi.array().items(invoiceItemSchema).min(1).required()
 });
 

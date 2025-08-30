@@ -116,6 +116,10 @@ model ServiceRequest {
     driver_name              String?  // Tên tài xế
     license_plate            String?  // Biển số xe
     
+    // Invoice và Payment status
+    has_invoice              Boolean  @default(false)  // Kiểm tra request đã có hóa đơn chưa
+    is_paid                  Boolean  @default(false)  // Kiểm tra request đã được thanh toán chưa
+    
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 
@@ -124,11 +128,14 @@ model ServiceRequest {
     chatRoom         ChatRoom?
     attachments      RequestAttachment[]
     notifications    Notification[]
+    invoices         Invoice[]  // Relation với Invoice (source_id)
     
     @@index([depot_deleted_at])
     @@index([customer_deleted_at])
     @@index([status])
     @@index([appointment_time])
+    @@index([has_invoice])
+    @@index([is_paid])
 }
 
 model DocumentFile {
@@ -415,12 +422,15 @@ model Invoice {
   created_by    String?
   updated_by    String?
 
+  // Relations
   items         InvoiceLineItem[]
   allocations   PaymentAllocation[]
+  serviceRequest ServiceRequest? @relation(fields: [source_id], references: [id])
 
   @@unique([org_id, invoice_no])
   @@index([org_id, status, issue_date])
   @@index([org_id, customer_id, issue_date])
+  @@index([source_id])
 }
 
 model InvoiceLineItem {

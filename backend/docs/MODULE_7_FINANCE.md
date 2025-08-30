@@ -12,7 +12,9 @@ Tài liệu techlead rút gọn cho Dev Intern/Jr. Module chịu trách nhiệm 
 
 ## API chính
 - Invoices
-  - `GET /finance/invoices`
+  - `GET /finance/invoices` - Lấy danh sách hóa đơn cơ bản
+  - `GET /finance/invoices/details` - Lấy danh sách hóa đơn với thông tin chi tiết (ServiceRequest, Customer)
+  - `GET /finance/invoices/containers-need-invoice` - Lấy danh sách container cần tạo hóa đơn
   - `POST /finance/invoices` (DRAFT, backend tính subtotal/tax/total)
   - `POST /finance/invoices/:id/issue` (DRAFT → UNPAID, cấp `invoice_no`)
   - `GET /finance/invoices/:id`
@@ -21,6 +23,35 @@ Tài liệu techlead rút gọn cho Dev Intern/Jr. Module chịu trách nhiệm 
 - Payments
   - `GET /finance/payments`
   - `POST /finance/payments` (header `Idempotency-Key`)
+
+## Logic mới: Danh sách Container cần tạo hóa đơn
+
+### API Endpoint
+```
+GET /finance/invoices/containers-need-invoice
+```
+
+### Business Logic
+- **Mục đích**: Hiển thị danh sách container cần tạo hóa đơn cho SaleAdmin
+- **Điều kiện lọc**: Container có trạng thái `IN_YARD`, `IN_CAR`, hoặc `GATE_OUT`
+- **Nguồn dữ liệu**: Bảng `ServiceRequest` với filter theo `status`
+
+### Implementation
+- **Service**: `InvoiceService.getContainersNeedInvoice()`
+- **Controller**: `InvoiceController.getContainersNeedInvoice()`
+- **Route**: `/finance/invoices/containers-need-invoice`
+
+### Data Structure Response
+```typescript
+interface ContainerNeedInvoice {
+  id: string;
+  type: 'IMPORT' | 'EXPORT' | 'CONVERT';
+  container_no: string;
+  status: 'IN_YARD' | 'IN_CAR' | 'GATE_OUT';
+  createdAt: Date;
+  // Các field khác từ ServiceRequest
+}
+```
 
 ## Rounding
 - `qty(3)`, `unit_price(4)`, `line/tax/total(2)` half-up — triển khai trong `InvoiceService.calcTotals`
@@ -35,7 +66,11 @@ Tài liệu techlead rút gọn cho Dev Intern/Jr. Module chịu trách nhiệm 
 ## Liên kết module
 - M3 Requests / M4 Gate / M5 Yard có thể đẩy `source_module/source_id` vào invoice để truy xuất nguồn.
 - M2 Auth: RBAC SaleAdmin, scope theo `org_id` (placeholder sẵn trong schema).
+- M6 Maintenance: Lấy chi phí sửa chữa từ `RepairTicket` cho container
+- M4 Yard: Lấy chi phí LOLO từ `ForkliftTask` cho container
 
 ## To-do/Phase2
 - Reports & export job, credit/debit note, sequence service chuẩn.
+- Tích hợp chi phí sửa chữa và LOLO vào quy trình tạo hóa đơn
+- Upload EIR (Equipment Interchange Receipt) cho container
 

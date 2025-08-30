@@ -6,7 +6,19 @@ import { AuthRequest } from '../../../shared/middlewares/auth';
 export class ForkliftController {
 	async listJobs(req: Request, res: Response) {
 		try {
+			const { container_no, status } = req.query;
+			
+			// Build where clause
+			const where: any = {};
+			if (container_no) {
+				where.container_no = container_no as string;
+			}
+			if (status) {
+				where.status = status as string;
+			}
+			
 			const jobs = await prisma.forkliftTask.findMany({
+				where,
 				orderBy: {
 					createdAt: 'desc'
 				}
