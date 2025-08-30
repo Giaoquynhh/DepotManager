@@ -117,8 +117,8 @@ export default function InvoiceList(){
                       </td>
                       <td>{Number(invoice.total_amount||0).toLocaleString('vi-VN')} VND</td>
                       <td>
-                        {invoice.serviceRequest?.id ? (
-                          <Link href={`/requests/${invoice.serviceRequest.id}`} style={{color:'#1976d2', textDecoration:'none'}}>
+                        {invoice.serviceRequest?.container_no ? (
+                          <Link href={`/finance/eir/container/${invoice.serviceRequest.container_no}`} style={{color:'#1976d2', textDecoration:'none'}}>
                             Xem EIR
                           </Link>
                         ) : '-'}

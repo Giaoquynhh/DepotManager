@@ -18,6 +18,7 @@ Tính năng này cho phép SaleAdmin xem danh sách container cần tạo hóa �
   - Ngày tạo
   - Chi phí dự kiến
   - Nút "Tạo hóa đơn"
+- **Lọc container**: Chỉ hiển thị container có trạng thái `IN_CAR`, `IN_YARD`, `GATE_OUT` và `has_invoice = false`
 
 ### 3. Xem chi tiết chi phí và tạo hóa đơn
 - Click nút **"Tạo hóa đơn"** cho container muốn xử lý

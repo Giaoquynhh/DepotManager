@@ -23,10 +23,13 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const containerNo = req.body.container_no || 'UNKNOWN';
-    const filename = `EIR_${containerNo}_${uniqueSuffix}_${file.originalname}`;
-    console.log('📁 Creating filename:', filename, 'for container:', containerNo);
-    cb(null, filename);
+    
+    // Vấn đề: req.body chưa được parse khi filename function được gọi
+    // Giải pháp: Sử dụng originalname để tạo tên file tạm thời
+    // Sau đó sẽ đổi tên file trong route handler
+    const tempFilename = `EIR_TEMP_${uniqueSuffix}_${file.originalname}`;
+    console.log('📁 Creating temporary filename:', tempFilename);
+    cb(null, tempFilename);
   }
 });
 
@@ -84,8 +87,60 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
       return res.status(400).json({ success: false, message: 'Container number là bắt buộc' });
     }
 
-    // Lưu thông tin file vào database nếu cần
-    // TODO: Implement file tracking
+    // Đổi tên file từ TEMP thành tên chính xác với container number
+    const oldFilePath = req.file.path;
+    const oldFilename = req.file.filename;
+    const fileExtension = path.extname(req.file.originalname);
+    const newFilename = `EIR_${container_no}_${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExtension}`;
+    const newFilePath = path.join(path.dirname(oldFilePath), newFilename);
+    
+    try {
+      fs.renameSync(oldFilePath, newFilePath);
+      console.log('📁 Đã đổi tên file:', oldFilename, '→', newFilename);
+      
+      // Cập nhật req.file để sử dụng tên mới
+      req.file.filename = newFilename;
+      req.file.path = newFilePath;
+    } catch (renameError) {
+      console.error('❌ Lỗi khi đổi tên file:', renameError);
+      // Nếu không đổi tên được, vẫn tiếp tục với tên cũ
+    }
+
+    // Tìm request tương ứng với container_no
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    console.log('🔍 Tìm request với container_no:', container_no);
+    
+    const request = await prisma.serviceRequest.findFirst({
+      where: { container_no: container_no },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!request) {
+      console.log('❌ Không tìm thấy request cho container:', container_no);
+      return res.status(404).json({ 
+        success: false, 
+        message: `Không tìm thấy request cho container ${container_no}` 
+      });
+    }
+
+    console.log('✅ Tìm thấy request:', request);
+
+    // Lưu thông tin file vào database
+    const document = await prisma.documentFile.create({
+      data: {
+        request_id: request.id,
+        type: 'EIR',
+        name: req.file.originalname,
+        size: req.file.size,
+        version: 1,
+        uploader_id: req.user._id,
+        storage_key: req.file.filename
+      }
+    });
+
+    console.log('✅ Đã lưu EIR document vào database:', document);
 
     res.json({
       success: true,
@@ -96,6 +151,8 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
         size: req.file.size,
         mimetype: req.file.mimetype,
         container_no: container_no,
+        request_id: request.id,
+        document_id: document.id,
         upload_path: req.file.path
       }
     });
@@ -108,7 +165,75 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
   }
   });
   
-  // API để xem file EIR
+  // API để xem file EIR theo container_no
+  router.get('/eir/container/:container_no', async (req: any, res: any) => {
+    try {
+      const { container_no } = req.params;
+      
+      if (!container_no) {
+        return res.status(400).json({ success: false, message: 'Container number là bắt buộc' });
+      }
+
+      // Tìm request và EIR document
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      const request = await prisma.serviceRequest.findFirst({
+        where: { container_no: container_no },
+        include: {
+          docs: {
+            where: { type: 'EIR', deleted_at: null },
+            orderBy: { createdAt: 'desc' }, // Sử dụng createdAt thay vì version
+            take: 1
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (!request || !request.docs.length) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy EIR cho container này' });
+      }
+
+      const eirDoc = request.docs[0];
+      const filename = eirDoc.storage_key;
+      const filePath = path.join('D:\\container21\\manageContainer\\backend\\uploads', filename);
+      
+      // Kiểm tra file có tồn tại không
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ success: false, message: 'File EIR không tồn tại trên server' });
+      }
+
+      // Lấy thông tin file
+      const stats = fs.statSync(filePath);
+      const ext = path.extname(filename).toLowerCase();
+      
+      // Set content type dựa trên extension
+      let contentType = 'application/octet-stream';
+      if (ext === '.pdf') {
+        contentType = 'application/pdf';
+      } else if (['.png', '.jpg', '.jpeg', '.gif'].includes(ext)) {
+        contentType = `image/${ext.slice(1)}`;
+      }
+
+      // Set headers
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', stats.size);
+      res.setHeader('Content-Disposition', `inline; filename="${eirDoc.name}"`);
+
+      // Stream file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+
+    } catch (error: any) {
+      console.error('Error serving EIR file by container:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Lỗi khi xem file' 
+      });
+    }
+  });
+  
+  // API để xem file EIR theo filename
   router.get('/eir/:filename', async (req: any, res: any) => {
     try {
       const { filename } = req.params;
