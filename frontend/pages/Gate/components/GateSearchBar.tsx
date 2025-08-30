@@ -87,6 +87,8 @@ export default function GateSearchBar({
               <option value="SCHEDULED">SCHEDULED</option>
               <option value="FORWARDED">FORWARDED</option>
               <option value="GATE_IN">GATE_IN</option>
+              <option value="IN_YARD">IN_YARD (Import - Đã ở bãi)</option>
+              <option value="IN_CAR">IN_CAR (Export - Đã lên xe)</option>
               <option value="GATE_REJECTED">GATE_REJECTED</option>
               <option value="COMPLETED">COMPLETED</option>
             </select>

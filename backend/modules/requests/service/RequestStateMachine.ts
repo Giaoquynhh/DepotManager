@@ -27,7 +27,8 @@ export class RequestStateMachine {
     'POSITIONED', 
     'FORKLIFTING', // Trạng thái mới: đang nâng/hạ container
     'IN_YARD', // Trạng thái mới: đã ở trong bãi
-    'IN_CAR' // Trạng thái mới: container đã được đặt lên xe (cho EXPORT)
+    'IN_CAR', // Trạng thái mới: container đã được đặt lên xe (cho EXPORT)
+    'GATE_OUT' // Trạng thái mới: xe đã rời kho (cho cả IMPORT và EXPORT)
   ];
 
   private static readonly TRANSITIONS: StateTransition[] = [
@@ -173,6 +174,18 @@ export class RequestStateMachine {
       to: 'IN_CAR',
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
       description: 'Container đã được đặt lên xe (cho EXPORT)'
+    },
+    {
+      from: 'IN_CAR',
+      to: 'GATE_OUT',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      description: 'Xe đã rời kho (cho EXPORT requests)'
+    },
+    {
+      from: 'IN_YARD',
+      to: 'GATE_OUT',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      description: 'Xe đã rời kho (cho IMPORT requests)'
     },
     {
       from: 'PENDING_ACCEPT',
@@ -324,6 +337,12 @@ export class RequestStateMachine {
           case 'IN_YARD':
             systemMessage = '🏭 Container đã được đặt vào vị trí trong bãi';
             break;
+          case 'IN_CAR':
+            systemMessage = '🚛 Container đã được đặt lên xe';
+            break;
+          case 'GATE_OUT':
+            systemMessage = '🚗 Xe đã rời kho';
+            break;
           default:
             systemMessage = `🔄 Trạng thái đã thay đổi thành: ${newState}`;
         }
@@ -345,7 +364,9 @@ export class RequestStateMachine {
         'COMPLETED': 'Hoàn tất',
         'POSITIONED': 'Đã xếp chỗ trong bãi',
         'FORKLIFTING': 'Đang nâng/hạ container',
-        'IN_YARD': 'Đã ở trong bãi'
+        'IN_YARD': 'Đã ở trong bãi',
+        'IN_CAR': 'Đã lên xe',
+        'GATE_OUT': 'Đã rời kho'
     };
     return descriptions[state] || state;
   }
@@ -361,7 +382,9 @@ export class RequestStateMachine {
         'COMPLETED': 'green',
         'POSITIONED': 'blue',
         'FORKLIFTING': 'orange',
-        'IN_YARD': 'green'
+        'IN_YARD': 'green',
+        'IN_CAR': 'purple',
+        'GATE_OUT': 'red'
     };
     return colors[state] || 'gray';
   }

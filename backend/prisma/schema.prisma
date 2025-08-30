@@ -86,7 +86,7 @@ model ServiceRequest {
     type          String   // IMPORT | EXPORT | CONVERT
     container_no  String?  // Optional cho EXPORT
     eta           DateTime?
-    status        String   // PENDING | PICK_CONTAINER | SCHEDULED | FORWARDED | GATE_IN | CHECKING | GATE_REJECTED | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | PENDING_ACCEPT | ACCEPT | CHECKED | POSITIONED | FORKLIFTING | IN_YARD
+    status        String   // PENDING | PICK_CONTAINER | SCHEDULED | FORWARDED | GATE_IN | CHECKING | GATE_REJECTED | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | PENDING_ACCEPT | ACCEPT | CHECKED | POSITIONED | FORKLIFTING | IN_YARD | IN_CAR | GATE_OUT
     forwarded_at    DateTime?
     forwarded_by    String?
     gate_checked_at DateTime?

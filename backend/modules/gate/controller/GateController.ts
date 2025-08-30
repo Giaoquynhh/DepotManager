@@ -167,6 +167,7 @@ export class GateController {
 
       const searchParams = {
         status: req.query.status as string,
+        statuses: req.query.statuses as string,
         container_no: req.query.container_no as string,
         type: req.query.type as string,
         page: parseInt(req.query.page as string) || 1,
@@ -255,6 +256,31 @@ export class GateController {
     } catch (error: any) {
       res.status(400).json({ 
         message: error.message || 'Có lỗi xảy ra khi xem file' 
+      });
+    }
+  }
+
+  /**
+   * Gate OUT - Xe rời kho
+   */
+  async gateOut(req: AuthRequest, res: Response) {
+    try {
+      const requestId = req.params.id;
+      const actorId = req.user?._id;
+
+      if (!actorId) {
+        return res.status(401).json({ message: 'Không có quyền truy cập' });
+      }
+
+      const result = await this.gateService.gateOut(requestId, actorId);
+      
+      res.json({
+        message: 'Đã chuyển trạng thái sang GATE_OUT - Xe rời kho thành công',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({ 
+        message: error.message || 'Có lỗi xảy ra khi chuyển trạng thái GATE_OUT' 
       });
     }
   }

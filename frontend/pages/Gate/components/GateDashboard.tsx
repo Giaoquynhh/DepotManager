@@ -113,6 +113,11 @@ export default function GateDashboard() {
         if (value) params.append(key, value.toString());
       });
 
+      // Thêm filter để lấy requests có trạng thái IN_YARD và IN_CAR
+      if (!searchParams.status || searchParams.status === '') {
+        params.append('statuses', 'IN_YARD,IN_CAR');
+      }
+
       const response = await api.get(`/gate/requests/search?${params.toString()}`);
       setRequests(response.data.data);
       setPagination(response.data.pagination);

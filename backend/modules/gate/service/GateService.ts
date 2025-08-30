@@ -308,15 +308,22 @@ export class GateService {
    * Tìm kiếm requests ở Gate
    */
   async searchRequests(params: GateSearchParams, actorId: string): Promise<any> {
-    const { status, container_no, type, page = 1, limit = 20 } = params;
+    const { status, statuses, container_no, type, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      status: { in: ['FORWARDED', 'GATE_IN', 'GATE_REJECTED'] }
-    };
+    const where: any = {};
 
+    // Xử lý status filter
     if (status) {
+      // Nếu có status cụ thể, sử dụng nó
       where.status = status;
+    } else if (statuses) {
+      // Nếu có statuses (comma-separated), split và sử dụng
+      const statusArray = statuses.split(',').map(s => s.trim());
+      where.status = { in: statusArray };
+    } else {
+      // Default: chỉ hiển thị các trạng thái cơ bản của Gate
+      where.status = { in: ['FORWARDED', 'GATE_IN', 'GATE_REJECTED'] };
     }
 
     if (container_no) {
@@ -358,6 +365,48 @@ export class GateService {
         pages: Math.ceil(total / limit)
       }
     };
+  }
+
+  /**
+   * Gate OUT - Xe rời kho (chuyển từ IN_YARD hoặc IN_CAR sang GATE_OUT)
+   */
+  async gateOut(requestId: string, actorId: string): Promise<any> {
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      throw new Error('Request không tồn tại');
+    }
+
+    // Chỉ cho phép chuyển từ IN_YARD hoặc IN_CAR sang GATE_OUT
+    if (request.status !== 'IN_YARD' && request.status !== 'IN_CAR') {
+      throw new Error(`Không thể chuyển từ trạng thái ${request.status} sang GATE_OUT. Chỉ cho phép từ IN_YARD hoặc IN_CAR.`);
+    }
+
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'GATE_OUT',
+        history: {
+          ...(request.history as any || {}),
+          gate_out: {
+            previous_status: request.status,
+            gate_out_at: new Date().toISOString(),
+            gate_out_by: actorId
+          }
+        }
+      }
+    });
+
+    // Audit log
+    await audit(actorId, 'REQUEST.GATE_OUT', 'ServiceRequest', requestId, {
+      previous_status: request.status,
+      new_status: 'GATE_OUT',
+      request_type: request.type
+    });
+
+    return updatedRequest;
   }
 
   /**

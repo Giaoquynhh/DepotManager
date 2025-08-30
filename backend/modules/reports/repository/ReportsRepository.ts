@@ -73,7 +73,7 @@ export class ReportsRepository {
   }
 
   async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; page: number; pageSize: number }){
-    // Sửa lại query để đảm bảo container từ YardPlacement được trả về
+    // Sửa lại query để đảm bảo container từ YardPlacement được trả về và tránh duplicate
     const raw = await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
         SELECT DISTINCT ON (sr.container_no)
@@ -98,23 +98,31 @@ export class ReportsRepository {
         ORDER BY rt.container_no, rt."updatedAt" DESC
       ),
       base_containers AS (
-        -- Lấy container từ ServiceRequest
-        SELECT container_no, 'SERVICE_REQUEST' as source FROM latest_sr
-        UNION
-        -- Lấy container từ RepairTicket
-        SELECT container_no, 'REPAIR_TICKET' as source FROM rt_checked
-        UNION
-        -- Lấy container từ YardPlacement (SystemAdmin nhập trực tiếp)
-        SELECT DISTINCT yp.container_no, 'YARD_PLACEMENT' as source
-        FROM "YardPlacement" yp 
-        WHERE yp.status = 'OCCUPIED' 
-          AND yp.removed_at IS NULL
-          AND yp.container_no IS NOT NULL
-          AND yp.container_no NOT IN (
-            SELECT container_no FROM latest_sr
-            UNION
-            SELECT container_no FROM rt_checked
-          )
+        -- Ưu tiên: ServiceRequest trước, sau đó RepairTicket, cuối cùng YardPlacement
+        SELECT DISTINCT ON (container_no)
+          container_no,
+          source,
+          priority
+        FROM (
+          -- ServiceRequest có ưu tiên cao nhất
+          SELECT container_no, 'SERVICE_REQUEST' as source, 1 as priority FROM latest_sr
+          UNION ALL
+          -- RepairTicket có ưu tiên thứ 2
+          SELECT container_no, 'REPAIR_TICKET' as source, 2 as priority FROM rt_checked
+          UNION ALL
+          -- YardPlacement có ưu tiên thấp nhất (chỉ khi không có trong 2 nguồn trên)
+          SELECT yp.container_no, 'YARD_PLACEMENT' as source, 3 as priority
+          FROM "YardPlacement" yp 
+          WHERE yp.status = 'OCCUPIED' 
+            AND yp.removed_at IS NULL
+            AND yp.container_no IS NOT NULL
+            AND yp.container_no NOT IN (
+              SELECT container_no FROM latest_sr
+              UNION
+              SELECT container_no FROM rt_checked
+            )
+        ) all_sources
+        ORDER BY container_no, priority
       ),
       params AS (
         SELECT
@@ -122,7 +130,7 @@ export class ReportsRepository {
           CAST(${params.status ?? null} AS TEXT)        AS status,
           CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
-      SELECT 
+      SELECT DISTINCT ON (bc.container_no)
         bc.container_no,
         cm.dem_date, 
         cm.det_date,
@@ -140,7 +148,8 @@ export class ReportsRepository {
         ls.gate_ref as service_gate_ref,
         COALESCE(rt.repair_checked, FALSE) as repair_checked,
         rt.updated_at as repair_updated_at,
-        yp.tier as placement_tier
+        yp.tier as placement_tier,
+        bc.source as data_source
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
@@ -162,7 +171,7 @@ export class ReportsRepository {
             (bc.source = 'YARD_PLACEMENT' AND p.service_status = 'SYSTEM_ADMIN_ADDED')
           ))
         )
-      ORDER BY bc.container_no
+      ORDER BY bc.container_no, bc.priority
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
     `;
     
@@ -190,23 +199,31 @@ export class ReportsRepository {
         ORDER BY rt.container_no, rt."updatedAt" DESC
       ),
       base_containers AS (
-        -- Lấy container từ ServiceRequest
-        SELECT container_no, 'SERVICE_REQUEST' as source FROM latest_sr
-        UNION
-        -- Lấy container từ RepairTicket
-        SELECT container_no, 'REPAIR_TICKET' as source FROM rt_checked
-        UNION
-        -- Lấy container từ YardPlacement (SystemAdmin nhập trực tiếp)
-        SELECT DISTINCT yp.container_no, 'YARD_PLACEMENT' as source
-        FROM "YardPlacement" yp 
-        WHERE yp.status = 'OCCUPIED' 
-          AND yp.removed_at IS NULL
-          AND yp.container_no IS NOT NULL
-          AND yp.container_no NOT IN (
-            SELECT container_no FROM latest_sr
-            UNION
-            SELECT container_no FROM rt_checked
-          )
+        -- Ưu tiên: ServiceRequest trước, sau đó RepairTicket, cuối cùng YardPlacement
+        SELECT DISTINCT ON (container_no)
+          container_no,
+          source,
+          priority
+        FROM (
+          -- ServiceRequest có ưu tiên cao nhất
+          SELECT container_no, 'SERVICE_REQUEST' as source, 1 as priority FROM latest_sr
+          UNION ALL
+          -- RepairTicket có ưu tiên thứ 2
+          SELECT container_no, 'REPAIR_TICKET' as source, 2 as priority FROM rt_checked
+          UNION ALL
+          -- YardPlacement có ưu tiên thấp nhất (chỉ khi không có trong 2 nguồn trên)
+          SELECT yp.container_no, 'YARD_PLACEMENT' as source, 3 as priority
+          FROM "YardPlacement" yp 
+          WHERE yp.status = 'OCCUPIED' 
+            AND yp.removed_at IS NULL
+            AND yp.container_no IS NOT NULL
+            AND yp.container_no NOT IN (
+              SELECT container_no FROM latest_sr
+              UNION
+              SELECT container_no FROM rt_checked
+            )
+        ) all_sources
+        ORDER BY container_no, priority
       ),
       params AS (
         SELECT
@@ -214,7 +231,7 @@ export class ReportsRepository {
           CAST(${params.status ?? null} AS TEXT)        AS status,
           CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
-      SELECT COUNT(*)::int as cnt
+      SELECT COUNT(DISTINCT bc.container_no)::int as cnt
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no

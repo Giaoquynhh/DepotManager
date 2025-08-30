@@ -1,26 +1,33 @@
 # Container Management System
 
-## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR
+## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR và GATE_OUT
 
-### **Workflow mới với trạng thái IN_CAR**
+### **Workflow mới với trạng thái IN_CAR và GATE_OUT**
 
-#### 1. **Import Request Workflow (Giữ nguyên):**
+#### 1. **Import Request Workflow (MỚI):**
 ```
 1. CHECKED → POSITIONED (Yard confirm)
 2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
 3. FORKLIFTING → IN_YARD (Forklift approval)
+4. IN_YARD → GATE_OUT (Xe đã rời kho) ⭐ MỚI
 ```
 
 #### 2. **Export Request Workflow (MỚI):**
 ```
 1. GATE_IN → FORKLIFTING (Driver click "Bắt đầu")
-2. FORKLIFTING → IN_CAR (Forklift approval) ⭐ MỚI
-3. Container tự động ẩn khỏi Yard và ContainersPage
+2. FORKLIFTING → IN_CAR (Forklift approval)
+3. IN_CAR → GATE_OUT (Xe đã rời kho) ⭐ MỚI
+4. Container tự động ẩn khỏi Yard và ContainersPage
 ```
 
 ### **Logic mới khi approve forklift job:**
-- **IMPORT requests**: `FORKLIFTING` → `IN_YARD` (giữ nguyên logic cũ)
-- **EXPORT requests**: `FORKLIFTING` → `IN_CAR` (logic mới)
+- **IMPORT requests**: `FORKLIFTING` → `IN_YARD` → `GATE_OUT` (logic mới)
+- **EXPORT requests**: `FORKLIFTING` → `IN_CAR` → `GATE_OUT` (logic mới)
+
+### **Trạng thái GATE_OUT:**
+- **GATE_OUT**: Xe đã rời kho (cho cả IMPORT và EXPORT)
+- Đánh dấu hoàn tất quy trình xử lý container
+- Xe không còn ở trong depot
 
 ### **Ẩn container IN_CAR:**
 - Container có trạng thái `IN_CAR` sẽ tự động ẩn khỏi:
@@ -69,7 +76,9 @@ manageContainer/
 ### **1. Quản lý yêu cầu dịch vụ (Requests)**
 - **State Machine**: Quản lý workflow trạng thái một cách nhất quán
 - **Logic mới**: Phân biệt IMPORT/EXPORT khi approve forklift job
-- **Trạng thái mới**: IN_CAR cho container đã lên xe
+- **Trạng thái mới**: 
+  - IN_CAR cho container đã lên xe
+  - GATE_OUT cho xe đã rời kho (cả IMPORT và EXPORT)
 - **Ẩn container IN_CAR**: Tự động ẩn khỏi Yard và ContainersPage
 
 ### **2. Quản lý bãi container (Yard)**
@@ -142,18 +151,20 @@ npx prisma generate
 
 ### **Container Yard Workflow Integration mới:**
 
-#### **Import Request Workflow:**
+#### **Import Request Workflow (MỚI):**
 ```
 1. CHECKED → POSITIONED (Yard confirm)
 2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
 3. FORKLIFTING → IN_YARD (Forklift approval)
+4. IN_YARD → GATE_OUT (Xe đã rời kho) ⭐ MỚI
 ```
 
 #### **Export Request Workflow (MỚI):**
 ```
 1. GATE_IN → FORKLIFTING (Driver click "Bắt đầu")
-2. FORKLIFTING → IN_CAR (Forklift approval) ⭐ MỚI
-3. Container tự động ẩn khỏi Yard và ContainersPage
+2. FORKLIFTING → IN_CAR (Forklift approval)
+3. IN_CAR → GATE_OUT (Xe đã rời kho) ⭐ MỚI
+4. Container tự động ẩn khỏi Yard và ContainersPage
 ```
 
 ### **State Machine Integration:**
@@ -166,6 +177,10 @@ npx prisma generate
 ### **Khi approve forklift job:**
 - **IMPORT requests**: Container được đặt vào vị trí trong bãi → Hiển thị trong Yard và ContainersPage
 - **EXPORT requests**: Container được đặt lên xe → Tự động ẩn khỏi Yard và ContainersPage
+
+### **Khi xe rời kho (GATE_OUT):**
+- **IMPORT requests**: Container đã được đặt trong bãi, xe rời kho → Đánh dấu hoàn tất
+- **EXPORT requests**: Container đã lên xe, xe rời kho → Đánh dấu hoàn tất
 
 ### **Lý do logic mới:**
 - Container EXPORT đã lên xe không còn ở depot
@@ -217,6 +232,7 @@ npx prisma generate
 - `docs/CHAT_SYSTEM.md` - Hệ thống chat
 - `docs/FORKLIFT_STATUS_UPDATE.md` - Cập nhật trạng thái forklift + Logic mới
 - `docs/REQUEST_STATE_MACHINE_IMPLEMENTATION.md` - Implementation State Machine + Logic mới
+- `docs/GATE_OUT_STATUS_UPDATE.md` - Thêm trạng thái GATE_OUT cho xe rời kho ⭐ MỚI
 - `docs/FORKLIFT_ACTION_MAPPING.md` - Mapping hành động forklift
 - `docs/FORKLIFT_ISSUE_ANALYSIS.md` - Phân tích vấn đề forklift
 
@@ -224,7 +240,7 @@ npx prisma generate
 
 ### **Backend Implementation:**
 - `modules/forklift/controller/ForkliftController.ts` - Logic approve job mới
-- `modules/requests/service/RequestStateMachine.ts` - Thêm trạng thái IN_CAR
+- `modules/requests/service/RequestStateMachine.ts` - Thêm trạng thái IN_CAR, GATE_OUT và transitions
 - `modules/yard/service/YardService.ts` - Lọc bỏ container IN_CAR
 
 ### **Frontend Implementation:**
@@ -237,6 +253,6 @@ npx prisma generate
 ---
 
 **Ngày tạo:** 2024-08-16  
-**Phiên bản:** 4.0.0 - Container Yard Workflow Integration + Logic phân biệt IMPORT/EXPORT  
+**Phiên bản:** 4.1.0 - Container Yard Workflow Integration + Logic phân biệt IMPORT/EXPORT + Trạng thái GATE_OUT  
 **Tác giả:** Development Team  
-**Trạng thái:** ✅ Hoàn thành implementation và debug + Container Yard Workflow + Logic phân biệt IMPORT/EXPORT + Ẩn container IN_CAR
+**Trạng thái:** ✅ Hoàn thành implementation và debug + Container Yard Workflow + Logic phân biệt IMPORT/EXPORT + Ẩn container IN_CAR + Trạng thái GATE_OUT cho xe rời kho

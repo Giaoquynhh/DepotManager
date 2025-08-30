@@ -5,6 +5,7 @@ import TestContainerEmpty from '@components/TestContainerEmpty';
 import useSWR from 'swr';
 import { useState } from 'react';
 import { reportsApi } from '@services/reports';
+import React from 'react'; // Added for React.useMemo
 
 function ContainersList(){
   const [q, setQ] = useState('');
@@ -26,45 +27,120 @@ function ContainersList(){
     return await reportsApi.listContainers(params);
   });
 
-  const items = (data?.items || []).map((it:any) => {
-    const inYard = !!it.slot_code;
+  // Xử lý dữ liệu một lần và cache lại để tránh tính toán lại
+  const processedItems = React.useMemo(() => {
+    if (!data?.items) return [];
     
-    // Kiểm tra trạng thái IN_YARD và IN_CAR trước (đã được duyệt trên Forklift)
-    if (it.service_status === 'IN_YARD') {
-      // Container đã được duyệt và đặt vào vị trí trong bãi (cho IMPORT)
-      return { ...it, derived_status: 'IN_YARD' };
-    } else if (it.service_status === 'IN_CAR') {
-      // Container đã được duyệt và đặt lên xe (cho EXPORT) - ẨN khỏi danh sách
-      return { ...it, derived_status: 'IN_CAR', hidden: true };
-    }
+    // Debug: Log dữ liệu gốc
+    console.log('🔍 Raw data from API:', data.items);
+    console.log('🔍 Raw data count:', data.items.length);
     
-    if (inYard) {
-      // Container có slot_code - đã xếp chỗ trong bãi
-      if (it.service_status === 'CHECKED' || it.repair_checked === true) {
-        // Container đã được kiểm tra (CHECKED) - trạng thái bình thường
-        return { ...it, derived_status: 'ASSIGNED' };
-      } else if (it.service_status === 'SYSTEM_ADMIN_ADDED') {
-        // Container được SystemAdmin nhập trực tiếp vào bãi
-        return { ...it, derived_status: 'EMPTY_IN_YARD' };
+    // Sử dụng Map để đảm bảo mỗi container_no chỉ xuất hiện một lần
+    const containerMap = new Map();
+    
+    data.items.forEach((it: any) => {
+      const inYard = !!it.slot_code;
+      
+      // Debug: Log từng item
+      console.log(`📦 Processing container: ${it.container_no}, source: ${it.data_source}, status: ${it.service_status}, inYard: ${inYard}`);
+      
+      // Kiểm tra trạng thái IN_YARD và IN_CAR trước (đã được duyệt trên Forklift)
+      if (it.service_status === 'IN_YARD') {
+        // Container đã được duyệt và đặt vào vị trí trong bãi (cho IMPORT)
+        containerMap.set(it.container_no, { ...it, derived_status: 'IN_YARD' });
+        console.log(`✅ Set ${it.container_no} as IN_YARD`);
+      } else if (it.service_status === 'IN_CAR') {
+        // Container đã được duyệt và đặt lên xe (cho EXPORT) - ẨN khỏi danh sách
+        containerMap.set(it.container_no, { ...it, derived_status: 'IN_CAR', hidden: true });
+        console.log(`✅ Set ${it.container_no} as IN_CAR (hidden)`);
+      } else if (containerMap.has(it.container_no)) {
+        // Container đã tồn tại, kiểm tra ưu tiên
+        const existing = containerMap.get(it.container_no);
+        console.log(`⚠️  Duplicate found for ${it.container_no}: existing=${existing.data_source}, new=${it.data_source}`);
+        
+        // Ưu tiên ServiceRequest > RepairTicket > YardPlacement
+        if (it.data_source === 'SERVICE_REQUEST' || 
+            (it.data_source === 'REPAIR_TICKET' && existing.data_source !== 'SERVICE_REQUEST') ||
+            (it.data_source === 'YARD_PLACEMENT' && existing.data_source === 'YARD_PLACEMENT')) {
+          
+          console.log(`🔄 Replacing ${it.container_no} with new data from ${it.data_source}`);
+          
+          if (inYard) {
+            // Container có slot_code - đã xếp chỗ trong bãi
+            if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+              // Container đã được kiểm tra (CHECKED) - trạng thái bình thường
+              containerMap.set(it.container_no, { ...it, derived_status: 'ASSIGNED' });
+              console.log(`✅ Set ${it.container_no} as ASSIGNED (replaced)`);
+            } else if (it.service_status === 'SYSTEM_ADMIN_ADDED') {
+              // Container được SystemAdmin nhập trực tiếp vào bãi
+              containerMap.set(it.container_no, { ...it, derived_status: 'EMPTY_IN_YARD' });
+              console.log(`✅ Set ${it.container_no} as EMPTY_IN_YARD (replaced)`);
+            } else {
+              // Container KHÔNG có service_status = 'CHECKED' nhưng có slot_code
+              // => Đây là container được SystemAdmin nhập tùy ý
+              containerMap.set(it.container_no, { ...it, derived_status: 'EMPTY_IN_YARD' });
+              console.log(`✅ Set ${it.container_no} as EMPTY_IN_YARD (replaced, no status)`);
+            }
+          } else {
+            // Container chưa có slot_code
+            if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+              // Container đã kiểm tra nhưng chưa xếp chỗ - đang chờ sắp xếp
+              containerMap.set(it.container_no, { ...it, derived_status: 'WAITING' });
+              console.log(`✅ Set ${it.container_no} as WAITING (replaced)`);
+            } else {
+              // Container chưa được kiểm tra - không có derived_status
+              containerMap.set(it.container_no, { ...it, derived_status: null });
+              console.log(`✅ Set ${it.container_no} as null status (replaced)`);
+            }
+          }
+        } else {
+          console.log(`⏭️  Skipping ${it.container_no} - lower priority than existing ${existing.data_source}`);
+        }
       } else {
-        // Container KHÔNG có service_status = 'CHECKED' nhưng có slot_code
-        // => Đây là container được SystemAdmin nhập tùy ý
-        return { ...it, derived_status: 'EMPTY_IN_YARD' };
+        // Container mới, xử lý bình thường
+        if (inYard) {
+          // Container có slot_code - đã xếp chỗ trong bãi
+          if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+            // Container đã được kiểm tra (CHECKED) - trạng thái bình thường
+            containerMap.set(it.container_no, { ...it, derived_status: 'ASSIGNED' });
+            console.log(`✅ Set ${it.container_no} as ASSIGNED (new)`);
+          } else if (it.service_status === 'SYSTEM_ADMIN_ADDED') {
+            // Container được SystemAdmin nhập trực tiếp vào bãi
+            containerMap.set(it.container_no, { ...it, derived_status: 'EMPTY_IN_YARD' });
+            console.log(`✅ Set ${it.container_no} as EMPTY_IN_YARD (new)`);
+          } else {
+            // Container KHÔNG có service_status = 'CHECKED' nhưng có slot_code
+            // => Đây là container được SystemAdmin nhập tùy ý
+            containerMap.set(it.container_no, { ...it, derived_status: 'EMPTY_IN_YARD' });
+            console.log(`✅ Set ${it.container_no} as EMPTY_IN_YARD (new, no status)`);
+          }
+        } else {
+          // Container chưa có slot_code
+          if (it.service_status === 'CHECKED' || it.repair_checked === true) {
+            // Container đã kiểm tra nhưng chưa xếp chỗ - đang chờ sắp xếp
+            containerMap.set(it.container_no, { ...it, derived_status: 'WAITING' });
+            console.log(`✅ Set ${it.container_no} as WAITING (new)`);
+          } else {
+            // Container chưa được kiểm tra - không có derived_status
+            containerMap.set(it.container_no, { ...it, derived_status: null });
+            console.log(`✅ Set ${it.container_no} as null status (new)`);
+          }
+        }
       }
-    } else {
-      // Container chưa có slot_code
-      if (it.service_status === 'CHECKED' || it.repair_checked === true) {
-        // Container đã kiểm tra nhưng chưa xếp chỗ - đang chờ sắp xếp
-        return { ...it, derived_status: 'WAITING' };
-      } else {
-        // Container chưa được kiểm tra - không có derived_status
-        return { ...it, derived_status: null };
-      }
-    }
-  });
+    });
+    
+    const result = Array.from(containerMap.values());
+    
+    // Debug: Log kết quả cuối cùng
+    console.log('🔍 Final processed items:', result);
+    console.log('🔍 Final count:', result.length);
+    console.log('🔍 Container map keys:', Array.from(containerMap.keys()));
+    
+    return result;
+  }, [data?.items]);
   
   // Lọc theo trạng thái và ẩn container IN_CAR (đã lên xe)
-  const visibleItems = items.filter((i:any) => !i.hidden); // Loại bỏ container bị ẩn
+  const visibleItems = processedItems.filter((i:any) => !i.hidden); // Loại bỏ container bị ẩn
   
   const filteredItems = status === 'WAITING' ? 
     visibleItems.filter((i:any) => i.derived_status === 'WAITING') : 

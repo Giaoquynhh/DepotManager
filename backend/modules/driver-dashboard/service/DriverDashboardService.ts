@@ -367,7 +367,7 @@ export class DriverDashboardService {
 			const path = require('path');
 			
 			// Sử dụng đường dẫn tuyệt đối cố định để đảm bảo chính xác
-			const fixedUploadDir = 'D:\\container20\\manageContainer\\backend\\uploads\\reports';
+			const fixedUploadDir = 'D:\\container21\\manageContainer\\backend\\uploads\\reports';
 			
 			console.log('=== UPLOAD DEBUG INFO ===');
 			console.log('Current file location:', __dirname);

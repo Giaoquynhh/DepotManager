@@ -70,6 +70,13 @@ router.get(
   gateController.viewDocument.bind(gateController)
 );
 
+// Gate OUT - Xe rời kho (YardManager, SaleAdmin)
+router.patch(
+  '/requests/:id/gate-out',
+  requireRoles('YardManager', 'SaleAdmin'),
+  gateController.gateOut.bind(gateController)
+);
+
 export default router;
 
 
