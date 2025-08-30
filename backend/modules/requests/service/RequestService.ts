@@ -319,7 +319,7 @@ export class RequestService {
 	}
 
 	// Documents
-	async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT', file: Express.Multer.File) {
+	async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT'|'EXPORT_DOC', file: Express.Multer.File) {
 		console.log('Upload document debug:', { actor: actor.role, request_id, type, fileSize: file?.size });
 		const req = await repo.findById(request_id);
 		if (!req) throw new Error('Yêu cầu không tồn tại');
@@ -337,6 +337,17 @@ export class RequestService {
 			// Scope check: customer chỉ upload cho tenant của mình
 			if (req.tenant_id !== actor.tenant_id) {
 				throw new Error('Không có quyền upload cho yêu cầu này');
+			}
+		} else if (type === 'EXPORT_DOC') {
+			// EXPORT_DOC: chỉ upload khi PICK_CONTAINER và chỉ SaleAdmin/SystemAdmin/BusinessAdmin
+			if (req.status !== 'PICK_CONTAINER') {
+				throw new Error('Chỉ upload chứng từ xuất khi yêu cầu đang ở trạng thái chọn container');
+			}
+			if (req.type !== 'EXPORT') {
+				throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
+			}
+			if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+				throw new Error('Chỉ admin được upload chứng từ xuất');
 			}
 		} else {
 			// EIR/LOLO/INVOICE: chỉ upload khi COMPLETED hoặc EXPORTED
@@ -440,8 +451,74 @@ export class RequestService {
 			}
 		}
 		
-		// Audit log với action khác nhau cho SUPPLEMENT
-		const auditAction = type === 'SUPPLEMENT' ? 'DOC.UPLOADED_SUPPLEMENT' : 'DOC.UPLOADED';
+		// Nếu là EXPORT_DOC document, tự động chuyển trạng thái sang SCHEDULED
+		if (type === 'EXPORT_DOC') {
+			try {
+				console.log(`Attempting to auto-status change request ${request_id} from ${req.status} to SCHEDULED`);
+				console.log(`Actor role: ${actor.role}, Actor ID: ${actor._id}`);
+				
+				// Kiểm tra xem có thể chuyển trạng thái không
+				const canTransition = RequestStateMachine.canTransition(req.status, 'SCHEDULED', actor.role);
+				console.log(`Can transition from ${req.status} to SCHEDULED: ${canTransition}`);
+				
+				if (!canTransition) {
+					console.warn(`Cannot transition from ${req.status} to SCHEDULED for role ${actor.role}`);
+					return doc; // Upload thành công nhưng không chuyển trạng thái
+				}
+				
+				// Sử dụng State Machine để chuyển trạng thái
+				await RequestStateMachine.executeTransition(
+					actor,
+					request_id,
+					req.status,
+					'SCHEDULED',
+					'Tự động chuyển trạng thái sau khi upload chứng từ xuất'
+				);
+				
+				console.log(`State machine transition successful, updating database...`);
+				
+				// Cập nhật trạng thái request
+				const updatedRequest = await repo.update(request_id, {
+					status: 'SCHEDULED',
+					history: [
+						...(Array.isArray(req.history) ? req.history : []),
+						{
+							at: new Date().toISOString(),
+							by: actor._id,
+							action: 'SCHEDULED',
+							reason: 'Tự động chuyển trạng thái sau khi upload chứng từ xuất',
+							document_id: doc.id,
+							document_type: 'EXPORT_DOC'
+						}
+					]
+				});
+				
+				console.log(`Request ${request_id} successfully updated to SCHEDULED:`, {
+					newStatus: updatedRequest.status,
+					updatedAt: updatedRequest.updatedAt,
+					updatedBy: actor._id
+				});
+				
+			} catch (error) {
+				console.error('Error auto-status change after EXPORT_DOC upload:', error);
+				console.error('Error details:', {
+					message: error instanceof Error ? error.message : String(error),
+					stack: error instanceof Error ? error.stack : 'No stack trace',
+					actorRole: actor.role,
+					requestId: request_id,
+					currentStatus: req.status
+				});
+				// Không throw error để upload vẫn thành công, chỉ log warning
+			}
+		}
+		
+		// Audit log với action khác nhau cho SUPPLEMENT và EXPORT_DOC
+		let auditAction = 'DOC.UPLOADED';
+		if (type === 'SUPPLEMENT') {
+			auditAction = 'DOC.UPLOADED_SUPPLEMENT';
+		} else if (type === 'EXPORT_DOC') {
+			auditAction = 'DOC.UPLOADED_EXPORT_DOC';
+		}
 		await audit(actor._id, auditAction, 'DOC', doc.id, { request_id, type, version });
 		
 		return doc;

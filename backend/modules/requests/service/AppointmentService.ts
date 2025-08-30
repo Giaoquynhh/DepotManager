@@ -20,17 +20,24 @@ export class AppointmentService {
       throw new Error('Yêu cầu không tồn tại');
     }
 
+    // Xác định trạng thái đích dựa trên loại request
+    let targetStatus = 'SCHEDULED';
+    if (request.type === 'EXPORT' && request.status === 'PENDING') {
+      targetStatus = 'PICK_CONTAINER';
+      console.log('🔍 EXPORT request detected, transitioning to PICK_CONTAINER instead of SCHEDULED');
+    }
+
     // Validate transition
     await RequestStateMachine.executeTransition(
       actor,
       requestId,
       request.status,
-      'SCHEDULED'
+      targetStatus
     );
 
     // Update request với appointment data
     const updateData = {
-      status: 'SCHEDULED',
+      status: targetStatus,
       appointment_time: appointmentData.appointment_time,
       appointment_location_type: appointmentData.appointment_location_type,
       appointment_location_id: appointmentData.appointment_location_id,
@@ -41,7 +48,7 @@ export class AppointmentService {
         {
           at: new Date().toISOString(),
           by: actor._id,
-          action: 'SCHEDULED',
+          action: targetStatus,
           appointment_data: appointmentData
         }
       ]

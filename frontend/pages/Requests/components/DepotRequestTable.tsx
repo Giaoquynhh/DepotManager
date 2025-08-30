@@ -13,6 +13,7 @@ interface DepotRequestTableProps {
 	onSoftDelete?: (id: string, scope: string) => void;
 	onViewInvoice?: (id: string) => void;
 	onSendCustomerConfirmation?: (id: string) => void;
+	onAddDocument?: (requestId: string, containerNo: string) => void;
 	loadingId?: string;
 	// Chat props
 	activeChatRequests?: Set<string>;
@@ -32,6 +33,7 @@ export default function DepotRequestTable({
 	onSoftDelete,
 	onViewInvoice,
 	onSendCustomerConfirmation,
+	onAddDocument,
 	loadingId,
 	// Chat props
 	activeChatRequests = new Set(),
@@ -41,6 +43,7 @@ export default function DepotRequestTable({
 	const getStatusBadge = (status: string) => {
 		const statusConfig: Record<string, { label: string; className: string }> = {
 			PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
+			PICK_CONTAINER: { label: 'Đang chọn container', className: 'status-pick-container' },
 			RECEIVED: { label: 'Đã nhận', className: 'status-received' },
 			COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
 			EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
@@ -95,6 +98,8 @@ export default function DepotRequestTable({
 			<table className="table table-modern">
 				<thead>
 					<tr>
+						<th>Loại</th>
+						<th>Container</th>
 						<th>ETA</th>
 						<th>Trạng thái</th>
 						<th>Chứng từ</th>
@@ -114,10 +119,17 @@ export default function DepotRequestTable({
 						return (
 						<tr key={item.id} className="table-row">
 							<td>
-								<div className="eta-container-info">
-									<div className="container-id">
-										{item.container_no}
-									</div>
+								<span className="request-type">
+									{getTypeLabel(item.type)}
+								</span>
+							</td>
+							<td>
+								<div className="container-info">
+									{item.container_no || '-'}
+								</div>
+							</td>
+							<td>
+								<div className="eta-info">
 									{item.eta ? (
 										<div className="eta-date">
 											{new Date(item.eta).toLocaleString('vi-VN')}
@@ -145,7 +157,32 @@ export default function DepotRequestTable({
 										))}
 									</div>
 								) : (
-									<span className="no-document">-</span>
+									<div className="document-actions">
+										{/* Hiển thị nút "Thêm chứng từ" cho yêu cầu EXPORT với trạng thái PICK_CONTAINER */}
+										{item.type === 'EXPORT' && item.status === 'PICK_CONTAINER' && onAddDocument ? (
+											<button
+												className="btn btn-sm btn-primary"
+												onClick={() => onAddDocument(item.id, item.container_no || '')}
+												title="Thêm chứng từ cho container"
+												style={{
+													background: '#3b82f6',
+													color: 'white',
+													border: 'none',
+													borderRadius: '6px',
+													padding: '6px 12px',
+													fontSize: '12px',
+													cursor: 'pointer',
+													display: 'flex',
+													alignItems: 'center',
+													gap: '4px'
+												}}
+											>
+												📎 Thêm chứng từ
+											</button>
+										) : (
+											<span className="no-document">-</span>
+										)}
+									</div>
 								)}
 							</td>
 

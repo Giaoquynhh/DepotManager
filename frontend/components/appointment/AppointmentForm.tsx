@@ -168,6 +168,11 @@ export default function AppointmentForm({
        const response = await api.patch(`/requests/${requestId}/${endpoint}`, appointmentData);
        console.log('API response:', response);
        
+       // Backend đã tự động xử lý chuyển trạng thái:
+       // - IMPORT: PENDING → SCHEDULED
+       // - EXPORT: PENDING → PICK_CONTAINER
+       console.log('🔍 Appointment created successfully, backend handled status transition');
+       
        onSuccess();
          } catch (error: any) {
        console.error('Error creating appointment:', error);

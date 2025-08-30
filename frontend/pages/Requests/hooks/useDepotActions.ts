@@ -33,6 +33,8 @@ export interface DepotActions {
 	setMsg: (msg: { text: string; ok: boolean } | null) => void;
 	setLoadingId: (id: string) => void;
 	setRequestsData: (data: any[]) => void; // Thêm setter cho requests data
+	setShowContainerSelectionModal: (show: boolean) => void;
+	setSelectedRequestForContainer: (request: any) => void;
 
 	// Actions
 	changeStatus: (id: string, status: string) => Promise<void>;
@@ -51,6 +53,7 @@ export interface DepotActions {
 	handleViewInvoice: (id: string) => Promise<void>;
 	handleSendCustomerConfirmation: (id: string) => Promise<void>;
 	handleContainerSelection: (containerNo: string) => Promise<void>; // Thêm action xử lý khi chọn container
+	handleAddDocument: (requestId: string, containerNo: string) => Promise<void>; // Thêm action xử lý khi thêm chứng từ
 	
 	// Chat actions
 	toggleChat: (requestId: string) => void;
@@ -172,7 +175,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		});
 	};
 
-	const handleAppointmentMiniSuccess = (requestId: string) => {
+	const handleAppointmentMiniSuccess = async (requestId: string) => {
 		handleAppointmentClose(requestId);
 		handleAppointmentSuccess();
 	};
@@ -420,7 +423,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			setShowContainerSelectionModal(false);
 			
 			console.log('🔍 Opening appointment mini for request:', selectedRequestForContainer.id);
-			// Mở appointment mini để tạo lịch hẹn (giống như request IMPORT)
+			// Mở appointment mini để tạo lịch hẹn
 			setActiveAppointmentRequests(prev => {
 				const newSet = new Set(prev).add(selectedRequestForContainer.id);
 				console.log('🔍 Active appointment requests after adding:', Array.from(newSet));
@@ -443,6 +446,89 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			console.error('❌ Error message:', e?.message);
 			setMsg({ text: `Không thể cập nhật container: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 		} finally {
+			setLoadingId('');
+		}
+	};
+
+	// Handle add document for EXPORT requests with PICK_CONTAINER status
+	const handleAddDocument = async (requestId: string, containerNo: string) => {
+		console.log('🔍 handleAddDocument called:', { requestId, containerNo });
+		setLoadingId(requestId + 'ADD_DOC');
+		try {
+			// Tạo input file element
+			const fileInput = document.createElement('input');
+			fileInput.type = 'file';
+			fileInput.accept = '.pdf,.jpg,.jpeg,.png';
+			fileInput.style.display = 'none';
+			
+			fileInput.onchange = async (event) => {
+				const target = event.target as HTMLInputElement;
+				const file = target.files?.[0];
+				
+				if (!file) {
+					setLoadingId('');
+					return;
+				}
+				
+				try {
+					// Kiểm tra kích thước file (10MB)
+					if (file.size > 10 * 1024 * 1024) {
+						setMsg({ text: 'File quá lớn. Kích thước tối đa là 10MB', ok: false });
+						setLoadingId('');
+						return;
+					}
+					
+					// Kiểm tra loại file
+					const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+					if (!allowedTypes.includes(file.type)) {
+						setMsg({ text: 'Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)', ok: false });
+						setLoadingId('');
+						return;
+					}
+					
+					// Tạo FormData để upload
+					const formData = new FormData();
+					formData.append('file', file);
+					formData.append('type', 'EXPORT_DOC');
+					
+					// Gọi API upload chứng từ
+					const response = await api.post(`/requests/${requestId}/docs`, formData, {
+						headers: {
+							'Content-Type': 'multipart/form-data',
+						},
+					});
+					
+					console.log('✅ Document upload successful:', response.data);
+					
+					// Hiển thị thông báo thành công
+					setMsg({ 
+						text: `✅ Đã upload chứng từ thành công cho container ${containerNo}! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.`, 
+						ok: true 
+					});
+					
+					// Refresh data để cập nhật trạng thái
+					mutate('/requests?page=1&limit=20');
+					
+				} catch (error: any) {
+					console.error('❌ Error uploading document:', error);
+					setMsg({ 
+						text: `❌ Không thể upload chứng từ: ${error?.response?.data?.message || 'Lỗi không xác định'}`, 
+						ok: false 
+					});
+				} finally {
+					setLoadingId('');
+					// Xóa file input
+					document.body.removeChild(fileInput);
+				}
+			};
+			
+			// Thêm file input vào DOM và trigger click
+			document.body.appendChild(fileInput);
+			fileInput.click();
+			
+		} catch (e: any) {
+			console.error('❌ Error in handleAddDocument:', e);
+			setMsg({ text: `Không thể thêm chứng từ: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 			setLoadingId('');
 		}
 	};
@@ -516,6 +602,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		handleViewInvoice,
 		handleSendCustomerConfirmation,
 		handleContainerSelection,
+		handleAddDocument,
 		toggleChat,
 		closeChat
 	};

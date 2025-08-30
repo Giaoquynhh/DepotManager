@@ -40,6 +40,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
+      PICK_CONTAINER: { label: 'Đang chọn container', className: 'status-pick-container' },
       RECEIVED: { label: 'Đã nhận', className: 'status-received' },
       COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
       EXPORTED: { label: 'Đã xuất', className: 'status-exported' },

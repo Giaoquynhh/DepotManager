@@ -12,6 +12,7 @@ export interface StateTransition {
 export class RequestStateMachine {
   private static readonly VALID_STATES = [
     'PENDING',
+    'PICK_CONTAINER', // Trạng thái mới: đang chọn container (chỉ cho EXPORT)
     'SCHEDULED', 
     'SCHEDULED_INFO_ADDED',
     'FORWARDED',
@@ -31,9 +32,15 @@ export class RequestStateMachine {
   private static readonly TRANSITIONS: StateTransition[] = [
     {
       from: 'PENDING',
+      to: 'PICK_CONTAINER',
+      allowedRoles: ['CustomerAdmin', 'CustomerUser', 'SaleAdmin', 'SystemAdmin'],
+      description: 'Customer chọn container cho request EXPORT'
+    },
+    {
+      from: 'PENDING',
       to: 'SCHEDULED',
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
-      description: 'Depot tiếp nhận và đặt lịch hẹn'
+      description: 'Depot tiếp nhận và đặt lịch hẹn (cho IMPORT)'
     },
     {
       from: 'PENDING',
@@ -41,6 +48,19 @@ export class RequestStateMachine {
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
       requiresReason: true,
       description: 'Depot từ chối request'
+    },
+    {
+      from: 'PICK_CONTAINER',
+      to: 'SCHEDULED',
+      allowedRoles: ['CustomerAdmin', 'CustomerUser', 'SaleAdmin', 'SystemAdmin'],
+      description: 'Đã chọn container, chuyển sang đặt lịch hẹn'
+    },
+    {
+      from: 'PICK_CONTAINER',
+      to: 'REJECTED',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      requiresReason: true,
+      description: 'Depot từ chối request sau khi chọn container'
     },
     {
       from: 'SCHEDULED',
@@ -264,6 +284,9 @@ export class RequestStateMachine {
           case 'PENDING':
             systemMessage = '📋 Yêu cầu đã được tạo và đang chờ xử lý';
             break;
+          case 'PICK_CONTAINER':
+            systemMessage = '📦 Yêu cầu đang chờ chọn container';
+            break;
           case 'SCHEDULED':
             systemMessage = '📅 Lịch hẹn đã được đặt';
             break;
@@ -301,6 +324,7 @@ export class RequestStateMachine {
   static getStateDescription(state: string): string {
     const descriptions: Record<string, string> = {
       'PENDING': 'Chờ xử lý',
+      'PICK_CONTAINER': 'Đang chọn container',
       'SCHEDULED': 'Đã đặt lịch hẹn',
       'SCHEDULED_INFO_ADDED': 'Đã bổ sung thông tin',
               'SENT_TO_GATE': 'Đã chuyển sang Gate',
@@ -316,6 +340,7 @@ export class RequestStateMachine {
   static getStateColor(state: string): string {
     const colors: Record<string, string> = {
       'PENDING': 'yellow',
+      'PICK_CONTAINER': 'orange',
       'SCHEDULED': 'blue',
       'SCHEDULED_INFO_ADDED': 'cyan',
               'SENT_TO_GATE': 'purple',

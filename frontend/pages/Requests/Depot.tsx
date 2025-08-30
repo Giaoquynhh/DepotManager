@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { api } from '@services/api';
 import Modal from '@components/Modal';
 import Button from '@components/Button';
-import RequestTable from '@components/RequestTable';
+import { DepotRequestTable } from './components';
 import SearchBar from '@components/SearchBar';
 import AppointmentModal from '@components/AppointmentModal';
 import AppointmentMini from '@components/appointment/AppointmentMini';
@@ -151,10 +151,23 @@ export default function DepotRequests() {
 				</div>
 
 				{/* Request Table with Actions */}
-				<RequestTable 
+				<DepotRequestTable 
 					data={requestsWithActions} 
 					loading={isLoading}
-					userRole={state.me?.role || state.me?.roles?.[0]}
+					onDocumentClick={actions.handleDocumentClick}
+					onToggleSupplement={actions.toggleSupplement}
+					onChangeAppointment={actions.handleChangeAppointment}
+					onReject={actions.handleReject}
+					onChangeStatus={actions.changeStatus}
+					onSendPayment={actions.sendPayment}
+					onSoftDelete={actions.softDeleteRequest}
+					onViewInvoice={actions.handleViewInvoice}
+					onSendCustomerConfirmation={actions.handleSendCustomerConfirmation}
+					onAddDocument={actions.handleAddDocument}
+					loadingId={state.loadingId}
+					activeChatRequests={state.activeChatRequests}
+					onToggleChat={actions.toggleChat}
+					onCloseChat={actions.closeChat}
 				/>
 
 				{/* Status Message */}

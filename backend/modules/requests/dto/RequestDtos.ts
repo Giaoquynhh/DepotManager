@@ -11,7 +11,7 @@ export const createRequestSchema = Joi.object({
 });
 
 export const updateRequestStatusSchema = Joi.object({
-	status: Joi.string().valid('PENDING','SCHEDULED','SCHEDULED_INFO_ADDED','FORWARDED','SENT_TO_GATE','CHECKING','REJECTED','COMPLETED','POSITIONED','FORKLIFTING','IN_YARD').required(),
+	status: Joi.string().valid('PENDING','PICK_CONTAINER','SCHEDULED','SCHEDULED_INFO_ADDED','FORWARDED','SENT_TO_GATE','CHECKING','REJECTED','COMPLETED','POSITIONED','FORKLIFTING','IN_YARD').required(),
 	reason: Joi.string().optional()
 });
 
@@ -41,7 +41,7 @@ export const queryRequestSchema = Joi.object({
 });
 
 export const uploadDocSchema = Joi.object({
-	type: Joi.string().valid('EIR','LOLO','INVOICE','SUPPLEMENT').required()
+	type: Joi.string().valid('EIR','LOLO','INVOICE','SUPPLEMENT','EXPORT_DOC').required()
 });
 
 // New DTOs for State Machine

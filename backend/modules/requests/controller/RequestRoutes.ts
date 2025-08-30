@@ -61,8 +61,8 @@ router.delete('/:id', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','S
 router.post('/:id/restore', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','SystemAdmin','Accountant'), (req, res) => controller.restoreRequest(req as any, res));
 
 // Documents
-router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
-router.get('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser'), (req, res) => controller.listDocs(req as any, res));
+router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
+router.get('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), (req, res) => controller.listDocs(req as any, res));
 router.delete('/:id/docs/:docId', requireRoles('SaleAdmin','Accountant','SystemAdmin','BusinessAdmin'), (req, res) => controller.deleteDoc(req as any, res));
 
 // Payment request
