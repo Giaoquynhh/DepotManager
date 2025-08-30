@@ -3,14 +3,43 @@ import Card from '@components/Card';
 import useSWR, { mutate } from 'swr';
 import Link from 'next/link';
 import { financeApi } from '@services/finance';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ContainersNeedInvoiceModal from '@components/ContainersNeedInvoiceModal';
+import { api } from '@services/api';
 
 export default function InvoiceList(){
   const [status, setStatus] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const key = ['finance_invoices_details', status].join(':');
-  const { data: invoices } = useSWR(key, async ()=> financeApi.listInvoicesWithDetails({ status: status || undefined }));
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // Lấy thông tin user
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        setUserRole(response.data?.role || response.data?.roles?.[0]);
+        setUserId(response.data?._id || response.data?.id);
+      } catch (error) {
+        console.error('Error loading user info:', error);
+      }
+    };
+    
+    loadUserInfo();
+  }, []);
+  
+  const key = ['finance_invoices_details', status, userRole, userId].join(':');
+  const { data: invoices } = useSWR(key, async ()=> {
+    // Nếu là customer, chỉ lấy hóa đơn của họ
+    if (userRole === 'CustomerAdmin' || userRole === 'CustomerUser') {
+      return financeApi.listInvoicesWithDetails({ 
+        status: status || undefined,
+        created_by: userId 
+      });
+    }
+    // Nếu là admin, lấy tất cả hóa đơn
+    return financeApi.listInvoicesWithDetails({ status: status || undefined });
+  });
   
   const getTypeLabel = (type: string) => {
     switch(type) {
@@ -54,21 +83,24 @@ export default function InvoiceList(){
                 <option value="PAID">PAID</option>
                 <option value="CANCELLED">CANCELLED</option>
               </select>
-              <button 
-                className="btn-containers-need-invoice"
-                onClick={() => setIsModalOpen(true)}
-                style={{
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Danh sách container cần tạo hóa đơn
-              </button>
+              {/* Chỉ hiển thị nút này cho admin */}
+              {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
+                <button 
+                  className="btn-containers-need-invoice"
+                  onClick={() => setIsModalOpen(true)}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Danh sách container cần tạo hóa đơn
+                </button>
+              )}
             </div>
             
             <div style={{overflowX:'auto'}}>
@@ -86,7 +118,15 @@ export default function InvoiceList(){
                   </tr>
                 </thead>
                 <tbody>
-                  {(invoices||[]).map((invoice:any)=> (
+                  {(invoices||[]).map((invoice:any)=> {
+                    // Nếu là customer, chỉ hiển thị hóa đơn của họ
+                    if (userRole === 'CustomerAdmin' || userRole === 'CustomerUser') {
+                      if (invoice.serviceRequest?.created_by !== userId) {
+                        return null; // Không hiển thị hóa đơn không phải của họ
+                      }
+                    }
+                    
+                    return (
                     <tr key={invoice.id}>
                       <td>
                         <span style={{
@@ -118,9 +158,23 @@ export default function InvoiceList(){
                       <td>{Number(invoice.total_amount||0).toLocaleString('vi-VN')} VND</td>
                       <td>
                         {invoice.serviceRequest?.container_no ? (
-                          <Link href={`/finance/eir/container/${invoice.serviceRequest.container_no}`} style={{color:'#1976d2', textDecoration:'none'}}>
+                          <button 
+                            onClick={() => {
+                              const eirUrl = `http://localhost:5002/finance/eir/container/${encodeURIComponent(invoice.serviceRequest.container_no)}`;
+                              window.open(eirUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            style={{
+                              color: '#1976d2',
+                              textDecoration: 'none',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                              font: 'inherit'
+                            }}
+                          >
                             Xem EIR
-                          </Link>
+                          </button>
                         ) : '-'}
                       </td>
                       <td style={{display:'flex', gap:6}}>
@@ -129,7 +183,8 @@ export default function InvoiceList(){
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

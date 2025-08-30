@@ -111,6 +111,29 @@ export default function DepotRequestTable({
 		return typeLabels[type as keyof typeof typeLabels] || type;
 	};
 
+	// Function để cập nhật trạng thái thanh toán
+	const handleUpdatePaymentStatus = async (requestId: string, isPaid: boolean) => {
+		try {
+			const response = await fetch(`http://localhost:5002/requests/${requestId}/payment-status`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${localStorage.getItem('token')}`,
+				},
+				body: JSON.stringify({ is_paid: isPaid }),
+			});
+			
+			if (response.ok) {
+				// Refresh page để cập nhật dữ liệu
+				window.location.reload();
+			} else {
+				console.error('Lỗi cập nhật trạng thái thanh toán');
+			}
+		} catch (error) {
+			console.error('Lỗi cập nhật trạng thái thanh toán:', error);
+		}
+	};
+
 	if (loading) {
 		return (
 			<div className="table-loading">
@@ -140,6 +163,7 @@ export default function DepotRequestTable({
 						<th>Vị trí</th>
 						<th>ETA</th>
 						<th>Trạng thái</th>
+						<th>Trạng thái thanh toán</th>
 						<th>Chứng từ</th>
 						<th>Chat</th>
 						<th>Hành động</th>
@@ -199,6 +223,39 @@ export default function DepotRequestTable({
 						</td>
 							<td>
 								{getStatusBadge(item.status)}
+							</td>
+							<td>
+								<div className="payment-status-info">
+									{/* Hiển thị trạng thái hóa đơn */}
+									<div className="invoice-status">
+										<span className={`status-indicator ${item.has_invoice ? 'has-invoice' : 'no-invoice'}`}>
+											{item.has_invoice ? '📄' : '📝'} 
+											{item.has_invoice ? 'Có hóa đơn' : 'Chưa có hóa đơn'}
+										</span>
+									</div>
+									{/* Hiển thị trạng thái thanh toán */}
+									<div className="payment-status">
+										<span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
+											{item.is_paid ? '💰' : '⏳'} 
+											{item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+										</span>
+									</div>
+									{/* Nút cập nhật trạng thái thanh toán */}
+									<div className="payment-actions">
+										<button
+											className="btn btn-sm btn-outline"
+											onClick={() => handleUpdatePaymentStatus(item.id, !item.is_paid)}
+											title={item.is_paid ? 'Đánh dấu chưa thanh toán' : 'Đánh dấu đã thanh toán'}
+											style={{
+												fontSize: '10px',
+												padding: '2px 6px',
+												marginTop: '4px'
+											}}
+										>
+											{item.is_paid ? '🔄 Đánh dấu chưa TT' : '✅ Đánh dấu đã TT'}
+										</button>
+									</div>
+								</div>
 							</td>
 							<td>
 								{item.documents && item.documents.length > 0 ? (

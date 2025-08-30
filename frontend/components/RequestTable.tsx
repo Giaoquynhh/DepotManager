@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
 import { yardApi } from '../services/yard';
 import ChatWindowStandalone from './chat/ChatWindowStandalone';
+import InvoiceViewer from './InvoiceViewer';
 
 interface Request {
   id: string;
@@ -12,6 +13,12 @@ interface Request {
   rejected_reason?: string;
   latest_payment?: any;
   documents?: any[];
+  has_invoice?: boolean;
+  is_paid?: boolean;
+  appointment_time?: string;
+  appointment_location_type?: string;
+  appointment_location_id?: string;
+  appointment_note?: string;
 }
 
 interface RequestTableProps {
@@ -39,6 +46,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const [activeChatRequests, setActiveChatRequests] = React.useState<Set<string>>(new Set());
   const [containerLocations, setContainerLocations] = useState<Record<string, string>>({});
   const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
+  const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string>('');
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -86,6 +95,40 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const closeImageModal = () => {
     setShowImageModal(false);
     setSelectedDocument(null);
+  };
+
+  // Function để xem hóa đơn
+  const handleViewInvoice = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowInvoiceViewer(true);
+  };
+
+  // Function để thanh toán hóa đơn
+  const handlePayment = async (requestId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn thanh toán hóa đơn này?')) {
+      try {
+        // Cập nhật trạng thái thanh toán
+        const response = await fetch(`http://localhost:5002/requests/${requestId}/payment-status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ is_paid: true }),
+        });
+        
+        if (response.ok) {
+          alert('✅ Thanh toán thành công! Hóa đơn đã được cập nhật trạng thái.');
+          // Refresh trang để cập nhật dữ liệu
+          window.location.reload();
+        } else {
+          alert('❌ Lỗi khi cập nhật trạng thái thanh toán');
+        }
+      } catch (error) {
+        console.error('Lỗi thanh toán:', error);
+        alert('❌ Lỗi khi thực hiện thanh toán');
+      }
+    }
   };
 
   const toggleChat = (requestId: string) => {
@@ -270,11 +313,30 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   )}
                 </td>
                 <td>
-                  {item.latest_payment && (
-                    <span className="payment-badge">
-                      Đã gửi yêu cầu thanh toán
-                    </span>
-                  )}
+                  <div className="payment-status-info">
+                    {/* Hiển thị trạng thái hóa đơn */}
+                    <div className="invoice-status">
+                      <span className={`status-indicator ${item.has_invoice ? 'has-invoice' : 'no-invoice'}`}>
+                        {item.has_invoice ? '📄' : '📝'} 
+                        {item.has_invoice ? 'Có hóa đơn' : 'Chưa có hóa đơn'}
+                      </span>
+                    </div>
+                    {/* Hiển thị trạng thái thanh toán */}
+                    <div className="payment-status">
+                      <span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
+                        {item.is_paid ? '💰' : '⏳'} 
+                        {item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                      </span>
+                    </div>
+                    {/* Hiển thị thông tin payment request nếu có */}
+                    {item.latest_payment && (
+                      <div className="payment-request-info">
+                        <span className="payment-request-badge">
+                          📤 Đã gửi yêu cầu thanh toán
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <button
@@ -447,6 +509,28 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           {item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
                         </button>
                       )}
+
+                      {/* Invoice and Payment actions for requests with invoices */}
+                      {item.has_invoice && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
+                        <>
+                          <button
+                            className="btn btn-sm btn-info"
+                            onClick={() => handleViewInvoice(item.id)}
+                            title="Xem hóa đơn"
+                          >
+                            📄 Xem hóa đơn
+                          </button>
+                          {!item.is_paid && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handlePayment(item.id)}
+                              title="Thanh toán hóa đơn"
+                            >
+                              💰 Thanh toán
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
                 </td>
@@ -563,6 +647,16 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
           />
         );
       })}
+
+      {/* Invoice Viewer */}
+      <InvoiceViewer
+        requestId={selectedRequestId}
+        visible={showInvoiceViewer}
+        onClose={() => {
+          setShowInvoiceViewer(false);
+          setSelectedRequestId('');
+        }}
+      />
     </>
   );
 }

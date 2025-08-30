@@ -50,7 +50,103 @@ const upload = multer({
 
 const router = Router();
 
-// Middleware authentication và RBAC
+// Route riêng cho customer xem hóa đơn của họ (không cần quyền SaleAdmin)
+router.get('/invoices/details', authenticate, (req, res) => invoiceCtrl.getCustomerInvoices(req as any, res));
+
+// Route riêng cho customer xem EIR (không cần quyền SaleAdmin)
+router.get('/eir/container/:container_no', authenticate, async (req: any, res: any) => {
+  try {
+    const { container_no } = req.params;
+    
+    console.log('🔍 EIR request for container:', container_no);
+    console.log('🔍 User:', req.user);
+    
+    if (!container_no) {
+      return res.status(400).json({ success: false, message: 'Container number là bắt buộc' });
+    }
+
+    // Tìm request và EIR document
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const request = await prisma.serviceRequest.findFirst({
+      where: { container_no: container_no },
+      include: {
+        docs: {
+          where: { type: 'EIR', deleted_at: null },
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    console.log('🔍 Found request:', request);
+    console.log('🔍 Request docs:', request?.docs);
+
+    if (!request || !request.docs.length) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy EIR cho container này' });
+    }
+
+    // Kiểm tra quyền: customer chỉ có thể xem EIR của container họ tạo
+    console.log('🔍 User role:', req.user.role);
+    console.log('🔍 Request created_by:', request.created_by);
+    console.log('🔍 User _id:', req.user._id);
+    
+    if (req.user.role === 'CustomerAdmin' || req.user.role === 'CustomerUser') {
+      if (request.created_by !== req.user._id) {
+        console.log('🔍 Access denied: customer cannot view EIR of other users');
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền xem EIR của container này' });
+      }
+    }
+
+    const eirDoc = request.docs[0];
+    const filename = eirDoc.storage_key;
+    const filePath = path.join('D:\\container21\\manageContainer\\backend\\uploads', filename);
+    
+    console.log('🔍 EIR doc:', eirDoc);
+    console.log('🔍 Filename:', filename);
+    console.log('🔍 File path:', filePath);
+    
+    // Kiểm tra file có tồn tại không
+    if (!fs.existsSync(filePath)) {
+      console.log('🔍 File not found at path:', filePath);
+      return res.status(404).json({ success: false, message: 'File EIR không tồn tại trên server' });
+    }
+    
+    console.log('🔍 File exists, size:', fs.statSync(filePath).size);
+
+    // Lấy thông tin file
+    const stats = fs.statSync(filePath);
+    const ext = path.extname(filename).toLowerCase();
+    
+    // Set content type dựa trên extension
+    let contentType = 'application/octet-stream';
+    if (ext === '.pdf') {
+      contentType = 'application/pdf';
+    } else if (['.png', '.jpg', '.jpeg', '.gif'].includes(ext)) {
+      contentType = `image/${ext.slice(1)}`;
+    }
+
+    // Set headers
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', `inline; filename="${eirDoc.name}"`);
+
+    // Stream file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+  } catch (error: any) {
+    console.error('Error serving EIR file by container:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Lỗi khi xem file' 
+    });
+  }
+});
+
+// Middleware authentication và RBAC cho các route khácnnanày đoiđoi
 router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin'));
 
 // Routes hiện tại
@@ -62,6 +158,8 @@ router.post('/invoices', (req, res) => invoiceCtrl.create(req as any, res));
 router.patch('/invoices/:id', (req, res) => invoiceCtrl.patch(req as any, res));
 router.post('/invoices/:id/issue', (req, res) => invoiceCtrl.issue(req as any, res));
 router.post('/invoices/:id/cancel', (req, res) => invoiceCtrl.cancel(req as any, res));
+
+
 
 // Routes mới
 router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => {
@@ -165,73 +263,7 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
   }
   });
   
-  // API để xem file EIR theo container_no
-  router.get('/eir/container/:container_no', async (req: any, res: any) => {
-    try {
-      const { container_no } = req.params;
-      
-      if (!container_no) {
-        return res.status(400).json({ success: false, message: 'Container number là bắt buộc' });
-      }
-
-      // Tìm request và EIR document
-      const { PrismaClient } = require('@prisma/client');
-      const prisma = new PrismaClient();
-      
-      const request = await prisma.serviceRequest.findFirst({
-        where: { container_no: container_no },
-        include: {
-          docs: {
-            where: { type: 'EIR', deleted_at: null },
-            orderBy: { createdAt: 'desc' }, // Sử dụng createdAt thay vì version
-            take: 1
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      if (!request || !request.docs.length) {
-        return res.status(404).json({ success: false, message: 'Không tìm thấy EIR cho container này' });
-      }
-
-      const eirDoc = request.docs[0];
-      const filename = eirDoc.storage_key;
-      const filePath = path.join('D:\\container21\\manageContainer\\backend\\uploads', filename);
-      
-      // Kiểm tra file có tồn tại không
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ success: false, message: 'File EIR không tồn tại trên server' });
-      }
-
-      // Lấy thông tin file
-      const stats = fs.statSync(filePath);
-      const ext = path.extname(filename).toLowerCase();
-      
-      // Set content type dựa trên extension
-      let contentType = 'application/octet-stream';
-      if (ext === '.pdf') {
-        contentType = 'application/pdf';
-      } else if (['.png', '.jpg', '.jpeg', '.gif'].includes(ext)) {
-        contentType = `image/${ext.slice(1)}`;
-      }
-
-      // Set headers
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('Content-Length', stats.size);
-      res.setHeader('Content-Disposition', `inline; filename="${eirDoc.name}"`);
-
-      // Stream file
-      const fileStream = fs.createReadStream(filePath);
-      fileStream.pipe(res);
-
-    } catch (error: any) {
-      console.error('Error serving EIR file by container:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: error.message || 'Lỗi khi xem file' 
-      });
-    }
-  });
+  // Route EIR đã được di chuyển lên trên để cho phép customer truy cập
   
   // API để xem file EIR theo filename
   router.get('/eir/:filename', async (req: any, res: any) => {

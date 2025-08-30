@@ -64,6 +64,13 @@ export class RequestStatusController {
       const { id } = req.params;
       const { is_paid } = req.body;
       
+      // Debug: Kiểm tra user object
+      console.log('🔍 Debug updatePaymentStatus:');
+      console.log('🔍 req.user:', (req as any).user);
+      console.log('🔍 req.body:', req.body);
+      console.log('🔍 req.params:', req.params);
+      console.log('🔍 is_paid:', is_paid);
+      
       if (typeof is_paid !== 'boolean') {
         return res.status(400).json({
           success: false,
@@ -72,12 +79,47 @@ export class RequestStatusController {
       }
       
       const userId = (req as any).user?.id || (req as any).user?._id || 'SYSTEM';
+      const userRole = (req as any).user?.role;
+      
+      console.log('🔍 userId:', userId);
+      console.log('🔍 userRole:', userRole);
+
+      // Kiểm tra quyền: customer chỉ có thể thanh toán hóa đơn của họ
+      if (userRole === 'CustomerAdmin' || userRole === 'CustomerUser') {
+        // Tìm request để kiểm tra xem có phải của user này không
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        
+        const request = await prisma.serviceRequest.findUnique({
+          where: { id },
+          select: { created_by: true }
+        });
+        
+        if (!request) {
+          return res.status(404).json({
+            success: false,
+            message: 'Không tìm thấy request'
+          });
+        }
+        
+        if (request.created_by !== userId) {
+          console.log('🔍 Access denied: customer cannot update payment status of other users');
+          return res.status(403).json({
+            success: false,
+            message: 'Bạn không có quyền thanh toán hóa đơn của request này'
+          });
+        }
+        
+        console.log('🔍 Access granted: customer updating their own request');
+      }
 
       const request = await requestStatusService.updatePaymentStatus(
         id,
         is_paid,
         userId
       );
+
+      console.log('✅ Payment status updated successfully:', request);
 
       res.json({
         success: true,
@@ -258,8 +300,8 @@ export class RequestStatusController {
         message: 'Lấy thông tin trạng thái thành công',
         data: {
           id: requestData.id,
-          has_invoice: requestData.has_invoice,
-          is_paid: requestData.is_paid,
+          has_invoice: (requestData as any).has_invoice,
+          is_paid: (requestData as any).is_paid,
           status: requestData.status,
           type: requestData.type,
           updatedAt: requestData.updatedAt,

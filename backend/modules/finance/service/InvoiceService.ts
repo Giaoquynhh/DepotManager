@@ -33,6 +33,19 @@ export class InvoiceService {
     if (query.customer_id) where.customer_id = query.customer_id;
     if (query.from || query.to) where.issue_date = { gte: query.from? new Date(query.from): undefined, lte: query.to? new Date(query.to): undefined };
     
+    // Nếu có filter theo created_by của ServiceRequest
+    if (query.created_by) {
+      // Tìm tất cả ServiceRequest được tạo bởi user này
+      const userRequests = await prisma.serviceRequest.findMany({
+        where: { created_by: query.created_by },
+        select: { id: true }
+      });
+      
+      const requestIds = userRequests.map(req => req.id);
+      where.source_id = { in: requestIds };
+      where.source_module = 'REQUESTS';
+    }
+    
     const data = await prisma.invoice.findMany({ 
       where, 
       orderBy: { issue_date: 'desc' },
@@ -121,6 +134,109 @@ export class InvoiceService {
     const filteredContainers = containers.filter(container => !(container as any).has_invoice);
 
     return filteredContainers;
+  }
+
+  async getCustomerInvoices(actor: any, query: any) {
+    try {
+      // Lấy hóa đơn theo source_id (request_id) nếu có
+      const where: any = {};
+      
+      if (query.source_id) {
+        where.source_id = query.source_id;
+        where.source_module = 'REQUESTS';
+      }
+      
+      // Chỉ lấy hóa đơn của customer này
+      if (actor.role === 'CustomerAdmin' || actor.role === 'CustomerUser') {
+        // Tìm các request của customer này
+        const customerRequests = await prisma.serviceRequest.findMany({
+          where: {
+            created_by: actor._id
+          },
+          select: {
+            id: true
+          }
+        });
+        
+        const requestIds = customerRequests.map(req => req.id);
+        where.source_id = {
+          in: requestIds
+        };
+        where.source_module = 'REQUESTS';
+      }
+      
+      const data = await prisma.invoice.findMany({ 
+        where, 
+        orderBy: { issue_date: 'desc' },
+        include: {
+          items: true,
+          allocations: true
+        }
+      });
+
+      // Lấy thông tin ServiceRequest và Customer cho mỗi invoice
+      const enrichedData = await Promise.all(data.map(async (invoice) => {
+        let serviceRequest = null;
+        let customer = null;
+        
+        // Lấy thông tin ServiceRequest nếu có source_id
+        if (invoice.source_module === 'REQUESTS' && invoice.source_id) {
+          serviceRequest = await prisma.serviceRequest.findUnique({
+            where: { id: invoice.source_id },
+            select: {
+              id: true,
+              type: true,
+              container_no: true,
+              status: true,
+              tenant_id: true,
+              created_by: true
+            }
+          });
+          
+          // Lấy thông tin User tạo request (customer)
+          if (serviceRequest?.created_by) {
+            const user = await prisma.user.findUnique({
+              where: { id: serviceRequest.created_by },
+              select: {
+                id: true,
+                full_name: true,
+                email: true,
+                role: true
+              }
+            });
+            
+            customer = {
+              id: user?.id,
+              name: user?.full_name || user?.email,
+              tax_code: serviceRequest.tenant_id?.toString()
+            };
+          }
+        }
+        
+        // Fallback: Lấy thông tin Customer từ customer_id nếu có
+        if (!customer && invoice.customer_id) {
+          customer = await prisma.customer.findUnique({
+            where: { id: invoice.customer_id },
+            select: {
+              id: true,
+              name: true,
+              tax_code: true
+            }
+          });
+        }
+
+        return {
+          ...invoice,
+          serviceRequest,
+          customer
+        };
+      }));
+
+      return enrichedData;
+    } catch (error) {
+      console.error('Error in getCustomerInvoices:', error);
+      throw error;
+    }
   }
 
   async create(actor: any, payload: any){

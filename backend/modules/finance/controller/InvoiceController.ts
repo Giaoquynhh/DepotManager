@@ -49,6 +49,10 @@ export class InvoiceController {
   async getContainersNeedInvoice(req: AuthRequest, res: Response){
     try{ return res.json(await service.getContainersNeedInvoice(req.user!)); }catch(e:any){ return res.status(400).json({ message: e.message }); }
   }
+  
+  async getCustomerInvoices(req: AuthRequest, res: Response){
+    try{ return res.json(await service.getCustomerInvoices(req.user!, req.query)); }catch(e:any){ return res.status(400).json({ message: e.message }); }
+  }
 }
 
 export default new InvoiceController();
