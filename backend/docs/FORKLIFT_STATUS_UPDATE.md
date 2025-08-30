@@ -50,45 +50,36 @@ async assignDriver(req: AuthRequest, res: Response) {
         // Kiểm tra xem có phải gán lại tài xế không
         if (job.assigned_driver_id && job.assigned_driver_id !== driverId) {
             return res.status(400).json({ 
-                message: 'Job already assigned to another driver. Cannot reassign.' 
+                message: 'Job đã được gán cho tài xế khác. Không thể gán lại.' 
             });
         }
 
-        // Cập nhật job với tài xế mới
+        // Cập nhật trạng thái sang ASSIGNED
         const updatedJob = await prisma.forkliftTask.update({
             where: { id: jobId },
-            data: {
+            data: { 
                 assigned_driver_id: driverId,
-                status: 'ASSIGNED' // Chuyển sang trạng thái ASSIGNED
+                status: 'ASSIGNED',
+                updatedAt: new Date()
             }
         });
 
         // Ghi log audit
-        await prisma.auditLog.create({
-            data: {
-                actor_id: req.user._id,
-                action: 'FORKLIFT_DRIVER_ASSIGNED',
-                entity: 'ForkliftTask',
-                entity_id: jobId,
-                meta: {
-                    driverId,
-                    oldStatus: job.status,
-                    newStatus: 'ASSIGNED',
-                    timestamp: new Date()
-                }
-            }
+        await audit(req.user!._id, 'FORKLIFT_DRIVER_ASSIGNED', 'FORKLIFT_TASK', jobId, { 
+            driver_id: driverId,
+            previous_status: job.status,
+            new_status: 'ASSIGNED'
         });
 
         return res.json({
-            message: 'Driver assigned successfully',
-            job: updatedJob
+            success: true,
+            message: 'Tài xế đã được gán thành công',
+            data: updatedJob
         });
 
     } catch (error) {
         console.error('Error assigning driver:', error);
-        return res.status(500).json({ 
-            message: 'Internal server error' 
-        });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 }
 ```
@@ -125,34 +116,27 @@ async startJob(req: AuthRequest, res: Response) {
         // Cập nhật trạng thái sang IN_PROGRESS
         const updatedJob = await prisma.forkliftTask.update({
             where: { id: jobId },
-            data: { status: 'IN_PROGRESS' }
-        });
-
-        // Ghi log audit
-        await prisma.auditLog.create({
-            data: {
-                actor_id: driverId,
-                action: 'FORKLIFT_JOB_STARTED',
-                entity: 'ForkliftTask',
-                entity_id: jobId,
-                meta: {
-                    oldStatus: job.status,
-                    newStatus: 'IN_PROGRESS',
-                    timestamp: new Date()
-                }
+            data: { 
+                status: 'IN_PROGRESS',
+                updatedAt: new Date()
             }
         });
 
+        // Ghi log audit
+        await audit(req.user!._id, 'FORKLIFT_JOB_STARTED', 'FORKLIFT_TASK', jobId, { 
+            previous_status: job.status,
+            new_status: 'IN_PROGRESS'
+        });
+
         return res.json({
-            message: 'Job started successfully',
-            job: updatedJob
+            success: true,
+            message: 'Công việc đã được bắt đầu',
+            data: updatedJob
         });
 
     } catch (error) {
         console.error('Error starting job:', error);
-        return res.status(500).json({ 
-            message: 'Internal server error' 
-        });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 }
 ```
@@ -160,7 +144,7 @@ async startJob(req: AuthRequest, res: Response) {
 **Endpoint**: `PATCH /forklift/jobs/:jobId/start`
 **Status Allowed**: `ASSIGNED` → `IN_PROGRESS`
 
-#### c) Hàm `completeJob` - Logic Hoàn thành Công việc (Cập nhật)
+#### c) Hàm `completeJob` - Logic Hoàn thành Công việc
 ```typescript
 async completeJob(req: AuthRequest, res: Response) {
     try {
@@ -221,15 +205,14 @@ async completeJob(req: AuthRequest, res: Response) {
         });
 
         return res.json({
-            message: 'Job submitted for approval successfully',
-            job: updatedJob
+            success: true,
+            message: 'Công việc đã hoàn thành và chờ duyệt',
+            data: updatedJob
         });
 
     } catch (error) {
         console.error('Error completing job:', error);
-        return res.status(500).json({ 
-            message: 'Internal server error' 
-        });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 }
 ```
@@ -237,40 +220,117 @@ async completeJob(req: AuthRequest, res: Response) {
 **Endpoint**: `PATCH /forklift/jobs/:jobId/complete`
 **Status Allowed**: `IN_PROGRESS` → `PENDING_APPROVAL`
 
-### 3. Service Layer (modules/forklift/service/ForkliftService.ts)
-- Cập nhật validation để chấp nhận trạng thái `ASSIGNED` và `PENDING_APPROVAL`
-
-### 4. Frontend (pages/Forklift/index.tsx)
-
-#### a) Interface
+#### d) Hàm `approveJob` - Logic Duyệt Công việc (MỚI)
 ```typescript
-interface ForkliftTask {
-  // ... existing fields ...
-  status: 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
-  cost?: number; // Chi phí dịch vụ xe nâng
-  // report_status và report_image đã bị xóa khỏi Forklift page
-  // ... existing fields ...
+async approveJob(req: AuthRequest, res: Response) {
+    try {
+        const { jobId } = req.params;
+
+        const job = await prisma.forkliftTask.findUnique({
+            where: { id: jobId }
+        });
+
+        if (!job) {
+            return res.status(404).json({ message: 'Forklift job not found' });
+        }
+
+        // Kiểm tra trạng thái hiện tại
+        if (job.status !== 'PENDING_APPROVAL') {
+            return res.status(400).json({ 
+                message: 'Chỉ có thể duyệt công việc ở trạng thái CHỜ DUYỆT' 
+            });
+        }
+
+        // Kiểm tra chi phí và báo cáo đã được nhập
+        if (!job.cost || job.cost <= 0) {
+            return res.status(400).json({ 
+                message: 'Không thể duyệt: Chi phí chưa được nhập hoặc không hợp lệ' 
+            });
+        }
+
+        if (!job.report_status) {
+            return res.status(400).json({ 
+                message: 'Không thể duyệt: Báo cáo chưa được gửi' 
+            });
+        }
+
+        // Thực hiện transaction để cập nhật cả forklift task và service request
+        const updatedJob = await prisma.$transaction(async (tx) => {
+            // Cập nhật trạng thái forklift task sang COMPLETED
+            const updatedForkliftTask = await tx.forkliftTask.update({
+                where: { id: jobId },
+                data: { 
+                    status: 'COMPLETED',
+                    updatedAt: new Date()
+                }
+            });
+
+            // Cập nhật ServiceRequest từ FORKLIFTING sang trạng thái mới
+            if (job.container_no) {
+                const latestRequest = await tx.serviceRequest.findFirst({
+                    where: { container_no: job.container_no },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+                    // Logic mới: Phân biệt giữa IMPORT và EXPORT
+                    let newStatus: string;
+                    if (latestRequest.type === 'EXPORT') {
+                        // Export request: FORKLIFTING → IN_CAR
+                        newStatus = 'IN_CAR';
+                    } else {
+                        // Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
+                        newStatus = 'IN_YARD';
+                    }
+
+                    await tx.serviceRequest.update({
+                        where: { id: latestRequest.id },
+                        data: { 
+                            status: newStatus,
+                            updatedAt: new Date()
+                        }
+                    });
+                }
+            }
+
+            return updatedForkliftTask;
+        });
+
+        // Ghi log audit
+        await audit(req.user!._id, 'FORKLIFT_JOB_APPROVED', 'FORKLIFT_TASK', jobId, { 
+            previous_status: job.status,
+            new_status: 'COMPLETED',
+            approved_at: new Date()
+        });
+
+        return res.json({
+            success: true,
+            message: 'Công việc đã được duyệt thành công',
+            data: updatedJob
+        });
+
+    } catch (error) {
+        console.error('Error approving job:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
 }
 ```
 
-#### b) Hiển thị trạng thái
-- **PENDING:** "Chờ xử lý" (màu vàng)
-- **ASSIGNED:** "Xe nâng đã nhận" (màu cam)
-- **IN_PROGRESS:** "Đang thực hiện" (màu xanh dương)
-- **PENDING_APPROVAL:** "Chờ duyệt" (màu cam)
-- **COMPLETED:** "Hoàn thành" (màu xanh lá)
-- **CANCELLED:** "Đã hủy" (màu đỏ)
+**Endpoint**: `PATCH /forklift/jobs/:jobId/approve`
+**Status Allowed**: `PENDING_APPROVAL` → `COMPLETED`
+**Logic mới**: Phân biệt IMPORT/EXPORT khi cập nhật ServiceRequest status
 
-#### c) Logic nút hành động
-- **PENDING + không có tài xế:** "Hủy", "Gán tài xế", "Chỉnh sửa chi phí"
-- **PENDING + có tài xế:** "🔄 Gán lại tài xế", "Chỉnh sửa chi phí"
-- **ASSIGNED:** "Bắt đầu làm việc", "Chỉnh sửa chi phí"
-- **IN_PROGRESS:** "Hoàn thành", "Chỉnh sửa chi phí"
-- **PENDING_APPROVAL:** "Đang chờ duyệt" (không có nút hành động)
-- **COMPLETED:** Không hiển thị nút hành động
-- **CANCELLED:** Không hiển thị nút hành động
+### 3. Frontend Components (frontend/pages/Forklift/)
 
-#### d) Hiển thị thông tin
+#### a) Hiển thị trạng thái mới
+- **PENDING**: "Chờ xử lý" (badge-yellow)
+- **ASSIGNED**: "Xe nâng đã nhận" (badge-orange) 
+- **IN_PROGRESS**: "Đang thực hiện" (badge-blue)
+- **PENDING_APPROVAL**: "Chờ duyệt" (badge-orange)
+- **COMPLETED**: "Hoàn thành" (badge-green)
+- **CANCELLED**: "Đã hủy" (badge-red)
+
+#### b) Hiển thị thông tin
 - **VỊ TRÍ NHẬN:** Hiển thị thông tin tài xế (tên, biển số)
 - **VỊ TRÍ XẾP:** Hiển thị vị trí thực tế (yard/block/slot)
 - **CHI PHÍ:** Hiển thị chi phí dịch vụ với định dạng VNĐ
@@ -335,8 +395,36 @@ CANCELLED  CANCELLED
 
 ### **Quyền duyệt:**
 - Chỉ admin mới có thể duyệt task từ `PENDING_APPROVAL` sang `COMPLETED`
-- Tài xế không thể tự chuyển sang `COMPLETED`
 
-### **Audit Trail:**
-- Tất cả các thay đổi trạng thái đều được ghi log
-- Bao gồm thông tin về người thực hiện, thời gian, và trạng thái cũ/mới
+### **Logic mới khi approve (Phân biệt IMPORT/EXPORT):**
+- **IMPORT requests**: `FORKLIFTING` → `IN_YARD` (giữ nguyên logic cũ)
+- **EXPORT requests**: `FORKLIFTING` → `IN_CAR` (logic mới)
+
+### **Ẩn container IN_CAR:**
+- Container có trạng thái `IN_CAR` sẽ tự động ẩn khỏi:
+  - `http://localhost:5002/Yard` - Không hiển thị trong bản đồ bãi
+  - `http://localhost:5002/ContainersPage` - Không hiển thị trong danh sách container
+
+## API Endpoints
+
+| Method | Endpoint | Description | Status Allowed |
+|--------|----------|-------------|----------------|
+| `PATCH` | `/forklift/jobs/:jobId/assign-driver` | Gán tài xế | `PENDING` → `ASSIGNED` |
+| `PATCH` | `/forklift/jobs/:jobId/start` | Bắt đầu công việc | `ASSIGNED` → `IN_PROGRESS` |
+| `PATCH` | `/forklift/jobs/:jobId/complete` | Hoàn thành công việc | `IN_PROGRESS` → `PENDING_APPROVAL` |
+| `PATCH` | `/forklift/jobs/:jobId/approve` | Duyệt công việc | `PENDING_APPROVAL` → `COMPLETED` |
+| `PATCH` | `/forklift/jobs/:jobId/cancel` | Hủy công việc | `PENDING`, `ASSIGNED` → `CANCELLED` |
+
+## Files đã cập nhật
+
+### Backend:
+- `modules/forklift/controller/ForkliftController.ts` - Logic approve job mới
+- `modules/requests/service/RequestStateMachine.ts` - Thêm trạng thái IN_CAR
+- `modules/yard/service/YardService.ts` - Lọc bỏ container IN_CAR
+
+### Frontend:
+- `pages/Forklift/index.tsx` - Hiển thị trạng thái mới
+- `pages/ContainersPage/index.tsx` - Ẩn container IN_CAR
+- `components/RequestTable.tsx` - Hiển thị trạng thái IN_CAR
+- `components/DepotRequestTable.tsx` - Hiển thị trạng thái IN_CAR
+- `components/SimpleChatBox.tsx` - Hiển thị trạng thái IN_CAR

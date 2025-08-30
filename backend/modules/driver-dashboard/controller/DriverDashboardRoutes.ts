@@ -9,11 +9,28 @@ import fs from 'fs';
 // Cấu hình multer cho upload file
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/reports/');
+    // Sử dụng đường dẫn tuyệt đối cố định
+    const uploadPath = 'D:\\container20\\manageContainer\\backend\\uploads\\reports';
+    
+    console.log('=== MULTER DEBUG ===');
+    console.log('Multer upload destination:', uploadPath);
+    
+    // Tạo thư mục nếu chưa tồn tại
+    if (!fs.existsSync(uploadPath)) {
+      console.log('Creating multer upload directory:', uploadPath);
+      fs.mkdirSync(uploadPath, { recursive: true });
+      console.log('Multer upload directory created successfully');
+    } else {
+      console.log('Multer upload directory already exists');
+    }
+    
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + '-' + file.originalname);
+    const filename = file.fieldname + '-' + uniqueSuffix + '-' + file.originalname;
+    console.log('Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -56,11 +73,18 @@ router.post('/tasks/:taskId/report', upload.single('report_image'), (req, res) =
 // Serve ảnh báo cáo (public access)
 router.get('/reports/:filename', (req, res) => {
   const { filename } = req.params;
-  const filePath = path.join(__dirname, '../../../uploads/reports', filename);
+  // Sử dụng đường dẫn tuyệt đối cố định
+  const filePath = path.join('D:\\container20\\manageContainer\\backend\\uploads\\reports', filename);
+  
+  console.log('=== SERVING FILE DEBUG ===');
+  console.log('Filename:', filename);
+  console.log('Full file path:', filePath);
   
   if (fs.existsSync(filePath)) {
+    console.log('File found, serving:', filePath);
     res.sendFile(filePath);
   } else {
+    console.log('File not found:', filePath);
     res.status(404).json({ message: 'File not found' });
   }
 });

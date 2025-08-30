@@ -85,6 +85,7 @@ export default function DepotRequestTable({
 			EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
 			REJECTED: { label: 'Từ chối', className: 'status-rejected' },
 			IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
+			IN_CAR: { label: 'Đã lên xe', className: 'status-in-car' },
 			LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
 			PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
 			CHECKING: { label: 'Đang kiểm tra', className: 'status-checking' },

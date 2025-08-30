@@ -168,19 +168,52 @@ export class DriverDashboardService {
 			});
 
 			// Nếu forklift task chuyển từ PENDING sang IN_PROGRESS, 
-			// cập nhật ServiceRequest từ POSITIONED sang FORKLIFTING
+			// cập nhật ServiceRequest tương ứng
 			if (task.status === 'PENDING' && status === 'IN_PROGRESS' && task.container_no) {
 				const latestRequest = await tx.serviceRequest.findFirst({
 					where: { container_no: task.container_no },
 					orderBy: { createdAt: 'desc' }
 				});
 
-				if (latestRequest && latestRequest.status === 'POSITIONED') {
+				if (latestRequest) {
+					let newStatus: string;
+					
+					// Logic mới: Phân biệt giữa IMPORT và EXPORT
+					if (latestRequest.type === 'EXPORT' && latestRequest.status === 'GATE_IN') {
+						// Export request: GATE_IN → FORKLIFTING
+						newStatus = 'FORKLIFTING';
+					} else if (latestRequest.type === 'IMPORT' && latestRequest.status === 'POSITIONED') {
+						// Import request: POSITIONED → FORKLIFTING (giữ nguyên logic cũ)
+						newStatus = 'FORKLIFTING';
+					} else {
+						// Các trường hợp khác: không thay đổi
+						return updatedForkliftTask;
+					}
+
+					// Cập nhật trạng thái ServiceRequest
 					await tx.serviceRequest.update({
 						where: { id: latestRequest.id },
 						data: { 
-							status: 'FORKLIFTING',
+							status: newStatus,
 							updatedAt: new Date()
+						}
+					});
+
+					// Ghi log audit cho việc thay đổi trạng thái ServiceRequest
+					await tx.auditLog.create({
+						data: {
+							actor_id: driverId,
+							action: 'REQUEST_STATUS_UPDATED',
+							entity: 'ServiceRequest',
+							entity_id: latestRequest.id,
+							meta: {
+								oldStatus: latestRequest.status,
+								newStatus: newStatus,
+								containerNo: task.container_no,
+								requestType: latestRequest.type,
+								taskId: taskId,
+								timestamp: new Date()
+							}
 						}
 					});
 				}
@@ -325,28 +358,45 @@ export class DriverDashboardService {
 				throw new Error('Tên file không hợp lệ');
 			}
 
-					// Tạo tên file duy nhất
-		const fileName = `report_${taskId}_${Date.now()}_${file.originalname}`;
-		const relativePath = `/uploads/reports/${fileName}`; // Thêm dấu / ở đầu để tạo URL đúng
+			// Tạo tên file duy nhất
+			const fileName = `report_${taskId}_${Date.now()}_${file.originalname}`;
+			const relativePath = `/uploads/reports/${fileName}`; // Thêm dấu / ở đầu để tạo URL đúng
 
 			// Lưu file vào thư mục uploads
 			const fs = require('fs');
 			const path = require('path');
 			
-			// Tạo thư mục nếu chưa tồn tại
-			const uploadDir = path.join(__dirname, '../../../uploads/reports');
-			if (!fs.existsSync(uploadDir)) {
-				fs.mkdirSync(uploadDir, { recursive: true });
+			// Sử dụng đường dẫn tuyệt đối cố định để đảm bảo chính xác
+			const fixedUploadDir = 'D:\\container20\\manageContainer\\backend\\uploads\\reports';
+			
+			console.log('=== UPLOAD DEBUG INFO ===');
+			console.log('Current file location:', __dirname);
+			console.log('Upload directory path (fixed):', fixedUploadDir);
+			console.log('File info:', {
+				originalname: file.originalname,
+				mimetype: file.mimetype,
+				size: file.size,
+				hasBuffer: !!file.buffer,
+				hasPath: !!file.path
+			});
+			
+			// Tạo thư mục nếu chưa tồn tại - sử dụng đường dẫn cố định
+			if (!fs.existsSync(fixedUploadDir)) {
+				console.log('Creating upload directory:', fixedUploadDir);
+				fs.mkdirSync(fixedUploadDir, { recursive: true });
+				console.log('Upload directory created successfully');
+			} else {
+				console.log('Upload directory already exists');
 			}
 			
 			// Lưu file - sử dụng stream thay vì buffer
-			const absolutePath = path.join(uploadDir, fileName);
+			const absolutePath = path.join(fixedUploadDir, fileName);
 			
 			console.log('File upload details:', {
 				fileName,
 				relativePath,
 				absolutePath,
-				uploadDir,
+				uploadDir: fixedUploadDir,
 				hasBuffer: !!file.buffer,
 				hasPath: !!file.path,
 				fileSize: file.size
@@ -354,49 +404,61 @@ export class DriverDashboardService {
 			
 			// Kiểm tra xem file có buffer hay stream
 			if (file.buffer) {
+				console.log('Saving file using buffer to:', absolutePath);
 				fs.writeFileSync(absolutePath, file.buffer);
-				console.log('File saved using buffer');
+				console.log('File saved successfully using buffer');
 			} else if (file.path) {
 				// Nếu sử dụng diskStorage, file đã được lưu
 				// Chỉ cần copy từ temp location
 				const tempPath = file.path;
+				console.log('Copying file from temp path:', tempPath);
 				if (fs.existsSync(tempPath)) {
 					fs.copyFileSync(tempPath, absolutePath);
-					console.log('File copied from temp path:', tempPath);
+					console.log('File copied successfully from temp path');
 				} else {
 					throw new Error(`Temp file not found: ${tempPath}`);
 				}
-					} else {
-			throw new Error('Không thể lưu file: không có buffer hoặc path');
-		}
-
-		// Cập nhật task với thông tin báo cáo
-		const updatedTask = await prisma.forkliftTask.update({
-			where: { id: taskId },
-			data: {
-				report_status: 'SUBMITTED',
-				report_image: relativePath,
-				updatedAt: new Date()
+			} else {
+				throw new Error('Không thể lưu file: không có buffer hoặc path');
 			}
-		});
 
-		// Ghi log audit
-		await prisma.auditLog.create({
-			data: {
-				actor_id: driverId,
-				action: 'TASK_REPORT_UPLOADED',
-				entity: 'ForkliftTask',
-				entity_id: taskId,
-				meta: {
-					fileName,
-					filePath: relativePath,
-					timestamp: new Date()
+			// Kiểm tra file đã được lưu
+			if (fs.existsSync(absolutePath)) {
+				const stats = fs.statSync(absolutePath);
+				console.log('File saved successfully. Size:', stats.size, 'bytes');
+			} else {
+				throw new Error('File was not saved successfully');
+			}
+
+			// Cập nhật task với thông tin báo cáo
+			const updatedTask = await prisma.forkliftTask.update({
+				where: { id: taskId },
+				data: {
+					report_status: 'SUBMITTED',
+					report_image: relativePath,
+					updatedAt: new Date()
 				}
-			}
-		});
+			});
 
-		return updatedTask;
+			// Ghi log audit
+			await prisma.auditLog.create({
+				data: {
+					actor_id: driverId,
+					action: 'TASK_REPORT_UPLOADED',
+					entity: 'ForkliftTask',
+					entity_id: taskId,
+					meta: {
+						fileName,
+						filePath: relativePath,
+						timestamp: new Date()
+					}
+				}
+			});
+
+			console.log('=== UPLOAD COMPLETED SUCCESSFULLY ===');
+			return updatedTask;
 		} catch (error) {
+			console.error('=== UPLOAD ERROR ===');
 			console.error('Error in uploadReportImage service:', error);
 			throw error;
 		}

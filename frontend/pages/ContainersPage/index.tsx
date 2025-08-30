@@ -29,6 +29,15 @@ function ContainersList(){
   const items = (data?.items || []).map((it:any) => {
     const inYard = !!it.slot_code;
     
+    // Kiểm tra trạng thái IN_YARD và IN_CAR trước (đã được duyệt trên Forklift)
+    if (it.service_status === 'IN_YARD') {
+      // Container đã được duyệt và đặt vào vị trí trong bãi (cho IMPORT)
+      return { ...it, derived_status: 'IN_YARD' };
+    } else if (it.service_status === 'IN_CAR') {
+      // Container đã được duyệt và đặt lên xe (cho EXPORT) - ẨN khỏi danh sách
+      return { ...it, derived_status: 'IN_CAR', hidden: true };
+    }
+    
     if (inYard) {
       // Container có slot_code - đã xếp chỗ trong bãi
       if (it.service_status === 'CHECKED' || it.repair_checked === true) {
@@ -54,14 +63,20 @@ function ContainersList(){
     }
   });
   
-  // Lọc theo trạng thái
+  // Lọc theo trạng thái và ẩn container IN_CAR (đã lên xe)
+  const visibleItems = items.filter((i:any) => !i.hidden); // Loại bỏ container bị ẩn
+  
   const filteredItems = status === 'WAITING' ? 
-    items.filter((i:any) => i.derived_status === 'WAITING') : 
+    visibleItems.filter((i:any) => i.derived_status === 'WAITING') : 
     status === 'ASSIGNED' ? 
-    items.filter((i:any) => i.derived_status === 'ASSIGNED') : 
+    visibleItems.filter((i:any) => i.derived_status === 'ASSIGNED') : 
+    status === 'IN_YARD' ?
+    visibleItems.filter((i:any) => i.derived_status === 'IN_YARD') : // Container đã ở trong bãi
+    status === 'IN_CAR' ?
+    visibleItems.filter((i:any) => i.derived_status === 'IN_CAR') : // Container đã lên xe (không hiển thị)
     status === 'EMPTY_IN_YARD' ?
-    items.filter((i:any) => i.derived_status === 'EMPTY_IN_YARD') : // Container rỗng có trong bãi
-    items.filter((i:any) => i.derived_status !== null); // Lấy tất cả container có derived_status
+    visibleItems.filter((i:any) => i.derived_status === 'EMPTY_IN_YARD') : // Container rỗng có trong bãi
+    visibleItems.filter((i:any) => i.derived_status !== null); // Lấy tất cả container có derived_status
   
 
 
@@ -82,6 +97,7 @@ function ContainersList(){
           <option value="">Tất cả trạng thái</option>
           <option value="WAITING">Đang chờ sắp xếp</option>
           <option value="ASSIGNED">Đã xếp chỗ trong bãi</option>
+          <option value="IN_YARD">Đã ở trong bãi</option>
           <option value="EMPTY_IN_YARD">Container rỗng có trong bãi</option>
         </select>
                            <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'#f0f9ff', border:'1px solid #0ea5e9', borderRadius:6}}>
@@ -128,8 +144,12 @@ function ContainersList(){
                          <span
                            style={{
                              background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : 
+                                        it.derived_status==='IN_YARD' ? '#dcfce7' :
+                                        it.derived_status==='IN_CAR' ? '#fef3c7' :
                                         it.derived_status==='EMPTY_IN_YARD' ? '#fef3c7' : '#fff7e6',
                              color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : 
+                                   it.derived_status==='IN_YARD' ? '#166534' :
+                                   it.derived_status==='IN_CAR' ? '#92400e' :
                                    it.derived_status==='EMPTY_IN_YARD' ? '#92400e' : '#664d03',
                              padding:'4px 8px',
                              borderRadius:8,
@@ -138,9 +158,11 @@ function ContainersList(){
                            }}
                          >
                            {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
+                            it.derived_status==='IN_YARD' ? 'Đã ở trong bãi' :
+                            it.derived_status==='IN_CAR' ? 'Đã lên xe' :
                             it.derived_status==='EMPTY_IN_YARD' ? 'Container rỗng có trong bãi' : 'Đang chờ sắp xếp'}
                          </span>
-                         {(it.derived_status==='ASSIGNED' || it.derived_status==='EMPTY_IN_YARD') && (
+                         {(it.derived_status==='ASSIGNED' || it.derived_status==='IN_YARD' || it.derived_status==='EMPTY_IN_YARD') && (
                            <small className="muted" style={{marginTop:4}}>
                              Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
                          )}

@@ -58,16 +58,35 @@ export class YardService {
 
 	async getStackMap() {
 		const now = new Date();
-		// Đếm số OCCUPIED và HOLD(active) theo slot_id bằng groupBy
+		
+		// Lấy danh sách container có trạng thái IN_CAR để loại bỏ khỏi yard
+		const inCarContainers = await prisma.serviceRequest.findMany({
+			where: { 
+				status: 'IN_CAR',
+				container_no: { not: null }
+			},
+			select: { container_no: true }
+		});
+		const inCarContainerNos = new Set(inCarContainers.map(c => c.container_no!));
+		
+		// Đếm số OCCUPIED và HOLD(active) theo slot_id bằng groupBy, loại bỏ container IN_CAR
 		const [occCounts, holdCounts] = await Promise.all([
 			prisma.yardPlacement.groupBy({
 				by: ['slot_id'],
-				where: { status: 'OCCUPIED', removed_at: null },
+				where: { 
+					status: 'OCCUPIED', 
+					removed_at: null,
+					container_no: { notIn: Array.from(inCarContainerNos) } // Loại bỏ container IN_CAR
+				},
 				_count: { _all: true }
 			}),
 			prisma.yardPlacement.groupBy({
 				by: ['slot_id'],
-				where: { status: 'HOLD', OR: [ { hold_expires_at: null }, { hold_expires_at: { gt: now } } ] },
+				where: { 
+					status: 'HOLD', 
+					OR: [ { hold_expires_at: null }, { hold_expires_at: { gt: now } } ],
+					container_no: { notIn: Array.from(inCarContainerNos) } // Loại bỏ container IN_CAR
+				},
 				_count: { _all: true }
 			})
 		]);
@@ -96,10 +115,42 @@ export class YardService {
 			include: { placements: { orderBy: { tier: 'asc' } }, block: { include: { yard: true } } }
 		});
 		if (!slot) throw new Error('Slot không tồn tại');
-		return slot;
+		
+		// Lọc bỏ container có trạng thái IN_CAR khỏi placements
+		const inCarContainers = await prisma.serviceRequest.findMany({
+			where: { 
+				status: 'IN_CAR',
+				container_no: { not: null }
+			},
+			select: { container_no: true }
+		});
+		const inCarContainerNos = new Set(inCarContainers.map(c => c.container_no!));
+		
+		// Lọc placements để loại bỏ container IN_CAR
+		const filteredPlacements = slot.placements.filter((p: any) => 
+			!p.container_no || !inCarContainerNos.has(p.container_no)
+		);
+		
+		return {
+			...slot,
+			placements: filteredPlacements
+		};
 	}
 
 	async findContainerLocation(container_no: string) {
+		// Kiểm tra xem container có trạng thái IN_CAR không
+		const inCarRequest = await prisma.serviceRequest.findFirst({
+			where: { 
+				container_no,
+				status: 'IN_CAR'
+			}
+		});
+		
+		// Nếu container có trạng thái IN_CAR, không trả về vị trí
+		if (inCarRequest) {
+			return null;
+		}
+		
 		const place = await prisma.yardPlacement.findFirst({
 			where: { container_no, status: { in: ['HOLD','OCCUPIED'] } },
 			include: { slot: { include: { block: { include: { yard: true } } } } }

@@ -571,7 +571,7 @@ export class ForkliftController {
 					}
 				});
 
-				// Cập nhật ServiceRequest từ FORKLIFTING sang IN_YARD
+				// Cập nhật ServiceRequest từ FORKLIFTING sang trạng thái mới
 				if (job.container_no) {
 					const latestRequest = await tx.serviceRequest.findFirst({
 						where: { container_no: job.container_no },
@@ -579,10 +579,20 @@ export class ForkliftController {
 					});
 
 					if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+						// Logic mới: Phân biệt giữa IMPORT và EXPORT
+						let newStatus: string;
+						if (latestRequest.type === 'EXPORT') {
+							// Export request: FORKLIFTING → IN_CAR
+							newStatus = 'IN_CAR';
+						} else {
+							// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
+							newStatus = 'IN_YARD';
+						}
+
 						await tx.serviceRequest.update({
 							where: { id: latestRequest.id },
 							data: { 
-								status: 'IN_YARD',
+								status: newStatus,
 								updatedAt: new Date()
 							}
 						});

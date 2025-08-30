@@ -51,6 +51,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
       FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' },
       IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
+      IN_CAR: { label: 'Đã lên xe', className: 'status-in-car' },
       LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
       PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
       ACCEPT: { label: 'Đã chấp nhận', className: 'status-accept' }

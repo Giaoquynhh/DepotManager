@@ -1,152 +1,238 @@
-# 📦 Tobe Depot Management System — Mô tả bài toán tổng quan
+# PROJECT OVERVIEW - Container Management System
 
-## 1. Bối cảnh & Mục tiêu dự án
-Hệ thống **Tobe Depot Management System (TDMS)** là nền tảng phần mềm hỗ trợ quản lý toàn bộ quy trình **xuất – nhập – lưu trữ – bảo trì container** tại kho bãi.
+## Tổng quan dự án
+Hệ thống quản lý container toàn diện với các module chính: Auth, Requests, Gate, Yard, Forklift, Maintenance, Finance, Reports và Chat. Hệ thống đã được cập nhật với **Request State Machine** và **logic phân biệt IMPORT/EXPORT** để quản lý workflow trạng thái một cách nhất quán.
 
-### Mục tiêu:
-- Quản lý **tài nguyên**: nhân sự, khách hàng, phương tiện, container, sơ đồ bãi.
-- Quản lý **tác nghiệp**: nhập/xuất container, check-in/check-out, điều độ, nâng/hạ, bảo trì.
-- Quản lý **dịch vụ & tài chính**: dịch vụ phát sinh, báo giá, hóa đơn, công nợ, báo cáo.
-- Hỗ trợ **tự động hóa quy trình** và giảm thao tác thủ công.
+## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR
 
----
+### **Workflow mới với trạng thái IN_CAR**
 
-## 2. Quy trình nghiệp vụ container
-
-### 2.1 Quy trình nhập container (Import)
-1. **Tiếp nhận**
-   - Container đến cổng bãi.
-   - Kiểm tra booking & hồ sơ (vận đơn, hải quan).
-2. **Kiểm tra container**
-   - Kiểm tra tình trạng, seal (niêm phong).
-3. **Xử lý hàng hóa**
-   - Dỡ hàng, kiểm tra số lượng & chất lượng.
-   - Thủ tục hải quan (nếu cần).
-4. **Lưu kho**
-   - Xếp vào vị trí kho bãi.
-   - Cập nhật hệ thống quản lý.
-
-### 2.2 Quy trình xuất container (Export)
-1. **Chuẩn bị**
-   - Nhận yêu cầu xuất hàng.
-   - Kiểm tra hồ sơ xuất khẩu.
-2. **Chuẩn bị hàng hóa**
-   - Thu gom hàng từ kho.
-   - Đóng gói, xếp container.
-3. **Hoàn thiện**
-   - Kiểm tra container sau xếp hàng, niêm phong.
-   - Thủ tục hải quan.
-   - Bàn giao cho vận chuyển.
-
----
-
-## 3. Các phân hệ chức năng
-
-### 3.1 Quản lý danh mục & tài nguyên (Module 1, 9)
-- Nhân sự, khách hàng, người dùng.
-- Danh mục dịch vụ & bảng giá.
-- Danh mục vật tư bảo trì.
-- Thông tin hãng tàu & hãng xe.
-- Thiết lập sơ đồ & vị trí bãi.
-
-### 3.2 Quản lý người dùng & tài khoản (Module 2)
-- Đăng nhập, đổi mật khẩu.
-- Cập nhật thông tin cá nhân.
-
-### 3.3 Quản lý yêu cầu dịch vụ (Module 3)
-- Khách hàng tạo yêu cầu nhập/xuất/chuyển đổi container.
-- Depot tiếp nhận & phân công công việc.
-- Xuất phiếu EIR/LOLO & hóa đơn.
-- Gửi yêu cầu thanh toán.
-- Kết nối hệ thống Reuse container.
-- **🆕 Hệ thống Chat:** Giao tiếp real-time giữa depot staff và customer về đơn hàng.
-
-### 3.4 Quản lý cổng bãi (Module 4)
-- Đối chiếu phiếu hẹn với lịch hẹn.
-- Check-in / Check-out phương tiện.
-- In phiếu Gate IN/OUT.
-
-### 3.5 Quản lý điều độ & container (Module 5)
-- Sơ đồ bãi trực quan, tìm kiếm container.
-- Gợi ý vị trí nhập bãi.
-- Quản lý xe nâng & phân công công việc.
-- Nâng/hạ container.
-- Quản lý trạng thái container & cảnh báo DEM/DET.
-
-### 3.6 Quản lý bảo trì (Module 6)
-- Tạo & duyệt phiếu sửa chữa/kiểm tra.
-- Quản lý vật tư bảo trì.
-- Cập nhật trạng thái container sau sửa chữa.
-- Khách hàng chấp nhận/từ chối sửa chữa.
-
-### 3.7 Quản lý hóa đơn & công nợ (Module 7)
-- Danh sách hóa đơn.
-- Tạo hóa đơn từ dịch vụ.
-- Cập nhật thanh toán & công nợ.
-- Gửi hóa đơn qua email.
-- Báo cáo tài chính.
-
-### 3.8 Báo cáo & Dashboard (Module 8)
-- Báo cáo doanh thu, công nợ.
-- Báo cáo vận hành: tình trạng bãi, hiệu suất cổng, bảo trì.
-- Dashboard tổng quan KPI.
-- Xuất báo cáo PDF/Excel.
-  
-  Tham chiếu chi tiết: xem `backend/docs/MODULE_8_REPORTS.md`.
-
----
-
-## 4. Các điểm kiểm soát quan trọng
-- **Tài liệu**: Booking, hải quan, EIR/LOLO, hóa đơn.
-- **Chất lượng**: Container, seal, hàng hóa.
-
-## 5. 🆕 **Hệ thống Chat (Module Chat)**
-
-### **Tổng quan**
-Hệ thống chat mới được tích hợp vào TDMS để hỗ trợ giao tiếp real-time giữa **Depot Staff** và **Customer** về các đơn hàng container.
-
-### **Features chính**
-- ✅ **Status-based Activation:** Chat chỉ hoạt động khi request status ≥ SCHEDULED
-- ✅ **Real-time Communication:** WebSocket integration cho instant messaging
-- ✅ **Message Persistence:** Lưu trữ tin nhắn vào database
-- ✅ **Role-based Access:** Kiểm tra quyền theo user role và tenant
-- ✅ **Container-specific Chat:** Mỗi container có chat room riêng biệt
-
-### **Trạng thái được phép chat**
-```typescript
-const allowedStatuses = [
-  'SCHEDULED',        // Đơn hàng đã được lên lịch
-  'APPROVED',         // Đơn hàng đã được chấp nhận
-  'IN_PROGRESS',      // Đơn hàng đang được xử lý
-  'COMPLETED',        // Đơn hàng đã hoàn tất
-  'EXPORTED'          // Đơn hàng đã xuất kho
-];
+#### 1. **Import Request Workflow (Giữ nguyên):**
+```
+1. CHECKED → POSITIONED (Yard confirm)
+2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
+3. FORKLIFTING → IN_YARD (Forklift approval)
 ```
 
-### **API Endpoints**
-- `POST /chat` - Tạo chat room mới
-- `GET /chat/request/:request_id` - Lấy chat room theo request
-- `POST /chat/:chat_room_id/messages` - Gửi tin nhắn
-- `GET /chat/:chat_room_id/messages` - Lấy danh sách tin nhắn
-- `GET /chat/user/rooms` - Lấy chat rooms của user
+#### 2. **Export Request Workflow (MỚI):**
+```
+1. GATE_IN → FORKLIFTING (Driver click "Bắt đầu")
+2. FORKLIFTING → IN_CAR (Forklift approval) ⭐ MỚI
+3. Container tự động ẩn khỏi Yard và ContainersPage
+```
 
-### **Tích hợp với Frontend**
-- **DepotChatWindow:** Main chat interface với API integration
-- **DepotChatMini:** Chat trigger và window management
-- **DepotChatDemo:** Demo version cho testing
+### **Logic mới khi approve forklift job:**
+- **IMPORT requests**: `FORKLIFTING` → `IN_YARD` (giữ nguyên logic cũ)
+- **EXPORT requests**: `FORKLIFTING` → `IN_CAR` (logic mới)
 
-**Tham chiếu chi tiết:** Xem `backend/docs/CHAT_SYSTEM.md`
-- **An ninh**: Camera, kiểm soát niêm phong, giám sát nâng/hạ.
+### **Ẩn container IN_CAR:**
+- Container có trạng thái `IN_CAR` sẽ tự động ẩn khỏi:
+  - `http://localhost:5002/Yard` - Không hiển thị trong bản đồ bãi
+  - `http://localhost:5002/ContainersPage` - Không hiển thị trong danh sách container
+
+## 🏗️ Kiến trúc hệ thống
+
+### **Backend Architecture:**
+```
+manageContainer/backend/
+├── modules/
+│   ├── auth/           # Xác thực và phân quyền
+│   ├── requests/       # Quản lý yêu cầu dịch vụ + State Machine
+│   ├── gate/           # Quản lý cổng ra/vào
+│   ├── yard/           # Quản lý bãi container + Lọc bỏ container IN_CAR
+│   ├── forklift/       # Quản lý xe nâng + Logic phân biệt IMPORT/EXPORT
+│   ├── maintenance/    # Quản lý bảo trì
+│   ├── finance/        # Quản lý tài chính
+│   ├── reports/        # Báo cáo và thống kê
+│   └── chat/           # Hệ thống chat
+├── shared/
+│   ├── config/         # Cấu hình database và app
+│   ├── middlewares/    # Middleware chung
+│   └── utils/          # Utility functions
+└── prisma/             # Database schema và migrations
+```
+
+### **Frontend Architecture:**
+```
+manageContainer/frontend/
+├── pages/
+│   ├── Requests/       # Quản lý yêu cầu dịch vụ
+│   ├── Yard/           # Quản lý bãi container + Ẩn container IN_CAR
+│   ├── Forklift/       # Quản lý xe nâng + Hiển thị trạng thái mới
+│   ├── ContainersPage/ # Danh sách container + Logic ẩn container IN_CAR
+│   └── ...             # Các trang khác
+├── components/
+│   ├── RequestTable.tsx        # Hiển thị trạng thái IN_CAR
+│   ├── DepotRequestTable.tsx   # Hiển thị trạng thái IN_CAR
+│   ├── SimpleChatBox.tsx       # Hiển thị trạng thái IN_CAR
+│   └── ...                     # Các component khác
+└── services/            # API calls
+```
+
+## 📊 Module Overview
+
+### **1. MODULE 2: AUTH** ✅
+- **File:** `docs/MODULE_2_AUTH.md`
+- **Chức năng:** Xác thực, phân quyền, quản lý user/partner
+- **Trạng thái:** Hoàn thành
+
+### **2. MODULE 3: REQUESTS** ✅ + 🆕
+- **File:** `docs/MODULE_3_REQUESTS.md`
+- **Chức năng:** Quản lý yêu cầu dịch vụ với State Machine
+- **Tính năng mới:** 
+  - Logic phân biệt IMPORT/EXPORT khi approve forklift job
+  - Trạng thái IN_CAR cho container đã lên xe
+  - Ẩn container IN_CAR khỏi Yard và ContainersPage
+- **Trạng thái:** Hoàn thành + Tính năng mới
+
+### **3. MODULE 4: GATE** ✅
+- **File:** `docs/MODULE_4_GATE.md`
+- **Chức năng:** Quản lý cổng ra/vào container
+- **Trạng thái:** Hoàn thành
+
+### **4. MODULE 4: YARD** ✅ + 🆕
+- **File:** `docs/MODULE_4_YARD.md`
+- **Chức năng:** Quản lý bãi container, xếp chỗ, stacking
+- **Tính năng mới:** 
+  - Lọc bỏ container IN_CAR khỏi yard operations
+  - Không hiển thị container IN_CAR trong bản đồ bãi
+- **Trạng thái:** Hoàn thành + Tính năng mới
+
+### **5. MODULE 5: ContainerManager** ✅
+- **File:** `docs/MODULE_5_ContainerManager.md`
+- **Chức năng:** Quản lý container, kiểm tra, sửa chữa
+- **Trạng thái:** Hoàn thành
+
+### **6. MODULE 6: MAINTENANCE** ✅
+- **File:** `docs/MAINTENANCE_MODULE.md`
+- **Chức năng:** Quản lý bảo trì container
+- **Trạng thái:** Hoàn thành
+
+### **7. MODULE 7: FINANCE** ✅
+- **File:** `docs/MODULE_7_FINANCE.md`
+- **Chức năng:** Quản lý tài chính, hóa đơn, thanh toán
+- **Trạng thái:** Hoàn thành
+
+### **8. MODULE 8: REPORTS** ✅
+- **File:** `docs/MODULE_8_REPORTS.md`
+- **Chức năng:** Báo cáo và thống kê
+- **Trạng thái:** Hoàn thành
+
+### **9. CHAT SYSTEM** ✅
+- **File:** `docs/CHAT_SYSTEM.md`
+- **Chức năng:** Hệ thống chat real-time
+- **Trạng thái:** Hoàn thành
+
+## 🔄 Workflow Integration
+
+### **Container Yard Workflow Integration mới:**
+
+#### **Import Request Workflow:**
+```
+1. CHECKED → POSITIONED (Yard confirm)
+2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
+3. FORKLIFTING → IN_YARD (Forklift approval)
+```
+
+#### **Export Request Workflow (MỚI):**
+```
+1. GATE_IN → FORKLIFTING (Driver click "Bắt đầu")
+2. FORKLIFTING → IN_CAR (Forklift approval) ⭐ MỚI
+3. Container tự động ẩn khỏi Yard và ContainersPage
+```
+
+### **State Machine Integration:**
+- **RequestStateMachine** quản lý tất cả transitions
+- **Phân biệt IMPORT/EXPORT** khi approve forklift job
+- **Tự động ẩn container IN_CAR** khỏi giao diện quản lý bãi
+
+## 🎯 Business Logic mới
+
+### **Khi approve forklift job:**
+- **IMPORT requests**: Container được đặt vào vị trí trong bãi → Hiển thị trong Yard và ContainersPage
+- **EXPORT requests**: Container được đặt lên xe → Tự động ẩn khỏi Yard và ContainersPage
+
+### **Lý do logic mới:**
+- Container EXPORT đã lên xe không còn ở depot
+- Cần ẩn khỏi giao diện quản lý bãi
+- Logic phân biệt rõ ràng giữa nhập và xuất
+
+## 🔧 Technical Implementation
+
+### **Backend Changes:**
+1. **ForkliftController.approveJob()**: Logic phân biệt IMPORT/EXPORT
+2. **RequestStateMachine**: Thêm trạng thái IN_CAR và transitions
+3. **YardService**: Lọc bỏ container IN_CAR khỏi yard operations
+
+### **Frontend Changes:**
+1. **ContainersPage**: Logic ẩn container IN_CAR
+2. **Status Display**: Thêm hiển thị cho trạng thái IN_CAR
+3. **Filter Options**: Loại bỏ option IN_CAR (vì không hiển thị)
+
+## 📈 Performance Impact
+
+### **Database Queries:**
+- Thêm filter để loại bỏ container IN_CAR trong yard operations
+- Không ảnh hưởng đến performance vì chỉ filter thêm điều kiện
+
+### **Frontend Rendering:**
+- Container IN_CAR được ẩn hoàn toàn
+- Giảm số lượng item hiển thị
+- Cải thiện UX cho người dùng
+
+## 🚀 Future Enhancements
+
+### **Short-term:**
+- [ ] Add export status tracking cho container IN_CAR
+- [ ] Implement container departure workflow
+- [ ] Add notifications khi container chuyển sang IN_CAR
+
+### **Long-term:**
+- [ ] Add workflow engine cho complex business rules
+- [ ] Implement state machine visualization
+- [ ] Add bulk operations cho Depot
+- [ ] Implement auto-completion rules
+
+## 📝 Documentation Files
+
+### **Core Documentation:**
+- `PROJECT_OVERVIEW.md` - This file (Tổng quan dự án)
+- `README.md` - Hướng dẫn sử dụng chung
+
+### **Module Documentation:**
+- `MODULE_2_AUTH.md` - Xác thực và phân quyền
+- `MODULE_3_REQUESTS.md` - Quản lý yêu cầu dịch vụ + State Machine
+- `MODULE_4_GATE.md` - Quản lý cổng ra/vào
+- `MODULE_4_YARD.md` - Quản lý bãi container
+- `MODULE_5_ContainerManager.md` - Quản lý container
+- `MAINTENANCE_MODULE.md` - Quản lý bảo trì
+- `MODULE_7_FINANCE.md` - Quản lý tài chính
+- `MODULE_8_REPORTS.md` - Báo cáo và thống kê
+
+### **Feature Documentation:**
+- `CHAT_SYSTEM.md` - Hệ thống chat
+- `FORKLIFT_STATUS_UPDATE.md` - Cập nhật trạng thái forklift + Logic mới
+- `REQUEST_STATE_MACHINE_IMPLEMENTATION.md` - Implementation State Machine + Logic mới
+- `FORKLIFT_ACTION_MAPPING.md` - Mapping hành động forklift
+- `FORKLIFT_ISSUE_ANALYSIS.md` - Phân tích vấn đề forklift
+
+## 🔗 Related Files
+
+### **Backend Implementation:**
+- `modules/forklift/controller/ForkliftController.ts` - Logic approve job mới
+- `modules/requests/service/RequestStateMachine.ts` - Thêm trạng thái IN_CAR
+- `modules/yard/service/YardService.ts` - Lọc bỏ container IN_CAR
+
+### **Frontend Implementation:**
+- `pages/Forklift/index.tsx` - Hiển thị trạng thái mới
+- `pages/ContainersPage/index.tsx` - Ẩn container IN_CAR
+- `components/RequestTable.tsx` - Hiển thị trạng thái IN_CAR
+- `components/DepotRequestTable.tsx` - Hiển thị trạng thái IN_CAR
+- `components/SimpleChatBox.tsx` - Hiển thị trạng thái IN_CAR
 
 ---
 
-## 5. Yêu cầu kỹ thuật chính
-- **Phân quyền**: Quản lý nhân sự, Sale Admin, Điều độ, Bảo trì, Bảo vệ, Kế toán, Khách hàng.
-- **Real-time update**: Vị trí container, trạng thái công việc, KPI dashboard.
-- **Tích hợp**: Thanh toán online, COS Reuse, máy in cổng, email.
-- **Báo cáo động**: Tùy chỉnh theo thời gian, loại dịch vụ, khách hàng.
-
----
-
-## 6. Kết luận
-Hệ thống TDMS là giải pháp tổng thể giúp số hóa toàn bộ hoạt động depot container, giảm giấy tờ, tối ưu vận hành, tăng tính minh bạch & khả năng kiểm soát.
+**Ngày tạo:** 2024-08-16  
+**Phiên bản:** 4.0.0 - Container Yard Workflow Integration + Logic phân biệt IMPORT/EXPORT  
+**Tác giả:** Development Team  
+**Trạng thái:** ✅ Hoàn thành implementation và debug + Container Yard Workflow + Logic phân biệt IMPORT/EXPORT + Ẩn container IN_CAR

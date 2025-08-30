@@ -26,7 +26,8 @@ export class RequestStateMachine {
     'CHECKED',
     'POSITIONED', 
     'FORKLIFTING', // Trạng thái mới: đang nâng/hạ container
-    'IN_YARD' // Trạng thái mới: đã ở trong bãi
+    'IN_YARD', // Trạng thái mới: đã ở trong bãi
+    'IN_CAR' // Trạng thái mới: container đã được đặt lên xe (cho EXPORT)
   ];
 
   private static readonly TRANSITIONS: StateTransition[] = [
@@ -131,6 +132,12 @@ export class RequestStateMachine {
       description: 'Bắt đầu kiểm tra container'
     },
     {
+      from: 'GATE_IN',
+      to: 'FORKLIFTING',
+      allowedRoles: ['Driver', 'SaleAdmin', 'SystemAdmin'],
+      description: 'Tài xế bắt đầu nâng/hạ container (Export requests)'
+    },
+    {
       from: 'CHECKING',
       to: 'CHECKED',
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
@@ -159,7 +166,13 @@ export class RequestStateMachine {
       from: 'FORKLIFTING',
       to: 'IN_YARD',
       allowedRoles: ['SaleAdmin', 'SystemAdmin'],
-      description: 'Container đã được đặt vào vị trí trong bãi'
+      description: 'Container đã được đặt vào vị trí trong bãi (cho IMPORT)'
+    },
+    {
+      from: 'FORKLIFTING',
+      to: 'IN_CAR',
+      allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+      description: 'Container đã được đặt lên xe (cho EXPORT)'
     },
     {
       from: 'PENDING_ACCEPT',
