@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../../shared/middlewares/auth';
 import service from '../service/RequestService';
-import { createRequestSchema, updateRequestStatusSchema, queryRequestSchema, uploadDocSchema, rejectRequestSchema, softDeleteRequestSchema, restoreRequestSchema, scheduleRequestSchema, addInfoSchema, sendToGateSchema, completeRequestSchema } from '../dto/RequestDtos';
+import { createRequestSchema, updateRequestStatusSchema, queryRequestSchema, uploadDocSchema, rejectRequestSchema, softDeleteRequestSchema, restoreRequestSchema, scheduleRequestSchema, addInfoSchema, sendToGateSchema, completeRequestSchema, updateContainerNoSchema } from '../dto/RequestDtos';
 import path from 'path';
 
 export class RequestController {
@@ -57,6 +57,12 @@ export class RequestController {
 		const { error, value } = updateRequestStatusSchema.validate(req.body);
 		if (error) return res.status(400).json({ message: error.message });
 		try { return res.json(await service.updateStatus(req.user!, req.params.id, value.status, value.reason)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+	}
+	
+	async updateContainerNo(req: AuthRequest, res: Response) {
+		const { error, value } = updateContainerNoSchema.validate(req.body);
+		if (error) return res.status(400).json({ message: error.message });
+		try { return res.json(await service.updateContainerNo(req.user!, req.params.id, value.container_no)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
 	
 	async rejectRequest(req: AuthRequest, res: Response) {

@@ -48,6 +48,9 @@ router.get('/:id', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','Acco
 // Status changes (SaleAdmin/SystemAdmin)
 router.patch('/:id/status', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.updateStatus(req as any, res));
 
+// Update container number (SaleAdmin/SystemAdmin)
+router.patch('/:id/container', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.updateContainerNo(req as any, res));
+
 // Reject request (SaleAdmin/SystemAdmin)
 router.patch('/:id/reject', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.rejectRequest(req as any, res));
 

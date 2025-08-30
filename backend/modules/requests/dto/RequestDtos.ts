@@ -15,6 +15,10 @@ export const updateRequestStatusSchema = Joi.object({
 	reason: Joi.string().optional()
 });
 
+export const updateContainerNoSchema = Joi.object({
+	container_no: Joi.string().min(4).max(20).required()
+});
+
 export const rejectRequestSchema = Joi.object({
 	reason: Joi.string().optional()
 });

@@ -194,6 +194,34 @@ export class RequestService {
 		return updated;
 	}
 
+	async updateContainerNo(actor: any, id: string, containerNo: string) {
+		const req = await repo.findById(id);
+		if (!req) throw new Error('Yêu cầu không tồn tại');
+
+		// Kiểm tra quyền - chỉ depot admin mới có thể cập nhật container_no
+		if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+			throw new Error('Không có quyền cập nhật container_no');
+		}
+
+		// Kiểm tra trạng thái - chỉ có thể cập nhật khi request đang PENDING
+		if (req.status !== 'PENDING') {
+			throw new Error('Chỉ có thể cập nhật container_no khi request đang ở trạng thái PENDING');
+		}
+
+		const prevHistory = Array.isArray(req.history) ? (req.history as any[]) : [];
+		const updated = await repo.update(id, {
+			container_no: containerNo,
+			history: [
+				...prevHistory,
+				{ at: new Date().toISOString(), by: actor._id, action: 'CONTAINER_ASSIGNED', reason: `Container ${containerNo} được gán` }
+			]
+		});
+
+		await audit(actor._id, 'REQUEST.CONTAINER_ASSIGNED', 'ServiceRequest', id, { container_no: containerNo });
+		
+		return updated;
+	}
+
 	async rejectRequest(actor: any, id: string, reason?: string) {
 		const req = await repo.findById(id);
 		if (!req) throw new Error('Yêu cầu không tồn tại');
