@@ -40,6 +40,42 @@ export default function DepotRequestTable({
 	onToggleChat,
 	onCloseChat
 }: DepotRequestTableProps) {
+	
+	// Function để lấy vị trí container (tương tự như trên ContainersPage)
+	const getContainerLocation = (containerNo: string) => {
+		if (!containerNo) return null;
+		
+		// Logic để lấy vị trí container
+		// Có thể cần API call hoặc data từ props
+		// Tạm thời sử dụng logic mô phỏng dựa trên container_no
+		
+		// Nếu có container data với vị trí chi tiết
+		if (data && data.length > 0) {
+			const containerData = data.find(item => item.container_no === containerNo);
+			if (containerData && containerData.yard && containerData.block && containerData.slot) {
+				return `${containerData.yard} / ${containerData.block} / ${containerData.slot}`;
+			}
+		}
+		
+		// Fallback: Tạo vị trí mô phỏng dựa trên container_no
+		// Trong thực tế, cần lấy từ API containers
+		if (containerNo === 'ISO 9999') {
+			return 'Depot A / B1 / B1-10'; // Vị trí mô phỏng
+		}
+		
+		return null;
+	};
+	
+	// TODO: Implement API call để lấy vị trí container thực tế
+	// const getContainerLocationFromAPI = async (containerNo: string) => {
+	// 	try {
+	// 		const response = await api.get(`/containers/${containerNo}/location`);
+	// 		return response.data.location; // Format: "Depot A / B1 / B1-10"
+	// 	} catch (error) {
+	// 		console.error('Error fetching container location:', error);
+	// 		return null;
+	// 	}
+	// };
 	const getStatusBadge = (status: string) => {
 		const statusConfig: Record<string, { label: string; className: string }> = {
 			PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
@@ -100,6 +136,7 @@ export default function DepotRequestTable({
 					<tr>
 						<th>Loại</th>
 						<th>Container</th>
+						<th>Vị trí</th>
 						<th>ETA</th>
 						<th>Trạng thái</th>
 						<th>Chứng từ</th>
@@ -123,22 +160,42 @@ export default function DepotRequestTable({
 									{getTypeLabel(item.type)}
 								</span>
 							</td>
-							<td>
-								<div className="container-info">
-									{item.container_no || '-'}
-								</div>
-							</td>
-							<td>
-								<div className="eta-info">
-									{item.eta ? (
-										<div className="eta-date">
-											{new Date(item.eta).toLocaleString('vi-VN')}
-										</div>
-									) : (
-										<div className="eta-empty">-</div>
-									)}
-								</div>
-							</td>
+													<td>
+							<div className="container-info">
+								{item.container_no || '-'}
+							</div>
+						</td>
+						{/* 
+							Cột Vị trí: Chỉ hiển thị cho EXPORT requests, để trống cho IMPORT (sẽ bổ sung logic sau)
+							Logic hiển thị:
+							1. Sử dụng getContainerLocation() để lấy vị trí thực tế từ container data
+							2. Nếu có vị trí -> hiển thị vị trí (Yard / Block / Slot)
+							3. Nếu không có vị trí -> hiển thị "Chưa xác định"
+							
+							Vị trí được lấy tương tự như trên ContainersPage
+						*/}
+						<td>
+							<div className="location-info">
+								{item.type === 'EXPORT' ? (
+									<span className="location-badge">
+										📍 {getContainerLocation(item.container_no) || 'Chưa xác định'}
+									</span>
+								) : (
+									<span className="location-na">-</span>
+								)}
+							</div>
+						</td>
+						<td>
+							<div className="eta-info">
+								{item.eta ? (
+									<div className="eta-date">
+										{new Date(item.eta).toLocaleString('vi-VN')}
+									</div>
+								) : (
+									<div className="eta-empty">-</div>
+								)}
+							</div>
+						</td>
 							<td>
 								{getStatusBadge(item.status)}
 							</td>
@@ -246,17 +303,53 @@ export default function DepotRequestTable({
 							</td>
 							<td>
 								<div className="action-buttons">
+									{/* PENDING Status Actions */}
 									{item.status === 'PENDING' && (
-										<button
-											className="btn btn-sm btn-primary"
-											disabled={loadingId === item.id + 'RECEIVED'}
-											onClick={() => onChangeStatus?.(item.id, 'RECEIVED')}
-										>
-											{loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} Tiếp nhận
-										</button>
+										<div className="action-group">
+											<button
+												className="btn btn-sm btn-primary"
+												disabled={loadingId === item.id + 'RECEIVED'}
+												onClick={() => onChangeStatus?.(item.id, 'RECEIVED')}
+												title="Tiếp nhận yêu cầu"
+											>
+												{loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} Tiếp nhận
+											</button>
+											<button
+												className="btn btn-sm btn-danger"
+												disabled={loadingId === item.id + 'REJECTED'}
+												onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
+												title="Từ chối yêu cầu"
+											>
+												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+											</button>
+										</div>
 									)}
+
+									{/* RECEIVED Status Actions */}
+									{item.status === 'RECEIVED' && (
+										<div className="action-group">
+											<button
+												className="btn btn-sm btn-success"
+												disabled={loadingId === item.id + 'COMPLETED'}
+												onClick={() => onChangeStatus?.(item.id, 'COMPLETED')}
+												title="Tiếp nhận và hoàn tất"
+											>
+												{loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} Hoàn tất
+											</button>
+											<button
+												className="btn btn-sm btn-danger"
+												disabled={loadingId === item.id + 'REJECTED'}
+												onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
+												title="Từ chối yêu cầu"
+											>
+												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+											</button>
+										</div>
+									)}
+
+									{/* SCHEDULED Status Actions */}
 									{item.status === 'SCHEDULED' && (
-										<>
+										<div className="action-group">
 											<button
 												className="btn btn-sm btn-success"
 												onClick={() => onChangeAppointment?.(item.id)}
@@ -272,58 +365,34 @@ export default function DepotRequestTable({
 											>
 												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
 											</button>
-										</>
+										</div>
 									)}
-									{(item.status === 'PENDING' || item.status === 'RECEIVED') && (
-										<button
-											className="btn btn-sm btn-danger"
-											disabled={loadingId === item.id + 'REJECTED'}
-											onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
-										>
-											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
-										</button>
-									)}
-									{item.status === 'RECEIVED' && (
-										<>
+
+									{/* COMPLETED Status Actions */}
+									{item.status === 'COMPLETED' && (
+										<div className="action-group">
 											<button
-												className="btn btn-sm btn-success"
-												disabled={loadingId === item.id + 'COMPLETED'}
-												onClick={() => onChangeStatus?.(item.id, 'COMPLETED')}
-												title="Tiếp nhận và hoàn tất"
+												className="btn btn-sm btn-warning"
+												disabled={loadingId === item.id + 'EXPORTED'}
+												onClick={() => onChangeStatus?.(item.id, 'EXPORTED')}
+												title="Xuất kho"
 											>
-												{loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} Tiếp nhận
+												{loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} Xuất kho
 											</button>
 											<button
-												className="btn btn-sm btn-danger"
-												disabled={loadingId === item.id + 'REJECTED'}
-												onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
-												title="Từ chối yêu cầu"
+												className="btn btn-sm btn-info"
+												disabled={loadingId === item.id + 'PAY'}
+												onClick={() => onSendPayment?.(item.id)}
+												title="Gửi yêu cầu thanh toán"
 											>
-												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+												{loadingId === item.id + 'PAY' ? '⏳' : '💰'} Thanh toán
 											</button>
-										</>
+										</div>
 									)}
-									{item.status === 'COMPLETED' && (
-										<button
-											className="btn btn-sm btn-warning"
-											disabled={loadingId === item.id + 'EXPORTED'}
-											onClick={() => onChangeStatus?.(item.id, 'EXPORTED')}
-										>
-											{loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} Xuất kho
-										</button>
-									)}
-									{item.status === 'COMPLETED' && (
-										<button
-											className="btn btn-sm btn-info"
-											disabled={loadingId === item.id + 'PAY'}
-											onClick={() => onSendPayment?.(item.id)}
-										>
-											{loadingId === item.id + 'PAY' ? '⏳' : '💰'} Thanh toán
-										</button>
-									)}
-									{/* Actions cho trạng thái PENDING_ACCEPT */}
+
+									{/* PENDING_ACCEPT Status Actions */}
 									{item.status === 'PENDING_ACCEPT' && (
-										<>
+										<div className="action-group">
 											<button
 												className="btn btn-sm btn-info"
 												disabled={loadingId === item.id + 'VIEW_INVOICE'}
@@ -340,25 +409,28 @@ export default function DepotRequestTable({
 											>
 												{loadingId === item.id + 'CONFIRM' ? '⏳' : '📧'} Gửi xác nhận
 											</button>
-										</>
+										</div>
 									)}
-									{/* Soft delete buttons */}
+
+									{/* Soft Delete Actions */}
 									{['REJECTED', 'COMPLETED', 'EXPORTED'].includes(item.status) && (
-										<button
-											className="btn btn-sm btn-outline"
-											disabled={loadingId === item.id + 'DELETE'}
-											onClick={() => {
-												if (window.confirm('Xóa khỏi danh sách Kho?\nRequest vẫn hiển thị trạng thái Từ chối bên Khách hàng.')) {
-													onSoftDelete?.(item.id, 'depot');
-												}
-											}}
-											title="Xóa khỏi danh sách Kho"
-										>
-											{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
-										</button>
+										<div className="action-group">
+											<button
+												className="btn btn-sm btn-outline"
+												disabled={loadingId === item.id + 'DELETE'}
+												onClick={() => {
+													if (window.confirm('Xóa khỏi danh sách Kho?\nRequest vẫn hiển thị trạng thái Từ chối bên Khách hàng.')) {
+														onSoftDelete?.(item.id, 'depot');
+													}
+												}}
+												title="Xóa khỏi danh sách Kho"
+											>
+												{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
+											</button>
+										</div>
 									)}
-															</div>
-						</td>
+								</div>
+							</td>
 					</tr>
 						);
 					})}

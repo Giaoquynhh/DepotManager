@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
+import { yardApi } from '../services/yard';
 import ChatWindowStandalone from './chat/ChatWindowStandalone';
 
 interface Request {
@@ -36,6 +37,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const [selectedDocument, setSelectedDocument] = React.useState<any>(null);
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [activeChatRequests, setActiveChatRequests] = React.useState<Set<string>>(new Set());
+  const [containerLocations, setContainerLocations] = useState<Record<string, string>>({});
+  const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -110,6 +113,65 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     return ext === 'pdf';
   };
 
+  // Function để lấy vị trí container từ API yard (tương tự như depot)
+  const getContainerLocation = async (containerNo: string) => {
+    if (!containerNo) return null;
+    
+    // Kiểm tra cache
+    if (containerLocations[containerNo]) {
+      return containerLocations[containerNo];
+    }
+    
+    // Kiểm tra đang loading
+    if (loadingLocations.has(containerNo)) {
+      return null;
+    }
+    
+    try {
+      setLoadingLocations(prev => new Set(prev).add(containerNo));
+      
+      // Gọi API yard để lấy vị trí container
+      const locationData = await yardApi.locate(containerNo);
+      
+      if (locationData && locationData.slot) {
+        const yardName = locationData.slot.block?.yard?.name || 'Depot';
+        const blockCode = locationData.slot.block?.code || '';
+        const slotCode = locationData.slot.code || '';
+        const location = `${yardName} / ${blockCode} / ${slotCode}`;
+        
+        // Cache kết quả
+        setContainerLocations(prev => ({
+          ...prev,
+          [containerNo]: location
+        }));
+        
+        return location;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching container location:', error);
+      return null;
+    } finally {
+      setLoadingLocations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(containerNo);
+        return newSet;
+      });
+    }
+  };
+
+  // Load vị trí cho tất cả container khi component mount
+  useEffect(() => {
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        if (item.container_no && item.type === 'EXPORT') {
+          getContainerLocation(item.container_no);
+        }
+      });
+    }
+  }, [data]);
+
   if (loading) {
     return (
       <div className="table-loading">
@@ -137,6 +199,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
             <tr>
               <th>Loại</th>
               <th>Container</th>
+              <th>Vị trí</th>
               <th>ETA</th>
               <th>Trạng thái</th>
               <th>Chứng từ</th>
@@ -157,6 +220,23 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   <span className="container-id">
                     {item.container_no}
                   </span>
+                </td>
+                <td>
+                  <div className="location-info">
+                    {item.type === 'EXPORT' ? (
+                      <span className="location-badge">
+                        {loadingLocations.has(item.container_no || '') ? (
+                          <span className="loading-location">⏳ Đang tải...</span>
+                        ) : (
+                          <>
+                            📍 {containerLocations[item.container_no || ''] || 'Chưa xác định'}
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="location-na">-</span>
+                    )}
+                  </div>
                 </td>
                 <td>
                   {item.eta ? (
@@ -306,7 +386,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                              disabled={item.actions.loadingId === item.id + 'VIEW_INVOICE'}
                              onClick={() => {
                                if (item.actions?.handleViewInvoice) {
-                                 item.actions.handleViewInvoice(item.id, item.container_no);
+                                 item.actions.handleViewInvoice(item.id);
                                } else {
                                  alert('Tính năng xem hóa đơn đang được phát triển!');
                                }

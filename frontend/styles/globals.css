@@ -1124,13 +1124,17 @@ button, input, select {
 .table-container{
   background: var(--white);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  /* overflow: hidden; */ /* Loại bỏ overflow hidden để tránh cắt mất nội dung */
   box-shadow: 0 4px 18px rgba(2,6,23,.06);
+  /* Thêm scroll ngang khi cần thiết */
+  overflow-x: auto;
 }
 
 .table-modern{
   width: 100%;
   border-collapse: collapse;
+  /* Đảm bảo bảng có thể mở rộng */
+  min-width: 1200px; /* Đặt min-width để đảm bảo tất cả cột hiển thị đầy đủ */
 }
 
 .table-modern th{
@@ -1907,6 +1911,7 @@ button, input, select {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  min-width: 180px; /* Đặt min-width cho container action buttons */
 }
 
 .action-buttons .btn {
@@ -1914,6 +1919,9 @@ button, input, select {
   padding: 4px 8px;
   min-width: auto;
   white-space: nowrap;
+  /* Đảm bảo button không bị cắt */
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Status Message */
@@ -2945,4 +2953,12 @@ button, input, select {
 .section-head {
   margin-bottom: 16px;
   text-align: center;
+}
+
+/* Đảm bảo cột hành động có đủ không gian */
+.table-modern th:last-child,
+.table-modern td:last-child {
+  min-width: 200px; /* Đặt min-width cho cột hành động */
+  max-width: none; /* Cho phép mở rộng khi cần */
+  white-space: nowrap; /* Ngăn text bị xuống dòng */
 }
