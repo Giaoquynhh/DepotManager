@@ -1,5 +1,6 @@
 import React from 'react';
 import DepotChatMini from './DepotChatMini';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface DepotRequestTableProps {
 	data?: any[];
@@ -19,6 +20,13 @@ interface DepotRequestTableProps {
 	activeChatRequests?: Set<string>;
 	onToggleChat?: (requestId: string) => void;
 	onCloseChat?: (requestId: string) => void;
+	// UI/UX additions
+	userRole?: string;
+	actLabel?: Record<string, string>;
+	onRequestSort?: () => void; // toggle sort by ETA
+	sortKey?: 'eta';
+	sortOrder?: 'asc' | 'desc';
+	onContainerClick?: (item: any) => void;
 }
 
 export default function DepotRequestTable({ 
@@ -38,7 +46,14 @@ export default function DepotRequestTable({
 	// Chat props
 	activeChatRequests = new Set(),
 	onToggleChat,
-	onCloseChat
+	onCloseChat,
+	// UI/UX additions
+	userRole,
+	actLabel,
+	onRequestSort,
+	sortKey,
+	sortOrder,
+	onContainerClick
 }: DepotRequestTableProps) {
 	
 	// Function để lấy vị trí container (tương tự như trên ContainersPage)
@@ -104,9 +119,9 @@ export default function DepotRequestTable({
 
 	const getTypeLabel = (type: string) => {
 		const typeLabels: Record<string, string> = {
-			IMPORT: 'Nhập',
-			EXPORT: 'Xuất',
-			CONVERT: 'Chuyển đổi'
+			IMPORT: t('pages.requests.filterOptions.import'),
+			EXPORT: t('pages.requests.filterOptions.export'),
+			CONVERT: t('pages.requests.filterOptions.convert')
 		};
 		return typeLabels[type as keyof typeof typeLabels] || type;
 	};
@@ -136,19 +151,19 @@ export default function DepotRequestTable({
 
 	if (loading) {
 		return (
-			<div className="table-loading">
+			<div className="table-loading modern-loading">
 				<div className="loading-spinner"></div>
-				<p>Đang tải dữ liệu...</p>
+				<p>{t('common.loading')}</p>
 			</div>
 		);
 	}
 
 	if (!data || data.length === 0) {
 		return (
-			<div className="table-empty">
+			<div className="table-empty modern-empty">
 				<div className="empty-icon">📋</div>
-				<p>Chưa có yêu cầu nào</p>
-				<small>Không có yêu cầu nào để xử lý</small>
+				<p>{t('pages.requests.noRequests')}</p>
+				<small>{t('pages.requests.noRequestsSubtitle')}</small>
 			</div>
 		);
 	}
@@ -158,15 +173,24 @@ export default function DepotRequestTable({
 			<table className="table table-modern">
 				<thead>
 					<tr>
-						<th>Loại</th>
-						<th>Container</th>
-						<th>Vị trí</th>
-						<th>ETA</th>
-						<th>Trạng thái</th>
-						<th>Trạng thái thanh toán</th>
-						<th>Chứng từ</th>
-						<th>Chat</th>
-						<th>Hành động</th>
+						<th data-column="container">{safeT('pages.requests.tableHeaders.container', 'Container')}</th>
+						<th data-column="eta">
+							<button
+								onClick={onRequestSort}
+								className="th-sort-btn"
+								title={t('common.sortBy') || 'Sắp xếp'}
+								style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+							>
+								{safeT('pages.requests.tableHeaders.eta', 'ETA')}
+								{sortKey === 'eta' && (
+									<span style={{ marginLeft: 6 }}>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+								)}
+							</button>
+						</th>
+						<th data-column="status">{safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
+						<th data-column="documents">{safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
+						<th data-column="chat">{safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
+						<th data-column="actions">{safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -181,9 +205,22 @@ export default function DepotRequestTable({
 						return (
 						<tr key={item.id} className="table-row">
 							<td>
-								<span className="request-type">
-									{getTypeLabel(item.type)}
-								</span>
+								<button
+									onClick={() => onContainerClick?.(item)}
+									className="container-link"
+									title={t('pages.requests.viewDetail') || 'Xem chi tiết'}
+								>
+									<span className="container-text">{item.container_no}</span>
+								</button>
+							</td>
+							<td>
+							{item.eta ? (
+								<div className="eta-date">
+									{formatETA(item.eta)}
+								</div>
+							) : (
+								<div className="eta-empty">-</div>
+							)}
 							</td>
 													<td>
 							<div className="container-info">
@@ -327,7 +364,8 @@ export default function DepotRequestTable({
 												gap: '4px'
 											}}
 										>
-											{activeChatRequests.has(demoItem.id) ? '💬 Đóng Chat' : '💬 Mở Chat'}
+											{/* Icon-only chat button */}
+											<span aria-hidden="true">💬</span>
 										</button>
 									)}
 									
