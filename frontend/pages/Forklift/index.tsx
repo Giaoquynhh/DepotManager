@@ -330,20 +330,25 @@ export default function Forklift() {
   return (
     <>
       <Header />
-      <main className="container">
-        <div className="page-header">
-          <div className="page-header-content">
-            <h1 className="page-title">Quản lý Xe nâng</h1>
-            <p className="page-subtitle">Theo dõi và quản lý công việc xe nâng</p>
-          </div>
-          <div className="page-actions">
-            <button 
-              className="btn btn-primary"
-              onClick={loadForkliftTasks}
-              disabled={loading}
-            >
-              {loading ? 'Đang tải...' : 'Làm mới'}
-            </button>
+      <main className="container forklift-page">
+        {/* Page Header */}
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">Quản lý Xe nâng</h1>
+              <p className="page-subtitle">Theo dõi và quản lý công việc xe nâng</p>
+            </div>
+
+            <div className="header-actions">
+              <button 
+                className="btn btn-outline refresh-btn"
+                onClick={loadForkliftTasks}
+                disabled={loading}
+                title="Làm mới dữ liệu"
+              >
+                {loading ? '⏳' : '🔄'} {loading ? 'Đang tải...' : 'Làm mới'}
+              </button>
+            </div>
           </div>
         </div>
 

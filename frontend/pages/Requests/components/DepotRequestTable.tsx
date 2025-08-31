@@ -55,58 +55,36 @@ export default function DepotRequestTable({
 	sortOrder,
 	onContainerClick
 }: DepotRequestTableProps) {
-	
-	// Function để lấy vị trí container (tương tự như trên ContainersPage)
-	const getContainerLocation = (containerNo: string) => {
-		if (!containerNo) return null;
-		
-		// Logic để lấy vị trí container
-		// Có thể cần API call hoặc data từ props
-		// Tạm thời sử dụng logic mô phỏng dựa trên container_no
-		
-		// Nếu có container data với vị trí chi tiết
-		if (data && data.length > 0) {
-			const containerData = data.find(item => item.container_no === containerNo);
-			if (containerData && containerData.yard && containerData.block && containerData.slot) {
-				return `${containerData.yard} / ${containerData.block} / ${containerData.slot}`;
-			}
-		}
-		
-		// Fallback: Tạo vị trí mô phỏng dựa trên container_no
-		// Trong thực tế, cần lấy từ API containers
-		if (containerNo === 'ISO 9999') {
-			return 'Depot A / B1 / B1-10'; // Vị trí mô phỏng
-		}
-		
-		return null;
+	// i18n
+	const { t } = useTranslation();
+	const safeT = (key: string, fallback: string) => {
+		const v = t(key) as string;
+		return v && v !== key ? v : fallback;
 	};
-	
-	// TODO: Implement API call để lấy vị trí container thực tế
-	// const getContainerLocationFromAPI = async (containerNo: string) => {
-	// 	try {
-	// 		const response = await api.get(`/containers/${containerNo}/location`);
-	// 		return response.data.location; // Format: "Depot A / B1 / B1-10"
-	// 	} catch (error) {
-	// 		console.error('Error fetching container location:', error);
-	// 		return null;
-	// 	}
-	// };
+
+	// Định dạng ETA giống với trang cha
+	const formatETA = (eta?: string) => {
+		if (!eta) return '-';
+		const d = new Date(eta);
+		const pad = (n: number) => n.toString().padStart(2, '0');
+		return `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+	};
 	const getStatusBadge = (status: string) => {
 		const statusConfig: Record<string, { label: string; className: string }> = {
-			PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
-			PICK_CONTAINER: { label: 'Đang chọn container', className: 'status-pick-container' },
-			RECEIVED: { label: 'Đã nhận', className: 'status-received' },
-			COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
-			EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
-			REJECTED: { label: 'Từ chối', className: 'status-rejected' },
-			IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
-			IN_CAR: { label: 'Đã lên xe', className: 'status-in-car' },
-			LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
-			PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
-			CHECKING: { label: 'Đang kiểm tra', className: 'status-checking' },
-			CHECKED: { label: 'Đã kiểm tra', className: 'status-checked' },
-			POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
-			FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' }
+			PENDING: { label: safeT('pages.requests.filterOptions.pending', 'Pending'), className: 'status-pending' },
+			PICK_CONTAINER: { label: safeT('pages.requests.filterOptions.pickContainer', 'Pick container'), className: 'status-pick-container' },
+			RECEIVED: { label: safeT('pages.requests.filterOptions.received', 'Received'), className: 'status-received' },
+			COMPLETED: { label: safeT('pages.requests.filterOptions.completed', 'Completed'), className: 'status-completed' },
+			EXPORTED: { label: safeT('pages.requests.filterOptions.exported', 'Exported'), className: 'status-exported' },
+			REJECTED: { label: safeT('pages.requests.filterOptions.rejected', 'Rejected'), className: 'status-rejected' },
+			IN_YARD: { label: safeT('pages.requests.filterOptions.inYard', 'In yard'), className: 'status-in-yard' },
+			IN_CAR: { label: safeT('pages.requests.filterOptions.inCar', 'In car'), className: 'status-in-car' },
+			LEFT_YARD: { label: safeT('pages.requests.filterOptions.leftYard', 'Left yard'), className: 'status-left-yard' },
+			PENDING_ACCEPT: { label: safeT('pages.requests.filterOptions.pendingAccept', 'Pending confirmation'), className: 'status-pending-accept' },
+			CHECKING: { label: safeT('pages.requests.filterOptions.checking', 'Checking'), className: 'status-checking' },
+			CHECKED: { label: safeT('pages.requests.filterOptions.checked', 'Checked'), className: 'status-checked' },
+			POSITIONED: { label: safeT('pages.requests.filterOptions.positioned', 'Positioned in yard'), className: 'status-positioned' },
+			FORKLIFTING: { label: safeT('pages.requests.filterOptions.forklifting', 'Forklifting'), className: 'status-forklifting' }
 		};
 
 		const config = statusConfig[status] || { label: status, className: 'status-default' };
@@ -126,27 +104,14 @@ export default function DepotRequestTable({
 		return typeLabels[type as keyof typeof typeLabels] || type;
 	};
 
-	// Function để cập nhật trạng thái thanh toán
-	const handleUpdatePaymentStatus = async (requestId: string, isPaid: boolean) => {
-		try {
-			const response = await fetch(`http://localhost:5002/requests/${requestId}/payment-status`, {
-				method: 'PATCH',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${localStorage.getItem('token')}`,
-				},
-				body: JSON.stringify({ is_paid: isPaid }),
-			});
-			
-			if (response.ok) {
-				// Refresh page để cập nhật dữ liệu
-				window.location.reload();
-			} else {
-				console.error('Lỗi cập nhật trạng thái thanh toán');
-			}
-		} catch (error) {
-			console.error('Lỗi cập nhật trạng thái thanh toán:', error);
-		}
+	const getTypeBadge = (type?: string) => {
+		const label = type ? getTypeLabel(type) : '-';
+		const typeKey = (type || '').toLowerCase();
+		return (
+			<span className={`type-badge ${typeKey ? `type-${typeKey}` : ''}`}>
+				{label || '-'}
+			</span>
+		);
 	};
 
 	if (loading) {
@@ -169,175 +134,129 @@ export default function DepotRequestTable({
 	}
 
 	return (
-		<div className="table-container">
-			<table className="table table-modern">
-				<thead>
-					<tr>
-						<th data-column="container">{safeT('pages.requests.tableHeaders.container', 'Container')}</th>
-						<th data-column="eta">
+		<div className="depot-requests">
+			<div className="table-container">
+				<table className="table table-modern">
+					<thead>
+						<tr>
+							<th data-column="type">📦 {safeT('pages.requests.tableHeaders.type', 'Loại')}</th>
+							<th data-column="container">📦 {safeT('pages.requests.tableHeaders.container', 'Container')}</th>
+							<th data-column="eta">
 							<button
 								onClick={onRequestSort}
 								className="th-sort-btn"
-								title={t('common.sortBy') || 'Sắp xếp'}
+								title={safeT('common.sortBy', 'Sort by')}
 								style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
 							>
-								{safeT('pages.requests.tableHeaders.eta', 'ETA')}
+								🕒 {safeT('pages.requests.tableHeaders.eta', 'ETA')}
 								{sortKey === 'eta' && (
 									<span style={{ marginLeft: 6 }}>{sortOrder === 'asc' ? '▲' : '▼'}</span>
 								)}
 							</button>
 						</th>
-						<th data-column="status">{safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
-						<th data-column="documents">{safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
-						<th data-column="chat">{safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
-						<th data-column="actions">{safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
+						<th data-column="status">🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
+						<th data-column="documents">📄 {safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
+						<th data-column="payment">🔥 {safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
+						<th data-column="chat">💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
+						<th data-column="actions">🛠️ {safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
 					</tr>
 				</thead>
 				<tbody>
-					{data.map((item) => {
+					{data.map((item: any) => {
 						// Demo data - Chỉ có supplement cho một số SCHEDULED orders (không phải tất cả)
 						const demoItem = {
 							...item,
 							has_supplement_documents: item.has_supplement_documents || (item.status === 'SCHEDULED' && item.container_no === 'ISO 1234' ? true : false),
 							last_supplement_update: item.last_supplement_update || (item.status === 'SCHEDULED' && item.container_no === 'ISO 1234' ? new Date(Date.now() - Math.random() * 86400000).toISOString() : null)
 						};
-						
+
+						// Phân loại chứng từ: chứng từ thanh toán vs chứng từ khác
+						const docs: any[] = Array.isArray(item.documents) ? item.documents : [];
+						const isPaymentDoc = (doc: any) => {
+							const s = `${doc?.type || ''} ${doc?.category || ''} ${doc?.kind || ''} ${doc?.name || ''}`.toLowerCase();
+							return s.includes('pay') || s.includes('invoice') || s.includes('hoa don') || s.includes('hóa đơn') || s.includes('hoá đơn') || s.includes('thanh toa');
+						};
+						const paymentDocs = docs.filter(isPaymentDoc);
+						const otherDocs = docs.filter((d) => !isPaymentDoc(d));
+
 						return (
 						<tr key={item.id} className="table-row">
+							<td>
+								{getTypeBadge(item.type)}
+							</td>
 							<td>
 								<button
 									onClick={() => onContainerClick?.(item)}
 									className="container-link"
-									title={t('pages.requests.viewDetail') || 'Xem chi tiết'}
+									title={safeT('pages.requests.viewDetail', 'View details')}
 								>
 									<span className="container-text">{item.container_no}</span>
 								</button>
 							</td>
 							<td>
-							{item.eta ? (
-								<div className="eta-date">
-									{formatETA(item.eta)}
-								</div>
-							) : (
-								<div className="eta-empty">-</div>
-							)}
-							</td>
-													<td>
-							<div className="container-info">
-								{item.container_no || '-'}
-							</div>
-						</td>
-						{/* 
-							Cột Vị trí: Chỉ hiển thị cho EXPORT requests, để trống cho IMPORT (sẽ bổ sung logic sau)
-							Logic hiển thị:
-							1. Sử dụng getContainerLocation() để lấy vị trí thực tế từ container data
-							2. Nếu có vị trí -> hiển thị vị trí (Yard / Block / Slot)
-							3. Nếu không có vị trí -> hiển thị "Chưa xác định"
-							
-							Vị trí được lấy tương tự như trên ContainersPage
-						*/}
-						<td>
-							<div className="location-info">
-								{item.type === 'EXPORT' ? (
-									<span className="location-badge">
-										📍 {getContainerLocation(item.container_no) || 'Chưa xác định'}
-									</span>
-								) : (
-									<span className="location-na">-</span>
-								)}
-							</div>
-						</td>
-						<td>
-							<div className="eta-info">
 								{item.eta ? (
 									<div className="eta-date">
-										{new Date(item.eta).toLocaleString('vi-VN')}
+										{formatETA(item.eta)}
 									</div>
 								) : (
 									<div className="eta-empty">-</div>
 								)}
-							</div>
-						</td>
+							</td>
 							<td>
 								{getStatusBadge(item.status)}
 							</td>
 							<td>
-								<div className="payment-status-info">
-									{/* Hiển thị trạng thái hóa đơn */}
-									<div className="invoice-status">
-										<span className={`status-indicator ${item.has_invoice ? 'has-invoice' : 'no-invoice'}`}>
-											{item.has_invoice ? '📄' : '📝'} 
-											{item.has_invoice ? 'Có hóa đơn' : 'Chưa có hóa đơn'}
-										</span>
-									</div>
-									{/* Hiển thị trạng thái thanh toán */}
-									<div className="payment-status">
-										<span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
-											{item.is_paid ? '💰' : '⏳'} 
-											{item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
-										</span>
-									</div>
-									{/* Nút cập nhật trạng thái thanh toán */}
-									<div className="payment-actions">
-										<button
-											className="btn btn-sm btn-outline"
-											onClick={() => handleUpdatePaymentStatus(item.id, !item.is_paid)}
-											title={item.is_paid ? 'Đánh dấu chưa thanh toán' : 'Đánh dấu đã thanh toán'}
-											style={{
-												fontSize: '10px',
-												padding: '2px 6px',
-												marginTop: '4px'
-											}}
-										>
-											{item.is_paid ? '🔄 Đánh dấu chưa TT' : '✅ Đánh dấu đã TT'}
-										</button>
-									</div>
-								</div>
-							</td>
-							<td>
-								{item.documents && item.documents.length > 0 ? (
+								{otherDocs && otherDocs.length > 0 ? (
 									<div className="document-badges">
-										{item.documents.map((doc: any) => (
+										{otherDocs.map((doc: any) => (
 											<button
 												key={doc.id}
 												className="document-badge clickable"
 												onClick={() => onDocumentClick?.(doc)}
-												title={`Xem ${doc.name}`}
+												title={`${safeT('common.view', 'View')} ${doc.name}`}
 											>
 												📎 {doc.name}
 											</button>
 										))}
 									</div>
 								) : (
-									<div className="document-actions">
-										{/* Hiển thị nút "Thêm chứng từ" cho yêu cầu EXPORT với trạng thái PICK_CONTAINER */}
-										{item.type === 'EXPORT' && item.status === 'PICK_CONTAINER' && onAddDocument ? (
-											<button
-												className="btn btn-sm btn-primary"
-												onClick={() => onAddDocument(item.id, item.container_no || '')}
-												title="Thêm chứng từ cho container"
-												style={{
-													background: '#3b82f6',
-													color: 'white',
-													border: 'none',
-													borderRadius: '6px',
-													padding: '6px 12px',
-													fontSize: '12px',
-													cursor: 'pointer',
-													display: 'flex',
-													alignItems: 'center',
-													gap: '4px'
-												}}
-											>
-												📎 Thêm chứng từ
-											</button>
-										) : (
-											<span className="no-document">-</span>
-										)}
-									</div>
+									<span className="no-document">📄 {safeT('pages.requests.noDocuments', 'Chưa có chứng từ')}</span>
 								)}
 							</td>
-
+							<td>
+								<div className="payment-status-info">
+									{/* Hiển thị trạng thái thanh toán chính */}
+									<div className="payment-status">
+										<span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
+											{item.is_paid ? '💰' : '⏳'} 
+											{item.is_paid ? safeT('pages.requests.payment.paid', 'Đã thanh toán') : safeT('pages.requests.payment.notPaid', 'Chưa thanh toán')}
+										</span>
+									</div>
+									{/* Hiển thị payment documents nếu có */}
+									{paymentDocs && paymentDocs.length > 0 && (
+										<div className="payment-docs">
+											{paymentDocs.map((doc: any) => (
+												<button
+													key={`pay-${doc.id}`}
+													className="document-badge clickable"
+													onClick={() => onDocumentClick?.(doc)}
+													title={`${safeT('common.view', 'View')} ${doc.name}`}
+												>
+													📎 {doc.name}
+												</button>
+											))}
+										</div>
+									)}
+									{/* Hiển thị trạng thái hóa đơn nếu có */}
+									{item.has_invoice && (
+										<div className="invoice-status">
+											<span className="status-indicator has-invoice">
+												📄 {safeT('pages.requests.invoice.hasInvoice', 'Có hóa đơn')}
+											</span>
+										</div>
+									)}
+								</div>
+							</td>
 							<td>
 								<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
 									{/* Chat button - hiển thị cho các trạng thái được phép chat */}
@@ -349,23 +268,10 @@ export default function DepotRequestTable({
 									  demoItem.status === 'PENDING_ACCEPT') && (
 										<button
 											onClick={() => onToggleChat?.(demoItem.id)}
-											className="depot-chat-mini-trigger"
-											title={activeChatRequests.has(demoItem.id) ? "Đóng chat" : "Mở chat với khách hàng"}
-											style={{
-												background: activeChatRequests.has(demoItem.id) ? '#10b981' : '#3b82f6',
-												color: 'white',
-												border: 'none',
-												borderRadius: '6px',
-												padding: '6px 12px',
-												fontSize: '12px',
-												cursor: 'pointer',
-												display: 'flex',
-												alignItems: 'center',
-												gap: '4px'
-											}}
+											className="btn btn-sm btn-outline depot-chat-mini-trigger"
+											title={activeChatRequests.has(demoItem.id) ? safeT('pages.requests.chat.close', 'Close chat') : safeT('pages.requests.chat.open', 'Open chat with customer')}
 										>
-											{/* Icon-only chat button */}
-											<span aria-hidden="true">💬</span>
+											💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}
 										</button>
 									)}
 									
@@ -392,7 +298,7 @@ export default function DepotRequestTable({
 											borderRadius: '10px',
 											border: '1px solid #f59e0b'
 										}}>
-											📋 Có tài liệu bổ sung
+											📋 {safeT('pages.requests.supplementAvailable', 'Supplement documents available')}
 										</div>
 									)}
 								</div>
@@ -406,17 +312,17 @@ export default function DepotRequestTable({
 												className="btn btn-sm btn-primary"
 												disabled={loadingId === item.id + 'RECEIVED'}
 												onClick={() => onChangeStatus?.(item.id, 'RECEIVED')}
-												title="Tiếp nhận yêu cầu"
+												title={safeT('pages.requests.actions.acceptRequest', 'Accept request')}
 											>
-												{loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} Tiếp nhận
+											{loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} {safeT('pages.requests.actions.accept', 'Accept')}
 											</button>
 											<button
 												className="btn btn-sm btn-danger"
 												disabled={loadingId === item.id + 'REJECTED'}
 												onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
-												title="Từ chối yêu cầu"
+												title={safeT('pages.requests.actions.rejectRequest', 'Reject request')}
 											>
-												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {safeT('pages.requests.actions.reject', 'Reject')}
 											</button>
 										</div>
 									)}
@@ -428,17 +334,17 @@ export default function DepotRequestTable({
 												className="btn btn-sm btn-success"
 												disabled={loadingId === item.id + 'COMPLETED'}
 												onClick={() => onChangeStatus?.(item.id, 'COMPLETED')}
-												title="Tiếp nhận và hoàn tất"
+												title={safeT('pages.requests.actions.completeRequest', 'Complete request')}
 											>
-												{loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} Hoàn tất
+											{loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} {safeT('pages.requests.actions.complete', 'Complete')}
 											</button>
 											<button
 												className="btn btn-sm btn-danger"
 												disabled={loadingId === item.id + 'REJECTED'}
 												onClick={() => onChangeStatus?.(item.id, 'REJECTED')}
-												title="Từ chối yêu cầu"
+												title={safeT('pages.requests.actions.rejectRequest', 'Reject request')}
 											>
-												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {safeT('pages.requests.actions.reject', 'Reject')}
 											</button>
 										</div>
 									)}
@@ -449,17 +355,17 @@ export default function DepotRequestTable({
 											<button
 												className="btn btn-sm btn-success"
 												onClick={() => onChangeAppointment?.(item.id)}
-												title="Thay đổi lịch hẹn với khách hàng"
+												title={safeT('pages.requests.actions.rescheduleTitle', 'Reschedule with customer')}
 											>
-												📅 Thay đổi lịch hẹn
+											📅 {safeT('pages.requests.actions.reschedule', 'Reschedule')}
 											</button>
 											<button
 												className="btn btn-sm btn-danger"
 												disabled={loadingId === item.id + 'REJECTED'}
 												onClick={() => onReject?.(item.id)}
-												title="Từ chối yêu cầu"
+												title={safeT('pages.requests.actions.rejectRequest', 'Reject request')}
 											>
-												{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {safeT('pages.requests.actions.reject', 'Reject')}
 											</button>
 										</div>
 									)}
@@ -471,17 +377,17 @@ export default function DepotRequestTable({
 												className="btn btn-sm btn-warning"
 												disabled={loadingId === item.id + 'EXPORTED'}
 												onClick={() => onChangeStatus?.(item.id, 'EXPORTED')}
-												title="Xuất kho"
+												title={safeT('pages.requests.actions.exportTitle', 'Export from depot')}
 											>
-												{loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} Xuất kho
+											{loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} {safeT('pages.requests.actions.export', 'Export')}
 											</button>
 											<button
 												className="btn btn-sm btn-info"
 												disabled={loadingId === item.id + 'PAY'}
 												onClick={() => onSendPayment?.(item.id)}
-												title="Gửi yêu cầu thanh toán"
+												title={safeT('pages.requests.actions.sendPaymentTitle', 'Send payment request')}
 											>
-												{loadingId === item.id + 'PAY' ? '⏳' : '💰'} Thanh toán
+											{loadingId === item.id + 'PAY' ? '⏳' : '💰'} {safeT('pages.requests.actions.payment', 'Payment')}
 											</button>
 										</div>
 									)}
@@ -493,17 +399,17 @@ export default function DepotRequestTable({
 												className="btn btn-sm btn-info"
 												disabled={loadingId === item.id + 'VIEW_INVOICE'}
 												onClick={() => onViewInvoice?.(item.id)}
-												title="Xem hóa đơn sửa chữa"
+												title={safeT('pages.requests.actions.viewRepairInvoiceTitle', 'View repair invoice')}
 											>
-												{loadingId === item.id + 'VIEW_INVOICE' ? '⏳' : '📄'} Xem hóa đơn
+											{loadingId === item.id + 'VIEW_INVOICE' ? '⏳' : '📄'} {safeT('pages.requests.actions.viewRepairInvoice', 'View invoice')}
 											</button>
 											<button
 												className="btn btn-sm btn-success"
 												disabled={loadingId === item.id + 'CONFIRM'}
 												onClick={() => onSendCustomerConfirmation?.(item.id)}
-												title="Gửi xác nhận cho khách hàng"
+												title={safeT('pages.requests.actions.sendConfirmationTitle', 'Send confirmation to customer')}
 											>
-												{loadingId === item.id + 'CONFIRM' ? '⏳' : '📧'} Gửi xác nhận
+											{loadingId === item.id + 'CONFIRM' ? '⏳' : '📧'} {safeT('pages.requests.actions.sendConfirmation', 'Send confirmation')}
 											</button>
 										</div>
 									)}
@@ -515,14 +421,14 @@ export default function DepotRequestTable({
 												className="btn btn-sm btn-outline"
 												disabled={loadingId === item.id + 'DELETE'}
 												onClick={() => {
-													if (window.confirm('Xóa khỏi danh sách Kho?\nRequest vẫn hiển thị trạng thái Từ chối bên Khách hàng.')) {
-														onSoftDelete?.(item.id, 'depot');
-													}
-												}}
-												title="Xóa khỏi danh sách Kho"
-											>
-												{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
-											</button>
+													if (window.confirm(safeT('pages.requests.softDeleteConfirm', 'Remove from Depot list?\nRequest will still show Rejected on the Customer side.'))) {
+												onSoftDelete?.(item.id, 'depot');
+											}
+										}}
+										title={safeT('pages.requests.softDeleteTitle', 'Remove from Depot list')}
+									>
+										{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} {safeT('common.remove', 'Remove')}
+									</button>
 										</div>
 									)}
 								</div>
@@ -531,7 +437,8 @@ export default function DepotRequestTable({
 						);
 					})}
 				</tbody>
-			</table>
+				</table>
+			</div>
 		</div>
 	);
 }

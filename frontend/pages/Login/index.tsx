@@ -42,57 +42,156 @@ export default function Login(){
 	return (
 		<>
 			<Header />
-			<main className="auth-hero">
-				<div className="auth-card">
-					<div className="section-head">
-						<h2>Đăng nhập</h2>
-						<p className="muted">Nhập thông tin để truy cập hệ thống</p>
+			<main className="futuristic-login">
+				{/* Premium Marine Background */}
+				<div className="navy-bg">
+					<div className="navy-particles"></div>
+					<div className="navy-waves"></div>
+					<div className="navy-grid"></div>
+					
+					{/* 3D Marine Illustrations */}
+					<div className="marine-illustrations">
+						{/* Container Ship */}
+						<div className="container-ship"></div>
+						
+						{/* Marine Crane */}
+						<div className="marine-crane">🏗️</div>
+						
+						{/* Seagulls */}
+						<div className="seagulls">
+							<div className="seagull">🕊️</div>
+							<div className="seagull">🕊️</div>
+							<div className="seagull">🕊️</div>
+						</div>
+						
+						{/* Lighthouse */}
+						<div className="lighthouse"></div>
 					</div>
-					<form className="form-grid" onSubmit={handleSubmit} noValidate>
-						<div>
-							<label className="field-label" htmlFor="login-username">Email / Tên đăng nhập</label>
-							<div className="input-icon">
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-									<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="currentColor" strokeWidth="1.5"/>
-									<path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-								</svg>
-								<input id="login-username" name="username" type="text" placeholder="email@company.com" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} disabled={loading} />
+					
+					{/* Floating Containers */}
+					<div className="floating-containers">
+						<div className="floating-container" style={{left: '10%', animationDelay: '0s'}}>📦</div>
+						<div className="floating-container" style={{left: '30%', animationDelay: '2s'}}>📦</div>
+						<div className="floating-container" style={{left: '50%', animationDelay: '4s'}}>📦</div>
+						<div className="floating-container" style={{left: '70%', animationDelay: '6s'}}>📦</div>
+						<div className="floating-container" style={{left: '90%', animationDelay: '8s'}}>📦</div>
+					</div>
+					
+					{/* Wave Sound Effect */}
+					<div className="wave-sound-effect"></div>
+				</div>
+
+				{/* Login Container */}
+				<div className="login-container">
+					{/* Glass Login Card */}
+					<div className="glass-login-card">
+						{/* Card Header */}
+						<div className="login-header">
+							<div className="logo-container">
+								<div className="navy-logo">
+									<span className="logo-icon">📦</span>
+								</div>
 							</div>
+							<h1 className="login-title">
+								<span className="shimmer-text">ĐĂNG NHẬP</span>
+							</h1>
+							<p className="login-subtitle">
+								⚓ Nhập thông tin để truy cập hệ thống quản lý container toàn cầu
+							</p>
 						</div>
-						<div>
-							<label className="field-label" htmlFor="login-password">Mật khẩu</label>
-							<div className="input-icon has-action">
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-									<rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-									<path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								</svg>
-								<input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} disabled={loading} />
-								<button type="button" className="input-action" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} disabled={loading}>
-									{showPassword ? (
-										/* Eye-off icon */
-										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-											<path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-											<path d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-											<path d="M7.11 7.11C5.15 8.26 3.6 10 2 12c2.5 3.5 6 6 10 6 1.54 0 3-.33 4.32-.93M16.89 16.89C19 15.7 20.85 13.98 22 12c-2.5-3.5-6-6-10-6-1.04 0-2.05.16-3 .46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-										</svg>
+
+						{/* Login Form */}
+						<form className="futuristic-form" onSubmit={handleSubmit} noValidate>
+							{/* Username Field */}
+							<div className="input-group">
+								<label className="navy-label" htmlFor="login-username">
+									📧 Email / Tên đăng nhập
+								</label>
+								<div className="navy-input-wrapper">
+									<span className="navy-input-icon">📧</span>
+									<input 
+										id="login-username" 
+										name="username" 
+										type="text" 
+										placeholder="email@company.com" 
+										autoComplete="username" 
+										value={username} 
+										onChange={e=>setUsername(e.target.value)} 
+										disabled={loading}
+										className="navy-input"
+									/>
+								</div>
+							</div>
+
+							{/* Password Field */}
+							<div className="input-group">
+								<label className="navy-label" htmlFor="login-password">
+									🔐 Mật khẩu
+								</label>
+								<div className="navy-input-wrapper">
+									<span className="navy-input-icon">🔒</span>
+									<input 
+										id="login-password" 
+										name="password" 
+										type={showPassword ? 'text' : 'password'} 
+										placeholder="••••••••" 
+										autoComplete="current-password" 
+										value={password} 
+										onChange={e=>setPassword(e.target.value)} 
+										disabled={loading}
+										className="navy-input"
+									/>
+									<button 
+										type="button" 
+										className="navy-toggle-btn" 
+										onClick={() => setShowPassword(v => !v)} 
+										aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} 
+										disabled={loading}
+									>
+										{showPassword ? '🙈' : '👁️'}
+									</button>
+								</div>
+							</div>
+
+							{/* Error Message */}
+							{error && (
+								<div className="navy-error">
+									<span className="error-icon">⚠️</span>
+									{error}
+								</div>
+							)}
+
+							{/* Login Button */}
+							<button 
+								className="navy-login-btn" 
+								type="submit" 
+								disabled={loading} 
+								aria-busy={loading}
+							>
+								<span className="btn-content">
+									{loading ? (
+										<>
+											<span className="loading-spinner"></span>
+											Đang đăng nhập...
+										</>
 									) : (
-										/* Eye icon */
-										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-											<path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-											<circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/>
-										</svg>
+										<>
+											ĐĂNG NHẬP
+										</>
 									)}
-								</button>
+								</span>
+								<div className="btn-ripple"></div>
+							</button>
+
+							{/* Register Link */}
+							<div className="navy-auth-link">
+								<span className="link-text">Chưa có mật khẩu?</span>
+								<Link href="/Register" className="navy-link">
+									📋 Kích hoạt tài khoản (Accept Invite)
+								</Link>
 							</div>
-						</div>
-						{error && <div className="form-error">{error}</div>}
-						<button className="btn btn-login" type="submit" disabled={loading} aria-busy={loading}>
-							{loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-						</button>
-						<div className="auth-link">
-							Chưa có mật khẩu? <Link href="/Register">Kích hoạt tài khoản (Accept Invite)</Link>
-						</div>
-					</form>
+						</form>
+					</div>
 				</div>
 			</main>
 		</>

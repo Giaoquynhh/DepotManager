@@ -24,7 +24,17 @@
     "page": "Trang",
     "sortBy": "Sắp xếp theo",
     "na": "Không có",
-    "processing": "Đang xử lý..."
+    "processing": "Đang xử lý...",
+    "update": "Cập nhật",
+    "cannot": "Không thể",
+    "unknownError": "Lỗi không xác định",
+    "deleteFailed": "Xóa thất bại",
+    "restoreFailed": "Khôi phục thất bại",
+    "depot": "Depot",
+    "customer": "Khách hàng",
+    "list": "danh sách",
+    "view": "Xem",
+    "remove": "Gỡ bỏ"
   },
   "header": {
     "brand": "Smartlog Container Manager",
@@ -68,6 +78,8 @@
       "title": "Quản lý yêu cầu dịch vụ",
       "depotTitle": "Quản lý yêu cầu dịch vụ",
       "customerTitle": "Quản lý yêu cầu dịch vụ (Khách hàng)",
+      "createRequest": "Tạo yêu cầu",
+      "createRequestTitle": "Tạo yêu cầu mới",
       "searchPlaceholder": "Tìm kiếm theo mã container...",
       "searchByLicensePlate": "Tìm kiếm theo biển số xe...",
       "allTypes": "Tất cả loại",
@@ -101,7 +113,11 @@
         "inProgress": "Đang xử lý",
         "gateIn": "Đã cho phép vào",
         "gateOut": "Đã cho phép ra",
-        "gateRejected": "Đã từ chối"
+        "gateRejected": "Đã từ chối",
+        "pickContainer": "Lấy container",
+        "inCar": "Trên xe",
+        "positioned": "Đã định vị trong bãi",
+        "forklifting": "Đang nâng hạ"
       },
       "actionLabels": {
         "received": "Tiếp nhận",
@@ -111,13 +127,93 @@
       },
       "supplementDocuments": "Tài liệu bổ sung",
       "close": "Đóng",
+      "noDocuments": "Chưa có chứng từ",
       "tableHeaders": {
+        "type": "Loại",
         "container": "Container",
         "eta": "ETA",
         "status": "Trạng thái",
         "documents": "Chứng từ",
+        "payment": "Thanh toán",
         "chat": "Chat",
         "actions": "Hành động"
+      },
+      "location": {
+        "unknown": "Chưa xác định"
+      },
+      "invoice": {
+        "has": "Có hóa đơn",
+        "none": "Chưa có hóa đơn"
+      },
+      "payment": {
+        "paid": "Đã thanh toán",
+        "unpaid": "Chưa thanh toán",
+        "notPaid": "Chưa thanh toán",
+        "markUnpaid": "Đánh dấu chưa thanh toán",
+        "markPaid": "Đánh dấu đã thanh toán",
+        "markUnpaidShort": "Đánh dấu chưa TT",
+        "markPaidShort": "Đánh dấu đã TT"
+      },
+      "addDocumentTitle": "Thêm chứng từ cho container",
+      "addDocument": "Thêm chứng từ",
+      "chat": {
+        "open": "Mở chat với khách hàng",
+        "close": "Đóng chat"
+      },
+      "supplementAvailable": "Có tài liệu bổ sung",
+      "actions": {
+        "acceptRequest": "Tiếp nhận yêu cầu",
+        "accept": "Tiếp nhận",
+        "rejectRequest": "Từ chối yêu cầu",
+        "reject": "Từ chối",
+        "completeRequest": "Hoàn tất yêu cầu",
+        "complete": "Hoàn tất",
+        "rescheduleTitle": "Sắp xếp lại lịch với khách hàng",
+        "reschedule": "Đổi lịch",
+        "exportTitle": "Xuất khỏi depot",
+        "export": "Xuất kho",
+        "sendPaymentTitle": "Gửi yêu cầu thanh toán",
+        "payment": "Thanh toán",
+        "viewRepairInvoiceTitle": "Xem hóa đơn sửa chữa",
+        "viewRepairInvoice": "Xem hóa đơn",
+        "sendConfirmationTitle": "Gửi xác nhận cho khách hàng",
+        "sendConfirmation": "Gửi xác nhận",
+        "received": "Đã nhận",
+        "rejected": "Từ chối",
+        "completed": "Hoàn thành",
+        "exported": "Đã xuất"
+      },
+      "softDeleteConfirm": "Gỡ khỏi danh sách Depot\\nYêu cầu vẫn sẽ hiển thị là Từ chối ở phía Khách hàng.",
+      "softDeleteTitle": "Gỡ khỏi danh sách Depot",
+      "prompts": {
+        "enterRejectionReason": "Nhập lý do từ chối"
+      },
+      "messages": {
+        "requestSuccess": "thành công",
+        "receivedAndAppointmentCreated": "Đã tiếp nhận yêu cầu và tạo lịch hẹn thành công!",
+        "rejectSuccess": "Từ chối yêu cầu thành công!",
+        "paymentRequestSent": "Đã gửi yêu cầu thanh toán",
+        "paymentRequestFailed": "Gửi yêu cầu thanh toán thất bại",
+        "removedFromList": "Đã gỡ khỏi",
+        "restoredInList": "Đã khôi phục trong",
+        "containerInfoNotFound": "Không tìm thấy thông tin container cho yêu cầu này",
+        "noRepairsFound": "Không tìm thấy phiếu sửa chữa cho container này",
+        "openInvoiceSuccess": "Mở hóa đơn sửa chữa thành công",
+        "cannotViewInvoice": "Không thể xem hóa đơn",
+        "customerConfirmationSent": "Gửi xác nhận cho khách hàng thành công",
+        "sendConfirmationFailed": "Gửi xác nhận thất bại",
+        "containerSelectedForExport": "Đã chọn container {{containerNo}} cho yêu cầu EXPORT. Vui lòng tạo lịch hẹn.",
+        "cannotUpdateContainer": "Không thể cập nhật container",
+        "fileTooLarge": "Tệp quá lớn. Kích thước tối đa là 10MB",
+        "invalidFileType": "Chỉ chấp nhận tệp PDF hoặc hình ảnh (JPG, PNG)",
+        "uploadDocumentFailed": "Không thể tải lên chứng từ",
+        "cannotAddDocument": "Không thể thêm chứng từ",
+        "uploadDocumentSuccess": "Tải lên file thành công!",
+        "supplementUploadSuccessForwarded": "Tải lên tài liệu bổ sung thành công. Yêu cầu đã được tự động chuyển tiếp.",
+        "removedFromDepotList": "Đã gỡ khỏi danh sách Depot",
+        "removedFromCustomerList": "Đã gỡ khỏi danh sách Khách hàng",
+        "restoredInDepotList": "Đã khôi phục trong danh sách Depot",
+        "restoredInCustomerList": "Đã khôi phục trong danh sách Khách hàng"
       }
     },
     "gate": {

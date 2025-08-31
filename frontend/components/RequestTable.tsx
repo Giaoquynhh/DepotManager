@@ -3,6 +3,7 @@ import { api } from '@services/api';
 import { yardApi } from '../services/yard';
 import ChatWindowStandalone from './chat/ChatWindowStandalone';
 import InvoiceViewer from './InvoiceViewer';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Request {
   id: string;
@@ -48,6 +49,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
   const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string>('');
+  const { t, currentLanguage } = useTranslation();
+  const dateLocale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -220,7 +223,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     return (
       <div className="table-loading">
         <div className="loading-spinner"></div>
-        <p>Đang tải dữ liệu...</p>
+        <p>{t('common.loading')}</p>
       </div>
     );
   }
@@ -229,8 +232,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     return (
       <div className="table-empty">
         <div className="empty-icon">📋</div>
-        <p>Chưa có yêu cầu nào</p>
-        <small>Tạo yêu cầu đầu tiên để bắt đầu</small>
+        <p>{t('pages.requests.noRequests')}</p>
+        <small>{t('pages.requests.noRequestsSubtitle')}</small>
       </div>
     );
   }
@@ -241,14 +244,14 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
         <table className="table table-modern">
           <thead>
             <tr>
-              <th data-column="type">Loại</th>
-              <th data-column="container">Container</th>
-              <th data-column="eta">ETA</th>
-              <th data-column="status">Trạng thái</th>
-              <th data-column="documents">Chứng từ</th>
-              <th data-column="payment">Thanh toán</th>
-              <th data-column="chat">Chat</th>
-              <th data-column="actions">Hành động</th>
+              <th data-column="type">{t('pages.requests.typeLabel')}</th>
+              <th data-column="container">{t('pages.requests.tableHeaders.container')}</th>
+              <th data-column="eta">{t('pages.requests.tableHeaders.eta')}</th>
+              <th data-column="status">{t('pages.requests.tableHeaders.status')}</th>
+              <th data-column="documents">{t('pages.requests.tableHeaders.documents')}</th>
+              <th data-column="payment">{t('pages.requests.actions.payment')}</th>
+              <th data-column="chat">{t('pages.requests.tableHeaders.chat')}</th>
+              <th data-column="actions">{t('pages.requests.tableHeaders.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -265,33 +268,31 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   </span>
                 </td>
                 <td>
-                  <div className="location-info">
-                    {item.type === 'EXPORT' ? (
-                      <span className="location-badge">
-                        {loadingLocations.has(item.container_no || '') ? (
-                          <span className="loading-location">⏳ Đang tải...</span>
-                        ) : (
-                          <>
-                            📍 {containerLocations[item.container_no || ''] || 'Chưa xác định'}
-                          </>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="location-na">-</span>
-                    )}
-                  </div>
-                </td>
-                <td>
                   {item.eta ? (
                     <span className="eta-date">
-                      {new Date(item.eta).toLocaleString('vi-VN')}
+                      {new Date(item.eta).toLocaleString(dateLocale)}
                     </span>
                   ) : (
                     <span className="eta-empty">-</span>
                   )}
                 </td>
                 <td>
-                  {getStatusBadge(item.status)}
+                  <div className="status-with-location">
+                    {getStatusBadge(item.status)}
+                    {item.type === 'EXPORT' && item.container_no && (
+                      <div className="location-info">
+                        <span className="location-badge">
+                          {loadingLocations.has(item.container_no) ? (
+                            <span className="loading-location">⏳ {t('common.loading')}</span>
+                          ) : (
+                            <>
+                              📍 {containerLocations[item.container_no] || t('pages.requests.location.unknown')}
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td>
                   {hasDocuments(item) ? (
@@ -313,14 +314,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                 </td>
                 <td>
                   <div className="payment-status-info">
-                    {/* Hiển thị trạng thái hóa đơn */}
-                    <div className="invoice-status">
-                      <span className={`status-indicator ${item.has_invoice ? 'has-invoice' : 'no-invoice'}`}>
-                        {item.has_invoice ? '📄' : '📝'} 
-                        {item.has_invoice ? 'Có hóa đơn' : 'Chưa có hóa đơn'}
-                      </span>
-                    </div>
-                    {/* Hiển thị trạng thái thanh toán */}
+                    {/* Hiển thị trạng thái thanh toán chính */}
                     <div className="payment-status">
                       <span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
                         {item.is_paid ? '💰' : '⏳'} 
@@ -328,10 +322,18 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                       </span>
                     </div>
                     {/* Hiển thị thông tin payment request nếu có */}
-                    {item.latest_payment && (
+                    {item.latest_payment && !item.is_paid && (
                       <div className="payment-request-info">
                         <span className="payment-request-badge">
                           📤 Đã gửi yêu cầu thanh toán
+                        </span>
+                      </div>
+                    )}
+                    {/* Hiển thị trạng thái hóa đơn (phụ) */}
+                    {item.has_invoice && (
+                      <div className="invoice-status">
+                        <span className="status-indicator has-invoice">
+                          📄 Có hóa đơn
                         </span>
                       </div>
                     )}

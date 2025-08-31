@@ -63,23 +63,58 @@ export default function InventoryPage(){
   return (
     <>
       <Header />
-      <main className="container">
-        <Card title="Tồn kho vật tư">
-          <div style={{display:'flex', gap:8, marginBottom:8, justifyContent:'space-between', alignItems:'center'}}>
-            <div style={{display:'flex', gap:8, alignItems:'center'}}>
-              <input placeholder="Tìm kiếm tên vật tư" value={search} onChange={e=>setSearch(e.target.value)} />
-              <label style={{display:'flex', alignItems:'center', gap:6}}>
-                <input type="checkbox" checked={onlyLow} onChange={e=>setOnlyLow(e.target.checked)} /> Chỉ hiển thị low stock
+      <main className="container inventory-page">
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">Tồn kho vật tư</h1>
+            </div>
+            <div className="header-actions">
+              <button 
+                className="btn btn-outline add-product-btn"
+                onClick={() => setShowAddForm(!showAddForm)}
+                title={showAddForm ? 'Hủy thêm sản phẩm' : 'Thêm sản phẩm mới'}
+              >
+                {showAddForm ? '❌ Hủy' : '➕ Thêm sản phẩm'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="search-filter-section modern-search">
+          <div className="search-row">
+            <div className="search-section">
+              <div className="search-input-group">
+                <span className="search-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm tên vật tư"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">
+                <input 
+                  type="checkbox" 
+                  checked={onlyLow} 
+                  onChange={e => setOnlyLow(e.target.checked)}
+                  style={{ marginRight: '8px' }}
+                />
+                Chỉ hiển thị low stock
               </label>
             </div>
-            <button 
-              className="btn" 
-              onClick={() => setShowAddForm(!showAddForm)}
-              style={{backgroundColor: showAddForm ? '#dc2626' : '#1e40af'}}
-            >
-              {showAddForm ? 'Hủy' : 'Thêm sản phẩm'}
-            </button>
-                      </div>
+          </div>
+        </div>
+
+        <Card>
             
             {showAddForm && (
               <div style={{

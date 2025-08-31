@@ -133,22 +133,22 @@ export default function DepotRequests() {
 
 	const getStatusLabel = (status: string) => {
 		const statusConfig: Record<string, string> = {
-			SCHEDULED: safeT('pages.requests.filterOptions.scheduled', 'Đã lên lịch'),
-			PENDING: safeT('pages.requests.filterOptions.pending', 'Đang chờ'),
-			RECEIVED: safeT('pages.requests.filterOptions.received', 'Đã tiếp nhận'),
-			APPROVED: safeT('pages.requests.filterOptions.approved', 'Đã duyệt'),
-			IN_PROGRESS: safeT('pages.requests.filterOptions.inProgress', 'Đang xử lý'),
-			COMPLETED: safeT('pages.requests.filterOptions.completed', 'Hoàn tất'),
-			EXPORTED: safeT('pages.requests.filterOptions.exported', 'Xuất kho'),
-			REJECTED: safeT('pages.requests.filterOptions.rejected', 'Từ chối'),
-			IN_YARD: safeT('pages.requests.filterOptions.inYard', 'Trong bãi'),
-			LEFT_YARD: safeT('pages.requests.filterOptions.leftYard', 'Rời bãi'),
-			PENDING_ACCEPT: safeT('pages.requests.filterOptions.pendingAccept', 'Chờ xác nhận'),
-			CHECKING: safeT('pages.requests.filterOptions.checking', 'Đang kiểm tra'),
-			CHECKED: safeT('pages.requests.filterOptions.checked', 'Đã kiểm tra'),
-			GATE_IN: safeT('pages.requests.filterOptions.gateIn', 'Đã cho phép vào'),
-			GATE_OUT: safeT('pages.requests.filterOptions.gateOut', 'Đã cho phép ra'),
-			GATE_REJECTED: safeT('pages.requests.filterOptions.gateRejected', 'Đã từ chối')
+			SCHEDULED: safeT('pages.requests.filterOptions.scheduled', 'Scheduled'),
+			PENDING: safeT('pages.requests.filterOptions.pending', 'Pending'),
+			RECEIVED: safeT('pages.requests.filterOptions.received', 'Received'),
+			APPROVED: safeT('pages.requests.filterOptions.approved', 'Approved'),
+			IN_PROGRESS: safeT('pages.requests.filterOptions.inProgress', 'In progress'),
+			COMPLETED: safeT('pages.requests.filterOptions.completed', 'Completed'),
+			EXPORTED: safeT('pages.requests.filterOptions.exported', 'Exported'),
+			REJECTED: safeT('pages.requests.filterOptions.rejected', 'Rejected'),
+			IN_YARD: safeT('pages.requests.filterOptions.inYard', 'In yard'),
+			LEFT_YARD: safeT('pages.requests.filterOptions.leftYard', 'Left yard'),
+			PENDING_ACCEPT: safeT('pages.requests.filterOptions.pendingAccept', 'Pending confirmation'),
+			CHECKING: safeT('pages.requests.filterOptions.checking', 'Checking'),
+			CHECKED: safeT('pages.requests.filterOptions.checked', 'Checked'),
+			GATE_IN: safeT('pages.requests.filterOptions.gateIn', 'Gate in'),
+			GATE_OUT: safeT('pages.requests.filterOptions.gateOut', 'Gate out'),
+			GATE_REJECTED: safeT('pages.requests.filterOptions.gateRejected', 'Gate rejected')
 		};
 		return statusConfig[status] || status;
 	};
@@ -163,10 +163,10 @@ export default function DepotRequests() {
 			restoreRequest: actions.restoreRequest,
 			loadingId: state.loadingId,
 			actLabel: {
-				RECEIVED: 'Tiếp nhận',
-				REJECTED: 'Từ chối',
-				COMPLETED: 'Hoàn tất',
-				EXPORTED: 'Đã xuất kho'
+				RECEIVED: 'Received',
+				REJECTED: 'Rejected',
+				COMPLETED: 'Completed',
+				EXPORTED: 'Exported'
 			}
 		}
 	}));
@@ -212,29 +212,30 @@ export default function DepotRequests() {
 
 				{/* Search and Filter */}
 				<div className="search-filter-section modern-search">
-					<div className="search-container">
-						<div className="search-input-group">
-							<span className="search-icon">
-								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-									<circle cx="11" cy="11" r="8"></circle>
-									<path d="m21 21-4.35-4.35"></path>
-								</svg>
-							</span>
-							<input
-								type="text"
-								className="search-input"
-								placeholder={t('pages.requests.searchPlaceholder')}
-								value={localSearch}
-								onChange={(e) => {
-									const v = e.target.value;
-									setLocalSearch(v);
-									handleSearch(v);
-								}}
-							/>
+					<div className="search-row">
+						<div className="search-section">
+							<div className="search-input-group">
+								<span className="search-icon">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+										<circle cx="11" cy="11" r="8"></circle>
+										<path d="m21 21-4.35-4.35"></path>
+									</svg>
+								</span>
+								<input
+									type="text"
+									className="search-input"
+									placeholder={t('pages.requests.searchPlaceholder')}
+									aria-label={t('pages.requests.searchPlaceholder')}
+									value={localSearch}
+									onChange={(e) => {
+										const v = e.target.value;
+										setLocalSearch(v);
+										handleSearch(v);
+									}}
+								/>
+							</div>
 						</div>
-					</div>
-					
-					<div className="filter-container">
+
 						<div className="filter-group">
 							<select
 								aria-label={t('pages.requests.typeLabel')}
@@ -252,7 +253,7 @@ export default function DepotRequests() {
 								<option value="CONVERT">{t('pages.requests.filterOptions.convert')}</option>
 							</select>
 						</div>
-						
+
 						<div className="filter-group">
 							<select
 								aria-label={t('pages.requests.statusLabel')}
@@ -278,13 +279,13 @@ export default function DepotRequests() {
 					onDocumentClick={actions.handleDocumentClick}
 					onToggleSupplement={actions.toggleSupplement}
 					onChangeAppointment={actions.handleChangeAppointment}
-					onReject={actions.handleReject}
-					onChangeStatus={actions.changeStatus}
-					onSendPayment={actions.sendPayment}
-					onSoftDelete={actions.softDeleteRequest}
-					onViewInvoice={actions.handleViewInvoice}
-					onSendCustomerConfirmation={actions.handleSendCustomerConfirmation}
-					onAddDocument={actions.handleAddDocument}
+					onReject={(id: string) => { void actions.handleReject(id); }}
+					onChangeStatus={(id: string, status: string) => { void actions.changeStatus(id, status); }}
+					onSendPayment={(id: string) => { void actions.sendPayment(id); }}
+					onSoftDelete={(id: string, scope: string) => { void actions.softDeleteRequest(id, scope as 'depot' | 'customer'); }}
+					onViewInvoice={(id: string) => { void actions.handleViewInvoice(id); }}
+					onSendCustomerConfirmation={(id: string) => { void actions.handleSendCustomerConfirmation(id); }}
+					onAddDocument={(requestId: string, containerNo: string) => { void actions.handleAddDocument(requestId, containerNo); }}
 					loadingId={state.loadingId}
 					actLabel={{
 						RECEIVED: t('pages.requests.actionLabels.received'),
@@ -303,33 +304,12 @@ export default function DepotRequests() {
 					onContainerClick={(item: any) => setDetailRequest(item)}
 				/>
 
-				{/* Pagination */}
-				{totalPages > 1 && (
-					<div className="pagination" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-						<button className="btn btn-sm btn-outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-							‹ {t('common.prev') || 'Trước'}
-						</button>
-						<span style={{ fontSize: 12 }}>
-							{t('common.page') || 'Trang'} {page}/{totalPages}
-						</span>
-						<button className="btn btn-sm btn-outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-							{t('common.next') || 'Sau'} ›
-						</button>
-					</div>
-				)}
-
-				{/* Status Message */}
-				{state.msg && (
-					<div className={`status-message ${state.msg.ok ? 'success' : 'error'}`}>
-						{state.msg.text}
-					</div>
-				)}
 
 				{/* Appointment Mini Windows */}
 				{Array.from(state.activeAppointmentRequests).map((requestId, index) => {
 					console.log('🔍 Depot: Rendering AppointmentMini for requestId:', requestId);
-					console.log('🔍 Depot: Current state.requestsData:', state.requestsData.map(r => ({ id: r.id, container_no: r.container_no })));
-					console.log('🔍 Depot: Current SWR data:', data?.data?.map(r => ({ id: r.id, container_no: r.container_no })));
+					console.log('🔍 Depot: Current state.requestsData:', state.requestsData.map((r: any) => ({ id: r.id, container_no: r.container_no })));
+					console.log('🔍 Depot: Current SWR data:', data?.data?.map((r: any) => ({ id: r.id, container_no: r.container_no })));
 					
 					// Ưu tiên sử dụng dữ liệu từ state.requestsData (đã được cập nhật)
 					let request = state.requestsData.find((r: any) => r.id === requestId);
@@ -416,7 +396,7 @@ export default function DepotRequests() {
 
 				{/* Detail Modal */}
 				<Modal
-					title={`${safeT('pages.requests.containerDetailTitle', 'Chi tiết container')} ${detailRequest?.container_no || ''}`}
+					title={`${safeT('pages.requests.containerDetailTitle', 'Container details')} ${detailRequest?.container_no || ''}`}
 					visible={!!detailRequest}
 					onCancel={() => setDetailRequest(null)}
 					size="lg"

@@ -86,6 +86,27 @@
   color: var(--color-purple-600);
 }
 
+/* Additional statuses used by DepotRequestTable */
+.status-pick-container {
+  background-color: var(--color-blue-100);
+  color: var(--color-blue-800);
+}
+
+.status-in-car {
+  background-color: var(--color-purple-100);
+  color: var(--color-purple-700);
+}
+
+.status-positioned {
+  background-color: var(--color-teal-100);
+  color: var(--color-teal-800);
+}
+
+.status-forklifting {
+  background-color: var(--color-orange-100);
+  color: var(--color-orange-800);
+}
+
 /* Gate statuses */
 .status-gate-in {
   background-color: var(--color-emerald-100);
@@ -490,6 +511,117 @@
   background-color: var(--color-red-100);
   color: var(--color-red-800);
   border: 1px solid var(--color-red-200);
+}
+
+/* Depot Requests: override truncation/wrapping for table content */
+.depot-requests .table-modern {
+  table-layout: auto;
+}
+
+.depot-requests .table-modern td {
+  white-space: normal; /* Cho phép xuống dòng */
+  overflow: visible; /* Không ẩn nội dung */
+  text-overflow: unset; /* Bỏ ellipsis */
+  word-break: break-word; /* Bẻ từ dài khi cần */
+  overflow-wrap: anywhere; /* Xử lý các chuỗi không có khoảng trắng */
+  vertical-align: top; /* Căn đỉnh nội dung theo cột */
+}
+
+.depot-requests .container-text,
+.depot-requests .document-badge,
+.depot-requests .doc-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.depot-requests .table-modern th {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.depot-requests .status-badge {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+
+.depot-requests .table-modern .document-badge {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+
+.depot-requests .location-badge {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+
+/* Enhancements for new table elements */
+.depot-requests .status-with-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.depot-requests .eta-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 11px;
+  line-height: 1;
+  border: 1px solid #c7d2fe;
+}
+
+.depot-requests .type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.depot-requests .type-badge.type-import {
+  background: #dcfce7;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.depot-requests .type-badge.type-export {
+  background: #fde68a;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.depot-requests .type-badge.type-convert {
+  background: #cffafe;
+  color: #155e75;
+  border-color: #a5f3fc;
+}
+
+.depot-requests .no-payment {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.depot-requests .no-document {
+  color: #6b7280;
+  font-size: 12px;
 }
 
 /* Responsive */

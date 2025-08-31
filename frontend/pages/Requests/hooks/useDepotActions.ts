@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { mutate } from 'swr';
 import { api } from '@services/api';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export interface DepotActionsState {
 	searchQuery: string;
@@ -78,6 +79,23 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	const [showContainerSelectionModal, setShowContainerSelectionModal] = useState(false);
 	const [selectedRequestForContainer, setSelectedRequestForContainer] = useState<any>(null);
 	
+	// i18n
+	const { t } = useTranslation();
+	const safeT = (key: string, fallback: string) => {
+		const v = t(key) as string;
+		return v && v !== key ? v : fallback;
+	};
+	const formatT = (key: string, fallback: string, params?: Record<string, string | number>) => {
+		let s = t(key) as string;
+		s = s && s !== key ? s : fallback;
+		if (params) {
+			for (const [k, val] of Object.entries(params)) {
+				s = s.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), String(val));
+			}
+		}
+		return s;
+	};
+
 	// Debug logging cho setRequestsData
 	const setRequestsDataWithLog = (data: any[]) => {
 		console.log('🔍 setRequestsData called with:', { 
@@ -89,10 +107,10 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	};
 
 	const actLabel: Record<string, string> = {
-		RECEIVED: 'Tiếp nhận',
-		REJECTED: 'Từ chối',
-		COMPLETED: 'Hoàn tất',
-		EXPORTED: 'Đã xuất kho'
+		RECEIVED: safeT('pages.requests.actions.received', 'Received'),
+		REJECTED: safeT('pages.requests.actions.rejected', 'Rejected'),
+		COMPLETED: safeT('pages.requests.actions.completed', 'Completed'),
+		EXPORTED: safeT('pages.requests.actions.exported', 'Exported')
 	};
 
 	// Load user info
@@ -107,7 +125,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		try {
 			let payload: any = { status };
 			if (status === 'REJECTED') {
-				const reason = window.prompt('Nhập lý do từ chối');
+				const reasonPrompt = safeT('pages.requests.prompts.enterRejectionReason', 'Enter rejection reason');
+				const reason = window.prompt(reasonPrompt);
 				if (!reason) {
 					setLoadingId('');
 					return;
@@ -142,9 +161,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				await api.patch(`/requests/${id}/status`, payload);
 			}
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `${actLabel[status] || 'Cập nhật'} yêu cầu thành công`, ok: true });
+			setMsg({ text: `${(actLabel[status] || safeT('common.update', 'Update'))} ${safeT('pages.requests.messages.requestSuccess', 'request successful')}`, ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Không thể ${actLabel[status]?.toLowerCase() || 'cập nhật'}: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('common.cannot', 'Cannot')} ${(actLabel[status] || safeT('common.update', 'Update')).toLowerCase()}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -152,7 +171,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 
 	const handleAppointmentSuccess = () => {
 		mutate('/requests?page=1&limit=20');
-		setMsg({ text: 'Đã tiếp nhận yêu cầu và tạo lịch hẹn thành công!', ok: true });
+		setMsg({ text: safeT('pages.requests.messages.receivedAndAppointmentCreated', 'Request received and appointment created successfully!'), ok: true });
 	};
 
 	const toggleAppointment = (requestId: string) => {
@@ -202,7 +221,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	};
 
 	const handleReject = async (requestId: string) => {
-		const reason = window.prompt('Nhập lý do từ chối:');
+		const reasonPrompt = safeT('pages.requests.prompts.enterRejectionReason', 'Enter rejection reason');
+		const reason = window.prompt(reasonPrompt);
 		if (!reason) return;
 		
 		setMsg(null);
@@ -210,9 +230,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		try {
 			await api.patch(`/requests/${requestId}/reject`, { reason });
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: 'Đã từ chối yêu cầu thành công!', ok: true });
+			setMsg({ text: safeT('pages.requests.messages.rejectSuccess', 'Request rejected successfully!'), ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Không thể từ chối: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('common.cannot', 'Cannot')} ${safeT('pages.requests.actions.rejected', 'rejected').toLowerCase()}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -223,9 +243,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setLoadingId(id + 'PAY');
 		try {
 			await api.post(`/requests/${id}/payment-request`, {});
-			setMsg({ text: 'Đã gửi yêu cầu thanh toán', ok: true });
+			setMsg({ text: safeT('pages.requests.messages.paymentRequestSent', 'Payment request sent'), ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Gửi yêu cầu thanh toán thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('pages.requests.messages.paymentRequestFailed', 'Failed to send payment request')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -237,9 +257,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		try {
 			await api.delete(`/requests/${id}?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `Đã xóa khỏi danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			setMsg({ text: `${safeT('pages.requests.messages.removedFromList', 'Removed from')} ${(scope === 'depot' ? safeT('common.depot', 'Depot') : safeT('common.customer', 'Customer'))} ${safeT('common.list', 'list')}`, ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Xóa thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('common.deleteFailed', 'Delete failed')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -251,9 +271,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		try {
 			await api.post(`/requests/${id}/restore?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `Đã khôi phục trong danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			setMsg({ text: `${safeT('pages.requests.messages.restoredInList', 'Restored in')} ${(scope === 'depot' ? safeT('common.depot', 'Depot') : safeT('common.customer', 'Customer'))} ${safeT('common.list', 'list')}`, ok: true });
 		} catch (e: any) {
-			setMsg({ text: `Khôi phục thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('common.restoreFailed', 'Restore failed')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -281,7 +301,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			console.log('🔍 All requestsData:', requestsData.map(r => ({ id: r.id, container_no: r.container_no, status: r.status })));
 			
 			if (!request || !request.container_no) {
-				setMsg({ text: 'Không tìm thấy thông tin container của request', ok: false });
+				setMsg({ text: safeT('pages.requests.messages.containerInfoNotFound', 'Container info not found for this request'), ok: false });
 				return;
 			}
 
@@ -332,7 +352,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			});
 			
 			if (repairs.length === 0) {
-				setMsg({ text: 'Không tìm thấy phiếu sửa chữa cho container này', ok: false });
+				setMsg({ text: safeT('pages.requests.messages.noRepairsFound', 'No repair record found for this container'), ok: false });
 				return;
 			}
 
@@ -358,12 +378,12 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			// Giải phóng URL
 			window.URL.revokeObjectURL(url);
 			
-			setMsg({ text: 'Đã mở hóa đơn sửa chữa thành công', ok: true });
+			setMsg({ text: safeT('pages.requests.messages.openInvoiceSuccess', 'Repair invoice opened successfully'), ok: true });
 		} catch (e: any) {
 			console.error('❌ Lỗi khi xem hóa đơn:', e);
 			console.error('❌ Error response:', e?.response?.data);
 			console.error('❌ Error status:', e?.response?.status);
-			setMsg({ text: `Không thể xem hóa đơn: ${e?.response?.data?.message || 'Lỗi không xác định'}`, ok: false });
+			setMsg({ text: `${safeT('pages.requests.messages.cannotViewInvoice', 'Cannot view invoice')}: ${e?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -377,12 +397,12 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			// TODO: Implement gửi xác nhận cho khách hàng
 			// Có thể gửi email, SMS hoặc cập nhật trạng thái
 			await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-			setMsg({ text: 'Đã gửi xác nhận cho khách hàng thành công', ok: true });
+			setMsg({ text: safeT('pages.requests.messages.customerConfirmationSent', 'Customer confirmation sent successfully'), ok: true });
 			
 			// Không tự động mở chat với khách hàng sau khi gửi xác nhận
 			// setActiveChatRequests(prev => new Set(prev).add(id));
 		} catch (e: any) {
-			setMsg({ text: `Gửi xác nhận thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('pages.requests.messages.sendConfirmationFailed', 'Send confirmation failed')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -437,14 +457,14 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			console.log('🔍 Refreshing SWR data');
 			// Refresh data
 			mutate('/requests?page=1&limit=20');
-			setMsg({ text: `Đã chọn container ${containerNo} cho yêu cầu EXPORT. Vui lòng tạo lịch hẹn.`, ok: true });
+			setMsg({ text: formatT('pages.requests.messages.containerSelectedForExport', 'Selected container {{containerNo}} for EXPORT request. Please create an appointment.', { containerNo }), ok: true });
 			console.log('🔍 handleContainerSelection completed successfully');
 		} catch (e: any) {
 			console.error('❌ Error in handleContainerSelection:', e);
 			console.error('❌ Error response data:', e?.response?.data);
 			console.error('❌ Error status:', e?.response?.status);
 			console.error('❌ Error message:', e?.message);
-			setMsg({ text: `Không thể cập nhật container: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('pages.requests.messages.cannotUpdateContainer', 'Cannot update container')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 		} finally {
 			setLoadingId('');
 		}
@@ -473,7 +493,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				try {
 					// Kiểm tra kích thước file (10MB)
 					if (file.size > 10 * 1024 * 1024) {
-						setMsg({ text: 'File quá lớn. Kích thước tối đa là 10MB', ok: false });
+						setMsg({ text: safeT('pages.requests.messages.fileTooLarge', 'File too large. Maximum size is 10MB'), ok: false });
 						setLoadingId('');
 						return;
 					}
@@ -481,7 +501,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 					// Kiểm tra loại file
 					const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 					if (!allowedTypes.includes(file.type)) {
-						setMsg({ text: 'Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)', ok: false });
+						setMsg({ text: safeT('pages.requests.messages.invalidFileType', 'Only PDF or image files (JPG, PNG) are accepted'), ok: false });
 						setLoadingId('');
 						return;
 					}
@@ -502,7 +522,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 					
 					// Hiển thị thông báo thành công
 					setMsg({ 
-						text: `✅ Đã upload chứng từ thành công cho container ${containerNo}! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.`, 
+						text: formatT('pages.requests.messages.documentUploadSuccess', '✅ Uploaded document successfully for container {{containerNo}}! Status automatically changed from PICK_CONTAINER to SCHEDULED.', { containerNo }), 
 						ok: true 
 					});
 					
@@ -512,7 +532,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				} catch (error: any) {
 					console.error('❌ Error uploading document:', error);
 					setMsg({ 
-						text: `❌ Không thể upload chứng từ: ${error?.response?.data?.message || 'Lỗi không xác định'}`, 
+						text: `❌ ${safeT('pages.requests.messages.uploadDocumentFailed', 'Cannot upload document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
 						ok: false 
 					});
 				} finally {
@@ -528,7 +548,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			
 		} catch (e: any) {
 			console.error('❌ Error in handleAddDocument:', e);
-			setMsg({ text: `Không thể thêm chứng từ: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setMsg({ text: `${safeT('pages.requests.messages.cannotAddDocument', 'Cannot add document')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
 			setLoadingId('');
 		}
 	};

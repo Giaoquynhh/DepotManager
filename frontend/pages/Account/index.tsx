@@ -45,28 +45,122 @@ export default function Account(){
 	return (
 		<>
 			<Header />
-			<main className="container">
-				<div className="grid grid-cols-2" style={{gap:16}}>
-					<Card title="Hồ sơ cá nhân">
-						<div className="grid" style={{gap:12}}>
-							<input type="text" placeholder="Họ tên" value={form.full_name} onChange={e=>setForm({...form, full_name:e.target.value})} />
-							<input type="email" placeholder="Email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
-							<input type="text" placeholder="Điện thoại" value={form.phone} onChange={e=>setForm({...form, phone:e.target.value})} />
-							<div style={{fontSize:12,color:'#6b7280'}}>Trường chỉ đọc: role, tenant/partner. Đổi email/phone có thể yêu cầu xác minh.</div>
-							<button className="btn" onClick={onUpdate}>Cập nhật hồ sơ</button>
-							{msg && <div style={{fontSize:13,color:'#065f46'}}>{msg}</div>}
-						</div>
-					</Card>
+			<main className="container futuristic-profile">
+				{/* Animated Background */}
+				<div className="futuristic-bg">
+					<div className="particles"></div>
+					<div className="waves"></div>
+				</div>
 
-					<Card title="Đổi mật khẩu">
-						<div className="grid" style={{gap:12}}>
-							<input type="password" placeholder="Mật khẩu cũ" value={pwd.old} onChange={e=>setPwd({...pwd, old:e.target.value})} />
-							<input type="password" placeholder="Mật khẩu mới" value={pwd.New} onChange={e=>setPwd({...pwd, New:e.target.value})} />
-							<input type="password" placeholder="Xác nhận mật khẩu mới" value={pwd.confirm} onChange={e=>setPwd({...pwd, confirm:e.target.value})} />
-							<div style={{fontSize:12,color:'#6b7280'}}>Mật khẩu ≥ 8 ký tự, gồm số, chữ hoa, ký tự đặc biệt, và khác mật khẩu cũ.</div>
-							<button className="btn" onClick={onChangePassword}>Đổi mật khẩu</button>
+				{/* Main Content */}
+				<div className="profile-container">
+					{/* Profile Card */}
+					<div className="glass-card profile-card">
+						<div className="card-header">
+							<h2 className="card-title">
+								<span className="shimmer-text">👤 Hồ sơ cá nhân</span>
+							</h2>
 						</div>
-					</Card>
+						
+						<div className="form-group">
+							<div className="input-wrapper">
+								<span className="input-icon">👤</span>
+								<input 
+									type="text" 
+									placeholder="Họ tên" 
+									value={form.full_name} 
+									onChange={e=>setForm({...form, full_name:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="input-wrapper">
+								<span className="input-icon">📧</span>
+								<input 
+									type="email" 
+									placeholder="Email" 
+									value={form.email} 
+									onChange={e=>setForm({...form, email:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="input-wrapper">
+								<span className="input-icon">📱</span>
+								<input 
+									type="text" 
+									placeholder="Điện thoại" 
+									value={form.phone} 
+									onChange={e=>setForm({...form, phone:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="info-text">
+								✨ Trường chỉ đọc: role, tenant/partner. Đổi email/phone có thể yêu cầu xác minh.
+							</div>
+							
+							<button className="futuristic-btn primary-btn" onClick={onUpdate}>
+								<span className="btn-text">Cập nhật hồ sơ</span>
+								<div className="btn-ripple"></div>
+							</button>
+							
+							{msg && <div className="success-message">✨ {msg}</div>}
+						</div>
+					</div>
+
+					{/* Password Card */}
+					<div className="glass-card password-card">
+						<div className="card-header">
+							<h2 className="card-title">
+								<span className="shimmer-text">🔑 Đổi mật khẩu</span>
+							</h2>
+						</div>
+						
+						<div className="form-group">
+							<div className="input-wrapper">
+								<span className="input-icon">🔒</span>
+								<input 
+									type="password" 
+									placeholder="Mật khẩu cũ" 
+									value={pwd.old} 
+									onChange={e=>setPwd({...pwd, old:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="input-wrapper">
+								<span className="input-icon">🔑</span>
+								<input 
+									type="password" 
+									placeholder="Mật khẩu mới" 
+									value={pwd.New} 
+									onChange={e=>setPwd({...pwd, New:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="input-wrapper">
+								<span className="input-icon">🔐</span>
+								<input 
+									type="password" 
+									placeholder="Xác nhận mật khẩu mới" 
+									value={pwd.confirm} 
+									onChange={e=>setPwd({...pwd, confirm:e.target.value})}
+									className="futuristic-input"
+								/>
+							</div>
+							
+							<div className="info-text">
+								🛡️ Mật khẩu ≥ 8 ký tự, gồm số, chữ hoa, ký tự đặc biệt, và khác mật khẩu cũ.
+							</div>
+							
+							<button className="futuristic-btn secondary-btn" onClick={onChangePassword}>
+								<span className="btn-text">Đổi mật khẩu</span>
+								<div className="btn-ripple"></div>
+							</button>
+						</div>
+					</div>
 				</div>
 			</main>
 		</>

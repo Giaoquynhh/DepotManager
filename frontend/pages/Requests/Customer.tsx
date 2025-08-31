@@ -1,5 +1,5 @@
 import Header from '@components/Header';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { api } from '@services/api';
 import Modal from '@components/Modal';
@@ -11,6 +11,7 @@ import AppointmentModal from '@components/AppointmentModal';
 import UploadModal from '@components/UploadModal';
 import SupplementMini from '@components/SupplementMini';
 import { useCustomerActions } from './hooks/useCustomerActions';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
@@ -23,6 +24,7 @@ export default function CustomerRequests() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterType, setFilterType] = useState('all');
 	const { data, error, isLoading } = useSWR('/requests?page=1&limit=20', fetcher);
+	const { t } = useTranslation();
 	
 	// Use customer actions hook
 	const [customerState, customerActions] = useCustomerActions();
@@ -55,9 +57,12 @@ export default function CustomerRequests() {
 		try {
 			await api.delete(`/requests/${id}?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			customerActions.setMsg({ text: `Đã xóa khỏi danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			const key = scope === 'depot'
+				? 'pages.requests.messages.removedFromDepotList'
+				: 'pages.requests.messages.removedFromCustomerList';
+			customerActions.setMsg({ text: t(key), ok: true });
 		} catch (e: any) {
-			customerActions.setMsg({ text: `Xóa thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			customerActions.setMsg({ text: `${t('common.deleteFailed')}: ${e?.response?.data?.message || t('common.error')}`, ok: false });
 		} finally {
 			customerActions.setLoadingId('');
 		}
@@ -69,9 +74,12 @@ export default function CustomerRequests() {
 		try {
 			await api.post(`/requests/${id}/restore?scope=${scope}`);
 			mutate('/requests?page=1&limit=20');
-			customerActions.setMsg({ text: `Đã khôi phục trong danh sách ${scope === 'depot' ? 'Kho' : 'Khách hàng'}`, ok: true });
+			const key = scope === 'depot'
+				? 'pages.requests.messages.restoredInDepotList'
+				: 'pages.requests.messages.restoredInCustomerList';
+			customerActions.setMsg({ text: t(key), ok: true });
 		} catch (e: any) {
-			customerActions.setMsg({ text: `Khôi phục thất bại: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			customerActions.setMsg({ text: `${t('common.restoreFailed')}: ${e?.response?.data?.message || t('common.error')}`, ok: false });
 		} finally {
 			customerActions.setLoadingId('');
 		}
@@ -103,9 +111,9 @@ export default function CustomerRequests() {
 		mutate('/requests?page=1&limit=20');
 		
 		// Hiển thị thông báo thành công với thông tin về việc tự động chuyển tiếp
-		customerActions.setMsg({ 
-			text: '✅ Upload tài liệu bổ sung thành công! 📤 Yêu cầu đã được tự động chuyển tiếp sang FORWARDED.', 
-			ok: true 
+		customerActions.setMsg({
+			text: t('pages.requests.messages.supplementUploadSuccessForwarded'),
+			ok: true
 		});
 		
 		// Tự động ẩn thông báo sau 5 giây
@@ -116,7 +124,7 @@ export default function CustomerRequests() {
 
 	const handleUploadSuccess = () => {
 		mutate('/requests?page=1&limit=20');
-		customerActions.setMsg({ text: 'Upload file thành công!', ok: true });
+		customerActions.setMsg({ text: t('pages.requests.messages.uploadDocumentSuccess'), ok: true });
 	};
 
 	const requestsWithActions = filteredData?.map((item: any) => ({
@@ -135,27 +143,64 @@ export default function CustomerRequests() {
 	return (
 		<>
 			<Header />
-			<main className="container">
+			<main className="container customer-requests">
 				{/* Page Header */}
-				<div className="page-header">
-					<h1 className="page-title">Danh sách yêu cầu</h1>
-					<div className="page-actions">
-						<Button 
-							variant="outline" 
-							icon="➕"
-							onClick={() => setShowCreateModal(true)}
-						>
-							Tạo yêu cầu
-						</Button>
+				<div className="page-header modern-header">
+					<div className="header-content">
+						<div className="header-left">
+							<h1 className="page-title gradient gradient-ultimate">{t('pages.requests.customerTitle')}</h1>
+						</div>
+
+						<div className="header-actions">
+							<Button 
+								variant="outline" 
+								icon="➕"
+								onClick={() => setShowCreateModal(true)}
+								className="create-btn"
+							>
+								{t('pages.requests.createRequest')}
+							</Button>
+						</div>
 					</div>
 				</div>
 
 				{/* Search and Filter */}
-				<SearchBar 
-					onSearch={handleSearch}
-					onFilterChange={handleFilterChange}
-					placeholder="Tìm kiếm theo mã container..."
-				/>
+				<div className="search-filter-section modern-search">
+					<div className="search-row">
+						<div className="search-section">
+							<div className="search-input-group">
+								<span className="search-icon">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+										<circle cx="11" cy="11" r="8"></circle>
+										<path d="m21 21-4.35-4.35"></path>
+									</svg>
+								</span>
+								<input
+									type="text"
+									className="search-input"
+									placeholder={t('pages.requests.searchPlaceholder')}
+									aria-label={t('pages.requests.searchPlaceholder')}
+									value={searchQuery}
+									onChange={(e) => handleSearch(e.target.value)}
+								/>
+							</div>
+						</div>
+
+						<div className="filter-group">
+							<select
+								aria-label={t('pages.requests.typeLabel')}
+								className="filter-select modern-select"
+								value={filterType}
+								onChange={(e) => handleFilterChange(e.target.value)}
+							>
+								<option value="all">{t('pages.requests.allTypes')}</option>
+								<option value="IMPORT">{t('pages.requests.filterOptions.import')}</option>
+								<option value="EXPORT">{t('pages.requests.filterOptions.export')}</option>
+								<option value="CONVERT">{t('pages.requests.filterOptions.convert')}</option>
+							</select>
+						</div>
+					</div>
+				</div>
 
 				{/* Request Table */}
 				<RequestTable 
@@ -173,7 +218,7 @@ export default function CustomerRequests() {
 
 				{/* Create Request Modal */}
 				<Modal
-					title="Tạo yêu cầu mới"
+					title={t('pages.requests.createRequestTitle')}
 					visible={showCreateModal}
 					onCancel={handleCreateCancel}
 					width={500}

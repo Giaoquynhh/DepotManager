@@ -1,10 +1,11 @@
 import useSWR, { mutate } from 'swr';
-import Header from '@components/Header';
+import { api } from '@services/api';
 import Card from '@components/Card';
+import { useTranslation } from '../../hooks/useTranslation';
 import Modal from '@components/Modal';
 import { useEffect, useState } from 'react';
-import { api } from '@services/api';
 import { canViewUsersPartners, showInternalForm, showCustomerForm, isCustomerRole } from '@utils/rbac';
+import Header from '@components/Header';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
@@ -25,28 +26,10 @@ export default function UsersPartners(){
 
 	const [message, setMessage] = useState('');
 	const [lastInviteToken, setLastInviteToken] = useState<string>('');
-	const [language, setLanguage] = useState<'vi' | 'en'>('vi');
 
-	// Language detection from localStorage or browser
-	useEffect(() => {
-		const savedLang = localStorage.getItem('preferred-language') || navigator.language.startsWith('en') ? 'en' : 'vi';
-		setLanguage(savedLang);
-	}, []);
-
-	// Listen for language changes from header
-	useEffect(() => {
-		const handleLanguageChange = (event: CustomEvent) => {
-			if (event.detail && event.detail.language && (event.detail.language === 'vi' || event.detail.language === 'en')) {
-				setLanguage(event.detail.language);
-				localStorage.setItem('preferred-language', event.detail.language);
-			}
-		};
-
-		window.addEventListener('languageChanged', handleLanguageChange as EventListener);
-		return () => {
-			window.removeEventListener('languageChanged', handleLanguageChange as EventListener);
-		};
-	}, []);
+	// Use global translation hook to keep language in sync with Header
+	const { currentLanguage } = useTranslation();
+	const language = (currentLanguage as 'vi' | 'en');
 
 	// Translations
 	const t = {

@@ -226,14 +226,45 @@ export default function RepairsPage() {
   return (
     <>
       <Header />
-      <main className="container">
-        <Card title="Danh sách phiếu sửa chữa">
-          <RepairPageHeader
-            filter={filter}
-            onFilterChange={handleFilterChange}
-            onOpenPendingContainers={() => setIsPendingContainersModalOpen(true)}
-          />
+      <main className="container repair-page">
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">Danh sách phiếu sửa chữa</h1>
+            </div>
+            <div className="header-actions">
+              <button 
+                onClick={() => setIsPendingContainersModalOpen(true)}
+                className="btn btn-outline pending-containers-btn"
+                title="Danh sách container đang chờ"
+              >
+                📋 Danh sách container đang chờ
+              </button>
+            </div>
+          </div>
+        </div>
 
+        <div className="search-filter-section modern-search">
+          <div className="search-row">
+            <div className="filter-group">
+              <label className="filter-label">Lọc theo trạng thái:</label>
+              <select 
+                value={filter} 
+                onChange={e => handleFilterChange(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">Tất cả</option>
+                <option value="CHECKING">Đang kiểm tra</option>
+                <option value="PENDING_ACCEPT">Chờ chấp nhận</option>
+                <option value="REPAIRING">Đang sửa chữa</option>
+                <option value="CHECKED">Đã kiểm tra</option>
+                <option value="REJECTED">Đã từ chối</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <Card>
           <MessageDisplay message={msg} />
 
           <RepairTable

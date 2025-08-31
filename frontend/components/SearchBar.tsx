@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -17,32 +18,41 @@ export default function SearchBar({
   onSearch, 
   onFilterChange, 
   onStatusFilterChange,
-  placeholder = "Tìm kiếm container...",
-  filters = [
-    { value: "all", label: "Tất cả loại" },
-    { value: "IMPORT", label: "Nhập" },
-    { value: "EXPORT", label: "Xuất" },
-    { value: "CONVERT", label: "Chuyển đổi" }
-  ],
-  statusFilters = [
-    { value: "all", label: "Tất cả trạng thái" },
-    { value: "PENDING", label: "Chờ xử lý" },
-    { value: "RECEIVED", label: "Đã nhận" },
-    { value: "COMPLETED", label: "Hoàn thành" },
-    { value: "EXPORTED", label: "Đã xuất" },
-    { value: "REJECTED", label: "Từ chối" },
-    { value: "PENDING_ACCEPT", label: "Chờ chấp nhận" },
-    { value: "CHECKING", label: "Đang kiểm tra" },
-    { value: "CHECKED", label: "Đã kiểm tra" }
-  ],
+  placeholder,
+  filters,
+  statusFilters,
   className = '',
   showClearButton = true,
   size = 'md',
   loading = false
 }: SearchBarProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // i18n defaults
+  const defaultFilters = [
+    { value: 'all', label: t('pages.requests.allTypes') },
+    { value: 'IMPORT', label: t('pages.requests.filterOptions.import') },
+    { value: 'EXPORT', label: t('pages.requests.filterOptions.export') },
+    { value: 'CONVERT', label: t('pages.requests.filterOptions.convert') }
+  ];
+  const defaultStatusFilters = [
+    { value: 'all', label: t('pages.requests.allStatuses') },
+    { value: 'PENDING', label: t('pages.requests.filterOptions.pending') },
+    { value: 'RECEIVED', label: t('pages.requests.filterOptions.received') },
+    { value: 'COMPLETED', label: t('pages.requests.filterOptions.completed') },
+    { value: 'EXPORTED', label: t('pages.requests.filterOptions.exported') },
+    { value: 'REJECTED', label: t('pages.requests.filterOptions.rejected') },
+    { value: 'PENDING_ACCEPT', label: t('pages.requests.filterOptions.pendingAccept') },
+    { value: 'CHECKING', label: t('pages.requests.filterOptions.checking') },
+    { value: 'CHECKED', label: t('pages.requests.filterOptions.checked') }
+  ];
+
+  const resolvedFilters = (filters && filters.length > 0) ? filters : defaultFilters;
+  const resolvedStatusFilters = (onStatusFilterChange && statusFilters && statusFilters.length > 0) ? statusFilters : defaultStatusFilters;
+  const resolvedPlaceholder = placeholder ?? t('pages.requests.searchPlaceholder');
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -94,7 +104,7 @@ export default function SearchBar({
         </span>
         <input
           type="text"
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           value={searchQuery}
           onChange={handleSearchChange}
           className="search-input"
@@ -105,7 +115,7 @@ export default function SearchBar({
             type="button"
             onClick={handleClearSearch}
             className="search-clear-btn"
-            aria-label="Xóa tìm kiếm"
+            aria-label={t('common.reset')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -116,14 +126,14 @@ export default function SearchBar({
       </div>
       
       <div className="filter-group">
-        {onFilterChange && filters.length > 0 && (
+        {onFilterChange && resolvedFilters.length > 0 && (
           <select 
             value={filter} 
             onChange={handleFilterChange}
             className="filter-select"
             disabled={loading}
           >
-            {filters.map(filterOption => (
+            {resolvedFilters.map(filterOption => (
               <option key={filterOption.value} value={filterOption.value}>
                 {filterOption.label}
               </option>
@@ -131,14 +141,14 @@ export default function SearchBar({
           </select>
         )}
         
-        {onStatusFilterChange && statusFilters.length > 0 && (
+        {onStatusFilterChange && (
           <select 
             value={statusFilter} 
             onChange={handleStatusFilterChange}
             className="filter-select"
             disabled={loading}
           >
-            {statusFilters.map(filterOption => (
+            {resolvedStatusFilters.map(filterOption => (
               <option key={filterOption.value} value={filterOption.value}>
                 {filterOption.label}
               </option>

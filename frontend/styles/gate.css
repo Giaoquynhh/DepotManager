@@ -139,42 +139,22 @@
 
 /* Cải thiện layout search row để responsive */
 .search-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: var(--space-6);
-  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-6);
   row-gap: var(--space-4);
+  align-items: center;
 }
 
-/* Đảm bảo khoảng cách giữa các filter groups */
-.search-row .filter-group:nth-child(3) {
-  margin-left: var(--space-4);
-}
+/* (Loại bỏ nth-child hack không cần thiết; dùng gap cho spacing) */
 
-.search-row .filter-group:nth-child(4) {
-  margin-left: var(--space-4);
-}
-
-/* Đảm bảo khoảng cách giữa search button và filter groups */
-.search-row .search-btn {
-  margin-right: var(--space-2);
-}
-
-/* Đảm bảo khoảng cách giữa các elements */
-.search-row > * {
-  margin-right: var(--space-2);
-}
-
-.search-row > *:last-child {
-  margin-right: 0;
-}
+/* Dùng gap/column-gap/row-gap thay cho margin-right thủ công */
 
 /* Responsive grid cho mobile */
 @media (max-width: 1200px) {
   .search-row {
-    grid-template-columns: 1fr 1fr auto;
+    column-gap: var(--space-4);
     row-gap: var(--space-4);
-    gap: var(--space-4);
   }
   
   .filter-group {
@@ -183,51 +163,34 @@
     margin-top: var(--space-2);
   }
   
-  .filter-group:nth-child(3) {
-    margin-top: var(--space-4);
-    margin-left: 0;
-  }
-  
-  .filter-group:nth-child(4) {
-    margin-top: var(--space-4);
-    margin-left: 0;
-  }
+  /* Loại bỏ các rule nth-child vì không còn dùng grid cố định cột */
 }
 
 @media (max-width: 768px) {
   .search-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-3);
+    column-gap: var(--space-3);
+    row-gap: var(--space-3);
   }
   
   .search-section {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
   }
   
   .search-btn {
-    grid-column: 1 / -1;
-    justify-self: stretch;
+    flex: 1 1 100%;
+    width: 100%;
   }
   
   .filter-group {
-    grid-column: 1 / -1;
-    justify-self: stretch;
+    flex: 1 1 100%;
     margin-top: var(--space-2);
   }
   
-  .filter-group:nth-child(3) {
-    margin-top: var(--space-4);
-    margin-left: 0;
-  }
-  
-  .filter-group:nth-child(4) {
-    margin-top: var(--space-4);
-    margin-left: 0;
-  }
+  /* Bỏ nth-child đặc thù để tránh phụ thuộc thứ tự phần tử */
   
   .clear-filters-btn {
-    grid-column: 1 / -1;
-    justify-self: stretch;
+    flex: 1 1 100%;
+    width: 100%;
     margin-top: var(--space-2);
   }
 }

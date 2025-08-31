@@ -172,66 +172,19 @@ export default function GateDashboard() {
     setSearchParams(prev => ({ ...prev, license_plate, page: 1 }));
   };
 
-  const handleExportReport = () => {
-    try {
-      const headers = ['ID', 'Container No', 'Type', 'Status', 'ETA', 'Forwarded At', 'License Plate', 'Docs Count', 'Attachments Count'];
-      const rows = requests.map(r => [
-        r.id,
-        r.container_no,
-        r.type,
-        r.status,
-        r.eta || '',
-        r.forwarded_at || '',
-        r.license_plate || '',
-        Array.isArray(r.docs) ? r.docs.length : 0,
-        Array.isArray(r.attachments) ? r.attachments.length : 0
-      ]);
 
-      const csv = [headers, ...rows]
-        .map(row => row.map((cell) => {
-          const val = String(cell ?? '');
-          const escaped = val.replace(/\"/g, '""');
-          return `"${escaped}"`;
-        }).join(','))
-        .join('\n');
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-      a.href = url;
-      a.download = `gate-requests-${ts}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Lỗi khi xuất báo cáo:', err);
-      alert(t('pages.gate.messages.exportError'));
-    }
-  };
 
   return (
-    <main className={`main-content gate-layout ${sidebarVisible ? 'sidebar-visible' : 'sidebar-hidden'}`}>
-      <div className="container gate-page">
-        <div className="dashboard-header modern-header">
-          <div className="header-content">
-            <div className="header-left">
-              <h1 className="page-title gradient-ultimate">{t('pages.gate.title')}</h1>
-            </div>
-            <div className="header-actions">
-              <button
-                type="button"
-                className="btn btn-export"
-                onClick={handleExportReport}
-                aria-label={t('common.export')}
-              >
-                <span className="dot" aria-hidden="true"></span>
-                {t('common.export')}
-              </button>
-            </div>
+    <main className="container gate-page">
+      <div className="page-header modern-header">
+        <div className="header-content">
+          <div className="header-left">
+            <h1 className="page-title gradient gradient-ultimate">{t('pages.gate.title')}</h1>
+          </div>
+          <div className="header-actions">
           </div>
         </div>
+      </div>
 
 
 
@@ -275,7 +228,6 @@ export default function GateDashboard() {
             </button>
           </div>
         )}
-      </div>
     </main>
   );
 }

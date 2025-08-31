@@ -50,6 +50,7 @@ export default function GateSearchBar({
               type="text"
               className="search-input"
               placeholder={t('pages.gate.searchByContainer')}
+              aria-label={t('pages.gate.searchByContainer')}
               value={searchParams.container_no}
               onChange={(e) => onContainerSearch(e.target.value)}
             />
@@ -61,34 +62,34 @@ export default function GateSearchBar({
               type="text"
               className="search-input"
               placeholder={t('pages.gate.searchByLicensePlate')}
+              aria-label={t('pages.gate.searchByLicensePlate')}
               value={searchParams.license_plate}
               onChange={(e) => onLicensePlateChange(e.target.value)}
             />
           </div>
 
           {/* Search Button */}
-          <button type="submit" className="search-btn">
+          <button type="submit" className="search-btn" aria-label={t('common.search')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
-            Tìm kiếm
           </button>
 
           {/* Status Filter */}
           <div className="filter-group">
-            <label className="filter-label">Trạng thái:</label>
             <select
               className="filter-select"
+              aria-label={t('pages.gate.statusLabel')}
               value={searchParams.status}
-              onChange={(e) => onStatusChange(e.target.value)}
+              onChange={(e) => onSearch({ status: e.target.value, page: 1 })}
             >
-              <option value="">Tất cả trạng thái</option>
+              <option value="">{t('pages.gate.allStatuses')}</option>
               <option value="SCHEDULED">SCHEDULED</option>
               <option value="FORWARDED">FORWARDED</option>
               <option value="GATE_IN">GATE_IN</option>
-              <option value="IN_YARD">IN_YARD (Import - Đã ở bãi)</option>
-              <option value="IN_CAR">IN_CAR (Export - Đã lên xe)</option>
+              <option value="IN_YARD">IN_YARD</option>
+              <option value="IN_CAR">IN_CAR</option>
               <option value="GATE_REJECTED">GATE_REJECTED</option>
               <option value="COMPLETED">COMPLETED</option>
             </select>
@@ -96,13 +97,13 @@ export default function GateSearchBar({
 
           {/* Type Filter */}
           <div className="filter-group">
-            <label className="filter-label">Loại:</label>
             <select
               className="filter-select"
+              aria-label={t('pages.gate.typeLabel')}
               value={searchParams.type}
-              onChange={(e) => onTypeChange(e.target.value)}
+              onChange={(e) => onSearch({ type: e.target.value, page: 1 })}
             >
-              <option value="">Tất cả loại</option>
+              <option value="">{t('pages.gate.allTypes')}</option>
               <option value="IMPORT">IMPORT</option>
               <option value="EXPORT">EXPORT</option>
               <option value="EMPTY">EMPTY</option>

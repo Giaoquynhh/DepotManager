@@ -67,14 +67,35 @@ export default function InvoiceList(){
   return (
     <>
       <Header />
-      <main className="container">
-        <div className="grid" style={{gap:16}}>
-          <Card title="Hóa đơn">
-            <div style={{display:'flex', gap:8, marginBottom:16, justifyContent:'space-between', alignItems:'center'}}>
+      <main className="container invoice-page">
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">Hóa đơn</h1>
+            </div>
+            <div className="header-actions">
+              {/* Chỉ hiển thị nút này cho admin */}
+              {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
+                <button 
+                  className="btn btn-outline containers-need-invoice-btn"
+                  onClick={() => setIsModalOpen(true)}
+                  title="Danh sách container cần tạo hóa đơn"
+                >
+                  📋 Danh sách container cần tạo hóa đơn
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="search-filter-section modern-search">
+          <div className="search-row">
+            <div className="filter-group">
+              <label className="filter-label">Lọc theo trạng thái:</label>
               <select 
                 value={status} 
                 onChange={e=>{ setStatus(e.target.value); mutate(key); }}
-                style={{padding:'8px 12px', border:'1px solid #ddd', borderRadius:'4px'}}
+                className="filter-select"
               >
                 <option value="">Tất cả</option>
                 <option value="DRAFT">DRAFT</option>
@@ -83,25 +104,11 @@ export default function InvoiceList(){
                 <option value="PAID">PAID</option>
                 <option value="CANCELLED">CANCELLED</option>
               </select>
-              {/* Chỉ hiển thị nút này cho admin */}
-              {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
-                <button 
-                  className="btn-containers-need-invoice"
-                  onClick={() => setIsModalOpen(true)}
-                  style={{
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Danh sách container cần tạo hóa đơn
-                </button>
-              )}
             </div>
+          </div>
+        </div>
+
+        <Card>
             
             <div style={{overflowX:'auto'}}>
               <table className="table" style={{minWidth:'1000px'}}>
@@ -195,7 +202,6 @@ export default function InvoiceList(){
               </div>
             )}
           </Card>
-        </div>
       </main>
       
       <ContainersNeedInvoiceModal 

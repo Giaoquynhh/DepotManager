@@ -1,6 +1,5 @@
 import Header from '@components/Header';
 import Card from '@components/Card';
-import TestContainerEmpty from '@components/TestContainerEmpty';
 
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -300,9 +299,21 @@ export default function ContainersPage(){
   return (
     <>
       <Header />
-      <main className="container">
-        <TestContainerEmpty onTest={() => mutate()} />
-        <Card title="Quản lý container" subtitle="Hiển thị tất cả container - Bao gồm cả container được SystemAdmin nhập trực tiếp vào bãi">
+      <main className="container containers-page">
+        {/* Page Header */}
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">Quản lý container</h1>
+              <p className="page-subtitle">Hiển thị tất cả container - Bao gồm cả container được SystemAdmin nhập trực tiếp vào bãi</p>
+            </div>
+
+            <div className="header-actions">
+            </div>
+          </div>
+        </div>
+
+        <Card>
           <ContainersList />
         </Card>
       </main>

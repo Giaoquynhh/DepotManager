@@ -22,7 +22,17 @@
     "retry": "Retry",
     "sortBy": "Sort by",
     "na": "N/A",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "update": "Update",
+    "cannot": "Cannot",
+    "unknownError": "Unknown error",
+    "deleteFailed": "Delete failed",
+    "restoreFailed": "Restore failed",
+    "depot": "Depot",
+    "customer": "Customer",
+    "list": "list",
+    "view": "View",
+    "remove": "Remove"
   },
   "header": {
     "brand": "Smartlog Container Manager",
@@ -66,6 +76,8 @@
       "title": "Service Request Management",
       "depotTitle": "Service Request Management",
       "customerTitle": "Service Request Management (Customer)",
+      "createRequest": "Create request",
+      "createRequestTitle": "Create new request",
       "searchPlaceholder": "Search by container code...",
       "searchByLicensePlate": "Search by license plate...",
       "allTypes": "All Types",
@@ -99,7 +111,11 @@
         "inProgress": "In Progress",
         "gateIn": "Gate In",
         "gateOut": "Gate Out",
-        "gateRejected": "Rejected"
+        "gateRejected": "Rejected",
+        "pickContainer": "Pick container",
+        "inCar": "In car",
+        "positioned": "Positioned in yard",
+        "forklifting": "Forklifting"
       },
       "actionLabels": {
         "received": "Receive",
@@ -109,13 +125,93 @@
       },
       "supplementDocuments": "Supplement Documents",
       "close": "Close",
+      "noDocuments": "No documents",
       "tableHeaders": {
+        "type": "Type",
         "container": "Container",
         "eta": "ETA",
         "status": "Status",
         "documents": "Documents",
+        "payment": "Payment",
         "chat": "Chat",
         "actions": "Actions"
+      },
+      "location": {
+        "unknown": "Unknown"
+      },
+      "invoice": {
+        "has": "Has invoice",
+        "none": "No invoice"
+      },
+      "payment": {
+        "paid": "Paid",
+        "unpaid": "Unpaid",
+        "notPaid": "Unpaid",
+        "markUnpaid": "Mark as unpaid",
+        "markPaid": "Mark as paid",
+        "markUnpaidShort": "Mark unpaid",
+        "markPaidShort": "Mark paid"
+      },
+      "addDocumentTitle": "Add document for container",
+      "addDocument": "Add document",
+      "chat": {
+        "open": "Open chat with customer",
+        "close": "Close chat"
+      },
+      "supplementAvailable": "Supplement documents available",
+      "actions": {
+        "acceptRequest": "Accept request",
+        "accept": "Accept",
+        "rejectRequest": "Reject request",
+        "reject": "Reject",
+        "completeRequest": "Complete request",
+        "complete": "Complete",
+        "rescheduleTitle": "Reschedule with customer",
+        "reschedule": "Reschedule",
+        "exportTitle": "Export from depot",
+        "export": "Export",
+        "sendPaymentTitle": "Send payment request",
+        "payment": "Payment",
+        "viewRepairInvoiceTitle": "View repair invoice",
+        "viewRepairInvoice": "View invoice",
+        "sendConfirmationTitle": "Send confirmation to customer",
+        "sendConfirmation": "Send confirmation",
+        "received": "Received",
+        "rejected": "Rejected",
+        "completed": "Completed",
+        "exported": "Exported"
+      },
+      "softDeleteConfirm": "Remove from Depot list?\\nRequest will still show Rejected on the Customer side.",
+      "softDeleteTitle": "Remove from Depot list",
+      "prompts": {
+        "enterRejectionReason": "Enter rejection reason"
+      },
+      "messages": {
+        "requestSuccess": "request successful",
+        "receivedAndAppointmentCreated": "Request received and appointment created successfully!",
+        "rejectSuccess": "Request rejected successfully!",
+        "paymentRequestSent": "Payment request sent",
+        "paymentRequestFailed": "Failed to send payment request",
+        "removedFromList": "Removed from",
+        "restoredInList": "Restored in",
+        "containerInfoNotFound": "Container info not found for this request",
+        "noRepairsFound": "No repair record found for this container",
+        "openInvoiceSuccess": "Repair invoice opened successfully",
+        "cannotViewInvoice": "Cannot view invoice",
+        "customerConfirmationSent": "Customer confirmation sent successfully",
+        "sendConfirmationFailed": "Send confirmation failed",
+        "containerSelectedForExport": "Selected container {{containerNo}} for EXPORT request. Please create an appointment.",
+        "cannotUpdateContainer": "Cannot update container",
+        "fileTooLarge": "File too large. Maximum size is 10MB",
+        "invalidFileType": "Only PDF or image files (JPG, PNG) are accepted",
+        "uploadDocumentFailed": "Cannot upload document",
+        "cannotAddDocument": "Cannot add document",
+        "uploadDocumentSuccess": "File uploaded successfully!",
+        "supplementUploadSuccessForwarded": "Supplement documents uploaded successfully. Request has been auto-forwarded.",
+        "removedFromDepotList": "Removed from Depot list",
+        "removedFromCustomerList": "Removed from Customer list",
+        "restoredInDepotList": "Restored in Depot list",
+        "restoredInCustomerList": "Restored in Customer list"
       }
     },
     "gate": {
