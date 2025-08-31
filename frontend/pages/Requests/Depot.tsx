@@ -4,11 +4,13 @@ import useSWR from 'swr';
 import { api } from '@services/api';
 import Modal from '@components/Modal';
 import Button from '@components/Button';
+import { DepotRequestTable } from './components';
+import SearchBar from '@components/SearchBar';
 import AppointmentModal from '@components/AppointmentModal';
 import AppointmentMini from '@components/appointment/AppointmentMini';
 import SupplementDocuments from '@components/SupplementDocuments';
-import DepotRequestTable from './components/DepotRequestTable';
 import DocumentViewerModal from './components/DocumentViewerModal';
+import ContainerSelectionModal from '@components/ContainerSelectionModal';
 import { useDepotActions } from './hooks/useDepotActions';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -273,16 +275,16 @@ export default function DepotRequests() {
 				<DepotRequestTable
 					data={pagedData}
 					loading={isLoading}
-					userRole={state.me?.role || state.me?.roles?.[0]}
 					onDocumentClick={actions.handleDocumentClick}
 					onToggleSupplement={actions.toggleSupplement}
 					onChangeAppointment={actions.handleChangeAppointment}
 					onReject={actions.handleReject}
 					onChangeStatus={actions.changeStatus}
 					onSendPayment={actions.sendPayment}
-					onSoftDelete={(id: string, scope: string) => actions.softDeleteRequest(id, scope as 'depot' | 'customer')}
+					onSoftDelete={actions.softDeleteRequest}
 					onViewInvoice={actions.handleViewInvoice}
 					onSendCustomerConfirmation={actions.handleSendCustomerConfirmation}
+					onAddDocument={actions.handleAddDocument}
 					loadingId={state.loadingId}
 					actLabel={{
 						RECEIVED: t('pages.requests.actionLabels.received'),
@@ -325,8 +327,26 @@ export default function DepotRequests() {
 
 				{/* Appointment Mini Windows */}
 				{Array.from(state.activeAppointmentRequests).map((requestId, index) => {
-					const request = data?.data?.find((r: any) => r.id === requestId);
-					if (!request) return null;
+					console.log('🔍 Depot: Rendering AppointmentMini for requestId:', requestId);
+					console.log('🔍 Depot: Current state.requestsData:', state.requestsData.map(r => ({ id: r.id, container_no: r.container_no })));
+					console.log('🔍 Depot: Current SWR data:', data?.data?.map(r => ({ id: r.id, container_no: r.container_no })));
+					
+					// Ưu tiên sử dụng dữ liệu từ state.requestsData (đã được cập nhật)
+					let request = state.requestsData.find((r: any) => r.id === requestId);
+					console.log('🔍 Depot: Found request in state.requestsData:', request);
+					
+					// Nếu không tìm thấy trong state, fallback về SWR data
+					if (!request) {
+						request = data?.data?.find((r: any) => r.id === requestId);
+						console.log('🔍 Depot: Found request in SWR data:', request);
+					}
+					
+					if (!request) {
+						console.log('❌ Depot: No request found for ID:', requestId);
+						return null;
+					}
+					
+					console.log('🔍 Depot: Final request data for AppointmentMini:', request);
 					
 					// Xác định mode dựa trên trạng thái request
 					const isChangeMode = request.status === 'SCHEDULED';
@@ -376,6 +396,16 @@ export default function DepotRequests() {
 						</div>
 					</div>
 				))}
+
+				{/* Container Selection Modal */}
+				<ContainerSelectionModal
+					visible={state.showContainerSelectionModal}
+					onClose={() => actions.setShowContainerSelectionModal(false)}
+					onSelectContainer={actions.handleContainerSelection}
+					onContainerSelected={actions.handleContainerSelection}
+					requestType={state.selectedRequestForContainer?.type || ''}
+					requestId={state.selectedRequestForContainer?.id || ''}
+				/>
 
 				{/* Document Viewer Modal */}
 				<DocumentViewerModal

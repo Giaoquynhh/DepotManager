@@ -10,6 +10,7 @@ interface PendingContainersModalProps {
 }
 
 export default function PendingContainersModal({ isOpen, onClose }: PendingContainersModalProps) {
+  // State quản lý danh sách container IMPORT đang chờ kiểm tra
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +33,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Chỉ lấy container có trạng thái GATE_IN
+      // Lấy tất cả container có trạng thái GATE_IN (sẽ filter theo loại IMPORT ở frontend)
       const response = await fetch('/backend/gate/requests/search?status=GATE_IN&limit=100', {
         method: 'GET',
         headers: {
@@ -50,7 +51,17 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
       }
       
       const data = await response.json();
-      setRequests(data.data || []);
+      
+      // Lọc chỉ lấy container có loại IMPORT
+      const importContainers = (data.data || []).filter((request: any) => {
+        return request.type === 'IMPORT';
+      });
+      
+      console.log('🔍 Total containers from API:', data.data?.length || 0);
+      console.log('🔍 Import containers after filtering:', importContainers.length);
+      console.log('🔍 Filtered containers:', importContainers);
+      
+      setRequests(importContainers);
       
     } catch (err: any) {
       console.error('Error fetching pending containers:', err);
@@ -447,7 +458,7 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
           onCheckContainer={handleCheckContainer}
           onCheckResult={handleCheckResult}
           onFailOption={handleFailOption}
-          title="Danh sách container đang chờ (GATE_IN)"
+          title="Danh sách container IMPORT đang chờ (GATE_IN)"
         />
       </div>
 

@@ -17,6 +17,7 @@ import partnerRoutes from './modules/partners/controller/partnerRoutes';
 import auditRoutes from './modules/audit/controller/auditRoutes';
 import requestRoutes from './modules/requests/controller/RequestRoutes';
 import documentRoutes from './modules/requests/controller/DocumentRoutes';
+import requestStatusRoutes from './modules/requests/routes/RequestStatusRoutes';
 
 import attachmentRoutes from './modules/requests/controller/AttachmentRoutes';
 import chatRoutes from './modules/chat/controller/ChatRoutes';
@@ -69,6 +70,9 @@ app.use(morgan('dev'));
 
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Debug middleware for ngrok
 app.use((req, res, next) => {
 	console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -89,6 +93,7 @@ app.use('/audit', authenticate, auditRoutes);
 app.use('/requests/documents', documentRoutes);
 // All other request routes require authentication
 app.use('/requests', authenticate, requestRoutes);
+app.use('/requests', authenticate, requestStatusRoutes);
 
 app.use('/requests', attachmentRoutes);
 

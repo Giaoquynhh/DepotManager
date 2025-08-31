@@ -17,6 +17,8 @@ export interface DepotActionsState {
 	me: any;
 	requestsData: any[]; // Thêm dữ liệu requests
 	activeChatRequests: Set<string>; // Thêm state để quản lý chat đang mở
+	showContainerSelectionModal: boolean; // Thêm state cho container selection modal
+	selectedRequestForContainer: any; // Thêm thông tin request được chọn để chọn container
 }
 
 export interface DepotActions {
@@ -31,6 +33,8 @@ export interface DepotActions {
 	setMsg: (msg: { text: string; ok: boolean } | null) => void;
 	setLoadingId: (id: string) => void;
 	setRequestsData: (data: any[]) => void; // Thêm setter cho requests data
+	setShowContainerSelectionModal: (show: boolean) => void;
+	setSelectedRequestForContainer: (request: any) => void;
 
 	// Actions
 	changeStatus: (id: string, status: string) => Promise<void>;
@@ -48,6 +52,8 @@ export interface DepotActions {
 	closeDocumentModal: () => void;
 	handleViewInvoice: (id: string) => Promise<void>;
 	handleSendCustomerConfirmation: (id: string) => Promise<void>;
+	handleContainerSelection: (containerNo: string) => Promise<void>; // Thêm action xử lý khi chọn container
+	handleAddDocument: (requestId: string, containerNo: string) => Promise<void>; // Thêm action xử lý khi thêm chứng từ
 	
 	// Chat actions
 	toggleChat: (requestId: string) => void;
@@ -69,6 +75,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	const [me, setMe] = useState<any>(null);
 	const [requestsData, setRequestsData] = useState<any[]>([]);
 	const [activeChatRequests, setActiveChatRequests] = useState<Set<string>>(new Set());
+	const [showContainerSelectionModal, setShowContainerSelectionModal] = useState(false);
+	const [selectedRequestForContainer, setSelectedRequestForContainer] = useState<any>(null);
 	
 	// Debug logging cho setRequestsData
 	const setRequestsDataWithLog = (data: any[]) => {
@@ -93,6 +101,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	}, []);
 
 	const changeStatus = async (id: string, status: string) => {
+		console.log('🔍 changeStatus called:', { id, status, requestsDataLength: requestsData.length });
 		setMsg(null);
 		setLoadingId(id + status);
 		try {
@@ -106,14 +115,29 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				payload.reason = reason;
 				await api.patch(`/requests/${id}/status`, payload);
 			} else if (status === 'RECEIVED') {
-				// Open appointment mini for RECEIVED status
-				setActiveAppointmentRequests(prev => {
-					const newSet = new Set(prev).add(id);
-					console.log('Opening AppointmentMini for request:', id, 'Active requests:', Array.from(newSet));
-					return newSet;
-				});
-				setLoadingId('');
-				return;
+				// Kiểm tra loại request
+				const request = requestsData.find(r => r.id === id);
+				console.log('🔍 Found request:', { request, requestType: request?.type });
+				
+				if (request && request.type === 'EXPORT') {
+					console.log('🔍 EXPORT request detected, opening container selection modal');
+					// Đối với request EXPORT, mở container selection modal
+					setSelectedRequestForContainer(request);
+					setShowContainerSelectionModal(true);
+					console.log('🔍 Container selection modal should be visible now');
+					setLoadingId('');
+					return;
+				} else {
+					console.log('🔍 Non-EXPORT request, opening appointment mini directly');
+					// Đối với request khác, mở appointment mini như cũ
+					setActiveAppointmentRequests(prev => {
+						const newSet = new Set(prev).add(id);
+						console.log('Opening AppointmentMini for request:', id, 'Active requests:', Array.from(newSet));
+						return newSet;
+					});
+					setLoadingId('');
+					return;
+				}
 			} else {
 				await api.patch(`/requests/${id}/status`, payload);
 			}
@@ -151,7 +175,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		});
 	};
 
-	const handleAppointmentMiniSuccess = (requestId: string) => {
+	const handleAppointmentMiniSuccess = async (requestId: string) => {
 		handleAppointmentClose(requestId);
 		handleAppointmentSuccess();
 	};
@@ -364,6 +388,151 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		}
 	};
 
+	// Container selection action
+	const handleContainerSelection = async (containerNo: string) => {
+		console.log('🔍 handleContainerSelection called with:', { containerNo, selectedRequestForContainer });
+		if (!selectedRequestForContainer) {
+			console.log('❌ No selectedRequestForContainer found');
+			return;
+		}
+		
+		setMsg(null);
+		setLoadingId(selectedRequestForContainer.id + 'CONTAINER_SELECT');
+		try {
+			console.log('🔍 Updating request with container:', containerNo);
+			// Sử dụng API endpoint mới để cập nhật container_no mà không thay đổi status
+			await api.patch(`/requests/${selectedRequestForContainer.id}/container`, {
+				container_no: containerNo
+			});
+			
+			console.log('🔍 API call successful, updating local state');
+			// Cập nhật state.requestsData ngay lập tức để AppointmentMini có thể sử dụng
+			setRequestsData(prev => {
+				console.log('🔍 Current requestsData before update:', prev.map(r => ({ id: r.id, container_no: r.container_no })));
+				const updated = prev.map(req => 
+					req.id === selectedRequestForContainer.id 
+						? { ...req, container_no: containerNo }
+						: req
+				);
+				console.log('🔍 Updated requestsData:', updated.map(r => ({ id: r.id, container_no: r.container_no })));
+				return updated;
+			});
+			
+			console.log('🔍 Closing container selection modal');
+			// Đóng container selection modal
+			setShowContainerSelectionModal(false);
+			
+			console.log('🔍 Opening appointment mini for request:', selectedRequestForContainer.id);
+			// Mở appointment mini để tạo lịch hẹn
+			setActiveAppointmentRequests(prev => {
+				const newSet = new Set(prev).add(selectedRequestForContainer.id);
+				console.log('🔍 Active appointment requests after adding:', Array.from(newSet));
+				return newSet;
+			});
+			
+			console.log('🔍 Resetting selectedRequestForContainer');
+			// Reset selected request
+			setSelectedRequestForContainer(null);
+			
+			console.log('🔍 Refreshing SWR data');
+			// Refresh data
+			mutate('/requests?page=1&limit=20');
+			setMsg({ text: `Đã chọn container ${containerNo} cho yêu cầu EXPORT. Vui lòng tạo lịch hẹn.`, ok: true });
+			console.log('🔍 handleContainerSelection completed successfully');
+		} catch (e: any) {
+			console.error('❌ Error in handleContainerSelection:', e);
+			console.error('❌ Error response data:', e?.response?.data);
+			console.error('❌ Error status:', e?.response?.status);
+			console.error('❌ Error message:', e?.message);
+			setMsg({ text: `Không thể cập nhật container: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+		} finally {
+			setLoadingId('');
+		}
+	};
+
+	// Handle add document for EXPORT requests with PICK_CONTAINER status
+	const handleAddDocument = async (requestId: string, containerNo: string) => {
+		console.log('🔍 handleAddDocument called:', { requestId, containerNo });
+		setLoadingId(requestId + 'ADD_DOC');
+		try {
+			// Tạo input file element
+			const fileInput = document.createElement('input');
+			fileInput.type = 'file';
+			fileInput.accept = '.pdf,.jpg,.jpeg,.png';
+			fileInput.style.display = 'none';
+			
+			fileInput.onchange = async (event) => {
+				const target = event.target as HTMLInputElement;
+				const file = target.files?.[0];
+				
+				if (!file) {
+					setLoadingId('');
+					return;
+				}
+				
+				try {
+					// Kiểm tra kích thước file (10MB)
+					if (file.size > 10 * 1024 * 1024) {
+						setMsg({ text: 'File quá lớn. Kích thước tối đa là 10MB', ok: false });
+						setLoadingId('');
+						return;
+					}
+					
+					// Kiểm tra loại file
+					const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+					if (!allowedTypes.includes(file.type)) {
+						setMsg({ text: 'Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)', ok: false });
+						setLoadingId('');
+						return;
+					}
+					
+					// Tạo FormData để upload
+					const formData = new FormData();
+					formData.append('file', file);
+					formData.append('type', 'EXPORT_DOC');
+					
+					// Gọi API upload chứng từ
+					const response = await api.post(`/requests/${requestId}/docs`, formData, {
+						headers: {
+							'Content-Type': 'multipart/form-data',
+						},
+					});
+					
+					console.log('✅ Document upload successful:', response.data);
+					
+					// Hiển thị thông báo thành công
+					setMsg({ 
+						text: `✅ Đã upload chứng từ thành công cho container ${containerNo}! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.`, 
+						ok: true 
+					});
+					
+					// Refresh data để cập nhật trạng thái
+					mutate('/requests?page=1&limit=20');
+					
+				} catch (error: any) {
+					console.error('❌ Error uploading document:', error);
+					setMsg({ 
+						text: `❌ Không thể upload chứng từ: ${error?.response?.data?.message || 'Lỗi không xác định'}`, 
+						ok: false 
+					});
+				} finally {
+					setLoadingId('');
+					// Xóa file input
+					document.body.removeChild(fileInput);
+				}
+			};
+			
+			// Thêm file input vào DOM và trigger click
+			document.body.appendChild(fileInput);
+			fileInput.click();
+			
+		} catch (e: any) {
+			console.error('❌ Error in handleAddDocument:', e);
+			setMsg({ text: `Không thể thêm chứng từ: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+			setLoadingId('');
+		}
+	};
+
 	// Chat actions
 	const toggleChat = (requestId: string) => {
 		setActiveChatRequests(prev => {
@@ -399,7 +568,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		loadingId,
 		me,
 		requestsData,
-		activeChatRequests
+		activeChatRequests,
+		showContainerSelectionModal,
+		selectedRequestForContainer
 	};
 
 	const actions: DepotActions = {
@@ -413,6 +584,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setMsg,
 		setLoadingId,
 		setRequestsData: setRequestsDataWithLog,
+		setShowContainerSelectionModal,
+		setSelectedRequestForContainer,
 		changeStatus,
 		handleAppointmentSuccess,
 		toggleAppointment,
@@ -428,6 +601,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		closeDocumentModal,
 		handleViewInvoice,
 		handleSendCustomerConfirmation,
+		handleContainerSelection,
+		handleAddDocument,
 		toggleChat,
 		closeChat
 	};

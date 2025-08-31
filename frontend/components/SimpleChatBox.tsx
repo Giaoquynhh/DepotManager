@@ -61,6 +61,7 @@ export default function SimpleChatBox({ requestId, requestStatus, rejectedReason
 			'REJECTED': `❌ Đơn hàng bị từ chối${rejectedReason ? `: ${rejectedReason}` : ''}`,
 			'CANCELLED': '❌ Đơn hàng đã bị hủy',
 			'IN_YARD': '🏭 Container đã vào kho',
+			'IN_CAR': '🚛 Container đã lên xe',
 			'LEFT_YARD': '🚛 Container đã rời kho'
 		};
 		return statusMessages[status] || `🔄 Trạng thái đơn hàng: ${status}`;

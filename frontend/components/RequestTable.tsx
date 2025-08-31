@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
+import { yardApi } from '../services/yard';
 import ChatWindowStandalone from './chat/ChatWindowStandalone';
+import InvoiceViewer from './InvoiceViewer';
 
 interface Request {
   id: string;
@@ -11,6 +13,12 @@ interface Request {
   rejected_reason?: string;
   latest_payment?: any;
   documents?: any[];
+  has_invoice?: boolean;
+  is_paid?: boolean;
+  appointment_time?: string;
+  appointment_location_type?: string;
+  appointment_location_id?: string;
+  appointment_note?: string;
 }
 
 interface RequestTableProps {
@@ -36,15 +44,23 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const [selectedDocument, setSelectedDocument] = React.useState<any>(null);
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [activeChatRequests, setActiveChatRequests] = React.useState<Set<string>>(new Set());
+  const [containerLocations, setContainerLocations] = useState<Record<string, string>>({});
+  const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
+  const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string>('');
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
+      PICK_CONTAINER: { label: 'Đang chọn container', className: 'status-pick-container' },
       RECEIVED: { label: 'Đã nhận', className: 'status-received' },
       COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
       EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
       REJECTED: { label: 'Từ chối', className: 'status-rejected' },
-      IN_YARD: { label: 'Trong kho', className: 'status-in-yard' },
+      POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
+      FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' },
+      IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
+      IN_CAR: { label: 'Đã lên xe', className: 'status-in-car' },
       LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
       PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
       ACCEPT: { label: 'Đã chấp nhận', className: 'status-accept' }
@@ -81,6 +97,40 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     setSelectedDocument(null);
   };
 
+  // Function để xem hóa đơn
+  const handleViewInvoice = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowInvoiceViewer(true);
+  };
+
+  // Function để thanh toán hóa đơn
+  const handlePayment = async (requestId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn thanh toán hóa đơn này?')) {
+      try {
+        // Cập nhật trạng thái thanh toán
+        const response = await fetch(`http://localhost:5002/requests/${requestId}/payment-status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ is_paid: true }),
+        });
+        
+        if (response.ok) {
+          alert('✅ Thanh toán thành công! Hóa đơn đã được cập nhật trạng thái.');
+          // Refresh trang để cập nhật dữ liệu
+          window.location.reload();
+        } else {
+          alert('❌ Lỗi khi cập nhật trạng thái thanh toán');
+        }
+      } catch (error) {
+        console.error('Lỗi thanh toán:', error);
+        alert('❌ Lỗi khi thực hiện thanh toán');
+      }
+    }
+  };
+
   const toggleChat = (requestId: string) => {
     setActiveChatRequests(prev => {
       const newSet = new Set(prev);
@@ -106,6 +156,65 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     const ext = filename.toLowerCase().split('.').pop();
     return ext === 'pdf';
   };
+
+  // Function để lấy vị trí container từ API yard (tương tự như depot)
+  const getContainerLocation = async (containerNo: string) => {
+    if (!containerNo) return null;
+    
+    // Kiểm tra cache
+    if (containerLocations[containerNo]) {
+      return containerLocations[containerNo];
+    }
+    
+    // Kiểm tra đang loading
+    if (loadingLocations.has(containerNo)) {
+      return null;
+    }
+    
+    try {
+      setLoadingLocations(prev => new Set(prev).add(containerNo));
+      
+      // Gọi API yard để lấy vị trí container
+      const locationData = await yardApi.locate(containerNo);
+      
+      if (locationData && locationData.slot) {
+        const yardName = locationData.slot.block?.yard?.name || 'Depot';
+        const blockCode = locationData.slot.block?.code || '';
+        const slotCode = locationData.slot.code || '';
+        const location = `${yardName} / ${blockCode} / ${slotCode}`;
+        
+        // Cache kết quả
+        setContainerLocations(prev => ({
+          ...prev,
+          [containerNo]: location
+        }));
+        
+        return location;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching container location:', error);
+      return null;
+    } finally {
+      setLoadingLocations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(containerNo);
+        return newSet;
+      });
+    }
+  };
+
+  // Load vị trí cho tất cả container khi component mount
+  useEffect(() => {
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        if (item.container_no && item.type === 'EXPORT') {
+          getContainerLocation(item.container_no);
+        }
+      });
+    }
+  }, [data]);
 
   if (loading) {
     return (
@@ -156,6 +265,23 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   </span>
                 </td>
                 <td>
+                  <div className="location-info">
+                    {item.type === 'EXPORT' ? (
+                      <span className="location-badge">
+                        {loadingLocations.has(item.container_no || '') ? (
+                          <span className="loading-location">⏳ Đang tải...</span>
+                        ) : (
+                          <>
+                            📍 {containerLocations[item.container_no || ''] || 'Chưa xác định'}
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="location-na">-</span>
+                    )}
+                  </div>
+                </td>
+                <td>
                   {item.eta ? (
                     <span className="eta-date">
                       {new Date(item.eta).toLocaleString('vi-VN')}
@@ -186,11 +312,30 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   )}
                 </td>
                 <td>
-                  {item.latest_payment && (
-                    <span className="payment-badge">
-                      Đã gửi yêu cầu thanh toán
-                    </span>
-                  )}
+                  <div className="payment-status-info">
+                    {/* Hiển thị trạng thái hóa đơn */}
+                    <div className="invoice-status">
+                      <span className={`status-indicator ${item.has_invoice ? 'has-invoice' : 'no-invoice'}`}>
+                        {item.has_invoice ? '📄' : '📝'} 
+                        {item.has_invoice ? 'Có hóa đơn' : 'Chưa có hóa đơn'}
+                      </span>
+                    </div>
+                    {/* Hiển thị trạng thái thanh toán */}
+                    <div className="payment-status">
+                      <span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
+                        {item.is_paid ? '💰' : '⏳'} 
+                        {item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                      </span>
+                    </div>
+                    {/* Hiển thị thông tin payment request nếu có */}
+                    {item.latest_payment && (
+                      <div className="payment-request-info">
+                        <span className="payment-request-badge">
+                          📤 Đã gửi yêu cầu thanh toán
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <button
@@ -303,7 +448,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                              disabled={item.actions.loadingId === item.id + 'VIEW_INVOICE'}
                              onClick={() => {
                                if (item.actions?.handleViewInvoice) {
-                                 item.actions.handleViewInvoice(item.id, item.container_no);
+                                 item.actions.handleViewInvoice(item.id);
                                } else {
                                  alert('Tính năng xem hóa đơn đang được phát triển!');
                                }
@@ -362,6 +507,28 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                         >
                           {item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
                         </button>
+                      )}
+
+                      {/* Invoice and Payment actions for requests with invoices */}
+                      {item.has_invoice && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
+                        <>
+                          <button
+                            className="btn btn-sm btn-info"
+                            onClick={() => handleViewInvoice(item.id)}
+                            title="Xem hóa đơn"
+                          >
+                            📄 Xem hóa đơn
+                          </button>
+                          {!item.is_paid && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handlePayment(item.id)}
+                              title="Thanh toán hóa đơn"
+                            >
+                              💰 Thanh toán
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -479,6 +646,16 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
           />
         );
       })}
+
+      {/* Invoice Viewer */}
+      <InvoiceViewer
+        requestId={selectedRequestId}
+        visible={showInvoiceViewer}
+        onClose={() => {
+          setShowInvoiceViewer(false);
+          setSelectedRequestId('');
+        }}
+      />
     </>
   );
 }

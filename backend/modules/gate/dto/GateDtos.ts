@@ -47,7 +47,8 @@ export interface GateRejectData {
 
 // DTO cho việc tìm kiếm requests ở Gate
 export const gateSearchSchema = Joi.object({
-  status: Joi.string().valid('FORWARDED', 'GATE_IN', 'GATE_REJECTED').optional(),
+  status: Joi.string().valid('FORWARDED', 'GATE_IN', 'GATE_REJECTED', 'IN_YARD', 'IN_CAR').optional(),
+  statuses: Joi.string().optional(), // Cho phép nhiều statuses (comma-separated)
   container_no: Joi.string().optional(),
   type: Joi.string().valid('IMPORT', 'EXPORT', 'CONVERT').optional(),
   page: Joi.number().integer().min(1).default(1),
@@ -65,6 +66,7 @@ export interface GateAcceptData {
 
 export interface GateSearchParams {
   status?: string;
+  statuses?: string; // Cho phép nhiều statuses (comma-separated)
   container_no?: string;
   type?: string;
   page?: number;

@@ -690,6 +690,23 @@ body.with-sidebar .header {
 
 .btn-icon{display:inline-flex;align-items:center}
 
+/* Disabled button state */
+.btn-disabled {
+  background: var(--color-gray-400) !important;
+  color: var(--color-gray-600) !important;
+  border-color: var(--color-gray-400) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+.btn-disabled:hover {
+  background: var(--color-gray-400) !important;
+  color: var(--color-gray-600) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .grid{display:grid;gap:16px}
 @media(min-width:840px){.grid-cols-2{grid-template-columns:1fr 1fr}.grid-cols-3{grid-template-columns:repeat(3,1fr)}}
 .table{width:100%;border-collapse:collapse}
@@ -1158,13 +1175,17 @@ button, input, select {
 .table-container{
   background: var(--white);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  /* overflow: hidden; */ /* Loại bỏ overflow hidden để tránh cắt mất nội dung */
   box-shadow: 0 4px 18px rgba(2,6,23,.06);
+  /* Thêm scroll ngang khi cần thiết */
+  overflow-x: auto;
 }
 
 .table-modern{
   width: 100%;
   border-collapse: collapse;
+  /* Đảm bảo bảng có thể mở rộng */
+  min-width: 1200px; /* Đặt min-width để đảm bảo tất cả cột hiển thị đầy đủ */
 }
 
 .table-modern th{
@@ -1608,6 +1629,36 @@ button, input, select {
   color: var(--color-white);
 }
 
+.badge-yellow {
+  background: var(--color-warning);
+  color: var(--color-navy-primary);
+}
+
+.badge-orange {
+  background: #f97316;
+  color: var(--color-white);
+}
+
+.badge-blue {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.badge-green {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.badge-red {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.badge-gray {
+  background: var(--color-gray-500);
+  color: var(--color-white);
+}
+
 /* Responsive adjustments */
 
 /* Tablet adjustments */
@@ -1940,6 +1991,7 @@ button, input, select {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  min-width: 180px; /* Đặt min-width cho container action buttons */
 }
 
 .action-buttons .btn {
@@ -1947,6 +1999,9 @@ button, input, select {
   padding: 4px 8px;
   min-width: auto;
   white-space: nowrap;
+  /* Đảm bảo button không bị cắt */
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Status Message */
@@ -4847,4 +4902,12 @@ main:has(.auth-hero) {
   width: 100%;
   max-width: none;
   margin: 0;
+}
+
+/* Đảm bảo cột hành động có đủ không gian */
+.table-modern th:last-child,
+.table-modern td:last-child {
+  min-width: 200px; /* Đặt min-width cho cột hành động */
+  max-width: none; /* Cho phép mở rộng khi cần */
+  white-space: nowrap; /* Ngăn text bị xuống dòng */
 }

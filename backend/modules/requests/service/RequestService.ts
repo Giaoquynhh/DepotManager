@@ -7,21 +7,31 @@ import RequestStateMachine from './RequestStateMachine';
 import appointmentService from './AppointmentService';
 
 export class RequestService {
-	async createByCustomer(actor: any, payload: { type: string; container_no: string; eta?: Date }, file?: Express.Multer.File) {
+	async createByCustomer(actor: any, payload: { type: string; container_no?: string; eta?: Date }, file?: Express.Multer.File) {
+		// Kiểm tra logic business: IMPORT cần container_no và file, EXPORT chỉ cần ETA
+		if (payload.type === 'IMPORT') {
+			if (!payload.container_no) {
+				throw new Error('Mã định danh container là bắt buộc cho yêu cầu nhập');
+			}
+			if (!file) {
+				throw new Error('Chứng từ là bắt buộc cho yêu cầu nhập');
+			}
+		}
+
 		const data = {
 			tenant_id: actor.tenant_id || null,
 			created_by: actor._id,
 			type: payload.type,
-			container_no: payload.container_no,
+			container_no: payload.container_no || null, // Có thể null cho EXPORT
 			eta: payload.eta || null,
 			status: 'PENDING',
 			history: [{ at: new Date().toISOString(), by: actor._id, action: 'CREATE' }]
 		};
 		const req = await repo.create(data);
 		
-		// Xử lý upload file nếu có
+		// Xử lý upload file chỉ khi có file (IMPORT)
 		if (file) {
-			const uploadDir = path.join(process.cwd(), 'uploads');
+			const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
 			if (!fs.existsSync(uploadDir)) {
 				fs.mkdirSync(uploadDir, { recursive: true });
 			}
@@ -184,6 +194,34 @@ export class RequestService {
 		return updated;
 	}
 
+	async updateContainerNo(actor: any, id: string, containerNo: string) {
+		const req = await repo.findById(id);
+		if (!req) throw new Error('Yêu cầu không tồn tại');
+
+		// Kiểm tra quyền - chỉ depot admin mới có thể cập nhật container_no
+		if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+			throw new Error('Không có quyền cập nhật container_no');
+		}
+
+		// Kiểm tra trạng thái - chỉ có thể cập nhật khi request đang PENDING
+		if (req.status !== 'PENDING') {
+			throw new Error('Chỉ có thể cập nhật container_no khi request đang ở trạng thái PENDING');
+		}
+
+		const prevHistory = Array.isArray(req.history) ? (req.history as any[]) : [];
+		const updated = await repo.update(id, {
+			container_no: containerNo,
+			history: [
+				...prevHistory,
+				{ at: new Date().toISOString(), by: actor._id, action: 'CONTAINER_ASSIGNED', reason: `Container ${containerNo} được gán` }
+			]
+		});
+
+		await audit(actor._id, 'REQUEST.CONTAINER_ASSIGNED', 'ServiceRequest', id, { container_no: containerNo });
+		
+		return updated;
+	}
+
 	async rejectRequest(actor: any, id: string, reason?: string) {
 		const req = await repo.findById(id);
 		if (!req) throw new Error('Yêu cầu không tồn tại');
@@ -281,7 +319,7 @@ export class RequestService {
 	}
 
 	// Documents
-	async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT', file: Express.Multer.File) {
+	async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT'|'EXPORT_DOC', file: Express.Multer.File) {
 		console.log('Upload document debug:', { actor: actor.role, request_id, type, fileSize: file?.size });
 		const req = await repo.findById(request_id);
 		if (!req) throw new Error('Yêu cầu không tồn tại');
@@ -300,6 +338,17 @@ export class RequestService {
 			if (req.tenant_id !== actor.tenant_id) {
 				throw new Error('Không có quyền upload cho yêu cầu này');
 			}
+		} else if (type === 'EXPORT_DOC') {
+			// EXPORT_DOC: chỉ upload khi PICK_CONTAINER và chỉ SaleAdmin/SystemAdmin/BusinessAdmin
+			if (req.status !== 'PICK_CONTAINER') {
+				throw new Error('Chỉ upload chứng từ xuất khi yêu cầu đang ở trạng thái chọn container');
+			}
+			if (req.type !== 'EXPORT') {
+				throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
+			}
+			if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+				throw new Error('Chỉ admin được upload chứng từ xuất');
+			}
 		} else {
 			// EIR/LOLO/INVOICE: chỉ upload khi COMPLETED hoặc EXPORTED
 			if (!['COMPLETED','EXPORTED'].includes(req.status)) {
@@ -315,7 +364,7 @@ export class RequestService {
 		const version = (last?.version || 0) + 1;
 		
 		// Xử lý file upload
-		const uploadDir = path.join(process.cwd(), 'uploads');
+		const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
 		if (!fs.existsSync(uploadDir)) {
 			fs.mkdirSync(uploadDir, { recursive: true });
 		}
@@ -402,8 +451,74 @@ export class RequestService {
 			}
 		}
 		
-		// Audit log với action khác nhau cho SUPPLEMENT
-		const auditAction = type === 'SUPPLEMENT' ? 'DOC.UPLOADED_SUPPLEMENT' : 'DOC.UPLOADED';
+		// Nếu là EXPORT_DOC document, tự động chuyển trạng thái sang SCHEDULED
+		if (type === 'EXPORT_DOC') {
+			try {
+				console.log(`Attempting to auto-status change request ${request_id} from ${req.status} to SCHEDULED`);
+				console.log(`Actor role: ${actor.role}, Actor ID: ${actor._id}`);
+				
+				// Kiểm tra xem có thể chuyển trạng thái không
+				const canTransition = RequestStateMachine.canTransition(req.status, 'SCHEDULED', actor.role);
+				console.log(`Can transition from ${req.status} to SCHEDULED: ${canTransition}`);
+				
+				if (!canTransition) {
+					console.warn(`Cannot transition from ${req.status} to SCHEDULED for role ${actor.role}`);
+					return doc; // Upload thành công nhưng không chuyển trạng thái
+				}
+				
+				// Sử dụng State Machine để chuyển trạng thái
+				await RequestStateMachine.executeTransition(
+					actor,
+					request_id,
+					req.status,
+					'SCHEDULED',
+					'Tự động chuyển trạng thái sau khi upload chứng từ xuất'
+				);
+				
+				console.log(`State machine transition successful, updating database...`);
+				
+				// Cập nhật trạng thái request
+				const updatedRequest = await repo.update(request_id, {
+					status: 'SCHEDULED',
+					history: [
+						...(Array.isArray(req.history) ? req.history : []),
+						{
+							at: new Date().toISOString(),
+							by: actor._id,
+							action: 'SCHEDULED',
+							reason: 'Tự động chuyển trạng thái sau khi upload chứng từ xuất',
+							document_id: doc.id,
+							document_type: 'EXPORT_DOC'
+						}
+					]
+				});
+				
+				console.log(`Request ${request_id} successfully updated to SCHEDULED:`, {
+					newStatus: updatedRequest.status,
+					updatedAt: updatedRequest.updatedAt,
+					updatedBy: actor._id
+				});
+				
+			} catch (error) {
+				console.error('Error auto-status change after EXPORT_DOC upload:', error);
+				console.error('Error details:', {
+					message: error instanceof Error ? error.message : String(error),
+					stack: error instanceof Error ? error.stack : 'No stack trace',
+					actorRole: actor.role,
+					requestId: request_id,
+					currentStatus: req.status
+				});
+				// Không throw error để upload vẫn thành công, chỉ log warning
+			}
+		}
+		
+		// Audit log với action khác nhau cho SUPPLEMENT và EXPORT_DOC
+		let auditAction = 'DOC.UPLOADED';
+		if (type === 'SUPPLEMENT') {
+			auditAction = 'DOC.UPLOADED_SUPPLEMENT';
+		} else if (type === 'EXPORT_DOC') {
+			auditAction = 'DOC.UPLOADED_EXPORT_DOC';
+		}
 		await audit(actor._id, auditAction, 'DOC', doc.id, { request_id, type, version });
 		
 		return doc;

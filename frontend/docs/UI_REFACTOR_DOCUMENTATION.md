@@ -84,13 +84,39 @@ import { theme } from '@/styles/theme';
 - ✅ **Trạng thái hiển thị rõ ràng**: "Đang chờ sắp xếp", "Ở trong bãi", "Chưa kiểm tra"
 - ✅ **UI filter indicator**: Checkbox hiển thị rõ logic lọc
 
-**Logic mới:**
+**Logic mới (Đơn giản hóa):**
 ```typescript
+// API call logic - Luôn lấy tất cả container
+// Filter được thực hiện hoàn toàn ở frontend dựa trên derived_status
+const params: any = { 
+  q: q || undefined, 
+  status: undefined, // Không filter theo backend status
+  service_status: undefined, // Lấy tất cả container (CHECKED và IN_YARD)
+  page, 
+  pageSize 
+};
+
+// Derived status logic
 const items = (data?.items || []).map((it:any) => {
-  // Chỉ container có trạng thái CHECKED mới có derived_status
+  // Kiểm tra trạng thái IN_YARD trước (đã được duyệt trên Forklift)
+  if (it.service_status === 'IN_YARD') {
+    // Container đã được duyệt và đặt vào vị trí trong bãi
+    return { ...it, derived_status: 'IN_YARD' };
+  }
+  
+  // Kiểm tra container có trạng thái CHECKED hoặc repair_checked
   if (it.service_status === 'CHECKED' || it.repair_checked === true) {
     const inYard = !!it.slot_code;
-    return { ...it, derived_status: inYard ? 'IN_YARD' : 'WAITING' };
+    if (inYard) {
+      // Container có slot_code - đã xếp chỗ trong bãi
+      // Khi container được confirm trên Yard, nó sẽ có slot_code
+      // Trạng thái này sẽ là "Đã xếp chỗ trong bãi" (ASSIGNED)
+      return { ...it, derived_status: 'ASSIGNED' };
+    } else {
+      // Container chưa có slot_code - đang chờ sắp xếp
+      // Trạng thái này sẽ là "Chờ xếp chỗ" (PENDING)
+      return { ...it, derived_status: 'PENDING' };
+    }
   } else {
     // Container chưa được kiểm tra - không có derived_status
     return { ...it, derived_status: null };
@@ -98,8 +124,10 @@ const items = (data?.items || []).map((it:any) => {
 });
 
 // Lọc theo trạng thái (chỉ lấy container đã được kiểm tra)
-const filteredItems = status === 'WAITING' ? 
-  items.filter((i:any) => i.derived_status === 'WAITING') : 
+const filteredItems = status === 'PENDING' ? 
+  items.filter((i:any) => i.derived_status === 'PENDING') : 
+  status === 'ASSIGNED' ? 
+  items.filter((i:any) => i.derived_status === 'ASSIGNED') : 
   status === 'IN_YARD' ? 
   items.filter((i:any) => i.derived_status === 'IN_YARD') : 
   items.filter((i:any) => i.derived_status !== null); // Chỉ lấy container có derived_status
@@ -108,8 +136,11 @@ const filteredItems = status === 'WAITING' ?
 **Trạng thái hiển thị:**
 ```typescript
 {it.derived_status ? (
-  // Container đã kiểm tra - hiển thị "Đang chờ sắp xếp" hoặc "Ở trong bãi"
-  <span>Đang chờ sắp xếp</span>
+  // Container đã kiểm tra - hiển thị "Chờ xếp chỗ", "Đã xếp chỗ trong bãi", hoặc "Đã ở trong bãi"
+  <span>
+    {it.derived_status === 'ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
+     it.derived_status === 'IN_YARD' ? 'Đã ở trong bãi' : 'Chờ xếp chỗ'}
+  </span>
 ) : (
   // Container chưa kiểm tra - hiển thị "Chưa kiểm tra"
   <span>Chưa kiểm tra</span>
@@ -117,9 +148,22 @@ const filteredItems = status === 'WAITING' ?
 ```
 
 **Kết quả:**
-- **Container có `service_status = 'CHECKED'`** → Có `derived_status = 'WAITING'` hoặc `'IN_YARD'`
-- **Container có `repair_checked = true`** → Có `derived_status = 'WAITING'` hoặc `'IN_YARD'`
+- **Container có `service_status = 'IN_YARD'`** → Có `derived_status = 'IN_YARD'` (ưu tiên cao nhất)
+- **Container có `service_status = 'CHECKED'`** → Có `derived_status = 'PENDING'` hoặc `'ASSIGNED'`
+- **Container có `repair_checked = true`** → Có `derived_status = 'PENDING'` hoặc `'ASSIGNED'`
 - **Container chưa kiểm tra** → `derived_status = null` → Hiển thị "Chưa kiểm tra"
+
+**Thứ tự ưu tiên:**
+1. `IN_YARD` (đã được duyệt trên Forklift) - cao nhất
+2. `CHECKED` + `slot_code` → `ASSIGNED` (đã confirm trên Yard)
+3. `CHECKED` + không có `slot_code` → `PENDING` (chưa confirm trên Yard)
+4. `repair_checked = true` → tương tự như `CHECKED`
+
+**API Call Logic (Đơn giản hóa):**
+- **Tất cả filter**: Luôn lấy tất cả container có `service_status = 'CHECKED'` và `'IN_YARD'`
+- **Filter được thực hiện hoàn toàn ở frontend** dựa trên `derived_status`
+- **Không cần gọi API nhiều lần** với các `service_status` khác nhau
+- **Performance tốt hơn** vì chỉ gọi API một lần và filter ở client
 
 ### 2. Button Component (`components/Button.tsx`)
 **Cập nhật:** Enhanced với variants và features mới

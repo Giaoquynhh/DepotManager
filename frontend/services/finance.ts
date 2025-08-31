@@ -40,6 +40,14 @@ export const financeApi = {
     const { data } = await api.post(`/finance/invoices/${id}/cancel`, {});
     return data;
   },
+  async listInvoicesWithDetails(params?: any) {
+    const { data } = await api.get('/finance/invoices/details', { params });
+    return data as any[];
+  },
+  async getContainersNeedInvoice() {
+    const { data } = await api.get('/finance/invoices/containers-need-invoice');
+    return data as any[];
+  },
   // Payments
   async listPayments(params?: any) {
     const { data } = await api.get('/finance/payments', { params });

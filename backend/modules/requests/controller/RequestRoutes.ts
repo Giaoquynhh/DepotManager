@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { requireRoles } from '../../../shared/middlewares/rbac';
 
-const uploadDir = path.join(process.cwd(), 'uploads');
+const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // Cấu hình multer cho file upload
@@ -48,6 +48,9 @@ router.get('/:id', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','Acco
 // Status changes (SaleAdmin/SystemAdmin)
 router.patch('/:id/status', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.updateStatus(req as any, res));
 
+// Update container number (SaleAdmin/SystemAdmin)
+router.patch('/:id/container', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.updateContainerNo(req as any, res));
+
 // Reject request (SaleAdmin/SystemAdmin)
 router.patch('/:id/reject', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.rejectRequest(req as any, res));
 
@@ -58,8 +61,8 @@ router.delete('/:id', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','S
 router.post('/:id/restore', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','SystemAdmin','Accountant'), (req, res) => controller.restoreRequest(req as any, res));
 
 // Documents
-router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
-router.get('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser'), (req, res) => controller.listDocs(req as any, res));
+router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
+router.get('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), (req, res) => controller.listDocs(req as any, res));
 router.delete('/:id/docs/:docId', requireRoles('SaleAdmin','Accountant','SystemAdmin','BusinessAdmin'), (req, res) => controller.deleteDoc(req as any, res));
 
 // Payment request

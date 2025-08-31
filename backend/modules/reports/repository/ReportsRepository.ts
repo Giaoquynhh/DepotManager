@@ -73,34 +73,56 @@ export class ReportsRepository {
   }
 
   async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; page: number; pageSize: number }){
-    // Hợp nhất: ServiceRequest mới nhất + RepairTicket đã CHECKED (bảo trì)
-    // Khi service_status = 'CHECKED': chỉ trả về container đã kiểm tra (có gate_checked_at hoặc repair_checked = TRUE)
+    // Sửa lại query để đảm bảo container từ YardPlacement được trả về và tránh duplicate
     const raw = await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
         SELECT DISTINCT ON (sr.container_no)
-               sr.container_no,
-               sr.status as service_status,
-               sr.gate_checked_at as gate_checked_at,
-               sr.driver_name as driver_name,
-               sr.license_plate as license_plate,
-               sr.gate_ref as gate_ref,
-               sr."createdAt" as created_at
+          sr.container_no,
+          sr.status as service_status,
+          sr.gate_checked_at as gate_checked_at,
+          sr.driver_name as driver_name,
+          sr.license_plate as license_plate,
+          sr.gate_ref as gate_ref,
+          sr."createdAt" as created_at
         FROM "ServiceRequest" sr
+        WHERE sr.container_no IS NOT NULL
         ORDER BY sr.container_no, sr."createdAt" DESC
       ),
       rt_checked AS (
         SELECT DISTINCT ON (rt.container_no)
-               rt.container_no,
-               TRUE as repair_checked,
-               rt."updatedAt" as updated_at
+          rt.container_no,
+          TRUE as repair_checked,
+          rt."updatedAt" as updated_at
         FROM "RepairTicket" rt
-        WHERE rt.status::text = 'CHECKED'
+        WHERE rt.status::text = 'CHECKED' AND rt.container_no IS NOT NULL
         ORDER BY rt.container_no, rt."updatedAt" DESC
       ),
       base_containers AS (
-        SELECT container_no FROM latest_sr
-        UNION
-        SELECT container_no FROM rt_checked
+        -- Ưu tiên: ServiceRequest trước, sau đó RepairTicket, cuối cùng YardPlacement
+        SELECT DISTINCT ON (container_no)
+          container_no,
+          source,
+          priority
+        FROM (
+          -- ServiceRequest có ưu tiên cao nhất
+          SELECT container_no, 'SERVICE_REQUEST' as source, 1 as priority FROM latest_sr
+          UNION ALL
+          -- RepairTicket có ưu tiên thứ 2
+          SELECT container_no, 'REPAIR_TICKET' as source, 2 as priority FROM rt_checked
+          UNION ALL
+          -- YardPlacement có ưu tiên thấp nhất (chỉ khi không có trong 2 nguồn trên)
+          SELECT yp.container_no, 'YARD_PLACEMENT' as source, 3 as priority
+          FROM "YardPlacement" yp 
+          WHERE yp.status = 'OCCUPIED' 
+            AND yp.removed_at IS NULL
+            AND yp.container_no IS NOT NULL
+            AND yp.container_no NOT IN (
+              SELECT container_no FROM latest_sr
+              UNION
+              SELECT container_no FROM rt_checked
+            )
+        ) all_sources
+        ORDER BY container_no, priority
       ),
       params AS (
         SELECT
@@ -108,17 +130,26 @@ export class ReportsRepository {
           CAST(${params.status ?? null} AS TEXT)        AS status,
           CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
-      SELECT bc.container_no,
-             cm.dem_date, cm.det_date,
-             yp.status as placement_status, ys.code as slot_code, yb.code as block_code, y.name as yard_name,
-             ls.service_status as service_status,
-             ls.gate_checked_at as service_gate_checked_at,
-             ls.driver_name as service_driver_name,
-             ls.license_plate as service_license_plate,
-             ls.gate_ref as service_gate_ref,
-             COALESCE(rt.repair_checked, FALSE) as repair_checked,
-             rt.updated_at as repair_updated_at,
-             yp.tier as placement_tier
+      SELECT DISTINCT ON (bc.container_no)
+        bc.container_no,
+        cm.dem_date, 
+        cm.det_date,
+        yp.status as placement_status, 
+        ys.code as slot_code, 
+        yb.code as block_code, 
+        y.name as yard_name,
+        CASE 
+          WHEN bc.source = 'YARD_PLACEMENT' THEN 'SYSTEM_ADMIN_ADDED'
+          ELSE COALESCE(ls.service_status, 'UNKNOWN')
+        END as service_status,
+        ls.gate_checked_at as service_gate_checked_at,
+        ls.driver_name as service_driver_name,
+        ls.license_plate as service_license_plate,
+        ls.gate_ref as service_gate_ref,
+        COALESCE(rt.repair_checked, FALSE) as repair_checked,
+        rt.updated_at as repair_updated_at,
+        yp.tier as placement_tier,
+        bc.source as data_source
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
@@ -135,37 +166,64 @@ export class ReportsRepository {
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
+          (p.service_status <> 'CHECKED' AND (
+            ls.service_status::text = p.service_status OR 
+            (bc.source = 'YARD_PLACEMENT' AND p.service_status = 'SYSTEM_ADMIN_ADDED')
+          ))
         )
-      ORDER BY bc.container_no
+      ORDER BY bc.container_no, bc.priority
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
     `;
+    
     const total = (await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
         SELECT DISTINCT ON (sr.container_no)
-               sr.container_no,
-               sr.status as service_status,
-               sr.gate_checked_at as gate_checked_at,
-               sr.driver_name as driver_name,
-               sr.license_plate as license_plate,
-               sr.gate_ref as gate_ref,
-               sr."createdAt" as created_at
+          sr.container_no,
+          sr.status as service_status,
+          sr.gate_checked_at as gate_checked_at,
+          sr.driver_name as driver_name,
+          sr.license_plate as license_plate,
+          sr.gate_ref as gate_ref,
+          sr."createdAt" as created_at
         FROM "ServiceRequest" sr
+        WHERE sr.container_no IS NOT NULL
         ORDER BY sr.container_no, sr."createdAt" DESC
       ),
       rt_checked AS (
         SELECT DISTINCT ON (rt.container_no)
-               rt.container_no,
-               TRUE as repair_checked,
-               rt."updatedAt" as updated_at
+          rt.container_no,
+          TRUE as repair_checked,
+          rt."updatedAt" as updated_at
         FROM "RepairTicket" rt
-        WHERE rt.status::text = 'CHECKED'
+        WHERE rt.status::text = 'CHECKED' AND rt.container_no IS NOT NULL
         ORDER BY rt.container_no, rt."updatedAt" DESC
       ),
       base_containers AS (
-        SELECT container_no FROM latest_sr
-        UNION
-        SELECT container_no FROM rt_checked
+        -- Ưu tiên: ServiceRequest trước, sau đó RepairTicket, cuối cùng YardPlacement
+        SELECT DISTINCT ON (container_no)
+          container_no,
+          source,
+          priority
+        FROM (
+          -- ServiceRequest có ưu tiên cao nhất
+          SELECT container_no, 'SERVICE_REQUEST' as source, 1 as priority FROM latest_sr
+          UNION ALL
+          -- RepairTicket có ưu tiên thứ 2
+          SELECT container_no, 'REPAIR_TICKET' as source, 2 as priority FROM rt_checked
+          UNION ALL
+          -- YardPlacement có ưu tiên thấp nhất (chỉ khi không có trong 2 nguồn trên)
+          SELECT yp.container_no, 'YARD_PLACEMENT' as source, 3 as priority
+          FROM "YardPlacement" yp 
+          WHERE yp.status = 'OCCUPIED' 
+            AND yp.removed_at IS NULL
+            AND yp.container_no IS NOT NULL
+            AND yp.container_no NOT IN (
+              SELECT container_no FROM latest_sr
+              UNION
+              SELECT container_no FROM rt_checked
+            )
+        ) all_sources
+        ORDER BY container_no, priority
       ),
       params AS (
         SELECT
@@ -173,11 +231,12 @@ export class ReportsRepository {
           CAST(${params.status ?? null} AS TEXT)        AS status,
           CAST(${params.service_status ?? null} AS TEXT) AS service_status
       )
-      SELECT COUNT(*)::int as cnt
+      SELECT COUNT(DISTINCT bc.container_no)::int as cnt
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
-      LEFT JOIN "YardSlot" ys ON ys."occupant_container_no" = bc.container_no
+      LEFT JOIN "YardPlacement" yp ON yp.container_no = bc.container_no AND yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
+      LEFT JOIN "YardSlot" ys ON ys.id = yp.slot_id
       CROSS JOIN params p
       WHERE (p.q IS NULL OR bc.container_no ILIKE ('%' || p.q || '%'))
         AND (p.status IS NULL OR ys.status::text = p.status)
@@ -186,9 +245,13 @@ export class ReportsRepository {
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'CHECKED' AND ls.service_status::text = p.service_status)
+          (p.service_status <> 'CHECKED' AND (
+            ls.service_status::text = p.service_status OR 
+            (bc.source = 'YARD_PLACEMENT' AND p.service_status = 'SYSTEM_ADMIN_ADDED')
+          ))
         )
     `)[0]?.cnt || 0;
+    
     return { items: raw, total, page: params.page, pageSize: params.pageSize };
   }
 }

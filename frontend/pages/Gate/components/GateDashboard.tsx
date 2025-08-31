@@ -116,10 +116,10 @@ export default function GateDashboard() {
         if (value) params.append(key, value.toString());
       });
 
-      console.log('🔍 Calling API:', `/gate/requests/search?${params.toString()}`);
-      console.log('🔍 API base URL:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000');
-      console.log('🔍 Full URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000'}/gate/requests/search?${params.toString()}`);
-      
+      // Thêm filter để lấy requests có trạng thái IN_YARD và IN_CAR
+      if (!searchParams.status || searchParams.status === '') {
+        params.append('statuses', 'IN_YARD,IN_CAR');
+      }
       const response = await api.get(`/gate/requests/search?${params.toString()}`);
       console.log('✅ API response:', response.data);
       

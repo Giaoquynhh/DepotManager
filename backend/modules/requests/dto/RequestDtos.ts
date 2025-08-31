@@ -2,13 +2,21 @@ import Joi from 'joi';
 
 export const createRequestSchema = Joi.object({
 	type: Joi.string().valid('IMPORT','EXPORT','CONVERT').required(),
-	container_no: Joi.string().min(4).max(20).required(),
+	container_no: Joi.when('type', {
+		is: 'IMPORT',
+		then: Joi.string().min(4).max(20).required(),
+		otherwise: Joi.string().min(4).max(20).optional()
+	}),
 	eta: Joi.date().required()
 });
 
 export const updateRequestStatusSchema = Joi.object({
-	status: Joi.string().valid('PENDING','SCHEDULED','SCHEDULED_INFO_ADDED','FORWARDED','SENT_TO_GATE','CHECKING','REJECTED','COMPLETED').required(),
+	status: Joi.string().valid('PENDING','PICK_CONTAINER','SCHEDULED','SCHEDULED_INFO_ADDED','FORWARDED','SENT_TO_GATE','CHECKING','REJECTED','COMPLETED','POSITIONED','FORKLIFTING','IN_YARD').required(),
 	reason: Joi.string().optional()
+});
+
+export const updateContainerNoSchema = Joi.object({
+	container_no: Joi.string().min(4).max(20).required()
 });
 
 export const rejectRequestSchema = Joi.object({
@@ -33,7 +41,7 @@ export const queryRequestSchema = Joi.object({
 });
 
 export const uploadDocSchema = Joi.object({
-	type: Joi.string().valid('EIR','LOLO','INVOICE','SUPPLEMENT').required()
+	type: Joi.string().valid('EIR','LOLO','INVOICE','SUPPLEMENT','EXPORT_DOC').required()
 });
 
 // New DTOs for State Machine

@@ -119,6 +119,35 @@ Cập nhật trạng thái task
 ### DELETE /forklift/task/:id
 Xóa task
 
+## Action Management
+
+### Available Actions by Status
+```typescript
+// TRẠNG THÁI PENDING
+actions: ['cancel', 'assign_driver', 'update_cost']
+// ❌ REMOVED: 'start' action
+// ❌ REMOVED: 'complete' action
+
+// TRẠNG THÁI IN_PROGRESS  
+actions: ['assign_driver', 'update_cost']
+// ❌ REMOVED: 'complete' action
+
+// TRẠNG THÁI COMPLETED
+actions: ['assign_driver', 'update_cost']
+
+// TRẠNG THÁI CANCELLED
+actions: ['assign_driver', 'update_cost']
+```
+
+### Action Flow
+```typescript
+// Trước đây: PENDING → IN_PROGRESS → COMPLETED
+// Bây giờ: PENDING → CANCELLED (chỉ có thể hủy)
+
+// Không còn action "Hoàn thành" trong giao diện
+// Chỉ có thể hủy công việc từ PENDING
+```
+
 ## Usage Examples
 
 ### 1. Hiển thị vị trí nguồn

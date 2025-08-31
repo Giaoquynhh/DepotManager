@@ -56,7 +56,7 @@ export class ForkliftService {
 	}
 
 	async updateStatus(actor: any, id: string, status: string, reason?: string) {
-		if (!['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].includes(status)) throw new Error('Status không hợp lệ');
+		if (!['PENDING','ASSIGNED','IN_PROGRESS','PENDING_APPROVAL','COMPLETED','CANCELLED'].includes(status)) throw new Error('Status không hợp lệ');
 		const data: any = { status };
 		if (status === 'CANCELLED') data.cancel_reason = reason || 'N/A';
 		const updated = await prisma.forkliftTask.update({ where: { id }, data });

@@ -15,15 +15,16 @@ interface DashboardData {
 
 interface ForkliftTask {
   id: string;
-  container_no: string;
+  task_name: string;
   from_slot_id?: string;
   to_slot_id?: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
   assigned_driver_id?: string;
   created_by: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  cost?: number;
+  report_status?: string;
+  created_at: string;
+  updated_at: string;
   from_slot?: {
     id: string;
     code: string;
@@ -40,6 +41,12 @@ interface ForkliftTask {
       yard: { name: string };
     };
   };
+  container_info?: {
+    driver_name?: string;
+    license_plate?: string;
+    status?: string;
+    type?: string;
+  };
 }
 
 export default function DriverDashboard() {
@@ -48,6 +55,11 @@ export default function DriverDashboard() {
   const [taskHistory, setTaskHistory] = useState<ForkliftTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'history'>('overview');
+  
+  // State cho việc nhập chi phí và upload ảnh
+  const [editingCost, setEditingCost] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -65,8 +77,12 @@ export default function DriverDashboard() {
       setDashboardData(dashboard);
       setAssignedTasks(tasks);
       setTaskHistory(history);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dashboard data:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải dữ liệu';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -74,11 +90,167 @@ export default function DriverDashboard() {
 
   const handleStatusUpdate = async (taskId: string, newStatus: string, notes?: string) => {
     try {
+      // Kiểm tra validation khi chuyển sang chờ duyệt
+      if (newStatus === 'PENDING_APPROVAL') {
+        const task = assignedTasks.find(t => t.id === taskId);
+        if (!task) {
+          alert('Không tìm thấy thông tin công việc');
+          return;
+        }
+        
+        if (!task.cost || task.cost <= 0) {
+          alert('Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt');
+          return;
+        }
+        
+        if (!task.report_status) {
+          alert('Vui lòng gửi báo cáo trước khi chuyển sang chờ duyệt');
+          return;
+        }
+      }
+      
       await driverDashboardApi.updateTaskStatus(taskId, newStatus, notes);
       // Reload data after update
       await loadDashboardData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating task status:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
+      alert(errorMessage);
+    }
+  };
+
+  // Hàm xử lý cập nhật chi phí
+  const handleCostUpdate = async (taskId: string, newCost: number) => {
+    try {
+      // Kiểm tra chi phí trước khi gửi
+      if (!newCost || newCost <= 0) {
+        alert('Vui lòng nhập chi phí hợp lệ (lớn hơn 0)');
+        return;
+      }
+      
+      if (newCost > 1000000000) { // Giới hạn 1 tỷ VNĐ
+        alert('Chi phí quá cao. Vui lòng kiểm tra lại');
+        return;
+      }
+      
+      // Kiểm tra chi phí có phải là số nguyên không
+      if (!Number.isInteger(newCost)) {
+        alert('Chi phí phải là số nguyên');
+        return;
+      }
+      
+      // Kiểm tra chi phí có phải là số dương không
+      if (newCost < 0) {
+        alert('Chi phí không thể là số âm');
+        return;
+      }
+      
+      // Kiểm tra nếu task đang ở trạng thái chờ duyệt
+      const task = assignedTasks.find(t => t.id === taskId);
+      if (task?.status === 'PENDING_APPROVAL') {
+        const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật chi phí? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+        if (!confirmUpdate) {
+          return;
+        }
+      }
+      
+      await driverDashboardApi.updateTaskCost(taskId, newCost);
+      setEditingCost(null);
+      await loadDashboardData();
+    } catch (error: any) {
+      console.error('Error updating task cost:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật chi phí';
+      alert(errorMessage);
+    } finally {
+      // Đảm bảo rằng trạng thái editing được reset
+      setEditingCost(null);
+    }
+  };
+
+  // Hàm xử lý upload ảnh báo cáo
+  const handleImageUpload = async (taskId: string) => {
+    if (!selectedFile) {
+      alert('Vui lòng chọn file ảnh trước khi upload');
+      return;
+    }
+    
+    // Kiểm tra nếu task đang ở trạng thái chờ duyệt
+    const task = assignedTasks.find(t => t.id === taskId);
+    if (task?.status === 'PENDING_APPROVAL') {
+      const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật báo cáo? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+      if (!confirmUpdate) {
+        return;
+      }
+    }
+    
+    try {
+      setUploadingImage(taskId);
+      const formData = new FormData();
+      formData.append('report_image', selectedFile);
+      
+      await driverDashboardApi.uploadReportImage(taskId, formData);
+      setSelectedFile(null);
+      setUploadingImage(null);
+      await loadDashboardData();
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      
+      // Hiển thị thông báo lỗi từ backend
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi upload ảnh báo cáo';
+      alert(errorMessage);
+      setUploadingImage(null);
+    } finally {
+      // Đảm bảo rằng trạng thái upload được reset
+      if (uploadingImage === taskId) {
+        setUploadingImage(null);
+      }
+      // Đảm bảo rằng file được reset
+      setSelectedFile(null);
+    }
+  };
+
+  // Hàm xử lý chọn file
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
+    try {
+      const file = event.target.files?.[0];
+      if (file) {
+        // Kiểm tra loại file
+        if (!file.type.startsWith('image/')) {
+          alert('Vui lòng chọn file ảnh (JPG, PNG, GIF, etc.)');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        // Kiểm tra kích thước file (giới hạn 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          alert('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        // Kiểm tra tên file
+        if (file.name.length > 100) {
+          alert('Tên file quá dài. Vui lòng đổi tên file ngắn hơn');
+          event.target.value = ''; // Reset input
+          setSelectedFile(null);
+          return;
+        }
+        
+        setSelectedFile(file);
+        setUploadingImage(taskId);
+      }
+    } catch (error) {
+      console.error('Error selecting file:', error);
+      alert('Có lỗi xảy ra khi chọn file');
+      event.target.value = ''; // Reset input
+      setSelectedFile(null);
     }
   };
 
@@ -86,6 +258,7 @@ export default function DriverDashboard() {
     switch (status) {
       case 'PENDING': return 'badge-yellow';
       case 'IN_PROGRESS': return 'badge-blue';
+      case 'PENDING_APPROVAL': return 'badge-orange';
       case 'COMPLETED': return 'badge-green';
       case 'CANCELLED': return 'badge-red';
       default: return 'badge-gray';
@@ -96,6 +269,7 @@ export default function DriverDashboard() {
     switch (status) {
       case 'PENDING': return 'Chờ thực hiện';
       case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'PENDING_APPROVAL': return 'Chờ duyệt';
       case 'COMPLETED': return 'Hoàn thành';
       case 'CANCELLED': return 'Đã hủy';
       default: return status;
@@ -311,6 +485,8 @@ export default function DriverDashboard() {
                         <th>Container</th>
                         <th>Từ vị trí</th>
                         <th>Đến vị trí</th>
+                        <th>Chi phí</th>
+                        <th>Báo cáo</th>
                         <th>Trạng thái</th>
                         <th>Thao tác</th>
                       </tr>
@@ -318,17 +494,79 @@ export default function DriverDashboard() {
                     <tbody>
                       {assignedTasks.map((task) => (
                         <tr key={task.id} className="table-row">
+                          {/* Cột Container */}
                           <td>
                             <span className="container-id">{task.container_no}</span>
                           </td>
+                          
+                          {/* Cột Từ vị trí - Hiển thị thông tin tài xế */}
                           <td>
-                            <span className="location-text">
-                              {task.from_slot 
-                                ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : 'Bên ngoài'
-                              }
-                            </span>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px',
+                              padding: '4px'
+                            }}>
+                              {task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Tài xế:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#dbeafe',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.driver_name}
+                                    </span>
+                                  </div>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Biển số:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.license_plate}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="location-text">
+                                  {task.from_slot 
+                                    ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
+                                    : 'Bên ngoài'
+                                  }
+                                </span>
+                              )}
+                            </div>
                           </td>
+                          
+                          {/* Cột Đến vị trí - Hiển thị vị trí đích */}
                           <td>
                             <span className="location-text">
                               {task.to_slot 
@@ -337,11 +575,288 @@ export default function DriverDashboard() {
                               }
                             </span>
                           </td>
+                          
+                                                     {/* Cột Chi phí - Có thể nhập liệu */}
+                           <td>
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}>
+                               {editingCost === task.id ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#fef3c7',
+                                   borderRadius: '6px',
+                                   border: '1px solid #f59e0b'
+                                 }}>
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     placeholder="Nhập chi phí"
+                                     className="input input-sm"
+                                     data-task-id={task.id}
+                                     style={{
+                                       width: '100px',
+                                       textAlign: 'center',
+                                       fontSize: '12px'
+                                     }}
+                                     defaultValue={task.cost || ''}
+                                     onKeyPress={(e) => {
+                                       if (e.key === 'Enter') {
+                                         const value = parseInt((e.target as HTMLInputElement).value);
+                                         if (!isNaN(value) && value >= 0) {
+                                           handleCostUpdate(task.id, value);
+                                         }
+                                       }
+                                     }}
+                                   />
+                                   <div style={{
+                                     display: 'flex',
+                                     gap: '4px'
+                                   }}>
+                                                                        <button
+                                     className="btn btn-sm btn-success"
+                                     style={{ fontSize: '10px', padding: '2px 6px' }}
+                                     onClick={() => {
+                                       const input = document.querySelector(`input[data-task-id="${task.id}"]`) as HTMLInputElement;
+                                       if (!input) {
+                                         console.error('Input not found for task:', task.id);
+                                         return;
+                                       }
+                                       const value = parseInt(input.value || '0');
+                                       console.log('Saving cost:', { taskId: task.id, value, inputValue: input.value });
+                                       if (!isNaN(value) && value >= 0) {
+                                         handleCostUpdate(task.id, value);
+                                       } else {
+                                         alert('Vui lòng nhập số hợp lệ');
+                                       }
+                                     }}
+                                   >
+                                     Lưu
+                                   </button>
+                                     <button
+                                       className="btn btn-sm btn-outline"
+                                       style={{ fontSize: '10px', padding: '2px 6px' }}
+                                       onClick={() => setEditingCost(null)}
+                                     >
+                                       Hủy
+                                     </button>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '4px',
+                                   padding: '6px'
+                                 }}>
+                                   {task.cost && task.cost > 0 ? (
+                                     <div style={{
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       alignItems: 'center',
+                                       gap: '4px',
+                                       padding: '6px',
+                                       backgroundColor: '#f0fdf4',
+                                       borderRadius: '4px',
+                                       border: '1px solid #bbf7d0'
+                                     }}>
+                                       <span style={{ 
+                                         color: '#059669', 
+                                         fontWeight: '700',
+                                         fontSize: '14px',
+                                         fontFamily: 'monospace'
+                                       }}>
+                                         {task.cost.toLocaleString('vi-VN')}
+                                       </span>
+                                       <span style={{
+                                         fontSize: '10px',
+                                         color: '#16a34a',
+                                         backgroundColor: '#dcfce7',
+                                         padding: '2px 4px',
+                                         borderRadius: '2px',
+                                         fontWeight: '600'
+                                       }}>
+                                         VNĐ
+                                       </span>
+                                     </div>
+                                   ) : (
+                                     <span style={{ 
+                                       color: '#94a3b8', 
+                                       fontSize: '12px',
+                                       fontStyle: 'italic'
+                                     }}>
+                                       Chưa có
+                                     </span>
+                                   )}
+                                                                       {task.status !== 'PENDING_APPROVAL' && (
+                                      <button
+                                        className="btn btn-sm btn-outline"
+                                        style={{
+                                          fontSize: '10px',
+                                          padding: '2px 6px',
+                                          marginTop: '4px'
+                                        }}
+                                        onClick={() => setEditingCost(task.id)}
+                                      >
+                                        {task.cost ? 'Sửa' : 'Thêm'}
+                                      </button>
+                                    )}
+                                 </div>
+                               )}
+                             </div>
+                           </td>
+                          
+                                                     {/* Cột Báo cáo - Có thể upload ảnh */}
+                           <td>
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}>
+                               {uploadingImage === task.id ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#fef3c7',
+                                   borderRadius: '6px',
+                                   border: '1px solid #f59e0b'
+                                 }}>
+                                   <input
+                                     type="file"
+                                     accept="image/*"
+                                     className="input input-sm"
+                                     style={{
+                                       fontSize: '10px',
+                                       width: '120px'
+                                     }}
+                                     onChange={(e) => handleFileSelect(e, task.id)}
+                                   />
+                                   {selectedFile && (
+                                     <div style={{
+                                       display: 'flex',
+                                       gap: '4px'
+                                     }}>
+                                       <button
+                                         className="btn btn-sm btn-success"
+                                         style={{ fontSize: '10px', padding: '2px 6px' }}
+                                         onClick={() => handleImageUpload(task.id)}
+                                       >
+                                         Gửi
+                                       </button>
+                                       <button
+                                         className="btn btn-sm btn-outline"
+                                         style={{ fontSize: '10px', padding: '2px 6px' }}
+                                         onClick={() => {
+                                           setSelectedFile(null);
+                                           setUploadingImage(null);
+                                         }}
+                                       >
+                                         Hủy
+                                       </button>
+                                       </div>
+                                   )}
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '4px',
+                                   padding: '6px'
+                                 }}>
+                                   {task.report_status ? (
+                                     <div style={{
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       alignItems: 'center',
+                                       gap: '4px',
+                                       padding: '6px',
+                                       backgroundColor: '#fef3c7',
+                                       borderRadius: '4px',
+                                       border: '1px solid #f59e0b'
+                                     }}>
+                                       <span style={{ 
+                                         color: '#92400e', 
+                                         fontWeight: '600',
+                                         fontSize: '12px'
+                                       }}>
+                                         {task.report_status}
+                                       </span>
+                                       {task.report_image && (
+                                         <button
+                                           className="btn btn-sm btn-outline"
+                                           style={{
+                                             fontSize: '10px',
+                                             padding: '2px 4px'
+                                           }}
+                                           onClick={() => {
+                                             // Tạo URL đầy đủ cho backend
+                                             if (task.report_image) {
+                                               let imageUrl;
+                                               if (task.report_image.startsWith('http')) {
+                                                 imageUrl = task.report_image;
+                                               } else if (task.report_image.startsWith('/uploads/')) {
+                                                 // Sử dụng static file serving
+                                                 imageUrl = `http://localhost:1000${task.report_image}`;
+                                               } else {
+                                                 // Sử dụng route reports
+                                                 const filename = task.report_image.split('/').pop();
+                                                 imageUrl = `http://localhost:1000/driver-dashboard/reports/${filename}`;
+                                               }
+                                               console.log('Opening image URL:', imageUrl);
+                                               window.open(imageUrl, '_blank');
+                                             }
+                                           }}
+                                         >
+                                           Xem ảnh
+                                         </button>
+                                       )}
+                                     </div>
+                                   ) : (
+                                     <span style={{ 
+                                       color: '#94a3b8', 
+                                       fontSize: '12px',
+                                       fontStyle: 'italic'
+                                     }}>
+                                       Chưa có
+                                     </span>
+                                   )}
+                                                                       {task.status !== 'PENDING_APPROVAL' && (
+                                      <button
+                                        className="btn btn-sm btn-primary"
+                                        style={{
+                                          fontSize: '10px',
+                                          padding: '2px 6px',
+                                          marginTop: '4px'
+                                        }}
+                                        onClick={() => setUploadingImage(task.id)}
+                                      >
+                                        Gửi tài liệu
+                                      </button>
+                                    )}
+                                 </div>
+                               )}
+                             </div>
+                           </td>
+                          
+                          {/* Cột Trạng thái - Hiển thị trạng thái công việc */}
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
                               {getStatusText(task.status)}
                             </span>
                           </td>
+                          
+                          {/* Cột Thao tác - Hiển thị các nút hành động */}
                           <td>
                             <div className="action-buttons">
                               {task.status === 'PENDING' && (
@@ -354,11 +869,31 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button
-                                  onClick={() => handleStatusUpdate(task.id, 'COMPLETED')}
-                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleStatusUpdate(task.id, 'PENDING_APPROVAL')}
+                                  className={`btn btn-sm ${
+                                    task.cost && task.cost > 0 && task.report_status 
+                                      ? 'btn-success' 
+                                      : 'btn-disabled'
+                                  }`}
+                                  disabled={!task.cost || task.cost <= 0 || !task.report_status}
+                                  title={
+                                    !task.cost || task.cost <= 0 
+                                      ? 'Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt'
+                                      : !task.report_status 
+                                        ? 'Vui lòng gửi báo cáo trước khi chuyển sang chờ duyệt'
+                                        : 'Click để chuyển sang chờ duyệt'
+                                  }
                                 >
                                   Hoàn thành
                                 </button>
+                              )}
+                              {task.status === 'PENDING_APPROVAL' && (
+                                <div style={{ textAlign: 'center' }}>
+                                  <div className="badge badge-orange mb-2">Chờ duyệt</div>
+                                  <div style={{ fontSize: '12px', color: '#666' }}>
+                                    Đã gửi để duyệt
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </td>
@@ -397,12 +932,69 @@ export default function DriverDashboard() {
                             <span className="container-id">{task.container_no}</span>
                           </td>
                           <td>
-                            <span className="location-text">
-                              {task.from_slot 
-                                ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : 'Bên ngoài'
-                              }
-                            </span>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px',
+                              padding: '4px'
+                            }}>
+                              {task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Tài xế:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#dbeafe',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.driver_name}
+                                    </span>
+                                  </div>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '12px'
+                                  }}>
+                                    <span style={{ 
+                                      color: '#64748b', 
+                                      fontWeight: '600',
+                                      minWidth: '50px'
+                                    }}>Biển số:</span>
+                                    <span style={{ 
+                                      color: '#1e293b', 
+                                      fontWeight: '500',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '2px 6px',
+                                      borderRadius: '3px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '11px'
+                                    }}>
+                                      {task.container_info.license_plate}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="location-text">
+                                  {task.from_slot 
+                                    ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
+                                    : 'Bên ngoài'
+                                  }
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td>
                             <span className="location-text">
