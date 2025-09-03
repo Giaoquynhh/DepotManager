@@ -5,6 +5,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import ModernYardMap from '@components/yard/ModernYardMap';
 import KeyboardShortcuts from '@components/yard/KeyboardShortcuts';
+import YardConfigurationModal from '@components/yard/YardConfigurationModal';
 import { useTranslation } from '../../hooks/useTranslation';
 
 // Dùng stack map mới
@@ -20,6 +21,7 @@ export default function YardPage() {
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState('');
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   const { t } = useTranslation();
   
@@ -131,8 +133,14 @@ export default function YardPage() {
 
   // 🎯 Settings handler
   const handleSettings = useCallback(() => {
-    // TODO: Implement settings modal
-    console.log('Open settings');
+    setShowConfigModal(true);
+  }, []);
+
+  // 🎯 Handle configuration success
+  const handleConfigSuccess = useCallback(() => {
+    setShowConfigModal(false);
+    // Refresh the yard data
+    mutate('yard_map');
   }, []);
 
   return (
@@ -213,6 +221,13 @@ export default function YardPage() {
           }}
           onToggleDesign={() => {}}
           enabled={true}
+        />
+
+        {/* ⚙️ Yard Configuration Modal */}
+        <YardConfigurationModal
+          visible={showConfigModal}
+          onCancel={() => setShowConfigModal(false)}
+          onSuccess={handleConfigSuccess}
         />
       </main>
     </>

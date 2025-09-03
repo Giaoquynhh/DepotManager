@@ -48,6 +48,19 @@ export class YardController {
         if (!container_no) return res.status(400).json({ message: 'Thiếu container_no' });
         try { return res.json(await service.removeByContainer(req.user!, String(container_no))); } catch (e: any) { return res.status(400).json({ message: e.message }); }
     }
+
+    // ----- Yard Configuration endpoints -----
+    async getConfiguration(_req: AuthRequest, res: Response) {
+        try { return res.json(await service.getConfiguration()); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+    }
+    async configure(req: AuthRequest, res: Response) {
+        const { depotCount, slotsPerDepot, tiersPerSlot } = req.body || {};
+        if (!depotCount || !slotsPerDepot || !tiersPerSlot) return res.status(400).json({ message: 'Thiếu dữ liệu cấu hình' });
+        try { return res.json(await service.configureYard(req.user!, Number(depotCount), Number(slotsPerDepot), Number(tiersPerSlot))); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+    }
+    async reset(_req: AuthRequest, res: Response) {
+        try { return res.json(await service.resetYard()); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+    }
 }
 
 export default new YardController();

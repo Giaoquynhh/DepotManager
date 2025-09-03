@@ -27,6 +27,11 @@ router.post('/stack/confirm', requireRoles('SaleAdmin','SystemAdmin'), validate(
 router.post('/stack/release', requireRoles('SaleAdmin','SystemAdmin'), validate(releaseSchema), (req, res) => controller.release(req as any, res));
 router.post('/stack/remove-by-container', requireRoles('SaleAdmin','SystemAdmin'), validate(removeByContainerSchema), (req, res) => controller.removeByContainer(req as any, res));
 
+// Yard Configuration routes - chỉ SystemAdmin
+router.get('/configuration', requireRoles('SystemAdmin'), (req, res) => controller.getConfiguration(req as any, res));
+router.post('/configure', requireRoles('SystemAdmin'), (req, res) => controller.configure(req as any, res));
+router.post('/reset', requireRoles('SystemAdmin'), (req, res) => controller.reset(req as any, res));
+
 export default router;
 
 

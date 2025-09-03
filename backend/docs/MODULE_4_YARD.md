@@ -104,6 +104,33 @@ Gán container vào vị trí đã chọn
 }
 ```
 
+### GET /yard/configuration
+Lấy cấu hình hiện tại của bãi (chỉ SystemAdmin).
+Trả về:
+```json
+{
+  "depotCount": 2,
+  "slotsPerDepot": 20,
+  "tiersPerSlot": 5
+}
+```
+
+### POST /yard/configure
+Cấu hình lại layout bãi (chỉ SystemAdmin).
+Body:
+```json
+{
+  "depotCount": 3,
+  "slotsPerDepot": 25,
+  "tiersPerSlot": 6
+}
+```
+**Lưu ý**: API này sẽ xóa toàn bộ dữ liệu bãi hiện tại và tạo lại từ đầu.
+
+### POST /yard/reset
+Reset bãi về cấu hình mặc định (chỉ SystemAdmin).
+Cấu hình mặc định: 2 depot (B1, B2), 20 ô/depot, 5 tầng/ô.
+
 ## Luồng xử lý (User Flow)
 
 ### 1. Gate In
@@ -120,6 +147,17 @@ Gán container vào vị trí đã chọn
 - Toolbar thống kê, nút Refresh và Deselect.
 - Badge O/H theo block, auto-scroll tới slot đang chọn.
 - Skeleton loading khi tải bản đồ bãi.
+
+### 4. Cấu hình bãi (SystemAdmin)
+1) Click nút Settings (⚙️) trên giao diện Yard
+2) Modal cấu hình hiển thị với form nhập:
+   - Số lượng depot (1-50)
+   - Số lượng ô trong mỗi depot (1-100)  
+   - Số lượng tầng trong mỗi ô (1-20)
+3) Preview real-time hiển thị tổng số depot, ô, tầng
+4) Click "💾 Cập nhật" để áp dụng cấu hình mới
+5) Click "🔄 Cài đặt mặc định" để reset về mặc định
+6) Hệ thống tự động làm mới sơ đồ bãi sau khi cấu hình
 
 ## Quyền hạn (RBAC)
 
@@ -140,6 +178,8 @@ Gán container vào vị trí đã chọn
 ### SystemAdmin
 - ✅ Tất cả quyền của SaleAdmin
 - ✅ Quản lý cấu hình bãi
+- ✅ Cấu hình layout bãi (số depot, số ô, số tầng)
+- ✅ Reset cấu hình về mặc định
 - ✅ Xem logs và báo cáo
 
 ### Security

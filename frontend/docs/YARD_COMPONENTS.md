@@ -9,6 +9,8 @@ frontend/
 ├── components/
 │   └── yard/
 │       ├── YardMap.tsx                    # Sơ đồ bãi dạng grid
+│       ├── ModernYardMap.tsx              # Sơ đồ bãi hiện đại với settings
+│       ├── YardConfigurationModal.tsx     # Modal cấu hình bãi (SystemAdmin)
 │       ├── ContainerSearch/
 │       │   └── ContainerSearchForm.tsx    # Form tìm kiếm container
 │       ├── ContainerInfo/
@@ -23,6 +25,7 @@ frontend/
 │   └── Yard/
 │       └── index.tsx                      # Trang chính Yard (đã làm gọn)
 └── styles/
+    ├── yard-configuration.css              # CSS cho modal cấu hình bãi
     └── yard/
         ├── layout.css                      # Layout chính
         ├── map.css                         # CSS cho sơ đồ bãi
@@ -181,7 +184,74 @@ interface PDFSlipProps {
 />
 ```
 
-### 5. useContainerSearch.ts
+### 5. ModernYardMap.tsx
+Component sơ đồ bãi hiện đại với nút Settings để cấu hình bãi.
+
+#### Props
+```typescript
+interface ModernYardMapProps {
+  yard: Yard;
+  onSettings?: () => void;
+}
+```
+
+#### Tính năng
+- **Hiển thị sơ đồ bãi** với layout hiện đại
+- **Nút Settings (⚙️)** để mở modal cấu hình (chỉ SystemAdmin)
+- **Responsive design** cho mobile và desktop
+- **Loading states** và error handling
+
+#### Sử dụng
+```tsx
+<ModernYardMap
+  yard={yardData}
+  onSettings={() => setShowConfigModal(true)}
+/>
+```
+
+### 6. YardConfigurationModal.tsx
+Modal cấu hình bãi cho SystemAdmin.
+
+#### Props
+```typescript
+interface YardConfigurationModalProps {
+  visible: boolean;
+  onCancel: () => void;
+  onSuccess: () => void;
+}
+```
+
+#### Tính năng
+- **Form cấu hình** với 3 trường:
+  - Số lượng depot (1-50)
+  - Số lượng ô trong mỗi depot (1-100)
+  - Số lượng tầng trong mỗi ô (1-20)
+- **Preview real-time** hiển thị tổng số depot, ô, tầng
+- **3 nút hành động**:
+  - Hủy (đóng modal)
+  - 🔄 Cài đặt mặc định (reset về 2 depot, 20 ô, 5 tầng)
+  - 💾 Cập nhật (áp dụng cấu hình mới)
+- **Success messages** và loading states
+- **Validation** input với giá trị tối thiểu
+
+#### API Integration
+- `GET /yard/configuration` - Lấy cấu hình hiện tại
+- `POST /yard/configure` - Cập nhật cấu hình
+- `POST /yard/reset` - Reset về mặc định
+
+#### Sử dụng
+```tsx
+<YardConfigurationModal
+  visible={showConfigModal}
+  onCancel={() => setShowConfigModal(false)}
+  onSuccess={() => {
+    setShowConfigModal(false);
+    mutate('yard_map'); // Refresh data
+  }}
+/>
+```
+
+### 7. useContainerSearch.ts
 Custom hook quản lý logic tìm kiếm container.
 
 #### State Management
@@ -220,6 +290,7 @@ Trang chính đã được làm gọn, chỉ giữ lại chức năng cốt lõi
 const [containerNo, setContainerNo] = useState('');
 const [gateLocationFilter, setGateLocationFilter] = useState('');
 const [showContainerModal, setShowContainerModal] = useState(false);
+const [showConfigModal, setShowConfigModal] = useState(false);
 
 const {
   containerInfo,
@@ -234,8 +305,9 @@ const {
 ```
 
 #### Layout mới
-- **Left column (2/3)**: Sơ đồ bãi với YardMap
+- **Left column (2/3)**: Sơ đồ bãi với ModernYardMap (có nút Settings)
 - **Right column (1/3)**: Chỉ form tìm kiếm ContainerSearchForm
+- **Modal cấu hình**: YardConfigurationModal (chỉ SystemAdmin)
 - **Không còn hiển thị**:
   - ContainerInfoCard
   - PositionSuggestionCard  
@@ -251,24 +323,41 @@ const {
 5. Chọn "Tải xuống PDF" hoặc "In phiếu"
 ```
 
+#### Luồng cấu hình bãi (SystemAdmin)
+```
+1. Click nút Settings (⚙️) trên ModernYardMap
+2. Modal cấu hình hiển thị với form nhập
+3. Thay đổi số depot, ô, tầng → Preview tự động cập nhật
+4. Click "💾 Cập nhật" → Áp dụng cấu hình mới
+5. Click "🔄 Cài đặt mặc định" → Reset về mặc định
+6. Hệ thống tự động làm mới sơ đồ bãi
+```
+
 ## Styling
 
 ### CSS Structure mới
 ```
-styles/yard/
-├── layout.css          # Layout chính (2 cột)
-├── map.css             # Sơ đồ bãi
-├── form.css            # Form tìm kiếm + validation
-├── modal.css           # Modal styling + no-info message
-├── pdf-slip.css        # PDF slip + actions buttons
-├── info.css            # Info cards + grid layout
-├── suggestions.css      # Position suggestion cards
-├── duplicate.css        # Duplicate warning styling
-├── responsive.css       # Mobile responsive
-└── yard.css            # File import chính
+styles/
+├── yard-configuration.css  # Modal cấu hình bãi + form + buttons
+└── yard/
+    ├── layout.css          # Layout chính (2 cột)
+    ├── map.css             # Sơ đồ bãi
+    ├── form.css            # Form tìm kiếm + validation
+    ├── modal.css           # Modal styling + no-info message
+    ├── pdf-slip.css        # PDF slip + actions buttons
+    ├── info.css            # Info cards + grid layout
+    ├── suggestions.css      # Position suggestion cards
+    ├── duplicate.css        # Duplicate warning styling
+    ├── responsive.css       # Mobile responsive
+    └── yard.css            # File import chính
 ```
 
 ### Key CSS Classes
+- **`.yard-config-modal`**: Modal cấu hình bãi chính
+- **`.config-form`**: Form nhập cấu hình
+- **`.config-preview`**: Preview section với thống kê
+- **`.preview-actions`**: 2 nút Cập nhật và Cài đặt mặc định
+- **`.modal-footer`**: Footer với 3 nút (Hủy, Reset, Update)
 - **`.pdf-slip-container`**: Container chính cho PDF slip
 - **`.pdf-actions`**: 2 nút tải PDF và in phiếu
 - **`.pdf-modal`**: Modal styling cho PDF view
@@ -342,12 +431,17 @@ styles/yard/
 3. **PDF generation**: jsPDF + html2canvas
 4. **Print functionality**: Cửa sổ in riêng biệt
 5. **Mock position data**: 5 vị trí gợi ý cố định
+6. **YardConfigurationModal**: Modal cấu hình bãi cho SystemAdmin
+7. **ModernYardMap**: Component sơ đồ bãi với nút Settings
+8. **Yard configuration APIs**: GET/POST /yard/configuration, /yard/configure, /yard/reset
 
 ### 🔄 Đã thay đổi
 1. **Layout**: Chỉ 2 cột, không còn thông tin phức tạp
 2. **Search logic**: Tập trung vào Gate In status
 3. **User flow**: Đơn giản hóa thành 4 bước
 4. **Information display**: Chỉ trong popup modal
+5. **Yard map**: Sử dụng ModernYardMap thay vì YardMap cũ
+6. **Settings integration**: Nút Settings tích hợp vào ModernYardMap
 
 ## Tài liệu tham khảo
 
