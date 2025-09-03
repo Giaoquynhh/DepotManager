@@ -1,0 +1,533 @@
+/* Modern Interface - Ultra Premium Yard Management */
+
+/* Advanced Color System */
+:root {
+  /* Premium Ocean Colors */
+  --premium-navy: #0A0E27;        /* Ultra deep navy */
+  --premium-steel: #2D3748;       /* Premium steel */
+  --premium-cyan: #00D4FF;        /* Electric cyan */
+  --premium-purple: #8B5CF6;      /* Neon purple */
+  --premium-emerald: #00F5A0;     /* Electric emerald */
+  --premium-amber: #FFB800;       /* Golden amber */
+  --premium-red: #FF4757;         /* Electric red */
+  
+  /* Glassmorphism Colors */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Advanced Gradients */
+  --premium-bg-primary: linear-gradient(135deg, 
+    #0A0E27 0%, 
+    #1A1F3A 25%, 
+    #2D3748 50%, 
+    #4A5568 75%, 
+    #718096 100%);
+  
+  --premium-bg-card: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.9) 50%, 
+    rgba(241, 245, 249, 0.85) 100%);
+  
+  --premium-bg-glass: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  
+  /* Advanced Shadows */
+  --premium-shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --premium-shadow-md: 0 8px 40px rgba(0, 0, 0, 0.12);
+  --premium-shadow-lg: 0 16px 60px rgba(0, 0, 0, 0.15);
+  --premium-shadow-glow: 0 0 40px rgba(0, 212, 255, 0.4);
+  --premium-shadow-neon: 0 0 30px rgba(139, 92, 246, 0.5);
+  
+  /* Advanced Animations */
+  --premium-transition-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --premium-transition-normal: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --premium-transition-slow: 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Ultra Modern Header */
+.yard-header {
+  background: var(--premium-bg-primary);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--premium-shadow-lg);
+}
+
+.yard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(0, 245, 160, 0.05) 0%, transparent 50%);
+  animation: headerGlow 8s ease-in-out infinite;
+}
+
+@keyframes headerGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.yard-header-content {
+  position: relative;
+  z-index: 2;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Premium Title - Disabled gradient effect for modern header */
+.yard-title {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+@keyframes titleShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Ultra Modern Search Bar */
+.yard-search-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.yard-search-input {
+  background: var(--premium-bg-glass);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  width: 400px;
+  transition: all var(--premium-transition-normal);
+  box-shadow: var(--premium-shadow-md);
+}
+
+.yard-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.yard-search-input:focus {
+  outline: none;
+  border-color: var(--premium-cyan);
+  box-shadow: var(--premium-shadow-glow);
+  transform: translateY(-2px);
+}
+
+/* Premium Action Buttons */
+.yard-action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.yard-action-btn {
+  background: var(--premium-bg-glass);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--premium-transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--premium-shadow-md);
+}
+
+.yard-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.6s;
+}
+
+.yard-action-btn:hover {
+  transform: translateY(-4px) scale(1.05);
+  border-color: var(--premium-cyan);
+  box-shadow: var(--premium-shadow-glow);
+}
+
+.yard-action-btn:hover::before {
+  left: 100%;
+}
+
+.yard-action-btn.refresh {
+  background: linear-gradient(135deg, 
+    rgba(0, 212, 255, 0.2), 
+    rgba(0, 212, 255, 0.1));
+}
+
+.yard-action-btn.locate {
+  background: linear-gradient(135deg, 
+    rgba(139, 92, 246, 0.2), 
+    rgba(139, 92, 246, 0.1));
+}
+
+/* Ultra Modern Depot Banner */
+.yard-depot-banner {
+  background: linear-gradient(135deg, 
+    #0A0E27 0%, 
+    #1A1F3A 25%, 
+    #2D3748 50%, 
+    #4A5568 75%, 
+    #718096 100%);
+  margin: 2rem auto;
+  max-width: 1600px;
+  border-radius: 24px;
+  padding: 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--premium-shadow-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.yard-depot-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+  animation: bannerPulse 6s ease-in-out infinite;
+}
+
+@keyframes bannerPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.yard-depot-title {
+  font-size: 4rem;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+  letter-spacing: 2px;
+}
+
+/* Ultra Modern Container Blocks */
+.yard-blocks-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 3rem;
+}
+
+.yard-block {
+  background: var(--premium-bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: var(--premium-shadow-lg);
+  border: 1px solid var(--glass-border);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--premium-transition-normal);
+}
+
+.yard-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, 
+    var(--premium-cyan) 0%, 
+    var(--premium-purple) 25%,
+    var(--premium-emerald) 50%,
+    var(--premium-amber) 75%,
+    var(--premium-red) 100%);
+  border-radius: 24px 24px 0 0;
+}
+
+.yard-block:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--premium-shadow-lg), var(--premium-shadow-glow);
+}
+
+.yard-block-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--premium-navy);
+  margin: 0 0 2rem 0;
+  text-align: center;
+  position: relative;
+}
+
+.yard-block-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--premium-cyan), var(--premium-purple));
+  border-radius: 2px;
+}
+
+/* Ultra Modern Container Slots */
+.yard-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.yard-slot {
+  aspect-ratio: 1;
+  background: var(--premium-bg-glass);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--glass-border);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all var(--premium-transition-normal);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--premium-shadow-sm);
+}
+
+.yard-slot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity var(--premium-transition-fast);
+}
+
+.yard-slot:hover {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: var(--premium-shadow-md);
+  border-color: var(--premium-cyan);
+}
+
+.yard-slot:hover::before {
+  opacity: 1;
+}
+
+/* Slot Status Variants */
+.yard-slot.empty {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(248, 250, 252, 0.8) 100%);
+  color: var(--premium-steel);
+}
+
+.yard-slot.hold {
+  background: linear-gradient(135deg, 
+    var(--premium-amber) 0%, 
+    #FFB800 100%);
+  color: white;
+  box-shadow: var(--premium-shadow-md), 0 0 20px rgba(255, 184, 0, 0.3);
+}
+
+.yard-slot.suggested {
+  background: linear-gradient(135deg, 
+    var(--premium-cyan) 0%, 
+    #00D4FF 100%);
+  color: white;
+  box-shadow: var(--premium-shadow-md), 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.yard-slot.selected {
+  background: linear-gradient(135deg, 
+    var(--premium-purple) 0%, 
+    #8B5CF6 100%);
+  color: white;
+  box-shadow: var(--premium-shadow-md), var(--premium-shadow-neon);
+}
+
+.yard-slot.occupied {
+  background: linear-gradient(135deg, 
+    var(--premium-steel) 0%, 
+    #2D3748 100%);
+  color: white;
+  box-shadow: var(--premium-shadow-md);
+}
+
+.yard-slot.maintenance {
+  background: linear-gradient(135deg, 
+    var(--premium-red) 0%, 
+    #FF4757 100%);
+  color: white;
+  box-shadow: var(--premium-shadow-md), 0 0 20px rgba(255, 71, 87, 0.3);
+}
+
+/* Ultra Modern Legend */
+.yard-legend {
+  background: var(--premium-bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 1600px;
+  box-shadow: var(--premium-shadow-lg);
+  border: 1px solid var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-legend::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--premium-cyan) 0%, 
+    var(--premium-purple) 50%, 
+    var(--premium-emerald) 100%);
+}
+
+.yard-legend-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--premium-navy);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.yard-legend-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.yard-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--premium-bg-glass);
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  transition: all var(--premium-transition-fast);
+}
+
+.yard-legend-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--premium-shadow-sm);
+}
+
+.yard-legend-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  box-shadow: var(--premium-shadow-sm);
+}
+
+.yard-legend-label {
+  font-weight: 600;
+  color: var(--premium-navy);
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .yard-blocks-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .yard-slots-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .yard-header-content {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .yard-title {
+    font-size: 1.5rem;
+  }
+  
+  .yard-search-input {
+    width: 100%;
+  }
+  
+  .yard-depot-title {
+    font-size: 2.5rem;
+  }
+  
+  .yard-slots-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .yard-slot {
+    font-size: 0.9rem;
+  }
+}
+
+/* Advanced Animations */
+@keyframes slotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.yard-slot.pulse {
+  animation: slotPulse 2s ease-in-out infinite;
+}
+
+@keyframes blockFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.yard-block.float {
+  animation: blockFloat 4s ease-in-out infinite;
+}
+

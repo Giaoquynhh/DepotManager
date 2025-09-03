@@ -1,0 +1,633 @@
+/* 🎯 Container Yard Management Dashboard - Modern Explosive Design */
+
+/* 🏗️ Core Layout Revolution - Dynamic Block Cards & Interactive Grid */
+:root {
+  /* 🌊 Primary Palette - Deep Ocean Gradient */
+  --ocean-navy: #1a365d;           /* Deep navy blue */
+  --ocean-electric: #3182ce;       /* Electric blue */
+  --ocean-cyan: #00d4ff;           /* Bright cyan */
+  --ocean-deep: #0f172a;           /* Deepest ocean */
+  
+  /* 🎨 Status Colors with Personality */
+  --status-empty: linear-gradient(135deg, #10b981 0%, #059669 100%);     /* Fresh mint gradient */
+  --status-hold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);      /* Warm amber glow */
+  --status-suggested: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); /* Cool blue shimmer */
+  --status-selected: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);  /* Purple lightning */
+  --status-occupied: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);  /* Confident red */
+  --status-maintenance: linear-gradient(135deg, #f97316 0%, #ea580c 100%); /* Orange caution */
+  
+  /* ✨ Glow Effects */
+  --glow-empty: 0 0 20px rgba(16, 185, 129, 0.4);
+  --glow-hold: 0 0 20px rgba(245, 158, 11, 0.4);
+  --glow-suggested: 0 0 20px rgba(59, 130, 246, 0.4);
+  --glow-selected: 0 0 25px rgba(139, 92, 246, 0.5);
+  --glow-occupied: 0 0 20px rgba(239, 68, 68, 0.4);
+  --glow-maintenance: 0 0 20px rgba(249, 115, 22, 0.4);
+  
+  /* 🎭 Animation Timing */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 🌈 Glassmorphic Effects */
+  --glass-bg: rgba(241, 245, 249, 0.8);
+  --glass-border: rgba(148, 163, 184, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* 🏗️ Dynamic Block Cards - 3D Style with Depth */
+.yard-block-card {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  transform-style: preserve-3d;
+}
+
+.yard-block-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, 
+    var(--ocean-cyan) 0%, 
+    var(--ocean-electric) 50%, 
+    var(--ocean-navy) 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.yard-block-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 212, 255, 0.02) 0%, 
+    rgba(49, 130, 206, 0.02) 50%, 
+    rgba(26, 54, 93, 0.02) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.yard-block-card:hover {
+  transform: translateY(-8px) rotateX(2deg);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 212, 255, 0.2);
+  border-color: var(--ocean-cyan);
+}
+
+.yard-block-card:hover::after {
+  opacity: 1;
+}
+
+/* 🎯 Interactive Container Grid - Smart Tiles */
+.yard-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 12px;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(248, 250, 252, 0.5);
+  border-radius: 16px;
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.yard-slot-tile {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all var(--transition-normal);
+  user-select: none;
+  border: 2px solid transparent;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.yard-slot-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
+}
+
+.yard-slot-tile::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all var(--transition-normal);
+}
+
+/* 🎭 Micro-Interactions - Hover Effects */
+.yard-slot-tile:hover {
+  transform: scale(1.1) translateZ(10px);
+  z-index: 1003;
+  box-shadow: var(--glow-suggested);
+}
+
+.yard-slot-tile:hover::after {
+  width: 100px;
+  height: 100px;
+  opacity: 0.6;
+}
+
+.yard-slot-tile:active {
+  transform: scale(0.95) translateZ(5px);
+  z-index: 1003;
+}
+
+/* 🎨 Status-Based Color Pulsing */
+.yard-slot-tile.status-empty {
+  background: var(--status-empty);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.yard-slot-tile.status-empty:hover {
+  box-shadow: var(--glow-empty);
+  animation: pulse-empty 2s ease-in-out infinite;
+}
+
+.yard-slot-tile.status-hold {
+  background: var(--status-hold);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.yard-slot-tile.status-hold:hover {
+  box-shadow: var(--glow-hold);
+  animation: pulse-hold 2s ease-in-out infinite;
+}
+
+.yard-slot-tile.status-suggested {
+  background: var(--status-suggested);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--ocean-cyan);
+}
+
+.yard-slot-tile.status-suggested:hover {
+  box-shadow: var(--glow-suggested);
+  animation: pulse-suggested 1.5s ease-in-out infinite;
+}
+
+.yard-slot-tile.status-selected {
+  background: var(--status-selected);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border: 3px solid var(--ocean-cyan);
+  box-shadow: var(--glow-selected);
+  animation: pulse-selected 1s ease-in-out infinite;
+}
+
+.yard-slot-tile.status-occupied {
+  background: var(--status-occupied);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.yard-slot-tile.status-occupied:hover {
+  box-shadow: var(--glow-occupied);
+  animation: pulse-occupied 2s ease-in-out infinite;
+}
+
+.yard-slot-tile.status-maintenance {
+  background: var(--status-maintenance);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.yard-slot-tile.status-maintenance::before {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--status-maintenance),
+    var(--status-maintenance) 10px,
+    rgba(255, 255, 255, 0.1) 10px,
+    rgba(255, 255, 255, 0.1) 20px
+  );
+}
+
+.yard-slot-tile.status-maintenance:hover {
+  box-shadow: var(--glow-maintenance);
+  animation: pulse-maintenance 2s ease-in-out infinite;
+}
+
+/* ⚡ Floating Search Portal - Glassmorphic Design */
+.yard-search-portal {
+  position: relative;
+  margin-bottom: 2rem;
+  z-index: 10;
+}
+
+.yard-search-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: visible;
+}
+
+.yard-search-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 212, 255, 0.1) 0%, 
+    rgba(139, 92, 246, 0.1) 100%);
+  pointer-events: none;
+}
+
+.yard-search-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ocean-deep);
+  transition: all var(--transition-normal);
+  position: relative;
+  z-index: 1;
+}
+
+.yard-search-input:focus {
+  outline: none;
+  border-color: var(--ocean-cyan);
+  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.2);
+  background: rgba(255, 255, 255, 1);
+}
+
+.yard-search-input::placeholder {
+  color: rgba(15, 23, 42, 0.6);
+  font-weight: 400;
+}
+
+.yard-search-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.yard-search-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-search-btn.primary {
+  background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--ocean-electric) 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.yard-search-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+}
+
+.yard-search-btn.secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ocean-deep);
+  border: 2px solid rgba(0, 212, 255, 0.3);
+}
+
+.yard-search-btn.secondary:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: var(--ocean-cyan);
+  transform: translateY(-2px);
+}
+
+/* 🎯 Quick Stats Bar - Floating Mini Dashboard */
+.yard-stats-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.yard-stat-card {
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.95) 0%, rgba(226, 232, 240, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ocean-cyan) 0%, var(--ocean-electric) 100%);
+}
+
+.yard-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.yard-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: white;
+  background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--ocean-electric) 100%);
+}
+
+.yard-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.yard-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ocean-deep);
+  line-height: 1;
+}
+
+.yard-stat-label {
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  font-weight: 500;
+}
+
+/* 🎪 Action Bubbles - Floating Action Buttons */
+.yard-action-bubbles {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 1000;
+}
+
+.yard-action-bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--ocean-electric) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-action-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.yard-action-bubble:hover {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 15px 35px rgba(0, 212, 255, 0.4);
+}
+
+.yard-action-bubble:hover::before {
+  opacity: 1;
+}
+
+.yard-action-bubble svg {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 🎭 Animation Keyframes */
+@keyframes pulse-empty {
+  0%, 100% { box-shadow: var(--glow-empty); }
+  50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); }
+}
+
+@keyframes pulse-hold {
+  0%, 100% { box-shadow: var(--glow-hold); }
+  50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.6); }
+}
+
+@keyframes pulse-suggested {
+  0%, 100% { box-shadow: var(--glow-suggested); }
+  50% { box-shadow: 0 0 35px rgba(59, 130, 246, 0.6); }
+}
+
+@keyframes pulse-selected {
+  0%, 100% { box-shadow: var(--glow-selected); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.7); }
+}
+
+@keyframes pulse-occupied {
+  0%, 100% { box-shadow: var(--glow-occupied); }
+  50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+}
+
+@keyframes pulse-maintenance {
+  0%, 100% { box-shadow: var(--glow-maintenance); }
+  50% { box-shadow: 0 0 30px rgba(249, 115, 22, 0.6); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.05) rotate(5deg); }
+  70% { transform: scale(0.9) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+/* 🎨 Enhanced Typography - yard-title styling moved to globals.css */
+
+.yard-subtitle {
+  font-size: 1.1rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* 📱 Responsive Excellence */
+@media (max-width: 768px) {
+  .yard-block-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .yard-slot-grid {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 8px;
+  }
+  
+  .yard-slot-tile {
+    width: 50px;
+    height: 50px;
+    font-size: 10px;
+  }
+  
+  .yard-search-container {
+    padding: 1rem;
+  }
+  
+  .yard-title {
+    font-size: 2rem;
+  }
+  
+  .yard-action-bubbles {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .yard-action-bubble {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .yard-slot-grid {
+    grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+    gap: 6px;
+  }
+  
+  .yard-slot-tile {
+    width: 45px;
+    height: 45px;
+    font-size: 9px;
+  }
+  
+  .yard-stats-bar {
+    flex-direction: column;
+  }
+  
+  .yard-stat-card {
+    justify-content: center;
+  }
+}
+
+/* 🎯 Loading States & Skeleton Screens */
+.yard-loading-skeleton {
+  display: grid;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.yard-skeleton-card {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 16px;
+  height: 200px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 🎭 Empty States */
+.yard-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.yard-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.yard-empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--ocean-deep);
+}
+
+.yard-empty-description {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+

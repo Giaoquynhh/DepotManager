@@ -181,7 +181,7 @@ a, a:visited {
 
 /* Header - Navy background */
 .header {
-  background: #5d1582; /* Navy blue */
+  background: #200d6b; /* Navy blue */
   color: var(--color-text-inverse);
   padding: var(--space-2) 0; /* Giảm padding từ space-3 (12px) xuống space-2 (8px) */
   box-shadow: var(--shadow-md);
@@ -787,7 +787,7 @@ button, input, select {
 .sidebar {
   position: fixed;
   left: 0;
-  top: calc(var(--header-clearance) + 3.8px); /* Thêm 10px để sidebar không đè lên header */
+  top: calc(var(--header-clearance) + 3.8px); /* Thêm 3.8px để sidebar không đè lên header */
   bottom: 0;
   width: 240px;
   background: linear-gradient(180deg, 
@@ -4111,13 +4111,83 @@ main:has(.auth-hero) {
 .yard-page {
   padding: 2rem;
   background: var(--color-background);
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Yard Page */
+.yard-page::-webkit-scrollbar {
+  width: 8px;
+}
+
+.yard-page::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.yard-page::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.yard-page::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+}
+
+/* Firefox scrollbar */
+.yard-page {
+  scrollbar-width: thin;
+  scrollbar-color: #3b82f6 rgba(255, 255, 255, 0.1);
 }
 
 .yard-page .modern-header {
-  background: linear-gradient(135deg, #059669, #10b981);
-  border: 2px solid #34d399;
-  box-shadow: 0 20px 40px rgba(5, 150, 105, 0.3);
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+  margin-bottom: 1rem;
 }
+
+.yard-page .modern-header .yard-title {
+  color: #ffffff !important;
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* Hiệu ứng gradient cho yard-title giống các trang khác */
+.yard-page .modern-header .yard-title.gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+.yard-page .modern-header .yard-title.gradient-ultimate {
+  background: linear-gradient(90deg,
+    #ffffff 0%,
+    #f0f9ff 20%,
+    #e0f2fe 40%,
+    #bae6fd 60%,
+    #e0f2fe 80%,
+    #ffffff 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s ease-in-out infinite;
+  text-shadow: none;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+
 
 
 

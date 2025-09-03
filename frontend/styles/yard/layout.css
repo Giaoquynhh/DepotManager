@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 100vh;
-  background: var(--ocean-bg-secondary);
+  min-height: calc(100vh - 4rem); /* Subtract padding */
+  position: relative;
 }
 
 .yard-main-content {
@@ -21,7 +21,6 @@
   max-width: none;
   margin: 0;
   padding: 0;
-  background: var(--ocean-bg-secondary);
   min-height: 100vh;
   position: relative;
 }

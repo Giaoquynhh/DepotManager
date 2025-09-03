@@ -1,0 +1,407 @@
+/* Premium Effects - Ultra Advanced Visual Enhancements */
+
+/* Particle System */
+.yard-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.yard-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--premium-cyan);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: particleFloat 8s linear infinite;
+}
+
+.yard-particle:nth-child(2n) {
+  background: var(--premium-purple);
+  animation-duration: 12s;
+}
+
+.yard-particle:nth-child(3n) {
+  background: var(--premium-emerald);
+  animation-duration: 10s;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(100vh) translateX(0px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100px) translateX(100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Advanced Glassmorphism */
+.yard-glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* Neon Glow Effects */
+.yard-neon-glow {
+  position: relative;
+}
+
+.yard-neon-glow::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    var(--premium-cyan), 
+    var(--premium-purple), 
+    var(--premium-emerald), 
+    var(--premium-amber));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--premium-transition-normal);
+  filter: blur(8px);
+}
+
+.yard-neon-glow:hover::before {
+  opacity: 0.7;
+}
+
+/* Advanced Hover Effects */
+.yard-hover-lift {
+  transition: all var(--premium-transition-normal);
+}
+
+.yard-hover-lift:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    var(--premium-shadow-lg),
+    0 0 40px rgba(0, 212, 255, 0.3);
+}
+
+/* Magnetic Effect */
+.yard-magnetic {
+  transition: all var(--premium-transition-fast);
+}
+
+.yard-magnetic:hover {
+  transform: scale(1.05);
+  box-shadow: var(--premium-shadow-glow);
+}
+
+/* Liquid Animation */
+.yard-liquid {
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.8s;
+}
+
+.yard-liquid:hover::before {
+  left: 100%;
+}
+
+/* Advanced Button Effects */
+.yard-btn-premium {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, 
+    var(--premium-cyan) 0%, 
+    var(--premium-purple) 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 1rem 2rem;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--premium-transition-normal);
+  box-shadow: var(--premium-shadow-md);
+}
+
+.yard-btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent);
+  transition: left 0.6s;
+}
+
+.yard-btn-premium:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: var(--premium-shadow-glow);
+}
+
+.yard-btn-premium:hover::before {
+  left: 100%;
+}
+
+.yard-btn-premium:active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Advanced Loading States */
+.yard-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.yard-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent);
+  animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Advanced Status Indicators */
+.yard-status-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.yard-status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.yard-status-indicator.available::before {
+  background: var(--premium-emerald);
+}
+
+.yard-status-indicator.hold::before {
+  background: var(--premium-amber);
+}
+
+.yard-status-indicator.blocked::before {
+  background: var(--premium-red);
+}
+
+@keyframes statusPulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.5; 
+    transform: scale(1.2); 
+  }
+}
+
+/* Advanced Tooltips */
+.yard-tooltip-premium {
+  position: absolute;
+  background: var(--premium-navy);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  transition: all var(--premium-transition-normal);
+  pointer-events: none;
+  box-shadow: var(--premium-shadow-lg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+.yard-tooltip-premium::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--premium-navy);
+}
+
+.yard-tooltip-premium.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Advanced Scrollbar */
+.yard-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.yard-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.yard-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, 
+    var(--premium-cyan), 
+    var(--premium-purple));
+  border-radius: 4px;
+}
+
+.yard-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, 
+    var(--premium-purple), 
+    var(--premium-emerald));
+}
+
+/* Advanced Focus States */
+.yard-focus-ring:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(0, 212, 255, 0.3),
+    var(--premium-shadow-md);
+}
+
+/* Advanced Selection States */
+.yard-selection {
+  position: relative;
+}
+
+.yard-selection::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 212, 255, 0.1), 
+    rgba(139, 92, 246, 0.1));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--premium-transition-fast);
+  pointer-events: none;
+}
+
+.yard-selection.selected::after {
+  opacity: 1;
+}
+
+/* Advanced Responsive Effects */
+@media (max-width: 768px) {
+  .yard-particles {
+    display: none; /* Disable particles on mobile for performance */
+  }
+  
+  .yard-glass-card {
+    backdrop-filter: blur(10px); /* Reduce blur on mobile */
+  }
+  
+  .yard-neon-glow::before {
+    filter: blur(4px); /* Reduce blur on mobile */
+  }
+}
+
+/* Performance Optimizations */
+.yard-gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.yard-smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Advanced Accessibility */
+.yard-reduced-motion {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yard-particles,
+  .yard-particle,
+  .yard-neon-glow::before,
+  .yard-liquid::before,
+  .yard-loading::after {
+    animation: none !important;
+  }
+  
+  .yard-hover-lift:hover,
+  .yard-magnetic:hover,
+  .yard-btn-premium:hover {
+    transform: none !important;
+  }
+}
+

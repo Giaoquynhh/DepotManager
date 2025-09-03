@@ -13,3 +13,9 @@
 @import './yard/duplicate.css';
 @import './yard/responsive.css';
 @import './yard/pdf-slip.css';
+/* 🎯 Modern Explosive Design - New Styles */
+@import './yard/explosive-design.css';
+@import './yard/modern-components.css';
+@import './yard/animations.css';
+@import './yard/smart-search.css';
+@import './yard/keyboard-shortcuts.css';

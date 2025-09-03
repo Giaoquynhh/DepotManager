@@ -4,7 +4,6 @@
 .yard-map-container {
   width: 100%;
   min-height: calc(100vh - 200px);
-  background: var(--ocean-bg-secondary);
   position: relative;
   overflow: hidden;
 }
