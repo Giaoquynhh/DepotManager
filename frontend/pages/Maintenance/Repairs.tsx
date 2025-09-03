@@ -280,9 +280,10 @@ export default function RepairsPage() {
           />
         </Card>
 
-        <PendingContainersModal
-          isOpen={isPendingContainersModalOpen}
+                <PendingContainersModal 
+          isOpen={isPendingContainersModalOpen} 
           onClose={() => setIsPendingContainersModalOpen(false)}
+          onRepairCreated={() => mutate(key)}
         />
 
         {selectedRepairTicket && (

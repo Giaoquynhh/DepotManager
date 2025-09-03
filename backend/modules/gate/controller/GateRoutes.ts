@@ -14,10 +14,10 @@ router.patch(
   gateController.forwardRequest.bind(gateController)
 );
 
-// Gate approve request (SaleAdmin)
+// Gate approve request (SaleAdmin, SystemAdmin)
 router.patch(
   '/requests/:id/approve',
-  requireRoles('SaleAdmin'),
+  requireRoles('SaleAdmin', 'SystemAdmin'),
   gateController.approveGate.bind(gateController)
 );
 

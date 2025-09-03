@@ -199,7 +199,7 @@ export default function AppointmentForm({
     }
   };
 
-  const filteredLocations = locations.filter(loc => loc.type === formData.location_type);
+  const filteredLocations = locations.filter(loc => loc.type === 'gate');
 
   // Get minimum datetime (current time + 1 hour)
   const getMinDateTime = () => {
@@ -265,7 +265,7 @@ export default function AppointmentForm({
           )}
         </div>
 
-        {/* Location Type */}
+        {/* Location Type - Chỉ hiển thị Cổng */}
         <div className="appointment-form-group">
           <label className="appointment-form-label">Loại địa điểm *</label>
           <div className="appointment-radio-group">
@@ -279,17 +279,6 @@ export default function AppointmentForm({
                 disabled={loading}
               />
               <span className="appointment-radio-text">Cổng (Gate)</span>
-            </label>
-            <label className="appointment-radio-item">
-              <input
-                type="radio"
-                name="location_type"
-                value="yard"
-                checked={formData.location_type === 'yard'}
-                onChange={(e) => handleInputChange('location_type', e.target.value)}
-                disabled={loading}
-              />
-              <span className="appointment-radio-text">Bãi (Yard)</span>
             </label>
           </div>
         </div>

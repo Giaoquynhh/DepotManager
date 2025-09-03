@@ -7,9 +7,10 @@ import PendingContainersModalContainer from './PendingContainersModalContainer';
 interface PendingContainersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onRepairCreated?: () => void;
 }
 
-export default function PendingContainersModal({ isOpen, onClose }: PendingContainersModalProps) {
+export default function PendingContainersModal({ isOpen, onClose, onRepairCreated }: PendingContainersModalProps) {
   // State quản lý danh sách container IMPORT đang chờ kiểm tra
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -109,12 +110,8 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
         throw new Error(errorData.message || `HTTP ${updateResponse.status}: ${updateResponse.statusText}`);
       }
 
-      // Cập nhật UI
-      setRequests(prev => prev.map(req => 
-        req.id === requestId 
-          ? { ...req, status: 'CHECKING' }
-          : req
-      ));
+      // Loại bỏ container khỏi danh sách vì đã chuyển sang CHECKING
+      setRequests(prev => prev.filter(req => req.id !== requestId));
 
       // Tạo phiếu sửa chữa cho container
       const container = requests.find(req => req.id === requestId);
@@ -140,6 +137,11 @@ export default function PendingContainersModal({ isOpen, onClose }: PendingConta
             }
             // Refresh danh sách phiếu sửa chữa
             mutate(['repairs', 'CHECKING']);
+            
+            // Thông báo cho trang Repairs refresh danh sách
+            if (onRepairCreated) {
+              onRepairCreated();
+            }
           }
         } catch (repairErr) {
           console.error('Lỗi khi tạo phiếu sửa chữa:', repairErr);
