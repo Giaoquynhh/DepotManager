@@ -84,14 +84,11 @@ export default function GateSearchBar({
               value={searchParams.status}
               onChange={(e) => onSearch({ status: e.target.value, page: 1 })}
             >
-              <option value="">{t('pages.gate.allStatuses')}</option>
-              <option value="SCHEDULED">SCHEDULED</option>
-              <option value="FORWARDED">FORWARDED</option>
-              <option value="GATE_IN">GATE_IN</option>
-              <option value="IN_YARD">IN_YARD</option>
-              <option value="IN_CAR">IN_CAR</option>
-              <option value="GATE_REJECTED">GATE_REJECTED</option>
-              <option value="COMPLETED">COMPLETED</option>
+                             <option value="">{t('pages.gate.allStatuses')}</option>
+               <option value="FORWARDED">FORWARDED</option>
+               <option value="GATE_IN">GATE_IN</option>
+               <option value="IN_YARD">IN_YARD</option>
+               <option value="IN_CAR">IN_CAR</option>
             </select>
           </div>
 
@@ -103,10 +100,9 @@ export default function GateSearchBar({
               value={searchParams.type}
               onChange={(e) => onSearch({ type: e.target.value, page: 1 })}
             >
-              <option value="">{t('pages.gate.allTypes')}</option>
-              <option value="IMPORT">IMPORT</option>
-              <option value="EXPORT">EXPORT</option>
-              <option value="EMPTY">EMPTY</option>
+                             <option value="">{t('pages.gate.allTypes')}</option>
+               <option value="IMPORT">IMPORT</option>
+               <option value="EXPORT">EXPORT</option>
             </select>
           </div>
 

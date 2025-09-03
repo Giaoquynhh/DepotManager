@@ -290,8 +290,8 @@ export default function DepotRequestTable({
 										/>
 									)}
 									
-									{/* Indicator cho supplement documents */}
-									{demoItem.has_supplement_documents && (
+									{/* Indicator cho supplement documents - chỉ hiển thị cho EXPORT, không hiển thị cho IMPORT */}
+									{demoItem.has_supplement_documents && demoItem.type !== 'IMPORT' && (
 										<div style={{
 											fontSize: '10px',
 											color: '#f59e0b',
