@@ -55,6 +55,7 @@ export interface DepotActions {
 	handleSendCustomerConfirmation: (id: string) => Promise<void>;
 	handleContainerSelection: (containerNo: string) => Promise<void>; // Thêm action xử lý khi chọn container
 	handleAddDocument: (requestId: string, containerNo: string) => Promise<void>; // Thêm action xử lý khi thêm chứng từ
+	handleUploadDocument: (requestId: string) => Promise<void>; // Thêm action xử lý khi upload chứng từ
 	
 	// Chat actions
 	toggleChat: (requestId: string) => void;
@@ -420,7 +421,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setLoadingId(selectedRequestForContainer.id + 'CONTAINER_SELECT');
 		try {
 			console.log('🔍 Updating request with container:', containerNo);
-			// Sử dụng API endpoint mới để cập nhật container_no mà không thay đổi status
+			// Sử dụng API endpoint mới để cập nhật container_no và set is_pick = true
 			await api.patch(`/requests/${selectedRequestForContainer.id}/container`, {
 				container_no: containerNo
 			});
@@ -428,13 +429,13 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			console.log('🔍 API call successful, updating local state');
 			// Cập nhật state.requestsData ngay lập tức để AppointmentMini có thể sử dụng
 			setRequestsData(prev => {
-				console.log('🔍 Current requestsData before update:', prev.map(r => ({ id: r.id, container_no: r.container_no })));
+				console.log('🔍 Current requestsData before update:', prev.map(r => ({ id: r.id, container_no: r.container_no, is_pick: r.is_pick })));
 				const updated = prev.map(req => 
 					req.id === selectedRequestForContainer.id 
-						? { ...req, container_no: containerNo }
+						? { ...req, container_no: containerNo, is_pick: true }
 						: req
 				);
-				console.log('🔍 Updated requestsData:', updated.map(r => ({ id: r.id, container_no: r.container_no })));
+				console.log('🔍 Updated requestsData:', updated.map(r => ({ id: r.id, container_no: r.container_no, is_pick: r.is_pick })));
 				return updated;
 			});
 			
@@ -553,6 +554,86 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		}
 	};
 
+	// Upload document action for PICK_CONTAINER status
+	const handleUploadDocument = async (requestId: string) => {
+		console.log('🔍 handleUploadDocument called:', { requestId });
+		setLoadingId(requestId + 'UPLOAD_DOC');
+		try {
+			// Tạo input file element
+			const fileInput = document.createElement('input');
+			fileInput.type = 'file';
+			fileInput.accept = '.pdf,.jpg,.jpeg,.png';
+			fileInput.style.display = 'none';
+			
+			fileInput.onchange = async (event) => {
+				const target = event.target as HTMLInputElement;
+				const file = target.files?.[0];
+				
+				if (!file) {
+					setLoadingId('');
+					return;
+				}
+				
+				try {
+					// Kiểm tra kích thước file (10MB)
+					if (file.size > 10 * 1024 * 1024) {
+						setMsg({ 
+							text: safeT('pages.requests.messages.fileTooLarge', 'File quá lớn. Kích thước tối đa là 10MB'), 
+							ok: false 
+						});
+						setLoadingId('');
+						return;
+					}
+					
+					// Tạo FormData
+					const formData = new FormData();
+					formData.append('file', file);
+					formData.append('type', 'EXPORT_DOC');
+					
+					console.log('📤 Uploading EXPORT_DOC:', { requestId, fileName: file.name, fileSize: file.size });
+					
+					// Upload document
+					const response = await api.post(`/requests/${requestId}/docs`, formData, {
+						headers: {
+							'Content-Type': 'multipart/form-data',
+						},
+					});
+					
+					console.log('✅ Document upload successful:', response.data);
+					
+					// Hiển thị thông báo thành công
+					setMsg({ 
+						text: formatT('pages.requests.messages.exportDocumentUploadSuccess', '✅ Uploaded export document successfully! Status automatically changed from PICK_CONTAINER to SCHEDULED.'), 
+						ok: true 
+					});
+					
+					// Refresh data để cập nhật trạng thái
+					mutate('/requests?page=1&limit=20');
+					
+				} catch (error: any) {
+					console.error('❌ Error uploading export document:', error);
+					setMsg({ 
+						text: `❌ ${safeT('pages.requests.messages.uploadExportDocumentFailed', 'Cannot upload export document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
+						ok: false 
+					});
+				} finally {
+					setLoadingId('');
+					// Xóa file input
+					document.body.removeChild(fileInput);
+				}
+			};
+			
+			// Thêm file input vào DOM và trigger click
+			document.body.appendChild(fileInput);
+			fileInput.click();
+			
+		} catch (e: any) {
+			console.error('❌ Error in handleUploadDocument:', e);
+			setMsg({ text: `${safeT('pages.requests.messages.cannotUploadDocument', 'Cannot upload document')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
+			setLoadingId('');
+		}
+	};
+
 	// Chat actions
 	const toggleChat = (requestId: string) => {
 		setActiveChatRequests(prev => {
@@ -623,6 +704,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		handleSendCustomerConfirmation,
 		handleContainerSelection,
 		handleAddDocument,
+		handleUploadDocument,
 		toggleChat,
 		closeChat
 	};

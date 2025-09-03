@@ -15,6 +15,7 @@ interface DepotRequestTableProps {
 	onViewInvoice?: (id: string) => void;
 	onSendCustomerConfirmation?: (id: string) => void;
 	onAddDocument?: (requestId: string, containerNo: string) => void;
+	onUploadDocument?: (requestId: string) => void;
 	loadingId?: string;
 	// Chat props
 	activeChatRequests?: Set<string>;
@@ -42,6 +43,7 @@ export default function DepotRequestTable({
 	onViewInvoice,
 	onSendCustomerConfirmation,
 	onAddDocument,
+	onUploadDocument,
 	loadingId,
 	// Chat props
 	activeChatRequests = new Set(),
@@ -364,6 +366,28 @@ export default function DepotRequestTable({
 												disabled={loadingId === item.id + 'REJECTED'}
 												onClick={() => onReject?.(item.id)}
 												title={safeT('pages.requests.actions.rejectRequest', 'Reject request')}
+											>
+											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {safeT('pages.requests.actions.reject', 'Reject')}
+											</button>
+										</div>
+									)}
+
+									{/* PICK_CONTAINER Status Actions */}
+									{item.status === 'PICK_CONTAINER' && (
+										<div className="action-group">
+											<button
+												className="btn btn-sm btn-success"
+												disabled={loadingId === item.id + 'UPLOAD_DOC'}
+												onClick={() => onUploadDocument?.(item.id)}
+												title={safeT('pages.requests.actions.uploadDocumentTitle', 'Upload export document')}
+											>
+											{loadingId === item.id + 'UPLOAD_DOC' ? '⏳' : '📄'} {safeT('pages.requests.actions.uploadDocument', 'Upload document')}
+											</button>
+											<button
+												className="btn btn-sm btn-danger"
+												disabled={loadingId === item.id + 'REJECTED'}
+												onClick={() => onReject?.(item.id)}
+												title={safeT('pages.requests.actions.rejectTitle', 'Reject request')}
 											>
 											{loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {safeT('pages.requests.actions.reject', 'Reject')}
 											</button>

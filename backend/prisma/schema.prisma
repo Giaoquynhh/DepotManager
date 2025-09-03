@@ -120,6 +120,9 @@ model ServiceRequest {
     has_invoice              Boolean  @default(false)  // Kiểm tra request đã có hóa đơn chưa
     is_paid                  Boolean  @default(false)  // Kiểm tra request đã được thanh toán chưa
     
+    // Container picking status
+    is_pick                  Boolean  @default(false)  // Kiểm tra request đã chọn container chưa (chỉ cho EXPORT)
+    
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 

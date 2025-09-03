@@ -1,5 +1,6 @@
 import repo from '../repository/RequestRepository';
 import { audit } from '../../../shared/middlewares/audit';
+import { prisma } from '../../../shared/config/database';
 import path from 'path';
 import fs from 'fs';
 import chatService from '../../chat/service/ChatService';
@@ -208,9 +209,24 @@ export class RequestService {
 			throw new Error('Chỉ có thể cập nhật container_no khi request đang ở trạng thái PENDING');
 		}
 
+		// Kiểm tra container đã được sử dụng bởi request khác chưa
+		const existingRequest = await prisma.serviceRequest.findFirst({
+			where: {
+				container_no: containerNo,
+				is_pick: true,
+				status: { not: 'REJECTED' },
+				id: { not: id }
+			}
+		});
+
+		if (existingRequest) {
+			throw new Error(`Container ${containerNo} đã được sử dụng bởi request khác`);
+		}
+
 		const prevHistory = Array.isArray(req.history) ? (req.history as any[]) : [];
 		const updated = await repo.update(id, {
 			container_no: containerNo,
+			is_pick: true, // Đánh dấu đã chọn container
 			history: [
 				...prevHistory,
 				{ at: new Date().toISOString(), by: actor._id, action: 'CONTAINER_ASSIGNED', reason: `Container ${containerNo} được gán` }
@@ -220,6 +236,68 @@ export class RequestService {
 		await audit(actor._id, 'REQUEST.CONTAINER_ASSIGNED', 'ServiceRequest', id, { container_no: containerNo });
 		
 		return updated;
+	}
+
+	// Lấy danh sách container available cho EXPORT request
+	async getAvailableContainersForExport(actor: any, searchQuery?: string) {
+		// Kiểm tra quyền
+		if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+			throw new Error('Không có quyền xem danh sách container');
+		}
+
+		// Lấy danh sách container từ YardPlacement (container đã được đặt trong bãi)
+		const containers = await prisma.yardPlacement.findMany({
+			where: {
+				status: 'OCCUPIED',
+				container_no: { not: null },
+				...(searchQuery && {
+					container_no: {
+						contains: searchQuery,
+						mode: 'insensitive'
+					}
+				})
+			},
+			include: {
+				slot: {
+					include: {
+						block: {
+							include: {
+								yard: true
+							}
+						}
+					}
+				}
+			},
+			orderBy: {
+				placed_at: 'desc'
+			}
+		});
+
+		// Lọc bỏ container đã được sử dụng bởi request khác
+		const availableContainers = [];
+		for (const placement of containers) {
+			if (!placement.container_no) continue;
+
+			// Kiểm tra container có đang được sử dụng bởi request khác không
+			const existingRequest = await prisma.serviceRequest.findFirst({
+				where: {
+					container_no: placement.container_no,
+					is_pick: true,
+					status: { not: 'REJECTED' }
+				}
+			});
+
+			if (!existingRequest) {
+				availableContainers.push({
+					container_no: placement.container_no,
+					location: `${placement.slot.block.yard.name} / ${placement.slot.block.code} / ${placement.slot.code}`,
+					status: 'Container rỗng có trong bãi',
+					placed_at: placement.placed_at
+				});
+			}
+		}
+
+		return availableContainers;
 	}
 
 	async rejectRequest(actor: any, id: string, reason?: string) {
@@ -241,6 +319,7 @@ export class RequestService {
 			rejected_reason: reason || null,
 			rejected_by: actor._id,
 			rejected_at: new Date(),
+			is_pick: false, // Reset is_pick khi reject để container có thể được sử dụng lại
 			history: [
 				...prevHistory,
 				{ at: new Date().toISOString(), by: actor._id, action: 'REJECTED', reason }

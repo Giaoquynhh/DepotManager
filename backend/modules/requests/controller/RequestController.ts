@@ -64,6 +64,16 @@ export class RequestController {
 		if (error) return res.status(400).json({ message: error.message });
 		try { return res.json(await service.updateContainerNo(req.user!, req.params.id, value.container_no)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
+
+	async getAvailableContainersForExport(req: AuthRequest, res: Response) {
+		try {
+			const searchQuery = req.query.search as string;
+			const containers = await service.getAvailableContainersForExport(req.user!, searchQuery);
+			return res.json(containers);
+		} catch (e: any) {
+			return res.status(400).json({ message: e.message });
+		}
+	}
 	
 	async rejectRequest(req: AuthRequest, res: Response) {
 		const { error, value } = rejectRequestSchema.validate(req.body);

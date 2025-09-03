@@ -51,6 +51,9 @@ router.patch('/:id/status', requireRoles('SaleAdmin','SystemAdmin'), (req, res) 
 // Update container number (SaleAdmin/SystemAdmin)
 router.patch('/:id/container', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.updateContainerNo(req as any, res));
 
+// Get available containers for export (SaleAdmin/SystemAdmin)
+router.get('/containers/available', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.getAvailableContainersForExport(req as any, res));
+
 // Reject request (SaleAdmin/SystemAdmin)
 router.patch('/:id/reject', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.rejectRequest(req as any, res));
 

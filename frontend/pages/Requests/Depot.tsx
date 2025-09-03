@@ -286,6 +286,7 @@ export default function DepotRequests() {
 					onViewInvoice={(id: string) => { void actions.handleViewInvoice(id); }}
 					onSendCustomerConfirmation={(id: string) => { void actions.handleSendCustomerConfirmation(id); }}
 					onAddDocument={(requestId: string, containerNo: string) => { void actions.handleAddDocument(requestId, containerNo); }}
+					onUploadDocument={(requestId: string) => { void actions.handleUploadDocument(requestId); }}
 					loadingId={state.loadingId}
 					actLabel={{
 						RECEIVED: t('pages.requests.actionLabels.received'),

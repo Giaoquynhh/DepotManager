@@ -260,6 +260,15 @@ export class YardService {
 				data: { status: 'OCCUPIED', container_no, hold_expires_at: null, placed_at: now }
 			});
 			
+			// Cập nhật YardSlot.occupant_container_no cho tier cao nhất
+			const topOccupiedTier = Math.max(...placements.filter((p: any) => p.status === 'OCCUPIED' && !p.removed_at).map((p: any) => p.tier), tier);
+			if (topOccupiedTier === tier) {
+				await tx.yardSlot.update({
+					where: { id: slot_id },
+					data: { occupant_container_no: container_no }
+				});
+			}
+			
 
 			
 			// Tạo ForkliftTask để di chuyển container vào vị trí (chỉ cho non-SystemAdmin)
@@ -292,6 +301,16 @@ export class YardService {
 			} else {
 				// SystemAdmin: Container sẽ có trạng thái "Container rỗng có trong bãi"
 				// Không cần tạo ForkliftTask, container sẽ được đặt trực tiếp vào bãi
+				
+				// Tạo ContainerMeta nếu chưa tồn tại
+				await tx.containerMeta.upsert({
+					where: { container_no },
+					update: { updatedAt: now },
+					create: { 
+						container_no,
+						updatedAt: now
+					}
+				});
 			}
 			
 			return updatedPlacement;
