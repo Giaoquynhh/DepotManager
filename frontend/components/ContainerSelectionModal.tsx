@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { reportsApi } from '@services/reports';
+import { requestsApi, AvailableContainer } from '@services/requests';
 
 interface Container {
   container_no: string;
-  yard_name: string;
-  block_code: string;
-  slot_code: string;
-  derived_status: string;
-  service_gate_checked_at?: string;
-  service_license_plate?: string;
-  service_driver_name?: string;
+  location: string;
+  status: string;
+  placed_at: string;
 }
 
 interface ContainerSelectionModalProps {
@@ -48,59 +44,20 @@ export default function ContainerSelectionModal({
   const loadContainers = async () => {
     setLoading(true);
     try {
-      // Sử dụng logic giống hệt như trong ContainersPage - không filter status
-      const params = {
-        q: searchQuery || undefined,
-        // Không set status để lấy tất cả container
-        page: currentPage,
-        pageSize
-      };
+      // Sử dụng API mới để lấy danh sách container available cho EXPORT
+      const response = await requestsApi.getAvailableContainersForExport(searchQuery || undefined);
+      const containers = response.data as AvailableContainer[];
       
-      const response = await reportsApi.listContainers(params);
-      
-      // Sử dụng logic lọc giống hệt như trong ContainersPage
-      const items = (response.items || []).map((it: any) => {
-        const inYard = !!it.slot_code;
-        
-        if (inYard) {
-          // Container có slot_code - đã xếp chỗ trong bãi
-          if (it.service_status === 'CHECKED' || it.repair_checked === true) {
-            // Container đã được kiểm tra (CHECKED) - trạng thái bình thường
-            return { ...it, derived_status: 'ASSIGNED' };
-          } else if (it.service_status === 'SYSTEM_ADMIN_ADDED') {
-            // Container được SystemAdmin nhập trực tiếp vào bãi
-            return { ...it, derived_status: 'EMPTY_IN_YARD' };
-          } else {
-            // Container KHÔNG có service_status = 'CHECKED' nhưng có slot_code
-            // => Đây là container được SystemAdmin nhập tùy ý
-            return { ...it, derived_status: 'EMPTY_IN_YARD' };
-          }
-        } else {
-          // Container chưa có slot_code
-          if (it.service_status === 'CHECKED' || it.repair_checked === true) {
-            // Container đã kiểm tra nhưng chưa xếp chỗ - đang chờ sắp xếp
-            return { ...it, derived_status: 'WAITING' };
-          } else {
-            // Container chưa được kiểm tra - không có derived_status
-            return { ...it, derived_status: null };
-          }
-        }
-      });
-      
-      // Lọc chỉ lấy container có derived_status = 'EMPTY_IN_YARD'
-      const emptyInYardContainers = items.filter((i: any) => i.derived_status === 'EMPTY_IN_YARD');
-
-      setContainers(emptyInYardContainers);
-      setTotalPages(Math.ceil(response.total / pageSize));
+      setContainers(containers);
+      setTotalPages(1); // API mới không có pagination
       
       // Debug log
-      console.log('🔍 ContainerSelectionModal: Loaded containers:', {
-        totalItems: response.items?.length || 0,
-        emptyInYardCount: emptyInYardContainers.length,
-        sampleItems: emptyInYardContainers.slice(0, 3)
+      console.log('🔍 ContainerSelectionModal: Loaded available containers:', {
+        count: containers.length,
+        sampleItems: containers.slice(0, 3)
       });
     } catch (error) {
-      console.error('Error loading containers:', error);
+      console.error('Error loading available containers:', error);
     } finally {
       setLoading(false);
     }
@@ -190,7 +147,7 @@ export default function ContainerSelectionModal({
                       <tr key={container.container_no}>
                         <td style={{ fontWeight: '700' }}>{container.container_no}</td>
                         <td>
-                          {container.yard_name || '-'} / {container.block_code || '-'} / {container.slot_code || '-'}
+                          {container.location || '-'}
                         </td>
                         <td>
                           <span
@@ -203,7 +160,7 @@ export default function ContainerSelectionModal({
                               fontSize: '12px'
                             }}
                           >
-                            Container rỗng có trong bãi
+                            {container.status}
                           </span>
                         </td>
                         <td>
