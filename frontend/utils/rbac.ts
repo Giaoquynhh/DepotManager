@@ -9,7 +9,7 @@ export function homeFor(role: AppRole): string {
 }
 
 export function canViewUsersPartners(role?: string): boolean {
-	return ['SystemAdmin','BusinessAdmin','HRManager'].includes(String(role));
+	return ['SystemAdmin','BusinessAdmin','HRManager','CustomerAdmin'].includes(String(role));
 }
 
 export function showInternalForm(role?: string): boolean {
@@ -66,3 +66,31 @@ export function isSecurity(role?: string): boolean { return String(role) === 'Se
 export function isYardManager(role?: string): boolean { return String(role) === 'YardManager'; }
 export function isMaintenanceManager(role?: string): boolean { return String(role) === 'MaintenanceManager'; }
 export function isDriver(role?: string): boolean { return String(role) === 'Driver'; }
+
+// User action permissions
+export function canLockUnlockUsers(role?: string): boolean {
+	return ['SystemAdmin','BusinessAdmin','CustomerAdmin'].includes(String(role));
+}
+
+export function canDeleteUsers(role?: string): boolean {
+	return ['SystemAdmin','BusinessAdmin'].includes(String(role));
+}
+
+export function canUpdateUsers(role?: string): boolean {
+	return ['SystemAdmin','BusinessAdmin'].includes(String(role));
+}
+
+// Kiểm tra CustomerAdmin có thể khóa user cụ thể hay không
+export function canLockSpecificUser(currentUserRole?: string, targetUserRole?: string): boolean {
+	// SystemAdmin và BusinessAdmin có thể khóa tất cả
+	if (['SystemAdmin','BusinessAdmin'].includes(String(currentUserRole))) {
+		return true;
+	}
+	
+	// CustomerAdmin chỉ có thể khóa CustomerUser, không thể khóa CustomerAdmin khác
+	if (currentUserRole === 'CustomerAdmin') {
+		return targetUserRole === 'CustomerUser';
+	}
+	
+	return false;
+}

@@ -4,7 +4,7 @@ import Card from '@components/Card';
 import { useTranslation } from '../../hooks/useTranslation';
 import Modal from '@components/Modal';
 import { useEffect, useState } from 'react';
-import { canViewUsersPartners, showInternalForm, showCustomerForm, isCustomerRole } from '@utils/rbac';
+import { canViewUsersPartners, showInternalForm, showCustomerForm, isCustomerRole, canLockUnlockUsers, canDeleteUsers, canLockSpecificUser } from '@utils/rbac';
 import Header from '@components/Header';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
@@ -209,12 +209,22 @@ export default function UsersPartners(){
 			setMessage(t[language].pleaseEnterValidEmail);
 			return;
 		}
-		if (!tenantId.trim()) {
+		// CustomerAdmin không cần nhập tenant_id vì backend sẽ tự động dùng tenant_id của họ
+		if (role !== 'CustomerAdmin' && !tenantId.trim()) {
 			setMessage(t[language].pleaseEnterTenantId);
 			return;
 		}
 		try{
-			await api.post('/users', { full_name: cusFullName.trim(), email: cusEmail.trim().toLowerCase(), role: cusRole, tenant_id: tenantId.trim() });
+			const payload: any = { 
+				full_name: cusFullName.trim(), 
+				email: cusEmail.trim().toLowerCase(), 
+				role: cusRole 
+			};
+			// Chỉ thêm tenant_id nếu không phải CustomerAdmin
+			if (role !== 'CustomerAdmin') {
+				payload.tenant_id = tenantId.trim();
+			}
+			await api.post('/users', payload);
 			setMessage(t[language].customerCreated);
 			setCusFullName(''); setCusEmail(''); setTenantId('');
 			setShowCusForm(false);
@@ -325,8 +335,24 @@ export default function UsersPartners(){
                                                         <option value="CustomerAdmin">CustomerAdmin</option>
                                                         <option value="CustomerUser">CustomerUser</option>
                                                     </select>
-                                                    <input type="text" placeholder={t[language].tenantIdPlaceholder} value={tenantId} onChange={e=>setTenantId(e.target.value)} />
-                                                    <div className="muted">{t[language].tenantIdInfo}</div>
+                                                    {role !== 'CustomerAdmin' && (
+                                                        <>
+                                                            <input type="text" placeholder={t[language].tenantIdPlaceholder} value={tenantId} onChange={e=>setTenantId(e.target.value)} />
+                                                            <div className="muted">{t[language].tenantIdInfo}</div>
+                                                        </>
+                                                    )}
+                                                    {role === 'CustomerAdmin' && (
+                                                        <div className="muted" style={{
+                                                            padding: '8px 12px',
+                                                            background: '#f0f9ff',
+                                                            border: '1px solid #0ea5e9',
+                                                            borderRadius: '6px',
+                                                            color: '#0c4a6e',
+                                                            fontSize: '14px'
+                                                        }}>
+                                                            Tài khoản sẽ tự động được gán vào công ty của bạn
+                                                        </div>
+                                                    )}
                                                     <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
                                                         <button className="btn btn-outline" onClick={()=>setShowCusForm(false)}>{t[language].close}</button>
                                                         <button className="btn" onClick={createCustomerUser} style={{background:'#0891b2', color:'#fff'}}>{t[language].create}</button>
@@ -397,19 +423,21 @@ export default function UsersPartners(){
                                                     >
                                                         {u.status === 'DISABLED' ? t[language].enable : t[language].disable}
                                                     </button>
-                                                    <button 
-                                                        className="btn btn-sm" 
-                                                        style={{
-                                                            background: u.status === 'LOCKED' ? '#059669' : '#d97706',
-                                                            color: 'white',
-                                                            fontSize: '12px',
-                                                            padding: '4px 8px'
-                                                        }}
-                                                        title={u.status === 'LOCKED' ? t[language].unlockTooltip : t[language].lockTooltip} 
-                                                        onClick={() => userAction(u.id || u._id, u.status === 'LOCKED' ? 'unlock' : 'lock')}
-                                                    >
-                                                        {u.status === 'LOCKED' ? t[language].unlock : t[language].lock}
-                                                    </button>
+                                                    {canLockUnlockUsers(role) && canLockSpecificUser(role, u.role) && (
+                                                        <button 
+                                                            className="btn btn-sm" 
+                                                            style={{
+                                                                background: u.status === 'LOCKED' ? '#059669' : '#d97706',
+                                                                color: 'white',
+                                                                fontSize: '12px',
+                                                                padding: '4px 8px'
+                                                            }}
+                                                            title={u.status === 'LOCKED' ? t[language].unlockTooltip : t[language].lockTooltip} 
+                                                            onClick={() => userAction(u.id || u._id, u.status === 'LOCKED' ? 'unlock' : 'lock')}
+                                                        >
+                                                            {u.status === 'LOCKED' ? t[language].unlock : t[language].lock}
+                                                        </button>
+                                                    )}
                                                     <button 
                                                         className="btn btn-sm" 
                                                         style={{
@@ -423,7 +451,7 @@ export default function UsersPartners(){
                                                     >
                                                         {t[language].resendInvite}
                                                     </button>
-													{u.status === 'DISABLED' && (
+													{u.status === 'DISABLED' && canDeleteUsers(role) && (
                                                         <button 
                                                             className="btn btn-sm" 
                                                             style={{
@@ -584,28 +612,44 @@ export default function UsersPartners(){
 										<option value="CustomerAdmin">CustomerAdmin</option>
 										<option value="CustomerUser">CustomerUser</option>
 									</select>
-                                    <input 
-                                        type="text" 
-                                        placeholder={t[language].tenantIdPlaceholder} 
-                                        value={tenantId} 
-                                        onChange={e => setTenantId(e.target.value)}
-                                        style={{
+                                    {role !== 'CustomerAdmin' && (
+                                        <>
+                                            <input 
+                                                type="text" 
+                                                placeholder={t[language].tenantIdPlaceholder} 
+                                                value={tenantId} 
+                                                onChange={e => setTenantId(e.target.value)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    border: '1px solid #d1d5db',
+                                                    borderRadius: '6px',
+                                                    fontSize: '14px'
+                                                }}
+                                            />
+                                            <div style={{
+                                                fontSize: '12px',
+                                                color: '#6b7280',
+                                                background: '#f9fafb',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #e5e7eb'
+                                            }}>
+                                                {t[language].tenantIdInfo}
+                                            </div>
+                                        </>
+                                    )}
+                                    {role === 'CustomerAdmin' && (
+                                        <div style={{
                                             padding: '8px 12px',
-                                            border: '1px solid #d1d5db',
+                                            background: '#f0f9ff',
+                                            border: '1px solid #0ea5e9',
                                             borderRadius: '6px',
+                                            color: '#0c4a6e',
                                             fontSize: '14px'
-                                        }}
-                                    />
-                                    <div style={{
-                                        fontSize: '12px',
-                                        color: '#6b7280',
-                                        background: '#f9fafb',
-                                        padding: '8px 12px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #e5e7eb'
-                                    }}>
-                                        {t[language].tenantIdInfo}
-                                    </div>
+                                        }}>
+                                            Tài khoản sẽ tự động được gán vào công ty của bạn
+                                        </div>
+                                    )}
                                     <button 
                                         className="btn" 
                                         onClick={createCustomerUser}

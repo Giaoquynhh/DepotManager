@@ -13,7 +13,14 @@ export class UserController {
 		if (['CustomerAdmin','CustomerUser'].includes(role)) {
 			const { error, value } = createCustomerUserSchema.validate(req.body);
 			if (error) return res.status(400).json({ message: error.message });
-			try { return res.status(201).json(await service.createCustomerUser((req as any).userDoc || (req.user as any), value)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
+			
+			// Tự động thêm tenant_id cho CustomerAdmin
+			const actor = (req as any).userDoc || (req.user as any);
+			if (actor.role === 'CustomerAdmin' && !value.tenant_id) {
+				value.tenant_id = actor.tenant_id;
+			}
+			
+			try { return res.status(201).json(await service.createCustomerUser(actor, value)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 		}
 		const { error, value } = createEmployeeSchema.validate(req.body);
 		if (error) return res.status(400).json({ message: error.message });

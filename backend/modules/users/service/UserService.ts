@@ -89,11 +89,20 @@ export class UserService {
 		return user;
 	}
 
-	async createCustomerUser(actor: any, payload: { full_name: string; email: string; role: AppRole; tenant_id: string; }) {
+	async createCustomerUser(actor: any, payload: { full_name: string; email: string; role: AppRole; tenant_id?: string; }) {
 		this.ensureRoleAllowedByCreator(actor.role as AppRole, payload.role);
 		await this.ensureEmailUnique(payload.email);
+		
 		// Customer Admin must not cross tenant
-		const tenant_id = actor.role === 'CustomerAdmin' ? (actor.tenant_id as string) : payload.tenant_id;
+		let tenant_id: string;
+		if (actor.role === 'CustomerAdmin') {
+			tenant_id = actor.tenant_id as string;
+		} else {
+			if (!payload.tenant_id) {
+				throw new Error('tenant_id is required for non-CustomerAdmin users');
+			}
+			tenant_id = payload.tenant_id;
+		}
 		const invite = this.buildInvite();
 		const user = await repo.create({
 			full_name: payload.full_name,
@@ -177,15 +186,39 @@ export class UserService {
 	}
 
 	async lock(actor: any, id: string) {
-		const user = await repo.updateById(id, { status: 'LOCKED' });
+		const user = await repo.findById(id);
 		if (!user) throw new Error('User không tồn tại');
+		
+		// CustomerAdmin không thể khóa CustomerAdmin khác
+		if (actor.role === 'CustomerAdmin' && user.role === 'CustomerAdmin') {
+			throw new Error('CustomerAdmin không thể khóa CustomerAdmin khác');
+		}
+		
+		// CustomerAdmin chỉ có thể khóa users cùng tenant
+		if (actor.role === 'CustomerAdmin' && user.tenant_id !== actor.tenant_id) {
+			throw new Error('Không có quyền khóa user này');
+		}
+		
+		await repo.updateById(id, { status: 'LOCKED' });
 		await audit(String(actor._id as any), 'USER.LOCKED', 'USER', id);
 		return true;
 	}
 
 	async unlock(actor: any, id: string) {
-		const user = await repo.updateById(id, { status: 'ACTIVE' });
+		const user = await repo.findById(id);
 		if (!user) throw new Error('User không tồn tại');
+		
+		// CustomerAdmin không thể mở khóa CustomerAdmin khác
+		if (actor.role === 'CustomerAdmin' && user.role === 'CustomerAdmin') {
+			throw new Error('CustomerAdmin không thể mở khóa CustomerAdmin khác');
+		}
+		
+		// CustomerAdmin chỉ có thể mở khóa users cùng tenant
+		if (actor.role === 'CustomerAdmin' && user.tenant_id !== actor.tenant_id) {
+			throw new Error('Không có quyền mở khóa user này');
+		}
+		
+		await repo.updateById(id, { status: 'ACTIVE' });
 		await audit(String(actor._id as any), 'USER.UNLOCKED', 'USER', id);
 		return true;
 	}
