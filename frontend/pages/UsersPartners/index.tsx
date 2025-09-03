@@ -60,6 +60,7 @@ export default function UsersPartners(){
 			lock: 'Khóa',
 			unlock: 'Mở khóa',
 			resendInvite: 'Gửi lại lời mời',
+			emailSent: 'Email mời đã được gửi!',
 			delete: 'Xóa',
 			// Button tooltips
 			disableTooltip: 'Chặn không cho đăng nhập',
@@ -84,8 +85,8 @@ export default function UsersPartners(){
 			pleaseEnterName: 'Vui lòng nhập họ tên',
 			pleaseEnterValidEmail: 'Vui lòng nhập email hợp lệ',
 			pleaseEnterTenantId: 'Vui lòng nhập tenant_id',
-			employeeCreated: 'Tạo nhân sự nội bộ thành công',
-			customerCreated: 'Tạo user khách hàng thành công',
+			employeeCreated: 'Tạo nhân sự nội bộ thành công. Email mời đã được gửi!',
+			customerCreated: 'Tạo user khách hàng thành công. Email mời đã được gửi!',
 			userActionSuccess: 'Đã {action} user',
 			createEmployeeError: 'Lỗi tạo nhân sự',
 			createCustomerError: 'Lỗi tạo user khách',
@@ -123,6 +124,7 @@ export default function UsersPartners(){
 			lock: 'Lock',
 			unlock: 'Unlock',
 			resendInvite: 'Resend Invitation',
+			emailSent: 'Invitation email sent!',
 			delete: 'Delete',
 			// Button tooltips
 			disableTooltip: 'Block login access',
@@ -147,8 +149,8 @@ export default function UsersPartners(){
 			pleaseEnterName: 'Please enter full name',
 			pleaseEnterValidEmail: 'Please enter a valid email',
 			pleaseEnterTenantId: 'Please enter tenant_id',
-			employeeCreated: 'Internal staff created successfully',
-			customerCreated: 'Customer user created successfully',
+			employeeCreated: 'Internal staff created successfully. Invitation email sent!',
+			customerCreated: 'Customer user created successfully. Invitation email sent!',
 			userActionSuccess: 'User {action} successfully',
 			createEmployeeError: 'Error creating staff',
 			createCustomerError: 'Error creating customer user',
@@ -226,13 +228,15 @@ export default function UsersPartners(){
 			if (action === 'invite') {
 				const res = await api.post(`/users/${id}/send-invite`);
 				setLastInviteToken(res.data?.invite_token || '');
+				setMessage(t[language].emailSent);
 			} else if (action === 'delete') {
 				await api.delete(`/users/${id}`);
+				setMessage(t[language].userActionSuccess.replace('{action}', action));
 			} else {
 				await api.patch(`/users/${id}/${action}`);
+				setMessage(t[language].userActionSuccess.replace('{action}', action));
 			}
 			mutate(['/users?role=&page=1&limit=50']);
-			setMessage(t[language].userActionSuccess.replace('{action}', action));
 		}catch(e:any){ setMessage(e?.response?.data?.message || t[language].userActionError.replace('{action}', action)); }
 	};
 

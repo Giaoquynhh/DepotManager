@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import repo from '../repository/UserRepository';
 import { audit } from '../../../shared/middlewares/audit';
 import { AppRole } from '../../../shared/middlewares/auth';
+import emailService from '../../../shared/services/EmailService';
 
 const INTERNAL_ROLES: AppRole[] = ['SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','Driver'];
 const CUSTOMER_ROLES: AppRole[] = ['CustomerAdmin','CustomerUser'];
@@ -68,6 +69,23 @@ export class UserService {
 			invite_expires_at: invite.expires
 		});
 		await audit(String(actor._id as any), 'USER.INVITED', 'USER', String((user as any)._id));
+		
+		// Gửi email invitation
+		try {
+			await emailService.sendUserInvitation(
+				payload.email,
+				payload.full_name,
+				payload.role,
+				invite.token,
+				invite.expires,
+				'vi' // Default language, có thể lấy từ actor preferences sau
+			);
+			console.log(`Invitation email sent to ${payload.email}`);
+		} catch (emailError) {
+			console.error('Failed to send invitation email:', emailError);
+			// Không throw error để không làm fail việc tạo user
+		}
+		
 		return user;
 	}
 
@@ -87,6 +105,23 @@ export class UserService {
 			invite_expires_at: invite.expires
 		});
 		await audit(String(actor._id as any), 'USER.INVITED', 'USER', String((user as any)._id));
+		
+		// Gửi email invitation
+		try {
+			await emailService.sendUserInvitation(
+				payload.email,
+				payload.full_name,
+				payload.role,
+				invite.token,
+				invite.expires,
+				'vi' // Default language, có thể lấy từ actor preferences sau
+			);
+			console.log(`Invitation email sent to ${payload.email}`);
+		} catch (emailError) {
+			console.error('Failed to send invitation email:', emailError);
+			// Không throw error để không làm fail việc tạo user
+		}
+		
 		return user;
 	}
 
@@ -156,10 +191,29 @@ export class UserService {
 	}
 
 	async sendInvite(actor: any, id: string) {
+		const user = await repo.findById(id);
+		if (!user) throw new Error('User không tồn tại');
+		
 		const invite = this.buildInvite();
 		const updated = await repo.updateById(id, { status: 'INVITED', invite_token: invite.token, invite_expires_at: invite.expires });
-		if (!updated) throw new Error('User không tồn tại');
 		await audit(String(actor._id as any), 'USER.INVITED', 'USER', id);
+		
+		// Gửi email invitation
+		try {
+			await emailService.sendUserInvitation(
+				user.email,
+				user.full_name,
+				user.role,
+				invite.token,
+				invite.expires,
+				'vi' // Default language, có thể lấy từ actor preferences sau
+			);
+			console.log(`Invitation email sent to ${user.email}`);
+		} catch (emailError) {
+			console.error('Failed to send invitation email:', emailError);
+			// Không throw error để không làm fail việc gửi invite
+		}
+		
 		return { invite_token: invite.token, invite_expires_at: invite.expires };
 	}
 

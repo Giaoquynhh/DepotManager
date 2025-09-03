@@ -48,11 +48,20 @@ components/
 - `SearchBar` - Search input với filters
 
 ### 4. Chat Components 🆕
-**Mục đích:** Real-time communication system
 
-- `DepotChatWindow` - Main chat interface với API integration
-- `DepotChatMini` - Chat trigger và window management
-- `DepotChatDemo` - Demo version cho testing
+**Mục đích:** Chat system cho depot management
+
+- `DepotChatWindow` - Main chat interface
+- `DepotChatMini` - Chat trigger & management  
+- `DepotChatDemo` - Demo version
+
+### 5. User Management Components 🆕
+
+**Mục đích:** User và partner management với email integration
+
+- `UsersPartners` - Main user management page với email invitation
+- Email notification system integration
+- RBAC-based form visibility
 
 ## 🎨 Design Principles
 
@@ -370,6 +379,12 @@ const isChatAllowed = requestStatus === 'SCHEDULED' ||
 
 *Tài liệu được cập nhật lần cuối: $(date)*  
 *Version: 1.0.0*
+
+## 📚 Tài liệu tham khảo
+
+- [UsersPartners Email Integration](./USERS_PARTNERS_EMAIL_INTEGRATION.md)
+- [Chat System Documentation](./CHAT_MINI_SYSTEM.md)
+- [UI Refactor Documentation](./UI_REFACTOR_DOCUMENTATION.md)
 
 
 
