@@ -116,10 +116,8 @@ export default function GateDashboard() {
         if (value) params.append(key, value.toString());
       });
 
-      // Thêm filter để lấy requests có trạng thái IN_YARD và IN_CAR
-      if (!searchParams.status || searchParams.status === '') {
-        params.append('statuses', 'IN_YARD,IN_CAR');
-      }
+      // Không cần thêm filter đặc biệt khi chọn "Tất cả trạng thái"
+      // Backend sẽ tự động lấy các trạng thái phù hợp với Gate
       const response = await api.get(`/gate/requests/search?${params.toString()}`);
       console.log('✅ API response:', response.data);
       

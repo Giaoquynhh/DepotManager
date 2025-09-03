@@ -322,8 +322,8 @@ export class GateService {
       const statusArray = statuses.split(',').map(s => s.trim());
       where.status = { in: statusArray };
     } else {
-      // Default: chỉ hiển thị các trạng thái cơ bản của Gate
-      where.status = { in: ['FORWARDED', 'GATE_IN', 'GATE_REJECTED'] };
+      // Default: hiển thị 4 trạng thái cụ thể khi chọn "Tất cả trạng thái"
+      where.status = { in: ['FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
     }
 
     if (container_no) {
