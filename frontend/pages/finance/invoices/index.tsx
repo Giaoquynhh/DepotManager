@@ -6,8 +6,10 @@ import { financeApi } from '@services/finance';
 import { useState, useEffect } from 'react';
 import ContainersNeedInvoiceModal from '@components/ContainersNeedInvoiceModal';
 import { api } from '@services/api';
+import { useTranslation } from '@hooks/useTranslation';
 
 export default function InvoiceList(){
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -43,18 +45,18 @@ export default function InvoiceList(){
   
   const getTypeLabel = (type: string) => {
     switch(type) {
-      case 'IMPORT': return 'Nhập';
-      case 'EXPORT': return 'Xuất';
-      case 'CONVERT': return 'Chuyển đổi';
+      case 'IMPORT': return t('pages.finance.invoices.types.import');
+      case 'EXPORT': return t('pages.finance.invoices.types.export');
+      case 'CONVERT': return t('pages.finance.invoices.types.convert');
       default: return type || '-';
     }
   };
 
   const getStatusLabel = (invoice: any) => {
     if (invoice.serviceRequest?.is_paid) {
-      return 'Đã thanh toán';
+      return t('pages.finance.invoices.status.paid');
     }
-    return 'Chưa thanh toán';
+    return t('pages.finance.invoices.status.unpaid');
   };
 
   const getStatusClass = (invoice: any) => {
@@ -67,45 +69,43 @@ export default function InvoiceList(){
   return (
     <>
       <Header />
-      <main className="container invoice-page">
+      <main className="container depot-requests invoice-page">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
-              <h1 className="page-title gradient gradient-ultimate">Hóa đơn</h1>
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.finance.invoices.title')}</h1>
             </div>
             <div className="header-actions">
-              {/* Chỉ hiển thị nút này cho admin */}
-              {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
-                <button 
-                  className="btn btn-outline containers-need-invoice-btn"
-                  onClick={() => setIsModalOpen(true)}
-                  title="Danh sách container cần tạo hóa đơn"
-                >
-                  📋 Danh sách container cần tạo hóa đơn
-                </button>
-              )}
             </div>
           </div>
         </div>
 
-        <div className="search-filter-section modern-search">
-          <div className="search-row">
-            <div className="filter-group">
-              <label className="filter-label">Lọc theo trạng thái:</label>
-              <select 
-                value={status} 
-                onChange={e=>{ setStatus(e.target.value); mutate(key); }}
-                className="filter-select"
-              >
-                <option value="">Tất cả</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="UNPAID">UNPAID</option>
-                <option value="PARTIALLY_PAID">PARTIALLY_PAID</option>
-                <option value="PAID">PAID</option>
-                <option value="CANCELLED">CANCELLED</option>
-              </select>
-            </div>
+        <div className="search-filter-section modern-search" style={{display: 'flex !important', justifyContent: 'space-between !important', alignItems: 'center !important'}}>
+          <div className="filter-group">
+            <label className="filter-label">{t('pages.finance.invoices.filterByStatus')}</label>
+            <select 
+              value={status} 
+              onChange={e=>{ setStatus(e.target.value); mutate(key); }}
+              className="filter-select"
+            >
+              <option value="">{t('pages.finance.invoices.allStatuses')}</option>
+              <option value="DRAFT">DRAFT</option>
+              <option value="UNPAID">UNPAID</option>
+              <option value="PARTIALLY_PAID">PARTIALLY_PAID</option>
+              <option value="PAID">PAID</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
           </div>
+          {/* Chỉ hiển thị nút này cho admin - đặt sát bên phải */}
+          {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
+            <button 
+              className="btn btn-outline containers-need-invoice-btn"
+              onClick={() => setIsModalOpen(true)}
+              title={t('pages.finance.invoices.containersNeedInvoice')}
+            >
+              📋 {t('pages.finance.invoices.containersNeedInvoice')}
+            </button>
+          )}
         </div>
 
         <Card>
@@ -114,14 +114,14 @@ export default function InvoiceList(){
               <table className="table" style={{minWidth:'1000px'}}>
                 <thead>
                   <tr>
-                    <th>Loại</th>
-                    <th>Container No</th>
-                    <th>Khách hàng</th>
-                    <th>Mã Công ty</th>
-                    <th>Trạng thái</th>
-                    <th>Chi phí</th>
-                    <th>EIR</th>
-                    <th>Hành động</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.type')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.containerNo')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.customer')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.companyCode')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.status')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.cost')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.eir')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -180,13 +180,13 @@ export default function InvoiceList(){
                               font: 'inherit'
                             }}
                           >
-                            Xem EIR
+                            {t('pages.finance.invoices.actions.viewEIR')}
                           </button>
                         ) : '-'}
                       </td>
                       <td style={{display:'flex', gap:6}}>
                         <Link className="btn" href={`/finance/invoices/${invoice.id}`} style={{padding:'4px 8px', fontSize:'12px'}}>
-                          Xem
+                          {t('pages.finance.invoices.actions.view')}
                         </Link>
                       </td>
                     </tr>
@@ -198,7 +198,7 @@ export default function InvoiceList(){
             
             {(!invoices || invoices.length === 0) && (
               <div style={{textAlign:'center', padding:'40px 20px', color:'#666'}}>
-                Không có hóa đơn nào
+                {t('pages.finance.invoices.messages.noInvoices')}
               </div>
             )}
           </Card>

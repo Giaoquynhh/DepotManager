@@ -52,6 +52,7 @@ export default function PermissionsPage(){
   const [selected, setSelected] = useState<Record<string, AppRole>>({});
   const [permSelections, setPermSelections] = useState<Record<string, string[]>>({});
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
+  const [notification, setNotification] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
 
   // Language detection from localStorage or browser
   useEffect(() => {
@@ -351,6 +352,14 @@ export default function PermissionsPage(){
     return true;
   };
 
+  // Function to show notification
+  const showNotification = (type: 'success' | 'info' | 'warning', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
+
 
   const saveRole = async (user: any) => {
     const id = user.id || user._id;
@@ -419,16 +428,7 @@ export default function PermissionsPage(){
           overflow: hidden !important;
           height: 100vh !important;
         }
-                 .permissions-header {
-           position: sticky;
-           top: 0;
-           background: white;
-           z-index: 100;
-           padding: 20px 10px;
-           border-bottom: 1px solid #e5e7eb;
-           margin-bottom: 20px;
-           min-width: 1400px;
-         }
+
                  .permissions-content {
            overflow: auto;
            height: calc(100vh - 120px);
@@ -449,28 +449,32 @@ export default function PermissionsPage(){
           background: #94a3b8;
         }
         
-        /* Enhanced UI Styles */
-                 .page-title {
-           font-size: 32px;
-           font-weight: 700;
-           color: #1e293b;
-           margin-bottom: 12px;
-           text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-           display: inline-block;
-           margin-right: 40px;
+
+         
+         /* Custom search input styling for permissions page */
+         .search-input {
+           padding: 14px 24px;
+           border: 2px solid rgba(255,255,255,0.3);
+           border-radius: 28px;
+           font-size: 15px;
+           background: rgba(255,255,255,0.9);
+           backdrop-filter: blur(10px);
+           min-width: 360px;
+           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+           transition: all 0.3s ease;
          }
-                 .page-subtitle {
-           display: inline-flex;
-           align-items: center;
-           gap: 8px;
+         
+         .search-input:focus {
+           outline: none;
+           border-color: rgba(255,255,255,0.8);
+           background: rgba(255,255,255,0.95);
+           box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+           transform: translateY(-1px);
+         }
+         
+         .search-input::placeholder {
            color: #64748b;
-           font-size: 16px;
-           line-height: 1.5;
-           margin-right: 40px;
-         }
-                 .info-icon {
-           color: #3b82f6;
-           font-size: 18px;
+           font-weight: 500;
          }
         
         /* Enhanced Table Styles */
@@ -666,39 +670,44 @@ export default function PermissionsPage(){
           color: #374151;
           font-size: 13px;
         }
+        
+        /* Notification Animation */
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
       `}</style>
       <Header />
-      <main className="container permissions-page" style={{ 
+      <main className="container depot-requests" style={{ 
         overflow: 'hidden', 
         height: '100vh',
         paddingTop: '20px',
         paddingBottom: '20px'
       }}>
-                 <div className="permissions-header">
-           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
-             <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
-               <h1 className="page-title">{t[language].title}</h1>
+         <div className="page-header modern-header">
+           <div className="header-content">
+             <div className="header-left">
+               <h1 className="page-title gradient gradient-ultimate">{t[language].title}</h1>
                <div className="page-subtitle">
                  <span className="info-icon">ℹ️</span>
                  <span>{t[language].subtitle}</span>
                </div>
              </div>
-                           <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                <input 
-                  type="text" 
-                  placeholder={t[language].searchPlaceholder}
-                  value={keyword}
-                  onChange={e=>setKeyword(e.target.value)}
-                  style={{ 
-                    padding:'12px 16px', 
-                    border:'1px solid #d1d5db', 
-                    borderRadius:8, 
-                    fontSize: '14px',
-                    minWidth: '300px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                  }}
-                />
-              </div>
+             <div className="header-actions">
+               <input 
+                 type="text" 
+                 className="search-input"
+                 placeholder={t[language].searchPlaceholder}
+                 value={keyword}
+                 onChange={e=>setKeyword(e.target.value)}
+               />
+             </div>
            </div>
          </div>
                         <div className="permissions-content">
@@ -788,7 +797,14 @@ export default function PermissionsPage(){
                            <button
                              className="btn-control"
                              disabled={isSelf || loadingRow === id}
-                             onClick={()=> setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }))}
+                             onClick={()=> {
+                               setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
+                               showNotification('info', 
+                                 language === 'vi' ? 
+                                   `Đã chọn tất cả chức năng cho ${u.email}` :
+                                   `Selected all functions for ${u.email}`
+                               );
+                             }}
                              title={language === 'vi' ? "Chọn tất cả chức năng" : "Select all functions"}
                            >
                              {t[language].selectAll}
@@ -796,7 +812,14 @@ export default function PermissionsPage(){
                            <button
                              className="btn-control"
                              disabled={isSelf || loadingRow === id}
-                             onClick={()=> setPermSelections(prev=>({ ...prev, [id]: [] }))}
+                             onClick={()=> {
+                               setPermSelections(prev=>({ ...prev, [id]: [] }));
+                               showNotification('warning', 
+                                 language === 'vi' ? 
+                                   `Đã bỏ chọn tất cả chức năng cho ${u.email}` :
+                                   `Deselected all functions for ${u.email}`
+                               );
+                             }}
                              title={language === 'vi' ? "Bỏ chọn tất cả" : "Deselect all"}
                            >
                              {t[language].deselectAll}
@@ -805,7 +828,14 @@ export default function PermissionsPage(){
                              <button
                                className="btn-control"
                                disabled={isSelf || loadingRow === id}
-                               onClick={()=> setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }))}
+                               onClick={()=> {
+                                 setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
+                                 showNotification('info', 
+                                   language === 'vi' ? 
+                                     `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                     `Applied default functions for role ${sel} to ${u.email}`
+                                 );
+                               }}
                                title={language === 'vi' ? `Áp dụng chức năng mặc định của vai trò ${sel}` : `Apply default functions for role ${sel}`}
                              >
                                {t[language].applyByRole}
@@ -834,6 +864,18 @@ export default function PermissionsPage(){
                                          if (e.target.checked) next = has ? base : [...base, key];
                                          else next = base.filter(k=>k!==key);
                                          if (next.length > 50) next = next.slice(0, 50);
+                                         
+                                         // Show notification when permission is changed
+                                         const action = e.target.checked ? 
+                                           (language === 'vi' ? 'đã bật' : 'enabled') : 
+                                           (language === 'vi' ? 'đã tắt' : 'disabled');
+                                         const permissionName = translatePermissionLabel(key);
+                                         showNotification('info', 
+                                           language === 'vi' ? 
+                                             `Chức năng "${permissionName}" ${action} cho ${u.email}` :
+                                             `Function "${permissionName}" ${action} for ${u.email}`
+                                         );
+                                         
                                          return { ...prev, [id]: next };
                                        });
                                      }}
@@ -966,14 +1008,28 @@ export default function PermissionsPage(){
                        <button
                          className="btn-control"
                          disabled={isSelf || loadingRow === id}
-                         onClick={()=> setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }))}
+                         onClick={()=> {
+                           setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
+                           showNotification('info', 
+                             language === 'vi' ? 
+                               `Đã chọn tất cả chức năng cho ${u.email}` :
+                               `Selected all functions for ${u.email}`
+                           );
+                         }}
                        >
                          {t[language].selectAll}
                        </button>
                        <button
                          className="btn-control"
                          disabled={isSelf || loadingRow === id}
-                         onClick={()=> setPermSelections(prev=>({ ...prev, [id]: [] }))}
+                         onClick={()=> {
+                           setPermSelections(prev=>({ ...prev, [id]: [] }));
+                           showNotification('warning', 
+                             language === 'vi' ? 
+                               `Đã bỏ chọn tất cả chức năng cho ${u.email}` :
+                               `Deselected all functions for ${u.email}`
+                           );
+                         }}
                        >
                          {t[language].deselectAll}
                        </button>
@@ -981,7 +1037,14 @@ export default function PermissionsPage(){
                          <button
                            className="btn-control"
                            disabled={isSelf || loadingRow === id}
-                           onClick={()=> setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }))}
+                           onClick={()=> {
+                             setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
+                             showNotification('info', 
+                               language === 'vi' ? 
+                                 `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                 `Applied default functions for role ${sel} to ${u.email}`
+                             );
+                           }}
                          >
                            {t[language].applyByRole}
                          </button>
@@ -1009,6 +1072,18 @@ export default function PermissionsPage(){
                                      if (e.target.checked) next = has ? base : [...base, key];
                                      else next = base.filter(k=>k!==key);
                                      if (next.length > 50) next = next.slice(0, 50);
+                                     
+                                     // Show notification when permission is changed
+                                     const action = e.target.checked ? 
+                                       (language === 'vi' ? 'đã bật' : 'enabled') : 
+                                       (language === 'vi' ? 'đã tắt' : 'disabled');
+                                     const permissionName = translatePermissionLabel(key);
+                                     showNotification('info', 
+                                       language === 'vi' ? 
+                                         `Chức năng "${permissionName}" ${action} cho ${u.email}` :
+                                         `Function "${permissionName}" ${action} for ${u.email}`
+                                     );
+                                     
                                      return { ...prev, [id]: next };
                                    });
                                  }}
@@ -1067,6 +1142,34 @@ export default function PermissionsPage(){
               fontSize: 14
             }}>
                            {message}
+           </div>
+         )}
+         
+         {/* Notification Toast */}
+         {notification && (
+           <div style={{
+             position: 'fixed',
+             top: '20px',
+             right: '20px',
+             zIndex: 9999,
+             padding: '16px 20px',
+             borderRadius: '8px',
+             color: 'white',
+             fontSize: '14px',
+             fontWeight: '500',
+             maxWidth: '400px',
+             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+             animation: 'slideInRight 0.3s ease-out',
+             background: notification.type === 'success' ? '#10b981' : 
+                        notification.type === 'warning' ? '#f59e0b' : '#3b82f6'
+           }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+               <span>
+                 {notification.type === 'success' ? '✅' : 
+                  notification.type === 'warning' ? '⚠️' : 'ℹ️'}
+               </span>
+               <span>{notification.message}</span>
+             </div>
            </div>
          )}
          </div>

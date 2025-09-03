@@ -1,5 +1,6 @@
 import React from 'react';
 import { maintenanceApi } from '@services/maintenance';
+import { useTranslation } from '@hooks/useTranslation';
 
 interface RepairTableProps {
   repairs: any[];
@@ -14,6 +15,7 @@ interface RepairTableProps {
 }
 
 export default function RepairTable({ repairs, onPassStandard, onFailStandard, onRepairable, onUnrepairable, onEditInvoice, onRequestConfirmation, onStartRepair, onCompleteRepair }: RepairTableProps) {
+  const { t } = useTranslation();
   const fmt = (n: any) => {
     const num = Number(n || 0);
     return num.toLocaleString('vi-VN');
@@ -46,13 +48,13 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
       <table className="table" style={{ width: '100%', minWidth: '900px' }}>
         <thead>
           <tr>
-            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Mã</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Container No</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Trạng thái</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Mô tả</th>
-            <th style={{ padding: '12px 8px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>Chi phí (đ)</th>
-            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Hóa đơn</th>
-            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Hành động</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.code')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.containerNo')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.status')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.description')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.cost')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.invoice')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -79,12 +81,12 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                          r.status === 'CHECKED' ? '#065f46' : 
                          r.status === 'REJECTED' ? '#991b1b' : '#991b1b'
                 }}>
-                                     {r.status === 'CHECKING' ? 'Đang kiểm tra' :
-                    r.status === 'PENDING_ACCEPT' ? 'Chờ chấp nhận' :
-                    r.status === 'ACCEPT' ? 'Đã chấp nhận' :
-                    r.status === 'REPAIRING' ? 'Đang sửa chữa' :
-                    r.status === 'CHECKED' ? 'Đã kiểm tra' :
-                    r.status === 'REJECTED' ? 'Đã từ chối' : 'Không xác định'}
+                                     {r.status === 'CHECKING' ? t('pages.maintenance.repairs.status.checking') :
+                    r.status === 'PENDING_ACCEPT' ? t('pages.maintenance.repairs.status.pendingAccept') :
+                    r.status === 'ACCEPT' ? t('pages.maintenance.repairs.status.accept') :
+                    r.status === 'REPAIRING' ? t('pages.maintenance.repairs.status.repairing') :
+                    r.status === 'CHECKED' ? t('pages.maintenance.repairs.status.checked') :
+                    r.status === 'REJECTED' ? t('pages.maintenance.repairs.status.rejected') : t('pages.maintenance.repairs.status.unknown')}
                 </span>
               </td>
               <td style={{ padding: '12px 8px', maxWidth: '200px' }} title={r.problem_description}>
@@ -104,9 +106,9 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                       cursor: 'pointer',
                       fontSize: '12px'
                     }}
-                    title="Xem hóa đơn PDF"
+                    title={t('pages.maintenance.repairs.actions.viewInvoicePDF')}
                   >
-                    📄 Xem chi tiết
+                    📄 {t('pages.maintenance.repairs.actions.viewInvoice')}
                   </button>
                 ) : (
                   <span style={{ 
@@ -114,7 +116,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                     fontSize: '12px',
                     fontStyle: 'italic'
                   }}>
-                    Chưa có hóa đơn
+                    {t('pages.maintenance.repairs.invoice.hasInvoice')}
                   </span>
                 )}
               </td>
@@ -133,9 +135,9 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                          cursor: 'pointer',
                          fontSize: '12px'
                        }}
-                       title="Sửa hóa đơn sửa chữa"
+                       title={t('pages.maintenance.repairs.actions.editInvoiceTitle')}
                      >
-                       ✏️ Sửa hóa đơn
+                       ✏️ {t('pages.maintenance.repairs.actions.editInvoice')}
                      </button>
                      <button 
                        onClick={() => onRequestConfirmation(r.id)}
@@ -148,9 +150,9 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                          cursor: 'pointer',
                          fontSize: '12px'
                        }}
-                       title="Gửi yêu cầu xác nhận từ khách hàng"
+                       title={t('pages.maintenance.repairs.actions.requestConfirmationTitle')}
                      >
-                       📧 Gửi yêu cầu xác nhận
+                       📧 {t('pages.maintenance.repairs.actions.requestConfirmation')}
                      </button>
                    </div>
                  )}
@@ -168,9 +170,9 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                          cursor: 'pointer',
                          fontSize: '12px'
                        }}
-                       title="Tiến hành sửa chữa"
+                       title={t('pages.maintenance.repairs.actions.startRepairTitle')}
                      >
-                       🔧 Tiến hành sửa chữa
+                       🔧 {t('pages.maintenance.repairs.actions.startRepair')}
                      </button>
                    </div>
                  )}
@@ -188,9 +190,9 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                          cursor: 'pointer',
                          fontSize: '12px'
                        }}
-                       title="Hoàn thành sửa chữa"
+                       title={t('pages.maintenance.repairs.actions.completeRepairTitle')}
                      >
-                       ✅ Hoàn thành
+                       ✅ {t('pages.maintenance.repairs.actions.completeRepair')}
                      </button>
                    </div>
                  )}
@@ -208,7 +210,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                         fontSize: '12px'
                       }}
                     >
-                      Đạt chuẩn
+                      {t('pages.maintenance.repairs.actions.passStandard')}
                     </button>
                     <button 
                       onClick={() => onFailStandard(r.id)}
@@ -222,7 +224,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                         fontSize: '12px'
                       }}
                     >
-                      Không đạt chuẩn
+                      {t('pages.maintenance.repairs.actions.failStandard')}
                     </button>
                   </div>
                 )}
@@ -240,7 +242,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                         fontSize: '12px'
                       }}
                     >
-                      Có thể sửa chữa
+                      {t('pages.maintenance.repairs.actions.repairable')}
                     </button>
                     <button 
                       onClick={() => onUnrepairable(r.id)}
@@ -254,7 +256,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                         fontSize: '12px'
                       }}
                     >
-                      Không thể sửa chữa
+                      {t('pages.maintenance.repairs.actions.unrepairable')}
                     </button>
                   </div>
                 )}
@@ -269,7 +271,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                 color: '#6b7280',
                 fontSize: '14px'
               }}>
-                Không có phiếu sửa chữa nào
+                {t('pages.maintenance.repairs.noDataSubtitle')}
               </td>
             </tr>
           )}

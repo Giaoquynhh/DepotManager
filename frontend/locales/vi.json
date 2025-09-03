@@ -228,6 +228,12 @@
       "typeLabel": "Loại",
       "allStatuses": "Tất cả trạng thái",
       "allTypes": "Tất cả loại",
+      "statusForwarded": "Đã chuyển tiếp",
+      "statusGateIn": "Đã vào cổng",
+      "statusInYard": "Trong bãi",
+      "statusInCar": "Trên xe",
+      "typeImport": "Nhập khẩu",
+      "typeExport": "Xuất khẩu",
       "noData": "Không có dữ liệu",
       "noRequestsToDisplay": "Không có yêu cầu nào để hiển thị",
       "viewDetail": "Xem chi tiết",
@@ -362,7 +368,32 @@
       "searchButton": "Tìm kiếm",
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có dữ liệu",
-      "noDataSubtitle": "Không có container nào để hiển thị"
+      "noDataSubtitle": "Không có container nào để hiển thị",
+      "allStatuses": "Tất cả trạng thái",
+      "statusWaiting": "Đang chờ sắp xếp",
+      "statusAssigned": "Đã xếp chỗ trong bãi",
+      "statusInYard": "Đã ở trong bãi",
+      "statusInCar": "Đã lên xe",
+      "statusEmptyInYard": "Container rỗng có trong bãi",
+      "showAllContainers": "Hiển thị tất cả container - Bao gồm cả container SystemAdmin nhập",
+      "loadDataError": "Lỗi tải dữ liệu",
+      "cannotLoadData": "Không thể tải dữ liệu",
+      "tableHeaders": {
+        "container": "Container",
+        "yard": "Bãi",
+        "block": "Khối",
+        "slot": "Ô",
+        "status": "Trạng thái",
+        "checkInfo": "Thông tin kiểm tra"
+      },
+      "position": "Vị trí",
+      "notChecked": "Chưa kiểm tra",
+      "checkedAt": "Lúc",
+      "licensePlate": "Biển số",
+      "driver": "Tài xế",
+      "checkedViaRepair": "Đã kiểm tra qua phiếu sửa chữa",
+      "systemAdminAdded": "Container được SystemAdmin nhập trực tiếp vào bãi",
+      "totalCurrentPage": "Tổng (trang hiện tại)"
     },
     "forklift": {
       "title": "Quản lý xe nâng",
@@ -375,22 +406,112 @@
     },
     "maintenance": {
       "repairs": {
-        "title": "Phiếu sửa chữa",
+        "title": "Danh sách phiếu sửa chữa",
         "welcome": "Chào mừng đến với hệ thống quản lý phiếu sửa chữa",
         "searchPlaceholder": "Tìm kiếm theo mã phiếu...",
         "searchButton": "Tìm kiếm",
         "clearFilters": "Xóa bộ lọc",
         "noData": "Không có dữ liệu",
-        "noDataSubtitle": "Không có phiếu sửa chữa nào để hiển thị"
+        "noDataSubtitle": "Không có phiếu sửa chữa nào để hiển thị",
+        "filterByStatus": "Lọc theo trạng thái:",
+        "allStatuses": "Tất cả",
+        "statusChecking": "Đang kiểm tra",
+        "statusPendingAccept": "Chờ chấp nhận",
+        "statusRepairing": "Đang sửa chữa",
+        "statusChecked": "Đã kiểm tra",
+        "statusRejected": "Đã từ chối",
+        "pendingContainersList": "Danh sách container đang chờ",
+        "tableHeaders": {
+          "code": "Mã",
+          "containerNo": "Container No",
+          "status": "Trạng thái",
+          "description": "Mô tả",
+          "cost": "Chi phí (đ)",
+          "invoice": "Hóa đơn",
+          "actions": "Hành động"
+        },
+        "actions": {
+          "passStandard": "Đạt chuẩn",
+          "failStandard": "Không đạt chuẩn",
+          "repairable": "Có thể sửa chữa",
+          "unrepairable": "Không thể sửa chữa",
+          "editInvoice": "Sửa hóa đơn",
+          "requestConfirmation": "Gửi yêu cầu xác nhận",
+          "startRepair": "Tiến hành sửa chữa",
+          "completeRepair": "Hoàn thành",
+          "viewInvoice": "Xem chi tiết",
+          "viewInvoicePDF": "Xem hóa đơn PDF",
+          "editInvoiceTitle": "Sửa hóa đơn sửa chữa",
+          "requestConfirmationTitle": "Gửi yêu cầu xác nhận từ khách hàng",
+          "startRepairTitle": "Tiến hành sửa chữa",
+          "completeRepairTitle": "Hoàn thành sửa chữa"
+        },
+        "status": {
+          "checking": "Đang kiểm tra",
+          "pendingAccept": "Chờ chấp nhận",
+          "accept": "Đã chấp nhận",
+          "repairing": "Đang sửa chữa",
+          "checked": "Đã kiểm tra",
+          "rejected": "Đã từ chối",
+          "unknown": "Không xác định"
+        },
+        "invoice": {
+          "hasInvoice": "Chưa có hóa đơn",
+          "viewDetails": "Xem chi tiết"
+        },
+        "messages": {
+          "repairApproved": "Đã duyệt phiếu",
+          "repairRejected": "Đã từ chối phiếu",
+          "checkCompleted": "Đã hoàn thành kiểm tra - Đạt chuẩn",
+          "checkFailed": "Container không đạt chuẩn - chọn option sửa chữa",
+          "repairCompleted": "Đã hoàn thành sửa chữa thành công",
+          "repairStarted": "Đã tiến hành sửa chữa thành công",
+          "confirmationSent": "Đã gửi yêu cầu xác nhận thành công",
+          "invoiceCreated": "Đã tạo hóa đơn sửa chữa thành công",
+          "invoiceModalOpened": "Mở modal sửa hóa đơn",
+          "unrepairableCompleted": "Đã từ chối - Container không đạt chuẩn và không thể sửa chữa"
+        }
       },
       "inventory": {
-        "title": "Tồn kho",
+        "title": "Tồn kho vật tư",
         "welcome": "Chào mừng đến với hệ thống quản lý tồn kho",
-        "searchPlaceholder": "Tìm kiếm theo mã sản phẩm...",
+        "searchPlaceholder": "Tìm kiếm tên vật tư",
         "searchButton": "Tìm kiếm",
         "clearFilters": "Xóa bộ lọc",
         "noData": "Không có dữ liệu",
-        "noDataSubtitle": "Không có sản phẩm nào trong tồn kho"
+        "noDataSubtitle": "Không có sản phẩm nào trong tồn kho",
+        "onlyShowLowStock": "Chỉ hiển thị tồn kho thấp",
+        "addProduct": "Thêm sản phẩm",
+        "cancelAddProduct": "Hủy thêm sản phẩm",
+        "addNewProduct": "Thêm sản phẩm mới",
+        "form": {
+          "productName": "Tên sản phẩm *",
+          "productNamePlaceholder": "Nhập tên sản phẩm",
+          "unitOfMeasurement": "Đơn vị tính *",
+          "unitOfMeasurementPlaceholder": "pcs, lit, kg...",
+          "stock": "Tồn kho",
+          "reorderPoint": "Điểm đặt hàng",
+          "unitPrice": "Đơn giá (VND)",
+          "add": "Thêm"
+        },
+        "tableHeaders": {
+          "name": "Tên",
+          "unitOfMeasurement": "Đơn vị tính",
+          "stock": "Tồn",
+          "reorderPoint": "Điểm đặt hàng",
+          "unitPrice": "Đơn giá (VND)",
+          "actions": "Hành động"
+        },
+        "actions": {
+          "save": "Lưu"
+        },
+        "messages": {
+          "updated": "Đã cập nhật",
+          "updateError": "Lỗi cập nhật",
+          "pleaseEnterNameAndUnit": "Vui lòng nhập tên và đơn vị tính",
+          "productAdded": "Đã thêm sản phẩm mới",
+          "addProductError": "Lỗi thêm sản phẩm"
+        }
       }
     },
     "finance": {
@@ -401,7 +522,36 @@
         "searchButton": "Tìm kiếm",
         "clearFilters": "Xóa bộ lọc",
         "noData": "Không có dữ liệu",
-        "noDataSubtitle": "Không có hóa đơn nào để hiển thị"
+        "noDataSubtitle": "Không có hóa đơn nào để hiển thị",
+        "filterByStatus": "Lọc theo trạng thái:",
+        "allStatuses": "Tất cả",
+        "containersNeedInvoice": "Danh sách container cần tạo hóa đơn",
+        "tableHeaders": {
+          "type": "Loại",
+          "containerNo": "Container No",
+          "customer": "Khách hàng",
+          "companyCode": "Mã Công ty",
+          "status": "Trạng thái",
+          "cost": "Chi phí",
+          "eir": "EIR",
+          "actions": "Hành động"
+        },
+        "types": {
+          "import": "Nhập",
+          "export": "Xuất",
+          "convert": "Chuyển đổi"
+        },
+        "status": {
+          "paid": "Đã thanh toán",
+          "unpaid": "Chưa thanh toán"
+        },
+        "actions": {
+          "view": "Xem",
+          "viewEIR": "Xem EIR"
+        },
+        "messages": {
+          "noInvoices": "Không có hóa đơn nào"
+        }
       },
       "createInvoice": {
         "title": "Tạo hóa đơn",
@@ -411,6 +561,80 @@
         "clearFilters": "Xóa bộ lọc",
         "noData": "Không có dữ liệu",
         "noDataSubtitle": "Không có hóa đơn nào để hiển thị"
+      }
+    },
+    "forklift": {
+      "title": "Quản lý Xe nâng",
+      "jobList": "Danh sách công việc xe nâng",
+      "totalJobs": "Tổng: {count} công việc",
+      "loadingJobs": "Đang tải danh sách công việc...",
+      "noJobs": "Chưa có công việc xe nâng nào",
+      "accessDenied": "Bạn không có quyền truy cập trang này",
+      "authError": "Không thể xác thực người dùng",
+      "loadError": "Không thể tải danh sách công việc xe nâng",
+      "tableHeaders": {
+        "containerNo": "Container No",
+        "pickupLocation": "Vị trí nhận",
+        "dropoffLocation": "Vị trí xếp",
+        "status": "Trạng Thái",
+        "forklift": "Xe nâng",
+        "cost": "Chi phí",
+        "createdAt": "Thời gian tạo đơn",
+        "actions": "Hành động"
+      },
+      "status": {
+        "pending": "Chờ xử lý",
+        "assigned": "Xe nâng đã nhận",
+        "inProgress": "Đang thực hiện",
+        "pendingApproval": "Chờ duyệt",
+        "completed": "Hoàn thành",
+        "cancelled": "Đã hủy"
+      },
+      "driver": {
+        "assigned": "Đã gán",
+        "notAssigned": "Chưa gán",
+        "driverName": "Tài xế:",
+        "licensePlate": "Biển số:",
+        "noInfo": "Chưa có thông tin"
+      },
+      "cost": {
+        "hasCost": "VNĐ",
+        "noCost": "Chưa có"
+      },
+      "location": {
+        "outside": "Bên ngoài"
+      },
+      "actions": {
+        "cancel": "❌ Hủy",
+        "assignDriver": "👤 Gán tài xế",
+        "reassignDriver": "🔄 Gán lại tài xế",
+        "startWork": "🔧 Bắt đầu làm việc",
+        "complete": "✅ Hoàn thành",
+        "approve": "✅ Duyệt",
+        "editCost": "💰 Chỉnh sửa chi phí",
+        "driverAssigned": "Đã gán tài xế"
+      },
+      "modal": {
+        "editCost": "Chỉnh sửa chi phí",
+        "costLabel": "Chi phí (VNĐ):",
+        "costPlaceholder": "Nhập chi phí (số nguyên)",
+        "update": "Cập nhật",
+        "cancel": "Hủy"
+      },
+      "messages": {
+        "cancelJobPrompt": "Lý do hủy công việc:",
+        "updateCostSuccess": "Đã cập nhật chi phí",
+        "updateCostError": "Không thể cập nhật chi phí",
+        "startJobError": "Không thể bắt đầu công việc",
+        "beginWorkError": "Không thể bắt đầu làm việc",
+        "completeJobError": "Không thể hoàn thành công việc",
+        "approveJobError": "Không thể duyệt công việc",
+        "cancelJobError": "Không thể hủy công việc",
+        "pleaseEnterCost": "Vui lòng nhập chi phí",
+        "costMustBeNumber": "Chi phí phải là số",
+        "costMustBeInteger": "Chi phí phải là số nguyên",
+        "costCannotBeNegative": "Chi phí không thể là số âm",
+        "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại"
       }
     },
     "reports": {

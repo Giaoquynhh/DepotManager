@@ -3,6 +3,7 @@ import Header from '@components/Header';
 import { api } from '@services/api';
 import { isSaleAdmin, isYardManager, isSystemAdmin } from '@utils/rbac';
 import AssignDriverModal from '@components/Forklift/AssignDriverModal';
+import { useTranslation } from '@hooks/useTranslation';
 
 interface ForkliftTask {
   id: string;
@@ -85,6 +86,7 @@ interface ForkliftTask {
 }
 
 export default function Forklift() {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<ForkliftTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -179,7 +181,7 @@ export default function Forklift() {
         
         // Kiểm tra quyền truy cập
         if (!isSaleAdmin(role) && !isYardManager(role) && !isSystemAdmin(role)) {
-          setError('Bạn không có quyền truy cập trang này');
+          setError(t('pages.forklift.accessDenied'));
           return;
         }
         
@@ -187,7 +189,7 @@ export default function Forklift() {
         loadForkliftTasks();
       })
       .catch(err => {
-        setError('Không thể xác thực người dùng');
+        setError(t('pages.forklift.authError'));
         console.error('Auth error:', err);
       });
   }, []);
@@ -199,7 +201,7 @@ export default function Forklift() {
       console.log('🔍 Forklift jobs data:', response.data);
       setTasks(response.data.data || []);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể tải danh sách công việc xe nâng');
+      setError(err?.response?.data?.message || t('pages.forklift.loadError'));
       console.error('Load tasks error:', err);
     } finally {
       setLoading(false);
@@ -230,7 +232,7 @@ export default function Forklift() {
       setCostModalOpen(false);
       setSelectedTask(null);
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể cập nhật chi phí');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.updateCostError'));
     }
   };
 
@@ -239,7 +241,7 @@ export default function Forklift() {
       await api.patch(`/forklift/jobs/${taskId}/start`);
       loadForkliftTasks();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể bắt đầu công việc');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.startJobError'));
     }
   };
 
@@ -248,7 +250,7 @@ export default function Forklift() {
       await api.patch(`/forklift/jobs/${taskId}/begin-work`);
       loadForkliftTasks();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể bắt đầu làm việc');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.beginWorkError'));
     }
   };
 
@@ -257,7 +259,7 @@ export default function Forklift() {
       await api.patch(`/forklift/jobs/${taskId}/complete`);
       loadForkliftTasks();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể hoàn thành công việc');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.completeJobError'));
     }
   };
 
@@ -266,30 +268,30 @@ export default function Forklift() {
       await api.patch(`/forklift/jobs/${taskId}/approve`);
       loadForkliftTasks();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể duyệt công việc');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.approveJobError'));
     }
   };
 
   const handleCancelJob = async (taskId: string) => {
-    const reason = prompt('Lý do hủy công việc:');
+    const reason = prompt(t('pages.forklift.messages.cancelJobPrompt'));
     if (!reason) return;
 
     try {
       await api.patch(`/forklift/jobs/${taskId}/cancel`, { reason });
       loadForkliftTasks();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Không thể hủy công việc');
+      alert(err?.response?.data?.message || t('pages.forklift.messages.cancelJobError'));
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'Chờ xử lý';
-      case 'ASSIGNED': return 'Xe nâng đã nhận';
-      case 'IN_PROGRESS': return 'Đang thực hiện';
-      case 'PENDING_APPROVAL': return 'Chờ duyệt';
-      case 'COMPLETED': return 'Hoàn thành';
-      case 'CANCELLED': return 'Đã hủy';
+      case 'PENDING': return t('pages.forklift.status.pending');
+      case 'ASSIGNED': return t('pages.forklift.status.assigned');
+      case 'IN_PROGRESS': return t('pages.forklift.status.inProgress');
+      case 'PENDING_APPROVAL': return t('pages.forklift.status.pendingApproval');
+      case 'COMPLETED': return t('pages.forklift.status.completed');
+      case 'CANCELLED': return t('pages.forklift.status.cancelled');
       default: return status;
     }
   };
@@ -318,7 +320,7 @@ export default function Forklift() {
         <main className="container">
           <div className="card card-padding-lg">
             <div className="text-center">
-              <h2 className="text-red-600">Lỗi truy cập</h2>
+              <h2 className="text-red-600">{t('common.error')}</h2>
               <p>{error}</p>
             </div>
           </div>
@@ -330,23 +332,15 @@ export default function Forklift() {
   return (
     <>
       <Header />
-      <main className="container forklift-page">
+      <main className="container depot-requests">
         {/* Page Header */}
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
-              <h1 className="page-title gradient gradient-ultimate">Quản lý Xe nâng</h1>
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.forklift.title')}</h1>
             </div>
 
             <div className="header-actions">
-              <button 
-                className="btn btn-outline refresh-btn"
-                onClick={loadForkliftTasks}
-                disabled={loading}
-                title="Làm mới dữ liệu"
-              >
-                {loading ? '⏳' : '🔄'} {loading ? 'Đang tải...' : 'Làm mới'}
-              </button>
             </div>
           </div>
         </div>
@@ -359,7 +353,7 @@ export default function Forklift() {
                 className="btn btn-outline mt-2"
                 onClick={() => setError(null)}
               >
-                Đóng
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -367,10 +361,10 @@ export default function Forklift() {
 
         <div className="card card-padding-lg">
           <div className="card-header">
-            <h2 className="card-title">Danh sách công việc xe nâng</h2>
+            <h2 className="card-title">{t('pages.forklift.jobList')}</h2>
             <div className="card-actions">
               <span className="badge badge-primary">
-                Tổng: {tasks.length} công việc
+                {t('pages.forklift.totalJobs').replace('{count}', tasks.length.toString())}
               </span>
             </div>
           </div>
@@ -379,11 +373,11 @@ export default function Forklift() {
             {loading ? (
               <div className="text-center py-8">
                 <div className="loading-spinner spinner-lg spinner-primary"></div>
-                <p className="mt-4">Đang tải danh sách công việc...</p>
+                <p className="mt-4">{t('pages.forklift.loadingJobs')}</p>
               </div>
             ) : tasks.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p>Chưa có công việc xe nâng nào</p>
+                <p>{t('pages.forklift.noJobs')}</p>
               </div>
             ) : (
               <div className="table-container">
@@ -401,7 +395,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Container No
+{t('pages.forklift.tableHeaders.containerNo')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -410,7 +404,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Vị trí nhận
+{t('pages.forklift.tableHeaders.pickupLocation')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -419,7 +413,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Vị trí xếp
+{t('pages.forklift.tableHeaders.dropoffLocation')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -428,7 +422,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Trạng Thái
+{t('pages.forklift.tableHeaders.status')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -437,7 +431,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Xe nâng
+{t('pages.forklift.tableHeaders.forklift')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -446,7 +440,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Chi phí
+{t('pages.forklift.tableHeaders.cost')}
                         </th>
 
                                                                      <th style={{
@@ -456,7 +450,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Thời gian tạo đơn
+{t('pages.forklift.tableHeaders.createdAt')}
                         </th>
                                                                      <th style={{
                           padding: '16px 12px',
@@ -465,7 +459,7 @@ export default function Forklift() {
                           color: '#374151',
                           fontSize: '14px'
                         }}>
-                          Hành động
+{t('pages.forklift.tableHeaders.actions')}
                         </th>
                     </tr>
                   </thead>
@@ -532,7 +526,7 @@ export default function Forklift() {
                                      color: '#64748b', 
                                      fontWeight: '600',
                                      minWidth: '60px'
-                                   }}>Tài xế:</span>
+                                   }}>{t('pages.forklift.driver.driverName')}</span>
                                    <span style={{ 
                                      color: '#1e293b', 
                                      fontWeight: '500',
@@ -553,7 +547,7 @@ export default function Forklift() {
                                      color: '#64748b', 
                                      fontWeight: '600',
                                      minWidth: '60px'
-                                   }}>Biển số:</span>
+                                   }}>{t('pages.forklift.driver.licensePlate')}</span>
                                    <span style={{ 
                                      color: '#1e293b', 
                                      fontWeight: '500',
@@ -577,7 +571,7 @@ export default function Forklift() {
                                  fontSize: '12px',
                                  fontStyle: 'italic'
                                }}>
-                                 Chưa có thông tin
+{t('pages.forklift.driver.noInfo')}
                                </div>
                              )}
                            </div>
@@ -608,7 +602,7 @@ export default function Forklift() {
                                  fontSize: '14px',
                                  fontStyle: 'italic'
                                }}>
-                                 {task.to_slot?.code || 'Bên ngoài'}
+{task.to_slot?.code || t('pages.forklift.location.outside')}
                                </span>
                              )}
                            </div>
@@ -695,7 +689,7 @@ export default function Forklift() {
                                    borderRadius: '3px',
                                    fontWeight: '600'
                                  }}>
-                                   Đã gán
+{t('pages.forklift.driver.assigned')}
                                  </span>
                                </div>
                              ) : (
@@ -714,7 +708,7 @@ export default function Forklift() {
                                    fontStyle: 'italic',
                                    fontWeight: '500'
                                  }}>
-                                   Chưa gán
+{t('pages.forklift.driver.notAssigned')}
                                  </span>
                                </div>
                              )}
@@ -753,7 +747,7 @@ export default function Forklift() {
                                    borderRadius: '3px',
                                    fontWeight: '600'
                                  }}>
-                                   VNĐ
+{t('pages.forklift.cost.hasCost')}
                                  </span>
                                </div>
                              ) : (
@@ -772,7 +766,7 @@ export default function Forklift() {
                                    fontStyle: 'italic',
                                    fontWeight: '500'
                                  }}>
-                                   Chưa có
+{t('pages.forklift.cost.noCost')}
                                  </span>
                                </div>
                              )}
@@ -830,7 +824,7 @@ export default function Forklift() {
                                  }}
                                  onClick={() => handleCancelJob(task.id)}
                                >
-                                 ❌ Hủy
+{t('pages.forklift.actions.cancel')}
                                </button>
                              )}
                                                          {task.status === 'ASSIGNED' && (
@@ -843,7 +837,7 @@ export default function Forklift() {
                                  borderRadius: '4px',
                                  border: '1px solid #d1d5db'
                                }}>
-                                 Đã gán tài xế
+{t('pages.forklift.actions.driverAssigned')}
                                </div>
                              )}
                                                          {/* Không hiển thị gì khi đã gán tài xế - chỉ để trống */}
@@ -859,7 +853,7 @@ export default function Forklift() {
                                  }}
                                  onClick={() => handleBeginWork(task.id)}
                                >
-                                 🔧 Bắt đầu làm việc
+{t('pages.forklift.actions.startWork')}
                                </button>
                              )}
                                                          {task.status === 'IN_PROGRESS' && (
@@ -874,7 +868,7 @@ export default function Forklift() {
                                  }}
                                  onClick={() => handleCompleteJob(task.id)}
                                >
-                                 ✅ Hoàn thành
+{t('pages.forklift.actions.complete')}
                                </button>
                              )}
                              
@@ -891,7 +885,7 @@ export default function Forklift() {
                                   onClick={() => handleApproveJob(task.id)}
                                   title="Duyệt và hoàn thành công việc"
                                 >
-                                  ✅ Duyệt
+{t('pages.forklift.actions.approve')}
                                 </button>
                               )}
                             {/* Gán tài xế lần đầu */}
@@ -907,7 +901,7 @@ export default function Forklift() {
                                  }}
                                 onClick={() => handleAssignDriver(task)}
                               >
-                                 👤 Gán tài xế
+{t('pages.forklift.actions.assignDriver')}
                                </button>
                             )}
                             
@@ -924,7 +918,7 @@ export default function Forklift() {
                                  }}
                                 onClick={() => handleAssignDriver(task)}
                               >
-                                 🔄 Gán lại tài xế
+{t('pages.forklift.actions.reassignDriver')}
                                </button>
                             )}
                              {(task.status === 'PENDING' || task.status === 'ASSIGNED' || task.status === 'IN_PROGRESS' || task.status === 'PENDING_APPROVAL') && (
@@ -942,7 +936,7 @@ export default function Forklift() {
                                    setCostModalOpen(true);
                                  }}
                                >
-                                 💰 Chỉnh sửa chi phí
+{t('pages.forklift.actions.editCost')}
                                 </button>
                              )}
                           </div>
@@ -983,7 +977,7 @@ export default function Forklift() {
         <div style={modalStyles.modal}>
           <div style={modalStyles.modalContent}>
             <div style={modalStyles.modalHeader}>
-              <h3 style={modalStyles.modalTitle}>Chỉnh sửa chi phí</h3>
+              <h3 style={modalStyles.modalTitle}>{t('pages.forklift.modal.editCost')}</h3>
               <button
                 style={modalStyles.modalClose}
                 onClick={() => {
@@ -996,12 +990,12 @@ export default function Forklift() {
             </div>
             <div style={modalStyles.modalBody}>
               <div style={modalStyles.formGroup}>
-                <label htmlFor="cost" style={modalStyles.formLabel}>Chi phí (VNĐ):</label>
+                <label htmlFor="cost" style={modalStyles.formLabel}>{t('pages.forklift.modal.costLabel')}</label>
                                  <input
                    type="number"
                    id="cost"
                    style={modalStyles.formInput}
-                   placeholder="Nhập chi phí (số nguyên)"
+                   placeholder={t('pages.forklift.modal.costPlaceholder')}
                    defaultValue={selectedTask.cost || 0}
                    min="0"
                    step="1"
@@ -1016,7 +1010,7 @@ export default function Forklift() {
                   setSelectedTask(null);
                 }}
               >
-                Hủy
+{t('pages.forklift.modal.cancel')}
               </button>
                              <button
                  className="btn btn-primary"
@@ -1026,13 +1020,13 @@ export default function Forklift() {
                    
                    // Kiểm tra có nhập gì không
                    if (!costValue) {
-                     alert('Vui lòng nhập chi phí');
+                     alert(t('pages.forklift.messages.pleaseEnterCost'));
                      return;
                    }
                    
                    // Kiểm tra có phải là số không
                    if (isNaN(Number(costValue))) {
-                     alert('Chi phí phải là số');
+                     alert(t('pages.forklift.messages.costMustBeNumber'));
                      return;
                    }
                    
@@ -1040,26 +1034,26 @@ export default function Forklift() {
                    
                    // Kiểm tra có phải là số nguyên không
                    if (!Number.isInteger(cost)) {
-                     alert('Chi phí phải là số nguyên');
+                     alert(t('pages.forklift.messages.costMustBeInteger'));
                      return;
                    }
                    
                    // Kiểm tra có phải là số không âm không
                    if (cost < 0) {
-                     alert('Chi phí không thể là số âm');
+                     alert(t('pages.forklift.messages.costCannotBeNegative'));
                      return;
                    }
                    
                    // Kiểm tra giới hạn chi phí (1 tỷ VNĐ)
                    if (cost > 1000000000) {
-                     alert('Chi phí quá cao. Vui lòng kiểm tra lại');
+                     alert(t('pages.forklift.messages.costTooHigh'));
                      return;
                    }
                    
                    handleUpdateCost(selectedTask.id, cost);
                  }}
                >
-                 Cập nhật
+{t('pages.forklift.modal.update')}
                </button>
             </div>
           </div>

@@ -198,14 +198,6 @@ export default function DepotRequests() {
 					</div>
 
 						<div className="header-actions">
-							<Button
-								variant="primary"
-								icon="📊"
-								onClick={() => window.print()}
-								className="export-btn"
-							>
-								{t('pages.requests.exportReport')}
-							</Button>
 						</div>
 					</div>
 				</div>

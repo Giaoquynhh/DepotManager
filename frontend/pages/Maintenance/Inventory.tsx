@@ -3,8 +3,10 @@ import Card from '@components/Card';
 import useSWR, { mutate } from 'swr';
 import { maintenanceApi } from '@services/maintenance';
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@hooks/useTranslation';
 
 export default function InventoryPage(){
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [onlyLow, setOnlyLow] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -30,13 +32,13 @@ export default function InventoryPage(){
     try{
       await maintenanceApi.updateInventory(id, payload);
       await mutate(key);
-      setMsg('Đã cập nhật');
-    }catch(e:any){ setMsg(e?.response?.data?.message || 'Lỗi cập nhật'); }
+      setMsg(t('pages.maintenance.inventory.messages.updated'));
+    }catch(e:any){ setMsg(e?.response?.data?.message || t('pages.maintenance.inventory.messages.updateError')); }
   };
 
   const addNewItem = async () => {
     if (!newItem.name || !newItem.uom) {
-      setMsg('Vui lòng nhập tên và đơn vị tính');
+      setMsg(t('pages.maintenance.inventory.messages.pleaseEnterNameAndUnit'));
       return;
     }
     
@@ -54,29 +56,22 @@ export default function InventoryPage(){
       await mutate(key);
       setNewItem({ name: '', uom: '', qty: 0, rp: 0, price: 0 });
       setShowAddForm(false);
-      setMsg('Đã thêm sản phẩm mới');
+      setMsg(t('pages.maintenance.inventory.messages.productAdded'));
     } catch(e:any) {
-      setMsg(e?.response?.data?.message || 'Lỗi thêm sản phẩm');
+      setMsg(e?.response?.data?.message || t('pages.maintenance.inventory.messages.addProductError'));
     }
   };
 
   return (
     <>
       <Header />
-      <main className="container inventory-page">
+      <main className="container depot-requests">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
-              <h1 className="page-title gradient gradient-ultimate">Tồn kho vật tư</h1>
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.maintenance.inventory.title')}</h1>
             </div>
             <div className="header-actions">
-              <button 
-                className="btn btn-outline add-product-btn"
-                onClick={() => setShowAddForm(!showAddForm)}
-                title={showAddForm ? 'Hủy thêm sản phẩm' : 'Thêm sản phẩm mới'}
-              >
-                {showAddForm ? '❌ Hủy' : '➕ Thêm sản phẩm'}
-              </button>
             </div>
           </div>
         </div>
@@ -93,12 +88,21 @@ export default function InventoryPage(){
                 </span>
                 <input
                   type="text"
-                  placeholder="Tìm kiếm tên vật tư"
+                  placeholder={t('pages.maintenance.inventory.searchPlaceholder')}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="search-input"
                 />
               </div>
+            </div>
+            <div className="filter-group">
+              <button 
+                className="btn btn-outline add-product-btn"
+                onClick={() => setShowAddForm(!showAddForm)}
+                title={showAddForm ? t('pages.maintenance.inventory.cancelAddProduct') : t('pages.maintenance.inventory.addNewProduct')}
+              >
+                {showAddForm ? '❌ ' + t('common.cancel') : '➕ ' + t('pages.maintenance.inventory.addProduct')}
+              </button>
             </div>
             <div className="filter-group">
               <label className="filter-label">
@@ -108,7 +112,7 @@ export default function InventoryPage(){
                   onChange={e => setOnlyLow(e.target.checked)}
                   style={{ marginRight: '8px' }}
                 />
-                Chỉ hiển thị low stock
+                {t('pages.maintenance.inventory.onlyShowLowStock')}
               </label>
             </div>
           </div>
@@ -124,30 +128,30 @@ export default function InventoryPage(){
                 marginBottom: '16px',
                 backgroundColor: '#f9fafb'
               }}>
-                <h4 style={{margin: '0 0 16px 0', color: '#1f2937'}}>Thêm sản phẩm mới</h4>
+                <h4 style={{margin: '0 0 16px 0', color: '#1f2937'}}>{t('pages.maintenance.inventory.addNewProduct')}</h4>
                 <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: '12px', alignItems: 'end'}}>
                   <div>
-                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>Tên sản phẩm *</label>
+                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>{t('pages.maintenance.inventory.form.productName')}</label>
                     <input
                       type="text"
-                      placeholder="Nhập tên sản phẩm"
+                      placeholder={t('pages.maintenance.inventory.form.productNamePlaceholder')}
                       value={newItem.name}
                       onChange={e => setNewItem(prev => ({ ...prev, name: e.target.value }))}
                       style={{width: '100%', padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px'}}
                     />
                   </div>
                   <div>
-                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>ĐVT *</label>
+                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>{t('pages.maintenance.inventory.form.unitOfMeasurement')}</label>
                     <input
                       type="text"
-                      placeholder="pcs, lit, kg..."
+                      placeholder={t('pages.maintenance.inventory.form.unitOfMeasurementPlaceholder')}
                       value={newItem.uom}
                       onChange={e => setNewItem(prev => ({ ...prev, uom: e.target.value }))}
                       style={{width: '100%', padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px'}}
                     />
                   </div>
                   <div>
-                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>Tồn kho</label>
+                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>{t('pages.maintenance.inventory.form.stock')}</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -163,7 +167,7 @@ export default function InventoryPage(){
                     />
                   </div>
                   <div>
-                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>Điểm đặt hàng</label>
+                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>{t('pages.maintenance.inventory.form.reorderPoint')}</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -179,7 +183,7 @@ export default function InventoryPage(){
                     />
                   </div>
                   <div>
-                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>Đơn giá (VND)</label>
+                    <label style={{display: 'block', fontSize: '12px', marginBottom: '4px', color: '#6b7280'}}>{t('pages.maintenance.inventory.form.unitPrice')}</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -199,14 +203,21 @@ export default function InventoryPage(){
                     onClick={addNewItem}
                     style={{backgroundColor: '#059669', padding: '8px 16px'}}
                   >
-                    Thêm
+                    {t('pages.maintenance.inventory.form.add')}
                   </button>
                 </div>
               </div>
             )}
             
             <table className="table">
-            <thead><tr><th>Tên</th><th>ĐVT</th><th>Tồn</th><th>Điểm đặt hàng</th><th>Đơn giá (VND)</th><th>Hành động</th></tr></thead>
+            <thead><tr>
+              <th>{t('pages.maintenance.inventory.tableHeaders.name')}</th>
+              <th>{t('pages.maintenance.inventory.tableHeaders.unitOfMeasurement')}</th>
+              <th>{t('pages.maintenance.inventory.tableHeaders.stock')}</th>
+              <th>{t('pages.maintenance.inventory.tableHeaders.reorderPoint')}</th>
+              <th>{t('pages.maintenance.inventory.tableHeaders.unitPrice')}</th>
+              <th>{t('pages.maintenance.inventory.tableHeaders.actions')}</th>
+            </tr></thead>
             <tbody>
               {(items||[]).map((it:any)=>{
                 const d = drafts[it.id] || { qty: it.qty_on_hand, rp: it.reorder_point, price: it.unit_price || 0 };
@@ -260,7 +271,7 @@ export default function InventoryPage(){
                         })}
                       />
                     </td>
-                    <td><button className="btn" onClick={()=>save(it.id)}>Lưu</button></td>
+                    <td><button className="btn" onClick={()=>save(it.id)}>{t('pages.maintenance.inventory.actions.save')}</button></td>
                   </tr>
                 );
               })}

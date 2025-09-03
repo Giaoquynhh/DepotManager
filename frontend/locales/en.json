@@ -20,6 +20,7 @@
     "submit": "Submit",
     "reset": "Reset",
     "retry": "Retry",
+    "prev": "Prev",
     "sortBy": "Sort by",
     "na": "N/A",
     "processing": "Processing...",
@@ -226,6 +227,12 @@
       "typeLabel": "Type",
       "allStatuses": "All Statuses",
       "allTypes": "All Types",
+      "statusForwarded": "Forwarded",
+      "statusGateIn": "Gate In",
+      "statusInYard": "In Yard",
+      "statusInCar": "In Car",
+      "typeImport": "Import",
+      "typeExport": "Export",
       "noData": "No Data",
       "noRequestsToDisplay": "No requests to display",
       "requestsList": "Requests List",
@@ -361,7 +368,32 @@
       "searchButton": "Search",
       "clearFilters": "Clear Filters",
       "noData": "No Data",
-      "noDataSubtitle": "No containers to display"
+      "noDataSubtitle": "No containers to display",
+      "allStatuses": "All Statuses",
+      "statusWaiting": "Waiting for arrangement",
+      "statusAssigned": "Assigned in yard",
+      "statusInYard": "In yard",
+      "statusInCar": "In car",
+      "statusEmptyInYard": "Empty container in yard",
+      "showAllContainers": "Show all containers - Including containers entered by SystemAdmin",
+      "loadDataError": "Error loading data",
+      "cannotLoadData": "Cannot load data",
+      "tableHeaders": {
+        "container": "Container",
+        "yard": "Yard",
+        "block": "Block",
+        "slot": "Slot",
+        "status": "Status",
+        "checkInfo": "Check information"
+      },
+      "position": "Position",
+      "notChecked": "Not checked",
+      "checkedAt": "At",
+      "licensePlate": "License plate",
+      "driver": "Driver",
+      "checkedViaRepair": "Checked via repair ticket",
+      "systemAdminAdded": "Container entered directly by SystemAdmin",
+      "totalCurrentPage": "Total (current page)"
     },
     "forklift": {
       "title": "Forklift Management",
@@ -374,22 +406,112 @@
     },
     "maintenance": {
       "repairs": {
-        "title": "Repair Tickets",
+        "title": "Repair Tickets List",
         "welcome": "Welcome to the Repair Ticket Management System",
         "searchPlaceholder": "Search by ticket code...",
         "searchButton": "Search",
         "clearFilters": "Clear Filters",
         "noData": "No Data",
-        "noDataSubtitle": "No repair tickets to display"
+        "noDataSubtitle": "No repair tickets to display",
+        "filterByStatus": "Filter by status:",
+        "allStatuses": "All",
+        "statusChecking": "Checking",
+        "statusPendingAccept": "Pending Accept",
+        "statusRepairing": "Repairing",
+        "statusChecked": "Checked",
+        "statusRejected": "Rejected",
+        "pendingContainersList": "List of pending containers",
+        "tableHeaders": {
+          "code": "Code",
+          "containerNo": "Container No",
+          "status": "Status",
+          "description": "Description",
+          "cost": "Cost (VND)",
+          "invoice": "Invoice",
+          "actions": "Actions"
+        },
+        "actions": {
+          "passStandard": "Pass Standard",
+          "failStandard": "Fail Standard",
+          "repairable": "Repairable",
+          "unrepairable": "Unrepairable",
+          "editInvoice": "Edit Invoice",
+          "requestConfirmation": "Send Confirmation Request",
+          "startRepair": "Start Repair",
+          "completeRepair": "Complete",
+          "viewInvoice": "View Details",
+          "viewInvoicePDF": "View Invoice PDF",
+          "editInvoiceTitle": "Edit Repair Invoice",
+          "requestConfirmationTitle": "Send Confirmation Request from Customer",
+          "startRepairTitle": "Start Repair",
+          "completeRepairTitle": "Complete Repair"
+        },
+        "status": {
+          "checking": "Checking",
+          "pendingAccept": "Pending Accept",
+          "accept": "Accepted",
+          "repairing": "Repairing",
+          "checked": "Checked",
+          "rejected": "Rejected",
+          "unknown": "Unknown"
+        },
+        "invoice": {
+          "hasInvoice": "No Invoice",
+          "viewDetails": "View Details"
+        },
+        "messages": {
+          "repairApproved": "Repair ticket approved",
+          "repairRejected": "Repair ticket rejected",
+          "checkCompleted": "Check completed - Passed standard",
+          "checkFailed": "Container failed standard - choose repair option",
+          "repairCompleted": "Repair completed successfully",
+          "repairStarted": "Repair started successfully",
+          "confirmationSent": "Confirmation request sent successfully",
+          "invoiceCreated": "Repair invoice created successfully",
+          "invoiceModalOpened": "Open edit invoice modal",
+          "unrepairableCompleted": "Rejected - Container failed standard and cannot be repaired"
+        }
       },
       "inventory": {
-        "title": "Inventory",
+        "title": "Material Inventory",
         "welcome": "Welcome to the Inventory Management System",
-        "searchPlaceholder": "Search by product code...",
+        "searchPlaceholder": "Search material name",
         "searchButton": "Search",
         "clearFilters": "Clear Filters",
         "noData": "No Data",
-        "noDataSubtitle": "No products in inventory"
+        "noDataSubtitle": "No products in inventory",
+        "onlyShowLowStock": "Only show low stock",
+        "addProduct": "Add Product",
+        "cancelAddProduct": "Cancel add product",
+        "addNewProduct": "Add new product",
+        "form": {
+          "productName": "Product name *",
+          "productNamePlaceholder": "Enter product name",
+          "unitOfMeasurement": "Unit of measurement *",
+          "unitOfMeasurementPlaceholder": "pcs, lit, kg...",
+          "stock": "Stock",
+          "reorderPoint": "Reorder point",
+          "unitPrice": "Unit price (VND)",
+          "add": "Add"
+        },
+        "tableHeaders": {
+          "name": "Name",
+          "unitOfMeasurement": "Unit of measurement",
+          "stock": "Stock",
+          "reorderPoint": "Reorder point",
+          "unitPrice": "Unit price (VND)",
+          "actions": "Actions"
+        },
+        "actions": {
+          "save": "Save"
+        },
+        "messages": {
+          "updated": "Updated",
+          "updateError": "Update error",
+          "pleaseEnterNameAndUnit": "Please enter name and unit of measurement",
+          "productAdded": "New product added",
+          "addProductError": "Error adding product"
+        }
       }
     },
     "finance": {
@@ -400,7 +522,36 @@
         "searchButton": "Search",
         "clearFilters": "Clear Filters",
         "noData": "No Data",
-        "noDataSubtitle": "No invoices to display"
+        "noDataSubtitle": "No invoices to display",
+        "filterByStatus": "Filter by status:",
+        "allStatuses": "All",
+        "containersNeedInvoice": "List of containers needing invoice creation",
+        "tableHeaders": {
+          "type": "Type",
+          "containerNo": "Container No",
+          "customer": "Customer",
+          "companyCode": "Company Code",
+          "status": "Status",
+          "cost": "Cost",
+          "eir": "EIR",
+          "actions": "Actions"
+        },
+        "types": {
+          "import": "Import",
+          "export": "Export",
+          "convert": "Convert"
+        },
+        "status": {
+          "paid": "Paid",
+          "unpaid": "Unpaid"
+        },
+        "actions": {
+          "view": "View",
+          "viewEIR": "View EIR"
+        },
+        "messages": {
+          "noInvoices": "No invoices"
+        }
       },
       "createInvoice": {
         "title": "Create Invoice",
@@ -410,6 +561,80 @@
         "clearFilters": "Clear Filters",
         "noData": "No Data",
         "noDataSubtitle": "No invoices to display"
+      }
+    },
+    "forklift": {
+      "title": "Forklift Management",
+      "jobList": "Forklift Job List",
+      "totalJobs": "Total: {count} jobs",
+      "loadingJobs": "Loading job list...",
+      "noJobs": "No forklift jobs yet",
+      "accessDenied": "You do not have permission to access this page",
+      "authError": "Unable to authenticate user",
+      "loadError": "Unable to load forklift job list",
+      "tableHeaders": {
+        "containerNo": "Container No",
+        "pickupLocation": "Pickup Location",
+        "dropoffLocation": "Dropoff Location",
+        "status": "Status",
+        "forklift": "Forklift",
+        "cost": "Cost",
+        "createdAt": "Created Time",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "assigned": "Forklift Assigned",
+        "inProgress": "In Progress",
+        "pendingApproval": "Pending Approval",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "driver": {
+        "assigned": "Assigned",
+        "notAssigned": "Not Assigned",
+        "driverName": "Driver:",
+        "licensePlate": "License Plate:",
+        "noInfo": "No information"
+      },
+      "cost": {
+        "hasCost": "VND",
+        "noCost": "No cost"
+      },
+      "location": {
+        "outside": "Outside"
+      },
+      "actions": {
+        "cancel": "❌ Cancel",
+        "assignDriver": "👤 Assign Driver",
+        "reassignDriver": "🔄 Reassign Driver",
+        "startWork": "🔧 Start Work",
+        "complete": "✅ Complete",
+        "approve": "✅ Approve",
+        "editCost": "💰 Edit Cost",
+        "driverAssigned": "Driver Assigned"
+      },
+      "modal": {
+        "editCost": "Edit Cost",
+        "costLabel": "Cost (VND):",
+        "costPlaceholder": "Enter cost (integer)",
+        "update": "Update",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "cancelJobPrompt": "Reason for cancelling job:",
+        "updateCostSuccess": "Cost updated",
+        "updateCostError": "Unable to update cost",
+        "startJobError": "Unable to start job",
+        "beginWorkError": "Unable to start work",
+        "completeJobError": "Unable to complete job",
+        "approveJobError": "Unable to approve job",
+        "cancelJobError": "Unable to cancel job",
+        "pleaseEnterCost": "Please enter cost",
+        "costMustBeNumber": "Cost must be a number",
+        "costMustBeInteger": "Cost must be an integer",
+        "costCannotBeNegative": "Cost cannot be negative",
+        "costTooHigh": "Cost too high. Please check again"
       }
     },
     "reports": {

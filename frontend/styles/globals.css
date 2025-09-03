@@ -4331,6 +4331,13 @@ main:has(.auth-hero) {
   
 
 
+/* Invoice page: nút sát bên phải */
+.invoice-page .search-filter-section {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
 /* ===== DEPOT REQUESTS PAGE COMPLETE ===== */
 
 /* ===== MODERN TABLE STYLES ===== */
@@ -5244,9 +5251,9 @@ main:has(.auth-hero) {
 }
 
 .invoice-page .modern-header {
-  background: linear-gradient(135deg, #dc2626, #ef4444);
-  border: 2px solid #f87171;
-  box-shadow: 0 20px 40px rgba(220, 38, 38, 0.3);
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  border: 2px solid #3b82f6;
+  box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
 }
 
 .invoice-page .containers-need-invoice-btn {
@@ -5379,16 +5386,12 @@ main:has(.auth-hero) {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  color: white;
+  color: #000000 !important;
 }
 
 .shimmer-text {
-  background: linear-gradient(45deg, #fff, #f0f0f0, #fff, #e0e0e0);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s ease-in-out infinite;
+  color: #000000 !important;
+  font-weight: 600;
 }
 
 @keyframes shimmer {
@@ -5407,23 +5410,34 @@ main:has(.auth-hero) {
   position: relative;
   display: flex;
   align-items: center;
+  margin-left: 3rem;
 }
 
 .input-icon {
   position: absolute;
-  left: 1rem;
+  left: -2.5rem;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 3;
   font-size: 1.2rem;
   filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .futuristic-input {
   width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  color: white;
+  color: #000000 !important;
   font-size: 1rem;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
@@ -5431,7 +5445,7 @@ main:has(.auth-hero) {
 }
 
 .futuristic-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(0, 0, 0, 0.6) !important;
 }
 
 .futuristic-input:focus {
@@ -5446,7 +5460,7 @@ main:has(.auth-hero) {
 
 .info-text {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #000000 !important;
   text-align: center;
   padding: 0.5rem;
   background: rgba(255, 255, 255, 0.05);
@@ -5471,13 +5485,13 @@ main:has(.auth-hero) {
 
 .primary-btn {
   background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  color: #000000 !important;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .secondary-btn {
   background: linear-gradient(135deg, #f093fb, #f5576c);
-  color: white;
+  color: #000000 !important;
   box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
 }
 
@@ -5493,6 +5507,7 @@ main:has(.auth-hero) {
 .btn-text {
   position: relative;
   z-index: 2;
+  color: #000000 !important;
 }
 
 .btn-ripple {
@@ -5515,7 +5530,7 @@ main:has(.auth-hero) {
 .success-message {
   background: rgba(34, 197, 94, 0.2);
   border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #10b981;
+  color: #000000 !important;
   padding: 1rem;
   border-radius: 8px;
   text-align: center;
@@ -6335,7 +6350,7 @@ main:has(.auth-hero) {
 
 .navy-login-btn:disabled .btn-content {
   opacity: 1;
-  color: #0a1628;
+  color: #ffffff;
   font-weight: 700;
 }
 
@@ -6346,10 +6361,10 @@ main:has(.auth-hero) {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #0a1628 !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
   opacity: 1 !important;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .loading-spinner {

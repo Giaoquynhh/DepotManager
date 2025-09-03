@@ -29,16 +29,7 @@ export default function GateSearchBar({
     onSearch(searchParams);
   };
 
-  const handleClearFilters = () => {
-    onSearch({
-      status: '',
-      container_no: '',
-      type: '',
-      license_plate: '', // Thêm clear license_plate
-      page: 1,
-      limit: 20
-    });
-  };
+
 
   return (
     <div className="gate-search-section">
@@ -68,13 +59,7 @@ export default function GateSearchBar({
             />
           </div>
 
-          {/* Search Button */}
-          <button type="submit" className="search-btn" aria-label={t('common.search')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-          </button>
+
 
           {/* Status Filter */}
           <div className="filter-group">
@@ -84,11 +69,11 @@ export default function GateSearchBar({
               value={searchParams.status}
               onChange={(e) => onSearch({ status: e.target.value, page: 1 })}
             >
-                             <option value="">{t('pages.gate.allStatuses')}</option>
-               <option value="FORWARDED">FORWARDED</option>
-               <option value="GATE_IN">GATE_IN</option>
-               <option value="IN_YARD">IN_YARD</option>
-               <option value="IN_CAR">IN_CAR</option>
+              <option value="">{t('pages.gate.allStatuses')}</option>
+              <option value="FORWARDED">{t('pages.gate.statusForwarded')}</option>
+              <option value="GATE_IN">{t('pages.gate.statusGateIn')}</option>
+              <option value="IN_YARD">{t('pages.gate.statusInYard')}</option>
+              <option value="IN_CAR">{t('pages.gate.statusInCar')}</option>
             </select>
           </div>
 
@@ -100,26 +85,13 @@ export default function GateSearchBar({
               value={searchParams.type}
               onChange={(e) => onSearch({ type: e.target.value, page: 1 })}
             >
-                             <option value="">{t('pages.gate.allTypes')}</option>
-               <option value="IMPORT">IMPORT</option>
-               <option value="EXPORT">EXPORT</option>
+              <option value="">{t('pages.gate.allTypes')}</option>
+              <option value="IMPORT">{t('pages.gate.typeImport')}</option>
+              <option value="EXPORT">{t('pages.gate.typeExport')}</option>
             </select>
           </div>
 
-          {/* Clear Filters */}
-          <button
-            type="button"
-            className="clear-filters-btn"
-            onClick={handleClearFilters}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3,6 5,6 21,6"></polyline>
-              <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-            {t('pages.gate.clearFilters')}
-          </button>
+
         </div>
       </form>
     </div>

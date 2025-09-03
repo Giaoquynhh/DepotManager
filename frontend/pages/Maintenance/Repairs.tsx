@@ -3,6 +3,7 @@ import Card from '@components/Card';
 import useSWR, { mutate } from 'swr';
 import { maintenanceApi } from '@services/maintenance';
 import { useState } from 'react';
+import { useTranslation } from '@hooks/useTranslation';
 import {
   PendingContainersModal,
   RepairTable,
@@ -12,6 +13,7 @@ import {
 } from '@components/Maintenance';
 
 export default function RepairsPage() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<string>('CHECKING');
   const [isPendingContainersModalOpen, setIsPendingContainersModalOpen] = useState(false);
   const [isRepairInvoiceModalOpen, setIsRepairInvoiceModalOpen] = useState(false);
@@ -41,10 +43,10 @@ export default function RepairsPage() {
     try {
       await maintenanceApi.approveRepair(id);
       mutate(key);
-      setMsg('Đã duyệt phiếu');
+      setMsg(t('pages.maintenance.repairs.messages.repairApproved'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi duyệt');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -54,10 +56,10 @@ export default function RepairsPage() {
       const c = window.prompt('Lý do từ chối?') || undefined;
       await maintenanceApi.rejectRepair(id, c);
       mutate(key);
-      setMsg('Đã từ chối phiếu');
+      setMsg(t('pages.maintenance.repairs.messages.repairRejected'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi từ chối');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -71,10 +73,10 @@ export default function RepairsPage() {
       mutate(key);
       mutate(['repairs', 'CHECKED']);
       
-      setMsg('Đã hoàn thành kiểm tra - Đạt chuẩn');
+      setMsg(t('pages.maintenance.repairs.messages.checkCompleted'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi hoàn thành kiểm tra');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -87,10 +89,10 @@ export default function RepairsPage() {
       // Refresh danh sách
       mutate(key);
       
-      setMsg('Container không đạt chuẩn - chọn option sửa chữa');
+      setMsg(t('pages.maintenance.repairs.messages.checkFailed'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi xử lý');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -118,10 +120,10 @@ export default function RepairsPage() {
       mutate(key);
       mutate(['repairs', 'REJECTED']);
       
-      setMsg('Đã từ chối - Container không đạt chuẩn và không thể sửa chữa');
+      setMsg(t('pages.maintenance.repairs.messages.unrepairableCompleted'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi xử lý');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -134,10 +136,10 @@ export default function RepairsPage() {
         setSelectedRepairTicket(repairTicket);
         setIsRepairInvoiceModalOpen(true);
       }
-      setMsg('Mở modal sửa hóa đơn');
+      setMsg(t('pages.maintenance.repairs.messages.invoiceModalOpened'));
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi mở modal sửa hóa chữa');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -146,7 +148,7 @@ export default function RepairsPage() {
     try {
       // Gọi API để gửi yêu cầu xác nhận
       const result = await maintenanceApi.sendConfirmationRequest(id);
-      setMsg(result.message || 'Đã gửi yêu cầu xác nhận thành công');
+      setMsg(result.message || t('pages.maintenance.repairs.messages.confirmationSent'));
       
       // Refresh danh sách để cập nhật trạng thái
       mutate(key);
@@ -154,7 +156,7 @@ export default function RepairsPage() {
       // Hiển thị thông báo lâu hơn để user đọc
       setTimeout(() => setMsg(''), 5000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi gửi yêu cầu xác nhận');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -163,7 +165,7 @@ export default function RepairsPage() {
     try {
       // Gọi API để tiến hành sửa chữa
       const result = await maintenanceApi.startRepair(id);
-      setMsg(result.message || 'Đã tiến hành sửa chữa thành công');
+      setMsg(result.message || t('pages.maintenance.repairs.messages.repairStarted'));
       
       // Refresh danh sách để cập nhật trạng thái
       mutate(key);
@@ -171,7 +173,7 @@ export default function RepairsPage() {
       // Hiển thị thông báo
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi tiến hành sửa chữa');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -180,7 +182,7 @@ export default function RepairsPage() {
     try {
       // Gọi API để hoàn thành sửa chữa
       const result = await maintenanceApi.completeRepair(id);
-      setMsg(result.message || 'Đã hoàn thành sửa chữa thành công');
+      setMsg(result.message || t('pages.maintenance.repairs.messages.repairCompleted'));
       
       // Refresh danh sách để cập nhật trạng thái
       mutate(key);
@@ -188,7 +190,7 @@ export default function RepairsPage() {
       // Hiển thị thông báo
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || 'Lỗi khi hoàn thành sửa chữa');
+      setMsg(e?.response?.data?.message || t('common.error'));
     }
   };
 
@@ -200,7 +202,7 @@ export default function RepairsPage() {
   const handleRepairInvoiceSuccess = () => {
     // Refresh danh sách sau khi tạo hóa đơn thành công
     mutate(key);
-    setMsg('Đã tạo hóa đơn sửa chữa thành công');
+    setMsg(t('pages.maintenance.repairs.messages.invoiceCreated'));
     setTimeout(() => setMsg(''), 3000);
   };
 
@@ -226,41 +228,53 @@ export default function RepairsPage() {
   return (
     <>
       <Header />
-      <main className="container repair-page">
+      <main className="container depot-requests">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
-              <h1 className="page-title gradient gradient-ultimate">Danh sách phiếu sửa chữa</h1>
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.maintenance.repairs.title')}</h1>
             </div>
             <div className="header-actions">
-              <button 
-                onClick={() => setIsPendingContainersModalOpen(true)}
-                className="btn btn-outline pending-containers-btn"
-                title="Danh sách container đang chờ"
-              >
-                📋 Danh sách container đang chờ
-              </button>
             </div>
           </div>
         </div>
 
-        <div className="search-filter-section modern-search">
-          <div className="search-row">
-            <div className="filter-group">
-              <label className="filter-label">Lọc theo trạng thái:</label>
-              <select 
-                value={filter} 
-                onChange={e => handleFilterChange(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">Tất cả</option>
-                <option value="CHECKING">Đang kiểm tra</option>
-                <option value="PENDING_ACCEPT">Chờ chấp nhận</option>
-                <option value="REPAIRING">Đang sửa chữa</option>
-                <option value="CHECKED">Đã kiểm tra</option>
-                <option value="REJECTED">Đã từ chối</option>
-              </select>
-            </div>
+        <div className="search-filter-section modern-search" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+          <div className="filter-group">
+            <label className="filter-label">{t('pages.maintenance.repairs.filterByStatus')}</label>
+            <select 
+              value={filter} 
+              onChange={e => handleFilterChange(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">{t('pages.maintenance.repairs.allStatuses')}</option>
+              <option value="CHECKING">{t('pages.maintenance.repairs.statusChecking')}</option>
+              <option value="PENDING_ACCEPT">{t('pages.maintenance.repairs.statusPendingAccept')}</option>
+              <option value="REPAIRING">{t('pages.maintenance.repairs.statusRepairing')}</option>
+              <option value="CHECKED">{t('pages.maintenance.repairs.statusChecked')}</option>
+              <option value="REJECTED">{t('pages.maintenance.repairs.statusRejected')}</option>
+            </select>
+          </div>
+          <div style={{marginLeft: 'auto'}}>
+            <button 
+              onClick={() => setIsPendingContainersModalOpen(true)}
+              className="btn btn-outline pending-containers-btn"
+              title={t('pages.maintenance.repairs.pendingContainersList')}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #1e40af',
+                borderRadius: '4px',
+                background: 'white',
+                color: '#1e40af',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              📋 {t('pages.maintenance.repairs.pendingContainersList')}
+            </button>
           </div>
         </div>
 

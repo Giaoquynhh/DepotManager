@@ -1,5 +1,6 @@
 import Header from '@components/Header';
 import Card from '@components/Card';
+import { useTranslation } from '@hooks/useTranslation';
 
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { reportsApi } from '@services/reports';
 import React from 'react'; // Added for React.useMemo
 
 function ContainersList(){
+  const { t } = useTranslation();
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -159,7 +161,7 @@ function ContainersList(){
     <>
       <div style={{display:'flex', gap:12, marginBottom:16, alignItems:'center', flexWrap:'wrap'}}>
         <input 
-          placeholder="Tìm container_no" 
+          placeholder={t('pages.containers.searchPlaceholder')} 
           value={q} 
           onChange={e=>{ setQ(e.target.value); setPage(1); mutate(); }}
           style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, minWidth:200}}
@@ -169,41 +171,38 @@ function ContainersList(){
           onChange={e=>{ setStatus(e.target.value); setPage(1); mutate(); }}
           style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, minWidth:160}}
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="WAITING">Đang chờ sắp xếp</option>
-          <option value="ASSIGNED">Đã xếp chỗ trong bãi</option>
-          <option value="IN_YARD">Đã ở trong bãi</option>
-          <option value="EMPTY_IN_YARD">Container rỗng có trong bãi</option>
+          <option value="">{t('pages.containers.allStatuses')}</option>
+          <option value="WAITING">{t('pages.containers.statusWaiting')}</option>
+          <option value="ASSIGNED">{t('pages.containers.statusAssigned')}</option>
+          <option value="IN_YARD">{t('pages.containers.statusInYard')}</option>
+          <option value="EMPTY_IN_YARD">{t('pages.containers.statusEmptyInYard')}</option>
         </select>
-                           <div style={{display:'flex', alignItems:'center', gap:8, padding:'8px 12px', background:'#f0f9ff', border:'1px solid #0ea5e9', borderRadius:6}}>
-            <input 
-              type="checkbox" 
-              id="show-checked-only" 
-              checked={true} 
-              disabled={true}
-              style={{margin:0}}
-            />
-            <label htmlFor="show-checked-only" style={{fontSize:14, color:'#0369a1', cursor:'default', fontWeight:500}}>
-              Hiển thị tất cả container - Bao gồm cả container SystemAdmin nhập
-            </label>
-          </div>
       </div>
       {error && (
         <div style={{marginBottom:12, border:'1px solid #fecaca', background:'#fef2f2', color:'#7f1d1d', padding:10, borderRadius:8}}>
-          Lỗi tải dữ liệu: {((error as any)?.response?.data?.message) || ((error as any)?.message) || 'Không xác định'}
+          {t('pages.containers.loadDataError')}: {((error as any)?.response?.data?.message) || ((error as any)?.message) || t('common.unknownError')}
         </div>
       )}
       {!data && !error && (
-        <div className="muted" style={{marginBottom:12}}>Đang tải dữ liệu...</div>
+        <div className="muted" style={{marginBottom:12}}>{t('common.loading')}</div>
       )}
       <div style={{overflow:'hidden', borderRadius:12, border:'1px solid #e8eef6'}}>
         <table className="table">
-          <thead style={{background:'#f7f9ff'}}><tr><th>Container</th><th>Yard</th><th>Block</th><th>Slot</th><th>Trạng thái</th><th>Thông tin kiểm tra</th></tr></thead>
+          <thead style={{background:'#f7f9ff'}}>
+            <tr>
+              <th>{t('pages.containers.tableHeaders.container')}</th>
+              <th>{t('pages.containers.tableHeaders.yard')}</th>
+              <th>{t('pages.containers.tableHeaders.block')}</th>
+              <th>{t('pages.containers.tableHeaders.slot')}</th>
+              <th>{t('pages.containers.tableHeaders.status')}</th>
+              <th>{t('pages.containers.tableHeaders.checkInfo')}</th>
+            </tr>
+          </thead>
           <tbody>
             {filteredItems.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ textAlign:'center', color:'#64748b' }}>
-                  {data ? 'Không có container phù hợp bộ lọc.' : (error ? 'Không thể tải dữ liệu.' : 'Đang tải...')}
+                  {data ? t('pages.containers.noDataSubtitle') : (error ? t('pages.containers.cannotLoadData') : t('common.loading'))}
                 </td>
               </tr>
             ) : filteredItems.map((it:any)=>(
@@ -232,14 +231,14 @@ function ContainersList(){
                              width:'fit-content'
                            }}
                          >
-                           {it.derived_status==='ASSIGNED' ? 'Đã xếp chỗ trong bãi' : 
-                            it.derived_status==='IN_YARD' ? 'Đã ở trong bãi' :
-                            it.derived_status==='IN_CAR' ? 'Đã lên xe' :
-                            it.derived_status==='EMPTY_IN_YARD' ? 'Container rỗng có trong bãi' : 'Đang chờ sắp xếp'}
+                           {it.derived_status==='ASSIGNED' ? t('pages.containers.statusAssigned') : 
+                            it.derived_status==='IN_YARD' ? t('pages.containers.statusInYard') :
+                            it.derived_status==='IN_CAR' ? t('pages.containers.statusInCar') :
+                            it.derived_status==='EMPTY_IN_YARD' ? t('pages.containers.statusEmptyInYard') : t('pages.containers.statusWaiting')}
                          </span>
                          {(it.derived_status==='ASSIGNED' || it.derived_status==='IN_YARD' || it.derived_status==='EMPTY_IN_YARD') && (
                            <small className="muted" style={{marginTop:4}}>
-                             Vị trí: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
+                             {t('pages.containers.position')}: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
                          )}
                        </>
                      ) : (
@@ -253,7 +252,7 @@ function ContainersList(){
                            width:'fit-content'
                          }}
                        >
-                         Chưa kiểm tra
+                         {t('pages.containers.notChecked')}
                        </span>
                      )}
                    </div>
@@ -262,16 +261,16 @@ function ContainersList(){
                    <div style={{display:'flex', flexDirection:'column', gap:4}}>
                      {it.service_gate_checked_at && (
                        <small className="muted">
-                         Lúc: {new Date(it.service_gate_checked_at).toLocaleString()} | Biển số: {it.service_license_plate || '-'} | Tài xế: {it.service_driver_name || '-'}</small>
+                         {t('pages.containers.checkedAt')}: {new Date(it.service_gate_checked_at).toLocaleString()} | {t('pages.containers.licensePlate')}: {it.service_license_plate || '-'} | {t('pages.containers.driver')}: {it.service_driver_name || '-'}</small>
                        )}
                      {!it.service_gate_checked_at && it.repair_checked && (
                        <small className="muted">
-                         Lúc: {new Date(it.repair_updated_at).toLocaleString()} | Đã kiểm tra qua phiếu sửa chữa
+                         {t('pages.containers.checkedAt')}: {new Date(it.repair_updated_at).toLocaleString()} | {t('pages.containers.checkedViaRepair')}
                        </small>
                      )}
                      {it.derived_status === 'EMPTY_IN_YARD' && (
                        <small className="muted" style={{color: '#92400e', fontStyle: 'italic'}}>
-                         Container được SystemAdmin nhập trực tiếp vào bãi
+                         {t('pages.containers.systemAdminAdded')}
                        </small>
                      )}
                    </div>
@@ -282,11 +281,11 @@ function ContainersList(){
         </table>
       </div>
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:12}}>
-        <div className="muted">Tổng (trang hiện tại): {filteredItems.length}</div>
+        <div className="muted">{t('pages.containers.totalCurrentPage')}: {filteredItems.length}</div>
         <div style={{display:'flex', gap:8}}>
-          <button className="btn" disabled={(data?.page||1)<=1} onClick={()=>{ setPage(p=>p-1); mutate(); }}>Prev</button>
-          <div style={{alignSelf:'center'}}>Trang {data?.page||1} / {Math.max(1, Math.ceil((data?.total||0)/pageSize))}</div>
-          <button className="btn" disabled={(data?.page||1) >= Math.ceil((data?.total||0)/pageSize)} onClick={()=>{ setPage(p=>p+1); mutate(); }}>Next</button>
+          <button className="btn" disabled={(data?.page||1)<=1} onClick={()=>{ setPage(p=>p-1); mutate(); }}>{t('common.prev')}</button>
+          <div style={{alignSelf:'center'}}>{t('common.page')} {data?.page||1} / {Math.max(1, Math.ceil((data?.total||0)/pageSize))}</div>
+          <button className="btn" disabled={(data?.page||1) >= Math.ceil((data?.total||0)/pageSize)} onClick={()=>{ setPage(p=>p+1); mutate(); }}>{t('common.next')}</button>
         </div>
       </div>
     </>
@@ -294,17 +293,18 @@ function ContainersList(){
 }
 
 export default function ContainersPage(){
+  const { t } = useTranslation();
   const { mutate } = useSWR('containers_page');
   
   return (
     <>
       <Header />
-      <main className="container containers-page">
+      <main className="container depot-requests">
         {/* Page Header */}
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
-              <h1 className="page-title gradient gradient-ultimate">Quản lý container</h1>
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.containers.title')}</h1>
             </div>
 
             <div className="header-actions">
