@@ -5,6 +5,14 @@
   pointer-events: none;
   animation: slide-up 0.2s ease-out;
   z-index: 1002;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yard-tooltip.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 .tooltip-content {
@@ -18,6 +26,7 @@
   min-width: 200px;
   position: relative;
   font-size: 0.875rem;
+  z-index: 1003;
 }
 
 .tooltip-close {
@@ -176,8 +185,44 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 2px;
+  padding: 4px;
+}
+
+/* 🏷️ Slot Position Code */
+.slot-code {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 🎨 Slot Code on different statuses */
+.yard-slot-tile.status-empty .slot-code {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.yard-slot-tile.status-occupied .slot-code {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.yard-slot-tile.status-hold .slot-code {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.yard-slot-tile.status-under_maintenance .slot-code {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .slot-counters {
@@ -411,7 +456,12 @@
   .search-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+  }
+  
+  /* 📱 Slot Code Mobile */
+  .slot-code {
+    font-size: 9px;
+    margin-bottom: 1px;
   }
   
   .search-input-wrapper {

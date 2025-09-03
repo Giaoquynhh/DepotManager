@@ -1,0 +1,512 @@
+/* 🌟 Futuristic Stack Details Modal - Revolutionary Design */
+
+/* 🏗️ Glassmorphic Modal Container */
+.futuristic-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.futuristic-modal {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  width: 90vw;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  animation: modalScaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.futuristic-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.1) 0%, 
+    rgba(147, 51, 234, 0.1) 50%, 
+    rgba(236, 72, 153, 0.1) 100%);
+  border-radius: 24px;
+  z-index: -1;
+  animation: gradientShift 8s ease-in-out infinite;
+}
+
+/* 🗂️ Dynamic Header */
+.futuristic-modal-header {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.2) 0%, 
+    rgba(147, 51, 234, 0.2) 100%);
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.futuristic-modal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%);
+  animation: shimmer 3s infinite;
+}
+
+.futuristic-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.futuristic-breadcrumb-item {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.futuristic-breadcrumb-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.futuristic-breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.futuristic-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ❌ Smart Close Button */
+.futuristic-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.futuristic-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* 🎯 Holographic Tier System */
+.futuristic-modal-content {
+  padding: 32px;
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+}
+
+.futuristic-tier-tower {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.futuristic-tier-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.futuristic-tier-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  border-radius: 16px;
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+.futuristic-tier-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+/* 🟠 Holding Tier */
+.futuristic-tier-card.holding {
+  background: linear-gradient(135deg, 
+    rgba(255, 140, 0, 0.2) 0%, 
+    rgba(255, 165, 0, 0.2) 100%);
+  border-color: rgba(255, 140, 0, 0.4);
+  animation: pulseOrange 2s ease-in-out infinite;
+}
+
+.futuristic-tier-card.holding::before {
+  background: linear-gradient(135deg, 
+    rgba(255, 140, 0, 0.1) 0%, 
+    rgba(255, 165, 0, 0.1) 100%);
+}
+
+/* ⚪ Empty Tier */
+.futuristic-tier-card.empty {
+  background: linear-gradient(135deg, 
+    rgba(248, 249, 250, 0.1) 0%, 
+    rgba(233, 236, 239, 0.1) 100%);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* 🎯 Tier Header */
+.futuristic-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.futuristic-tier-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.futuristic-tier-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ⏱️ TTL Countdown */
+.futuristic-ttl-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.futuristic-ttl-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.futuristic-ttl-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #10b981, #f59e0b, #ef4444);
+  animation: rotateProgress 1s linear infinite;
+}
+
+.futuristic-ttl-text {
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* 🎪 Futuristic Action Panel */
+.futuristic-action-panel {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 16px;
+}
+
+.futuristic-input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.futuristic-floating-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.futuristic-floating-input:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.futuristic-floating-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.futuristic-floating-label {
+  position: absolute;
+  top: -8px;
+  left: 16px;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.9) 0%, 
+    rgba(147, 51, 234, 0.9) 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 🎈 Floating Action Buttons */
+.futuristic-fab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.8) 0%, 
+    rgba(147, 51, 234, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.futuristic-fab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  transition: left 0.5s ease;
+}
+
+.futuristic-fab:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.futuristic-fab:hover::before {
+  left: 100%;
+}
+
+/* 🟢 Confirm Button */
+.futuristic-btn-confirm {
+  background: linear-gradient(135deg, 
+    rgba(16, 185, 129, 0.8) 0%, 
+    rgba(5, 150, 105, 0.8) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.futuristic-btn-confirm:hover {
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+}
+
+/* 🔴 Release Button */
+.futuristic-btn-release {
+  background: linear-gradient(135deg, 
+    rgba(239, 68, 68, 0.8) 0%, 
+    rgba(220, 38, 38, 0.8) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.futuristic-btn-release:hover {
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+}
+
+/* 🎭 Micro-Animations */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(20px);
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background: linear-gradient(45deg, 
+      rgba(59, 130, 246, 0.1) 0%, 
+      rgba(147, 51, 234, 0.1) 50%, 
+      rgba(236, 72, 153, 0.1) 100%);
+  }
+  50% {
+    background: linear-gradient(45deg, 
+      rgba(236, 72, 153, 0.1) 0%, 
+      rgba(59, 130, 246, 0.1) 50%, 
+      rgba(147, 51, 234, 0.1) 100%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes pulseOrange {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 140, 0, 0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+@keyframes rotateProgress {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 768px) {
+  .futuristic-modal {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .futuristic-modal-content {
+    padding: 20px;
+  }
+  
+  .futuristic-tier-card {
+    padding: 16px;
+  }
+  
+  .futuristic-modal-title {
+    font-size: 20px;
+  }
+}
+
+/* 🎨 Custom Scrollbar */
+.futuristic-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.futuristic-modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.futuristic-modal-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.6) 0%, 
+    rgba(147, 51, 234, 0.6) 100%);
+  border-radius: 4px;
+}
+
+.futuristic-modal-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.8) 0%, 
+    rgba(147, 51, 234, 0.8) 100%);
+}

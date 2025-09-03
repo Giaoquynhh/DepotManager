@@ -294,7 +294,65 @@
       "clearFilters": "Clear Filters",
       "noData": "No Data",
       "noDataSubtitle": "No data to display",
-      "yardMap": "Yard Map"
+      "yardMap": "Yard Map",
+      "smartSearch": "Smart Container Search",
+      "searchSuggestions": "Search Suggestions",
+      "searchHistory": "Search History",
+      "noSuggestions": "No suggestions",
+      "searching": "Searching...",
+      "blockStats": {
+        "occupied": "Occupied",
+        "hold": "Hold",
+        "empty": "Empty",
+        "utilized": "Utilized",
+        "totalSlots": "Total Slots",
+        "slots": "slots",
+        "blocks": "Blocks"
+      },
+      "slotStatus": {
+        "empty": "Empty",
+        "occupied": "Occupied",
+        "hold": "Hold",
+        "under_maintenance": "Under Maintenance",
+        "suggested": "Suggested",
+        "selected": "Selected"
+      },
+      "stackDetails": {
+        "title": "Stack Details",
+        "tier": "Tier",
+        "containers": "Containers",
+        "status": "Status",
+        "actions": "Actions",
+        "confirm": "Confirm",
+        "release": "Release",
+        "containerNo": "Container No",
+        "holdNextTier": "HOLD next tier",
+        "tierHoldStatus": "HOLD",
+        "receiveCheckedContainers": "Only receive containers with status \"Pending arrangement\" (CHECKED)",
+        "systemAdminNote": "SystemAdmin: Can input any container",
+        "empty": "Empty",
+        "occupied": "Occupied",
+        "removed": "Removed",
+        "expired": "expired",
+        "remove": "Remove",
+        "filterContainers": "Filter containers for this tier",
+        "loading": "Loading...",
+        "noContainersWaiting": "No containers waiting for arrangement",
+        "repair": "Repair"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "locate": "Locate",
+        "addContainer": "Add Container",
+        "export": "Export Report",
+        "settings": "Settings"
+      },
+      "keyboardShortcuts": {
+        "title": "Keyboard Shortcuts",
+        "search": "Search",
+        "refresh": "Refresh",
+        "escape": "Escape"
+      }
     },
     "containers": {
       "title": "Container Management",

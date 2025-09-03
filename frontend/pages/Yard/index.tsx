@@ -2,7 +2,7 @@ import Header from '@components/Header';
 import useSWR, { mutate } from 'swr';
 import { yardApi } from '@services/yard';
 import { useMemo, useState, useCallback } from 'react';
-import { StackDetailsModal } from '@components/yard';
+
 import ModernYardMap from '@components/yard/ModernYardMap';
 import KeyboardShortcuts from '@components/yard/KeyboardShortcuts';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -194,16 +194,7 @@ export default function YardPage() {
             )}
           </div>
         </div>
-        {/* Modal chi tiết Stack */}
-        {activeSlot && (
-          <StackDetailsModal
-            visible={!!activeSlot}
-            slotId={activeSlot.id}
-            slotCode={activeSlot.code}
-            onCancel={() => setActiveSlot(null)}
-            onActionDone={() => mutate('yard_map')}
-          />
-        )}
+
 
         {/* ⌨️ Keyboard Shortcuts */}
         <KeyboardShortcuts

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface SearchSuggestion {
   id: string;
@@ -19,10 +20,11 @@ interface SmartSearchProps {
 export default function SmartSearch({ 
   onSearch, 
   onSuggestionSelect,
-  placeholder = "Nhập số container để định vị (VD: ABCU1234567)",
+  placeholder,
   className = "",
   disabled = false
 }: SmartSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -261,7 +263,7 @@ export default function SmartSearch({
       {showSuggestions && (
         <div className="smart-suggestions">
           <div className="suggestions-header">
-            <span className="suggestions-title">💡 Gợi ý tìm kiếm</span>
+            <span className="suggestions-title">💡 {t('pages.yard.searchSuggestions')}</span>
             <span className="suggestions-count">{suggestions.length} kết quả</span>
           </div>
           
@@ -270,7 +272,7 @@ export default function SmartSearch({
               <div className="suggestion-item loading">
                 <div className="suggestion-icon">⏳</div>
                 <div className="suggestion-content">
-                  <div className="suggestion-code">Đang tìm kiếm...</div>
+                  <div className="suggestion-code">{t('pages.yard.searching')}</div>
                 </div>
               </div>
             ) : suggestions.length > 0 ? (
@@ -322,7 +324,7 @@ export default function SmartSearch({
       {showSuggestions && suggestions.length === 0 && searchHistory.length > 0 && query.length === 0 && (
         <div className="search-history">
           <div className="history-header">
-            <span className="history-title">🕒 Lịch sử tìm kiếm</span>
+            <span className="history-title">🕒 {t('pages.yard.searchHistory')}</span>
             <button 
               className="clear-history-btn"
               onClick={() => setSearchHistory([])}

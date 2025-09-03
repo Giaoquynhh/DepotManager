@@ -1,14 +1,14 @@
-/* Modal Styles */
- .yard-modal.modal-overlay {
+/* Modal Styles - Specific for yard modal with both classes */
+.yard-modal.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   z-index: 1400;
   padding: var(--space-4);
 }

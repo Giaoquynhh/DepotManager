@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import SmartSearch from './SmartSearch';
+import { FuturisticStackDetailsModal } from './FuturisticStackDetailsModal';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface Slot {
   id: string;
@@ -44,11 +46,12 @@ export default function ModernYardMap({
   onExport,
   onSettings
 }: ModernYardMapProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState(false);
   const [showTooltip, setShowTooltip] = useState<{ slot: Slot; x: number; y: number } | null>(null);
-  const [tooltipDelay, setTooltipDelay] = useState<NodeJS.Timeout | null>(null);
+  const [selectedSlotForModal, setSelectedSlotForModal] = useState<string | null>(null);
 
   // 🎯 Auto-scroll to selected slot
   useEffect(() => {
@@ -59,14 +62,7 @@ export default function ModernYardMap({
     }
   }, [selectedSlotId]);
 
-  // 🧹 Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (tooltipDelay) {
-        clearTimeout(tooltipDelay);
-      }
-    };
-  }, [tooltipDelay]);
+
 
   // 🎯 Click outside to hide tooltip
   useEffect(() => {
@@ -81,9 +77,9 @@ export default function ModernYardMap({
     };
 
     if (showTooltip) {
-      // Use click instead of mousedown to avoid immediate hiding
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      // Use mousedown to ensure it only triggers on actual clicks, not hover
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showTooltip]);
 
@@ -101,11 +97,11 @@ export default function ModernYardMap({
   // 🎭 Get slot tooltip content
   const getSlotTooltip = (slot: Slot) => {
     const statusMap = {
-      'EMPTY': 'Trống',
-      'RESERVED': 'Đã đặt (Hold)',
-      'OCCUPIED': 'Đã chiếm',
-      'UNDER_MAINTENANCE': 'Bảo trì',
-      'EXPORT': 'Xuất khẩu'
+      'EMPTY': t('pages.yard.slotStatus.empty'),
+      'RESERVED': t('pages.yard.slotStatus.hold'),
+      'OCCUPIED': t('pages.yard.slotStatus.occupied'),
+      'UNDER_MAINTENANCE': t('pages.yard.slotStatus.under_maintenance'),
+      'EXPORT': t('pages.yard.slotStatus.occupied')
     };
     
     const occ = slot.occupied_count || 0;
@@ -117,7 +113,7 @@ export default function ModernYardMap({
       status,
       occupied: occ,
       hold: hold,
-      details: occ > 0 ? `${occ} container(s)` : hold > 0 ? `${hold} hold(s)` : 'Sẵn sàng'
+      details: occ > 0 ? `${occ} ${t('pages.yard.stackDetails.containers').toLowerCase()}` : hold > 0 ? `${hold} ${t('pages.yard.blockStats.hold').toLowerCase()}` : t('pages.yard.slotStatus.empty')
     };
   };
 
@@ -126,13 +122,18 @@ export default function ModernYardMap({
     // Hide tooltip when clicking on slot
     setShowTooltip(null);
     
+    // Add click animation
+    const element = document.querySelector(`[data-slot-id="${slot.id}"]`);
+    if (element) {
+      element.classList.add('clicked');
+      setTimeout(() => element.classList.remove('clicked'), 300);
+    }
+    
+    // Open futuristic modal
+    setSelectedSlotForModal(slot.id);
+    
+    // Call parent handler
     if (onSlotClick) {
-      // Add click animation
-      const element = document.querySelector(`[data-slot-id="${slot.id}"]`);
-      if (element) {
-        element.classList.add('clicked');
-        setTimeout(() => element.classList.remove('clicked'), 300);
-      }
       onSlotClick(slot);
     }
   }, [onSlotClick]);
@@ -152,27 +153,40 @@ export default function ModernYardMap({
 
   // 🎭 Handle mouse events for tooltip
   const handleSlotMouseEnter = (slot: Slot, event: React.MouseEvent) => {
-    // Clear any existing delay
-    if (tooltipDelay) {
-      clearTimeout(tooltipDelay);
-      setTooltipDelay(null);
-    }
-    
     const rect = event.currentTarget.getBoundingClientRect();
     const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
     const scrollY = window.pageYOffset || document.documentElement.scrollTop;
     
+    // Calculate tooltip position with smart positioning
+    let x = rect.left + rect.width / 2 + scrollX;
+    let y = rect.bottom + 10 + scrollY; // Position below the slot
+    
+    // Adjust position if tooltip would go off screen
+    const tooltipWidth = 200; // Approximate tooltip width
+    const tooltipHeight = 120; // Approximate tooltip height
+    
+    if (x - tooltipWidth / 2 < 10) {
+      x = rect.left + scrollX + 10;
+    } else if (x + tooltipWidth / 2 > window.innerWidth - 10) {
+      x = rect.right + scrollX - 10;
+    }
+    
+    // If tooltip would go off bottom of screen, show it above the slot
+    if (y + tooltipHeight > window.innerHeight - 10) {
+      y = rect.top - tooltipHeight - 10 + scrollY;
+    }
+    
     // Show tooltip immediately when hovering over a slot
     setShowTooltip({
       slot,
-      x: rect.left + rect.width / 2 + scrollX,
-      y: rect.top - 10 + scrollY
+      x,
+      y
     });
   };
 
   const handleSlotMouseLeave = () => {
-    // Keep tooltip visible - no auto-hide
-    // Tooltip will only hide when hovering over another slot or clicking outside
+    // Hide tooltip when mouse leaves the slot
+    setShowTooltip(null);
   };
 
   // 📊 Calculate block statistics
@@ -210,11 +224,11 @@ export default function ModernYardMap({
       <div className="yard-search-portal">
         <div className="yard-search-container">
           <div className="search-header">
-            <h3 className="search-title">🔍 Tìm kiếm Container Thông Minh</h3>
+            <h3 className="search-title">🔍 {t('pages.yard.smartSearch')}</h3>
             <div className="search-input-wrapper">
               <SmartSearch
                 onSearch={handleSearch}
-                placeholder="Nhập số container để định vị (VD: ABCU1234567)"
+                placeholder={t('pages.yard.searchPlaceholder')}
                 className="modern-search"
                 disabled={isSearching}
               />
@@ -229,7 +243,7 @@ export default function ModernYardMap({
           <div className="yard-stat-icon">🏗️</div>
           <div className="yard-stat-content">
             <div className="yard-stat-value">{yard.blocks.length}</div>
-            <div className="yard-stat-label">Blocks</div>
+            <div className="yard-stat-label">{t('pages.yard.blockStats.blocks')}</div>
           </div>
         </div>
         
@@ -239,7 +253,7 @@ export default function ModernYardMap({
             <div className="yard-stat-value">
               {yard.blocks.reduce((sum, block) => sum + block.slots.length, 0)}
             </div>
-            <div className="yard-stat-label">Total Slots</div>
+            <div className="yard-stat-label">{t('pages.yard.blockStats.totalSlots')}</div>
           </div>
         </div>
         
@@ -251,7 +265,7 @@ export default function ModernYardMap({
                 sum + block.slots.reduce((s, slot) => s + (slot.occupied_count || 0), 0), 0
               )}
             </div>
-            <div className="yard-stat-label">Occupied</div>
+            <div className="yard-stat-label">{t('pages.yard.blockStats.occupied')}</div>
           </div>
         </div>
         
@@ -263,7 +277,7 @@ export default function ModernYardMap({
                 sum + block.slots.reduce((s, slot) => s + (slot.hold_count || 0), 0), 0
               )}
             </div>
-            <div className="yard-stat-label">Hold</div>
+            <div className="yard-stat-label">{t('pages.yard.blockStats.hold')}</div>
           </div>
         </div>
       </div>
@@ -279,22 +293,22 @@ export default function ModernYardMap({
                 <div className="block-title-section">
                   <h3 className="block-title">{block.code}</h3>
                   <div className="block-subtitle">
-                    {stats.total} slots • {stats.utilization}% utilized
+                    {stats.total} {t('pages.yard.blockStats.slots')} • {stats.utilization}% {t('pages.yard.blockStats.utilized')}
                   </div>
                 </div>
                 
                 <div className="block-stats">
                   <div className="block-stat">
                     <span className="stat-value">{stats.occupied}</span>
-                    <span className="stat-label">Occupied</span>
+                    <span className="stat-label">{t('pages.yard.blockStats.occupied')}</span>
                   </div>
                   <div className="block-stat">
                     <span className="stat-value">{stats.hold}</span>
-                    <span className="stat-label">Hold</span>
+                    <span className="stat-label">{t('pages.yard.blockStats.hold')}</span>
                   </div>
                   <div className="block-stat">
                     <span className="stat-value">{stats.empty}</span>
-                    <span className="stat-label">Empty</span>
+                    <span className="stat-label">{t('pages.yard.blockStats.empty')}</span>
                   </div>
                 </div>
               </div>
@@ -319,6 +333,9 @@ export default function ModernYardMap({
                     >
                       {/* Slot content */}
                       <div className="slot-content">
+                        {/* Slot position code */}
+                        <div className="slot-code">{slot.code}</div>
+                        
                         {slot.status === 'UNDER_MAINTENANCE' && (
                           <span className="maintenance-icon">🔧</span>
                         )}
@@ -379,19 +396,14 @@ export default function ModernYardMap({
       {/* 🎭 Enhanced Tooltip */}
       {showTooltip && (
         <div 
-          className="yard-tooltip"
+          className="yard-tooltip show"
           style={{
             position: 'fixed',
             left: showTooltip.x,
             top: showTooltip.y,
             transform: 'translateX(-50%)',
-            zIndex: 1002
-          }}
-          onMouseEnter={() => {
-            // Keep tooltip visible when hovering over it
-          }}
-          onMouseLeave={() => {
-            // Keep tooltip visible - no auto-hide
+            zIndex: 1002,
+            pointerEvents: 'none'
           }}
         >
           <div className="tooltip-content">
@@ -402,21 +414,22 @@ export default function ModernYardMap({
                 className="tooltip-close"
                 onClick={() => setShowTooltip(null)}
                 title="Đóng"
+                style={{ pointerEvents: 'auto' }}
               >
                 ×
               </button>
             </div>
             <div className="tooltip-details">
               <div className="tooltip-detail">
-                <span className="detail-label">Occupied:</span>
+                <span className="detail-label">{t('pages.yard.blockStats.occupied')}:</span>
                 <span className="detail-value">{getSlotTooltip(showTooltip.slot).occupied}</span>
               </div>
               <div className="tooltip-detail">
-                <span className="detail-label">Hold:</span>
+                <span className="detail-label">{t('pages.yard.blockStats.hold')}:</span>
                 <span className="detail-value">{getSlotTooltip(showTooltip.slot).hold}</span>
               </div>
               <div className="tooltip-detail">
-                <span className="detail-label">Status:</span>
+                <span className="detail-label">{t('pages.yard.stackDetails.status')}:</span>
                 <span className="detail-value">{getSlotTooltip(showTooltip.slot).details}</span>
               </div>
             </div>
@@ -426,34 +439,48 @@ export default function ModernYardMap({
 
       {/* 🎨 Status Legend */}
       <div className="yard-legend">
-        <div className="legend-title">Trạng thái Slot</div>
+        <div className="legend-title">{t('pages.yard.stackDetails.status')} Slot</div>
         <div className="legend-items">
           <div className="legend-item">
             <div className="legend-color status-empty"></div>
-            <span>Trống</span>
+            <span>{t('pages.yard.slotStatus.empty')}</span>
           </div>
           <div className="legend-item">
             <div className="legend-color status-hold"></div>
-            <span>Hold (Đã đặt)</span>
+            <span>{t('pages.yard.slotStatus.hold')}</span>
           </div>
           <div className="legend-item">
             <div className="legend-color status-suggested"></div>
-            <span>Gợi ý</span>
+            <span>{t('pages.yard.slotStatus.suggested')}</span>
           </div>
           <div className="legend-item">
             <div className="legend-color status-selected"></div>
-            <span>Đã chọn</span>
+            <span>{t('pages.yard.slotStatus.selected')}</span>
           </div>
           <div className="legend-item">
             <div className="legend-color status-occupied"></div>
-            <span>Đã chiếm</span>
+            <span>{t('pages.yard.slotStatus.occupied')}</span>
           </div>
           <div className="legend-item">
             <div className="legend-color status-maintenance"></div>
-            <span>Bảo trì</span>
+            <span>{t('pages.yard.slotStatus.under_maintenance')}</span>
           </div>
         </div>
       </div>
+
+      {/* 🌟 Futuristic Stack Details Modal */}
+      <FuturisticStackDetailsModal
+        visible={!!selectedSlotForModal}
+        slotId={selectedSlotForModal || ''}
+        slotCode={yard?.blocks
+          .flatMap(block => block.slots)
+          .find(slot => slot.id === selectedSlotForModal)?.code}
+        onCancel={() => setSelectedSlotForModal(null)}
+        onActionDone={() => {
+          // Refresh data if needed
+          onRefresh?.();
+        }}
+      />
     </div>
   );
 }

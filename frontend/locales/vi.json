@@ -295,7 +295,65 @@
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có dữ liệu",
       "noDataSubtitle": "Không có dữ liệu để hiển thị",
-      "yardMap": "Sơ đồ bãi"
+      "yardMap": "Sơ đồ bãi",
+      "smartSearch": "Tìm kiếm container thông minh",
+      "searchSuggestions": "Gợi ý tìm kiếm",
+      "searchHistory": "Lịch sử tìm kiếm",
+      "noSuggestions": "Không có gợi ý",
+      "searching": "Đang tìm kiếm...",
+      "blockStats": {
+        "occupied": "Đã sử dụng",
+        "hold": "Tạm giữ",
+        "empty": "Trống",
+        "utilized": "Sử dụng",
+        "totalSlots": "Tổng số ô",
+        "slots": "ô",
+        "blocks": "Khối"
+      },
+      "slotStatus": {
+        "empty": "Trống",
+        "occupied": "Đã sử dụng",
+        "hold": "Tạm giữ",
+        "under_maintenance": "Bảo trì",
+        "suggested": "Gợi ý",
+        "selected": "Đã chọn"
+      },
+      "stackDetails": {
+        "title": "Chi tiết stack",
+        "tier": "Tầng",
+        "containers": "Container",
+        "status": "Trạng thái",
+        "actions": "Hành động",
+        "confirm": "Xác nhận",
+        "release": "Giải phóng",
+        "containerNo": "Số Container",
+        "holdNextTier": "GIỮ tầng kế tiếp",
+        "tierHoldStatus": "Đang giữ",
+        "receiveCheckedContainers": "Chỉ nhận container có trạng thái \"Đang chờ sắp xếp\" (CHECKED)",
+        "systemAdminNote": "SystemAdmin: Có thể nhập container tùy ý",
+        "empty": "Trống",
+        "occupied": "Đã chiếm",
+        "removed": "Đã gỡ",
+        "expired": "hết hạn",
+        "remove": "Gỡ bỏ",
+        "filterContainers": "Lọc container cho tầng này",
+        "loading": "Đang tải...",
+        "noContainersWaiting": "Không có container đang chờ sắp xếp",
+        "repair": "Sửa chữa"
+      },
+      "actions": {
+        "refresh": "Làm mới",
+        "locate": "Định vị",
+        "addContainer": "Thêm container",
+        "export": "Xuất báo cáo",
+        "settings": "Cài đặt"
+      },
+      "keyboardShortcuts": {
+        "title": "Phím tắt",
+        "search": "Tìm kiếm",
+        "refresh": "Làm mới",
+        "escape": "Thoát"
+      }
     },
     "containers": {
       "title": "Quản lý container",

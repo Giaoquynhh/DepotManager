@@ -7,6 +7,7 @@ import '../styles/appointment-mini.css';
 import '../styles/supplement-mini.css';
 import '../styles/gate.css';
 import '../styles/depot-table.css';
+import '../styles/yard/futuristic-modal.css';
 import DriverNotification from '@components/DriverNotification';
 
 
