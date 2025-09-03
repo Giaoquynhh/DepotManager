@@ -1,30 +1,41 @@
-/* Yard Layout */
+/* Yard Layout - Ocean Theme Integration */
 .yard-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--space-6);
-  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--ocean-bg-secondary);
 }
 
+.yard-main-content {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Yard Container - Full Width Ocean Layout */
+.yard-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: var(--ocean-bg-secondary);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Legacy Support - Keep for backward compatibility */
 .yard-left {
+  width: 100%;
   min-height: 600px;
 }
 
 .yard-right {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  display: none; /* Hide sidebar in new layout */
 }
 
 .yard-right-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-/* Yard Container - New Simple Layout */
-.yard-container {
-  max-width: 800px;
-  margin: 0 auto;
-  margin-top: var(--space-6);
+  display: none; /* Hide sidebar content in new layout */
 }

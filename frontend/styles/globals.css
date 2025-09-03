@@ -151,7 +151,13 @@ main {
 body {
   margin: 0;
   font-family: var(--font-family-primary);
-  background: linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%);
+  background: linear-gradient(135deg, 
+    #f8fafc 0%,     /* Light gray */
+    #e2e8f0 25%,    /* Light blue-gray */
+    #cbd5e1 50%,    /* Medium blue-gray */
+    #94a3b8 75%,    /* Darker blue-gray */
+    #64748b 100%    /* Dark blue-gray */
+  );
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
@@ -173,9 +179,9 @@ a, a:visited {
   overflow-x: visible;
 }
 
-/* Header - Navy blue background theo guidelines */
+/* Header - Navy background */
 .header {
-  background: var(--color-bg-navy);
+  background: #5d1582; /* Navy blue */
   color: var(--color-text-inverse);
   padding: var(--space-2) 0; /* Giảm padding từ space-3 (12px) xuống space-2 (8px) */
   box-shadow: var(--shadow-md);
@@ -184,11 +190,11 @@ a, a:visited {
   z-index: 1100;
 }
 
-/* Khi có sidebar, làm header liền mạch với sidebar: bỏ shadow và dùng cùng nền gradient */
+/* Khi có sidebar, làm header liền mạch với sidebar: bỏ shadow và dùng màu navy */
 body.with-sidebar .header {
   box-shadow: none;
-  /* Dùng màu navy đặc để liền mạch với điểm bắt đầu gradient của sidebar */
-  background: var(--color-bg-navy);
+  /* Dùng màu navy để liền mạch */
+  background: #200445; /* Navy blue */
   /* Header chiếm toàn bộ chiều rộng màn hình với khoảng cách hợp lý */
   width: 100vw;
   margin-left: 0;
@@ -781,7 +787,7 @@ button, input, select {
 .sidebar {
   position: fixed;
   left: 0;
-  top: var(--header-clearance);
+  top: calc(var(--header-clearance) + 3.8px); /* Thêm 10px để sidebar không đè lên header */
   bottom: 0;
   width: 240px;
   background: linear-gradient(180deg, 
@@ -1012,7 +1018,7 @@ button, input, select {
   
   .sidebar {
     position: fixed;
-    top: var(--header-clearance);
+    top: calc(var(--header-clearance) + 10px); /* Thêm 10px để sidebar không đè lên header */
     left: 0;
     right: 0;
     bottom: auto;
