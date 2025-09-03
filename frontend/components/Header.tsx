@@ -494,8 +494,13 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/UsersPartners">
-                <span className="sidebar-emoji">👥</span>
+              <Link className={`sidebar-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} href="/UsersPartners">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
                 <span>{t('sidebar.usersPartners')}</span>
               </Link>
             )}
@@ -508,8 +513,10 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/Permissions">
-                <span className="sidebar-emoji">🛡️</span>
+              <Link className={`sidebar-link ${router.pathname === '/Permissions' ? 'active' : ''}`} href="/Permissions">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
                 <span>{t('sidebar.permissions')}</span>
               </Link>
             )}
@@ -522,8 +529,14 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/Requests/Depot">
-                <span className="sidebar-emoji">📋</span>
+              <Link className={`sidebar-link ${router.pathname === '/Requests/Depot' ? 'active' : ''}`} href="/Requests/Depot">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
                 <span>{t('sidebar.requests')}</span>
               </Link>
             )}
@@ -536,8 +549,11 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/Requests/Customer">
-                <span className="sidebar-emoji">👤</span>
+              <Link className={`sidebar-link ${router.pathname === '/Requests/Customer' ? 'active' : ''}`} href="/Requests/Customer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
                 <span>{t('sidebar.customerRequests')}</span>
               </Link>
             )}
@@ -550,8 +566,12 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/Gate">
-                <span className="sidebar-emoji">🚪</span>
+              <Link className={`sidebar-link ${router.pathname === '/Gate' ? 'active' : ''}`} href="/Gate">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
                 <span>{t('sidebar.gate')}</span>
               </Link>
             )}
@@ -564,8 +584,11 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/Yard">
-                  <span className="sidebar-emoji">🏗️</span>
+                <Link className={`sidebar-link ${router.pathname === '/Yard' ? 'active' : ''}`} href="/Yard">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 3h18v18H3zM9 9h6v6H9z"></path>
+                    <path d="M9 1v6M15 1v6M9 17v6M15 17v6M1 9h6M17 9h6M1 15h6M17 15h6"></path>
+                  </svg>
                   <span>{t('sidebar.yard')}</span>
                 </Link>
             )}
@@ -578,8 +601,15 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/ContainersPage">
-                  <span className="sidebar-emoji">📦</span>
+                <Link className={`sidebar-link ${router.pathname === '/ContainersPage' ? 'active' : ''}`} href="/ContainersPage">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
+                    <polyline points="7.5,19.79 7.5,14.6 3,12"></polyline>
+                    <polyline points="21,12 16.5,14.6 16.5,19.79"></polyline>
+                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
                   <span>{t('sidebar.containerManagement')}</span>
                 </Link>
             )}
@@ -592,8 +622,10 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className="sidebar-link" href="/Forklift">
-                <span className="sidebar-emoji">⚡</span>
+              <Link className={`sidebar-link ${router.pathname === '/Forklift' ? 'active' : ''}`} href="/Forklift">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
+                </svg>
                 <span>{t('sidebar.forkliftManagement')}</span>
               </Link>
             )}
@@ -606,7 +638,7 @@ export default function Header() {
                   : allow;
                 return ok;
             })() && (
-              <Link className="sidebar-link" href="/DriverDashboard">
+              <Link className={`sidebar-link ${router.pathname === '/DriverDashboard' ? 'active' : ''}`} href="/DriverDashboard">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="9" y1="9" x2="9" y2="9.01"></line>
@@ -627,7 +659,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/Maintenance/Repairs">
+                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Repairs' ? 'active' : ''}`} href="/Maintenance/Repairs">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                   </svg>
@@ -643,7 +675,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/Maintenance/Inventory">
+                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Inventory' ? 'active' : ''}`} href="/Maintenance/Inventory">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                   <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
@@ -664,7 +696,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/finance/invoices">
+                <Link className={`sidebar-link ${router.pathname === '/finance/invoices' ? 'active' : ''}`} href="/finance/invoices">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14,2 14,8 20,8"></polyline>
@@ -683,7 +715,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className="sidebar-link" href="/finance/invoices/new">
+                <Link className={`sidebar-link ${router.pathname === '/finance/invoices/new' ? 'active' : ''}`} href="/finance/invoices/new">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14,2 14,8 20,8"></polyline>
@@ -702,7 +734,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-            <Link className="sidebar-link" href="/Reports">
+            <Link className={`sidebar-link ${router.pathname === '/Reports' ? 'active' : ''}`} href="/Reports">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 17H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path>
                 <path d="M15 17h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path>
@@ -722,7 +754,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-            <Link className="sidebar-link" href="/Account">
+            <Link className={`sidebar-link ${router.pathname === '/Account' ? 'active' : ''}`} href="/Account">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>

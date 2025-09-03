@@ -77,7 +77,7 @@
   --color-text-inverse: #ffffff;
   
   --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f5f7fb;
+  --color-bg-secondary: linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%);
   --color-bg-navy: #001F3F;
   
   /* Typography - Theo hierarchy guidelines */
@@ -151,11 +151,12 @@ main {
 body {
   margin: 0;
   font-family: var(--font-family-primary);
-  background: var(--color-bg-secondary);
+  background: linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
   overflow: hidden; /* Ngăn tất cả thanh cuộn */
+  min-height: 100vh;
 }
 
 a, a:visited { 
@@ -502,6 +503,7 @@ body.with-sidebar .header {
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-gray-100);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
   transition: var(--transition-default);
   overflow: hidden;
 }
@@ -775,43 +777,42 @@ button, input, select {
   font-family: var(--font-family-primary);
 }
 
-/* Sidebar Navigation - Modern design */
+/* Sidebar Navigation - Modern minimal design */
 .sidebar {
   position: fixed;
   left: 0;
   top: var(--header-clearance);
   bottom: 0;
-  width: 280px;
+  width: 240px;
   background: linear-gradient(180deg, 
-    rgba(10, 22, 40, 0.95) 0%, 
-    rgba(30, 58, 138, 0.9) 25%,
-    rgba(79, 70, 229, 0.85) 50%,
-    rgba(56, 189, 248, 0.9) 75%,
-    rgba(10, 22, 40, 0.95) 100%);
+    #0F172A 0%,     /* Deep blue */
+    #1E3A8A 20%,    /* Navy blue */
+    #3730A3 40%,    /* Indigo */
+    #7C3AED 60%,    /* Purple */
+    #06B6D4 80%,    /* Cyan */
+    #0891B2 100%    /* Dark cyan */
+  );
   backdrop-filter: blur(20px);
-  border-right: 2px solid rgba(56, 189, 248, 0.3);
   box-shadow: 
-    0 0 30px rgba(56, 189, 248, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  padding: var(--space-4);
+    0 0 40px rgba(6, 182, 212, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-/* Collapsible sidebar on hover */
+/* Sidebar remains compact - no expansion on hover */
 .sidebar:hover {
-  width: 320px;
   box-shadow: 
-    0 0 40px rgba(56, 189, 248, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 0 50px rgba(6, 182, 212, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* Particle background for sidebar */
+/* Subtle particle background for futuristic feel */
 .sidebar::before {
   content: '';
   position: absolute;
@@ -820,19 +821,20 @@ button, input, select {
   right: 0;
   bottom: 0;
   background-image: 
-    radial-gradient(2px 2px at 20px 30px, rgba(56, 189, 248, 0.3), transparent),
-    radial-gradient(1px 1px at 40px 70px, rgba(79, 70, 229, 0.4), transparent),
-    radial-gradient(3px 3px at 90px 40px, rgba(30, 58, 138, 0.2), transparent);
+    radial-gradient(1px 1px at 20px 30px, rgba(6, 182, 212, 0.4), transparent),
+    radial-gradient(1px 1px at 60px 80px, rgba(124, 58, 237, 0.3), transparent),
+    radial-gradient(1px 1px at 100px 50px, rgba(30, 58, 138, 0.2), transparent);
   background-repeat: repeat;
-  background-size: 100px 80px;
-  animation: sidebarParticles 20s linear infinite;
+  background-size: 120px 100px;
+  animation: sidebarParticles 25s linear infinite;
   pointer-events: none;
   z-index: -1;
+  opacity: 0.6;
 }
 
 @keyframes sidebarParticles {
   0% { transform: translateY(0px); }
-  100% { transform: translateY(-80px); }
+  100% { transform: translateY(-100px); }
 }
 
 @keyframes iconBounce {
@@ -858,93 +860,110 @@ button, input, select {
 .sidebar-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   height: 100%;
   overflow-y: auto;
-  padding-bottom: var(--space-4);
+  overflow-x: hidden;
+  padding: var(--space-3) var(--space-2);
+  /* Hide scrollbar for cleaner look */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .sidebar-link, 
 .sidebar-link:visited {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  color: rgba(255, 255, 255, 0.9);
-  padding: var(--space-3) var(--space-4);
-  border-radius: 16px;
+  gap: var(--space-2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  padding: var(--space-3) var(--space-3);
+  margin: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: var(--font-size-sm);
-  box-shadow: 
-    0 4px 15px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   text-decoration: none;
-  border: 1px solid rgba(56, 189, 248, 0.2);
   position: relative;
-  overflow: hidden;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 48px;
 }
 
 .sidebar-link:hover {
-  transform: translateX(8px) scale(1.02);
-  box-shadow: 
-    0 8px 25px rgba(56, 189, 248, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  background: rgba(56, 189, 248, 0.2);
-  border-color: rgba(56, 189, 248, 0.5);
-  animation: iconBounce 0.6s ease-in-out;
+  background: transparent;
+  color: rgba(255, 255, 255, 1);
+  text-shadow: 
+    0 0 8px rgba(59, 130, 246, 0.6),
+    0 0 16px rgba(124, 58, 237, 0.4);
 }
 
 .sidebar-link:active {
-  transform: translateX(4px) scale(0.98);
-  animation: rippleClick 0.4s ease-out;
+  transform: scale(0.98);
 }
 
-/* Active state with neon glow */
+/* Active state with glowing underline */
 .sidebar-link.active {
-  background: rgba(56, 189, 248, 0.3);
-  border: 2px solid rgba(56, 189, 248, 0.8);
-  box-shadow: 
-    0 0 20px rgba(56, 189, 248, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: transparent;
   color: rgba(255, 255, 255, 1);
+  position: relative;
+}
+
+.sidebar-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    rgba(59, 130, 246, 0.8) 0%, 
+    rgba(124, 58, 237, 0.8) 50%, 
+    rgba(59, 130, 246, 0.8) 100%);
+  box-shadow: 
+    0 0 8px rgba(59, 130, 246, 0.6),
+    0 0 16px rgba(124, 58, 237, 0.4);
+  border-radius: 1px;
 }
 
 .sidebar-link svg {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-}
-
-/* Emoji icons for sidebar */
-.sidebar-emoji {
-  flex-shrink: 0;
-  font-size: 1.2rem;
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: emojiGlow 2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes emojiGlow {
-  0% { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)); }
-  100% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.8)); }
+.sidebar-link:hover svg {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 12px rgba(124, 58, 237, 0.4));
+  transform: scale(1.05);
 }
+
+/* All icons are now SVG - consistent styling */
 
 .sidebar-link span {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Responsive Layout - Desktop first approach */
 @media (min-width: 1024px) {
   body.with-sidebar .container {
     /* Main content có margin-left để tránh bị che bởi sidebar */
-    margin-left: 300px; /* Độ rộng của sidebar mới */
-    width: calc(100% - 320px); /* Chiều rộng còn lại sau khi trừ sidebar */
+    margin-left: 260px; /* Độ rộng của sidebar mới */
+    width: calc(100% - 280px); /* Chiều rộng còn lại sau khi trừ sidebar */
     transition: none;
     /* Container lệch về bên phải để không bị đè lên sidebar */
     margin-right: 0;
@@ -1116,7 +1135,7 @@ button, input, select {
 .modal-content {
   background: var(--color-bg-primary);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.8);
   max-height: 90vh;
   overflow: hidden;
   display: flex;
@@ -1268,10 +1287,10 @@ button, input, select {
 
 /* Modern Table styles */
 .table-container{
-  background: var(--white);
+  background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
   /* overflow: hidden; */ /* Loại bỏ overflow hidden để tránh cắt mất nội dung */
-  box-shadow: 0 4px 18px rgba(2,6,23,.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
   /* Thêm scroll ngang khi cần thiết */
   overflow-x: auto;
 }
@@ -2482,7 +2501,7 @@ button, input, select {
 
 /* Khi sidebar mở - Giao diện nhỏ hơn */
 .main-content.sidebar-visible {
-  left: 260px; /* Dịch theo độ rộng sidebar */
+  left: 240px; /* Dịch theo độ rộng sidebar */
 }
 
 /* Desktop: dành sẵn gutter phải 20px cho Gate khi sidebar mở (đồng bộ Depot) */
@@ -3647,6 +3666,12 @@ main:has(.auth-hero) {
   overflow: auto; /* Cho phép cuộn nội dung nếu cần, thay vì visible */
   scrollbar-gutter: stable; /* Giữ ổn định lề phải khi có/không có thanh cuộn */
 }
+
+/* Đảm bảo header của depot-requests có cùng kích thước với các trang khác */
+.depot-requests .modern-header {
+  padding: 1.25rem; /* Cùng padding với các trang khác */
+  margin-bottom: 1.5rem; /* Cùng margin-bottom với các trang khác */
+}
 .depot-requests-page {
   padding: 2rem;
   background: var(--color-background);
@@ -3656,8 +3681,8 @@ main:has(.auth-hero) {
 .modern-header {
   background: linear-gradient(135deg, #1e3a8a, #1e40af);
   border-radius: var(--radius-xl);
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 1.25rem; /* Giảm từ 2rem xuống 1.25rem để thu nhỏ header */
+  margin-bottom: 1.5rem; /* Giảm margin-bottom để tăng diện tích giao diện chính */
   box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
   position: relative;
   overflow: hidden;
@@ -3773,11 +3798,13 @@ main:has(.auth-hero) {
 .search-filter-section {
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   border-radius: var(--radius-xl);
-  padding: 2rem;
+  padding: var(--space-6); /* Cùng padding với table-container */
   margin-bottom: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border: 2px solid #e2e8f0;
   overflow: hidden; /* tránh nội dung (chip) tràn ra ngoài bo góc */
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Stickers cho Search & Filter - chỉ áp dụng tại trang Depot */
@@ -4152,8 +4179,9 @@ main:has(.auth-hero) {
 
 /* Responsive Design for Depot Page */
 @media (max-width: 768px) {
-  .modern-header {
-    padding: 1.5rem;
+  .modern-header,
+  .depot-requests .modern-header {
+    padding: 1rem; /* Giảm từ 1.5rem xuống 1rem */
   }
   
   .page-title {
@@ -4169,7 +4197,7 @@ main:has(.auth-hero) {
   .search-filter-section .filter-container { grid-template-columns: 1fr; }
   
   .search-filter-section {
-    padding: 1.5rem;
+    padding: var(--space-4); /* Giảm padding cho mobile nhưng vẫn consistent */
   }
   
   .export-btn {
@@ -4195,8 +4223,9 @@ main:has(.auth-hero) {
 }
 
 @media (max-width: 480px) {
-  .modern-header {
-    padding: 1rem;
+  .modern-header,
+  .depot-requests .modern-header {
+    padding: 0.75rem; /* Giảm từ 1rem xuống 0.75rem */
   }
   
   .page-title {
@@ -4208,7 +4237,7 @@ main:has(.auth-hero) {
   }
   
   .search-filter-section {
-    padding: 1rem;
+    padding: var(--space-3); /* Giảm padding cho mobile nhỏ nhưng vẫn consistent */
   }
   
   /* Search input responsive cho màn hình nhỏ */
@@ -4230,9 +4259,9 @@ main:has(.auth-hero) {
 
 /* ===== MODERN TABLE STYLES ===== */
 .table-container {
-  background: white;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl); /* Cùng border-radius với search-filter-section */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
   border: 1px solid var(--color-gray-200);
   overflow-x: auto; /* Cho phép scroll ngang khi cần */
   overflow-y: hidden;
@@ -4242,7 +4271,7 @@ main:has(.auth-hero) {
   /* Tăng kích thước để cân đối với giao diện */
   width: 100%;
   min-width: 100%;
-  padding: var(--space-6); /* Tăng padding bên trong */
+  padding: var(--space-6); /* Cùng padding với search-filter-section */
 }
 
 /* Tùy chỉnh scrollbar cho table container */
@@ -4264,11 +4293,7 @@ main:has(.auth-hero) {
   background: var(--color-gray-400);
 }
 
-/* Icons minh họa cho các cột bảng */
-.table-modern th[data-column="type"]::before {
-  content: "📋";
-  margin-right: var(--space-2);
-}
+/* Icons minh họa cho các cột bảng - Removed to prevent duplication */
 
 /* Định nghĩa độ rộng cố định cho các cột để bảng cân đối */
 .table-modern th[data-column="type"] {
@@ -4384,40 +4409,19 @@ main:has(.auth-hero) {
   word-wrap: break-word;
 }
 
-.table-modern th[data-column="container"]::before {
-  content: "📦";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="eta"]::before {
-  content: "📅";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="status"]::before {
-  content: "🔄";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="documents"]::before {
-  content: "📄";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="payment"]::before {
-  content: "💰";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="chat"]::before {
-  content: "💬";
-  margin-right: var(--space-2);
-}
 
-.table-modern th[data-column="actions"]::before {
-  content: "⚙️";
-  margin-right: var(--space-2);
-}
+
+
+
+
+
+
+
 
 .table-modern {
   width: 100%;

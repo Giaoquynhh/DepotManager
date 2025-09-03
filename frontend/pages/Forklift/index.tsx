@@ -336,7 +336,6 @@ export default function Forklift() {
           <div className="header-content">
             <div className="header-left">
               <h1 className="page-title gradient gradient-ultimate">Quản lý Xe nâng</h1>
-              <p className="page-subtitle">Theo dõi và quản lý công việc xe nâng</p>
             </div>
 
             <div className="header-actions">

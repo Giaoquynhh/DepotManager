@@ -1,7 +1,8 @@
 /* DepotRequestTable Styles */
 .table-container {
   overflow-x: auto;
-  margin: 20px 0;
+  margin: 0;
+  padding: var(--space-4);
 }
 
 .table-modern {

@@ -397,6 +397,8 @@
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+  padding: var(--space-4);
+  margin: 0;
 }
 
 .table {

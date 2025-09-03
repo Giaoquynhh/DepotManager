@@ -82,7 +82,6 @@ export default function YardPage() {
           <div className="header-content">
             <div className="header-left">
               <h1 className="page-title gradient gradient-ultimate">{t('pages.yard.title')}</h1>
-              <p className="page-subtitle">{t('pages.yard.welcome')}</p>
             </div>
 
             <div className="header-actions">

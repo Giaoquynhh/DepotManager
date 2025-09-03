@@ -305,7 +305,6 @@ export default function ContainersPage(){
           <div className="header-content">
             <div className="header-left">
               <h1 className="page-title gradient gradient-ultimate">Quản lý container</h1>
-              <p className="page-subtitle">Hiển thị tất cả container - Bao gồm cả container được SystemAdmin nhập trực tiếp vào bãi</p>
             </div>
 
             <div className="header-actions">
