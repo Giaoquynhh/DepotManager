@@ -420,6 +420,182 @@ export class YardService {
 		await audit(actor._id, 'YARD.REMOVE', 'YARD_SLOT', updated.slot_id, { tier: updated.tier, container_no });
 		return updated;
 	}
+
+	// ==========================
+	// Yard Configuration APIs
+	// ==========================
+
+	async getConfiguration() {
+		// Lấy cấu hình hiện tại từ database
+		const yards = await prisma.yard.findMany({
+			include: { 
+				blocks: { 
+					include: { 
+						slots: {
+							select: { tier_capacity: true }
+						}
+					} 
+				} 
+			}
+		});
+
+		if (yards.length === 0) {
+			// Trả về cấu hình mặc định nếu chưa có
+			return {
+				depotCount: 2,
+				slotsPerDepot: 20,
+				tiersPerSlot: 5
+			};
+		}
+
+		const yard = yards[0];
+		const depotCount = yard.blocks.length;
+		const slotsPerDepot = yard.blocks.length > 0 ? yard.blocks[0].slots.length : 0;
+		const tiersPerSlot = yard.blocks.length > 0 && yard.blocks[0].slots.length > 0 
+			? (yard.blocks[0].slots[0].tier_capacity || 5) 
+			: 5;
+
+		return {
+			depotCount,
+			slotsPerDepot,
+			tiersPerSlot
+		};
+	}
+
+	async configureYard(actor: any, depotCount: number, slotsPerDepot: number, tiersPerSlot: number) {
+		// Validation
+		if (depotCount < 1 || depotCount > 50) {
+			throw new Error('Số lượng depot phải từ 1 đến 50');
+		}
+		if (slotsPerDepot < 1 || slotsPerDepot > 100) {
+			throw new Error('Số lượng ô phải từ 1 đến 100');
+		}
+		if (tiersPerSlot < 1 || tiersPerSlot > 20) {
+			throw new Error('Số lượng tầng phải từ 1 đến 20');
+		}
+
+		// Xóa toàn bộ dữ liệu cũ và tạo mới
+		await prisma.$transaction(async (tx) => {
+			// Xóa tất cả placements trước
+			await tx.yardPlacement.deleteMany();
+			
+			// Xóa tất cả slots
+			await tx.yardSlot.deleteMany();
+			
+			// Xóa tất cả blocks
+			await tx.yardBlock.deleteMany();
+			
+			// Xóa tất cả yards
+			await tx.yard.deleteMany();
+
+			// Tạo yard mới
+			const yard = await tx.yard.create({
+				data: {
+					name: 'Depot A'
+				}
+			});
+
+			// Tạo blocks (depots)
+			const blocks = [];
+			for (let i = 1; i <= depotCount; i++) {
+				const block = await tx.yardBlock.create({
+					data: {
+						yard_id: yard.id,
+						code: `B${i}`
+					}
+				});
+				blocks.push(block);
+			}
+
+			// Tạo slots cho mỗi block
+			for (const block of blocks) {
+				for (let i = 1; i <= slotsPerDepot; i++) {
+					await tx.yardSlot.create({
+						data: {
+							block_id: block.id,
+							code: `${block.code}-${i}`,
+							status: 'EMPTY',
+							tier_capacity: tiersPerSlot,
+							occupant_container_no: null,
+							reserved_expire_at: null
+						}
+					});
+				}
+			}
+		});
+
+		await audit(actor._id, 'YARD.CONFIGURE', 'YARD', '', { 
+			depotCount, 
+			slotsPerDepot, 
+			tiersPerSlot 
+		});
+
+		return {
+			message: 'Cấu hình bãi đã được cập nhật thành công',
+			depotCount,
+			slotsPerDepot,
+			tiersPerSlot
+		};
+	}
+
+	async resetYard() {
+		// Reset về cấu hình mặc định (2 depot, 20 slots, 5 tiers)
+		await prisma.$transaction(async (tx) => {
+			// Xóa tất cả placements trước
+			await tx.yardPlacement.deleteMany();
+			
+			// Xóa tất cả slots
+			await tx.yardSlot.deleteMany();
+			
+			// Xóa tất cả blocks
+			await tx.yardBlock.deleteMany();
+			
+			// Xóa tất cả yards
+			await tx.yard.deleteMany();
+
+			// Tạo cấu hình mặc định
+			const yard = await tx.yard.create({
+				data: {
+					name: 'Depot A'
+				}
+			});
+
+			// Tạo 2 blocks mặc định
+			const blocks = [];
+			for (let i = 1; i <= 2; i++) {
+				const block = await tx.yardBlock.create({
+					data: {
+						yard_id: yard.id,
+						code: `B${i}`
+					}
+				});
+				blocks.push(block);
+			}
+
+			// Tạo 20 slots cho mỗi block
+			for (const block of blocks) {
+				for (let i = 1; i <= 20; i++) {
+					await tx.yardSlot.create({
+						data: {
+							block_id: block.id,
+							code: `${block.code}-${i}`,
+							status: 'EMPTY',
+							tier_capacity: 5,
+							occupant_container_no: null,
+							reserved_expire_at: null
+						}
+					});
+				}
+			}
+		});
+
+		return {
+			message: 'Bãi đã được reset về cấu hình mặc định',
+			depotCount: 2,
+			slotsPerDepot: 20,
+			tiersPerSlot: 5
+		};
+	}
 }
 
 export default new YardService();

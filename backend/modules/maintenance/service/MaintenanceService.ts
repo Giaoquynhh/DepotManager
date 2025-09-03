@@ -264,11 +264,17 @@ export class MaintenanceService {
     if (!repairTicket) throw new Error('Phiếu sửa chữa không tồn tại');
     if (repairTicket.status !== 'CHECKING') throw new Error('Chỉ tạo hóa đơn cho phiếu đang kiểm tra');
 
-    // Tính toán chi phí phụ tùng
+    // Tính toán chi phí phụ tùng và kiểm tra tồn kho
     let partsCost = 0;
     for (const part of payload.selected_parts) {
       const inventoryItem = await prisma.inventoryItem.findUnique({ where: { id: part.inventory_item_id } });
       if (!inventoryItem) throw new Error(`Phụ tùng ${part.inventory_item_id} không tồn tại`);
+      
+      // Kiểm tra số lượng tồn kho
+      if (inventoryItem.qty_on_hand < part.quantity) {
+        throw new Error(`Không đủ tồn kho cho phụ tùng ${inventoryItem.name}. Tồn kho hiện tại: ${inventoryItem.qty_on_hand}, yêu cầu: ${part.quantity}`);
+      }
+      
       partsCost += inventoryItem.unit_price * part.quantity;
     }
 
@@ -292,6 +298,18 @@ export class MaintenanceService {
       },
       include: { items: true }
     });
+
+    // Trừ số lượng tồn kho cho các phụ tùng đã sử dụng
+    for (const part of payload.selected_parts) {
+      await prisma.inventoryItem.update({
+        where: { id: part.inventory_item_id },
+        data: {
+          qty_on_hand: {
+            decrement: part.quantity
+          }
+        }
+      });
+    }
 
     // Cập nhật trạng thái request thành PENDING_ACCEPT nếu có
     if (repairTicket.container_no) {
@@ -537,18 +555,55 @@ export class MaintenanceService {
 
       // Cập nhật items nếu có
       if (invoiceData.items && Array.isArray(invoiceData.items)) {
+        // Lưu lại items cũ để hoàn trả tồn kho
+        const oldItems = repairTicket.items;
+        
+        // Hoàn trả tồn kho cho items cũ
+        for (const oldItem of oldItems) {
+          await prisma.inventoryItem.update({
+            where: { id: oldItem.inventory_item_id },
+            data: {
+              qty_on_hand: {
+                increment: oldItem.quantity
+              }
+            }
+          });
+        }
+
+        // Kiểm tra tồn kho cho items mới
+        for (const item of invoiceData.items) {
+          const inventoryItem = await prisma.inventoryItem.findUnique({ 
+            where: { id: item.inventory_item_id } 
+          });
+          if (!inventoryItem) throw new Error(`Phụ tùng ${item.inventory_item_id} không tồn tại`);
+          
+          if (inventoryItem.qty_on_hand < item.quantity) {
+            throw new Error(`Không đủ tồn kho cho phụ tùng ${inventoryItem.name}. Tồn kho hiện tại: ${inventoryItem.qty_on_hand}, yêu cầu: ${item.quantity}`);
+          }
+        }
+
         // Xóa items cũ
         await prisma.repairTicketItem.deleteMany({
           where: { repair_ticket_id: repairTicketId }
         });
 
-        // Tạo items mới
+        // Tạo items mới và trừ tồn kho
         for (const item of invoiceData.items) {
           await prisma.repairTicketItem.create({
             data: {
               repair_ticket_id: repairTicketId,
               inventory_item_id: item.inventory_item_id,
               quantity: item.quantity
+            }
+          });
+
+          // Trừ số lượng tồn kho
+          await prisma.inventoryItem.update({
+            where: { id: item.inventory_item_id },
+            data: {
+              qty_on_hand: {
+                decrement: item.quantity
+              }
             }
           });
         }

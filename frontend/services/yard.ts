@@ -53,6 +53,20 @@ export const yardApi = {
   async assign(containerNo: string, slotId: string) {
     const { data } = await api.patch('/yard/assign-position', { container_no: containerNo, slot_id: slotId });
     return data;
+  },
+
+  // 🎯 Yard Configuration APIs
+  async getConfiguration() {
+    const { data } = await api.get('/yard/configuration');
+    return data;
+  },
+  async configureYard(config: { depotCount: number; slotsPerDepot: number; tiersPerSlot: number }) {
+    const { data } = await api.post('/yard/configure', config);
+    return data;
+  },
+  async resetYard() {
+    const { data } = await api.post('/yard/reset');
+    return data;
   }
 };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import SmartSearch from './SmartSearch';
 import { FuturisticStackDetailsModal } from './FuturisticStackDetailsModal';
+import YardConfigurationModal from './YardConfigurationModal';
 import { useTranslation } from '../../hooks/useTranslation';
 
 interface Slot {
@@ -52,6 +53,7 @@ export default function ModernYardMap({
   const [heatmapMode, setHeatmapMode] = useState(false);
   const [showTooltip, setShowTooltip] = useState<{ slot: Slot; x: number; y: number } | null>(null);
   const [selectedSlotForModal, setSelectedSlotForModal] = useState<string | null>(null);
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   // 🎯 Auto-scroll to selected slot
   useEffect(() => {
