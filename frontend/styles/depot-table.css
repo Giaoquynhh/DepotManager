@@ -14,12 +14,28 @@
 .eta-container-info .eta-date {
   color: var(--color-text-secondary);
   font-size: 12px;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 .eta-container-info .eta-empty {
   color: var(--color-text-muted);
   font-size: 12px;
   font-style: italic;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 /* Status badges */
@@ -396,7 +412,7 @@
 .table-container {
   overflow-x: auto;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #dfe2e9;
   padding: var(--space-4);
   margin: 0;
 }

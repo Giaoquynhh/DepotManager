@@ -1,7 +1,6 @@
  import React, { useState, useEffect } from 'react';
 import { financeApi } from '@services/finance';
 import useSWR from 'swr';
-import CreateInvoiceModal from './CreateInvoiceModal';
 
 interface ContainersNeedInvoiceModalProps {
   isOpen: boolean;
@@ -13,8 +12,6 @@ export default function ContainersNeedInvoiceModal({ isOpen, onClose }: Containe
     isOpen ? 'containers-need-invoice' : null,
     () => financeApi.getContainersNeedInvoice()
   );
-  const [selectedContainer, setSelectedContainer] = useState<any>(null);
-  const [isCreateInvoiceModalOpen, setIsCreateInvoiceModalOpen] = useState(false);
 
   const getTypeLabel = (type: string) => {
     switch(type) {
@@ -76,7 +73,6 @@ export default function ContainersNeedInvoiceModal({ isOpen, onClose }: Containe
                     <th>Trạng thái</th>
                     <th>Ngày tạo</th>
                     <th>Chi phí dự kiến</th>
-                    <th>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -101,17 +97,6 @@ export default function ContainersNeedInvoiceModal({ isOpen, onClose }: Containe
                           {container.estimated_cost ? `${Number(container.estimated_cost).toLocaleString('vi-VN')} VND` : 'Chưa có'}
                         </span>
                       </td>
-                      <td>
-                        <button 
-                          className="btn-create-invoice"
-                          onClick={() => {
-                            setSelectedContainer(container);
-                            setIsCreateInvoiceModalOpen(true);
-                          }}
-                        >
-                          Tạo hóa đơn
-                        </button>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -127,16 +112,6 @@ export default function ContainersNeedInvoiceModal({ isOpen, onClose }: Containe
         </div>
       </div>
       
-      <CreateInvoiceModal
-        isOpen={isCreateInvoiceModalOpen}
-        onClose={() => {
-          setIsCreateInvoiceModalOpen(false);
-          setSelectedContainer(null);
-          // Refresh danh sách container sau khi tạo hóa đơn
-          mutate();
-        }}
-        container={selectedContainer}
-      />
       
       <style jsx>{`
         .modal-overlay {

@@ -79,8 +79,8 @@
       "customerTitle": "Service Request Management (Customer)",
       "createRequest": "Create request",
       "createRequestTitle": "Create new request",
-      "searchPlaceholder": "Search by container code...",
-      "searchByLicensePlate": "Search by license plate...",
+      "searchPlaceholder": "🔍 Search by container code",
+      "searchByLicensePlate": "🔍 Search by license plate",
       "allTypes": "All Types",
       "allStatuses": "All Statuses",
       "noRequests": "No requests yet",
@@ -213,14 +213,34 @@
         "removedFromCustomerList": "Removed from Customer list",
         "restoredInDepotList": "Restored in Depot list",
         "restoredInCustomerList": "Restored in Customer list"
+      },
+      "form": {
+        "requestType": "Request Type",
+        "containerId": "Container ID",
+        "containerIdPlaceholder": "Enter container ID...",
+        "documents": "Documents (PDF/Image)",
+        "selectDocumentFile": "Choose document file...",
+        "eta": "Estimated Time of Arrival (ETA)",
+        "fileFormat": "Format: PDF, JPG, PNG. Maximum size: 10MB",
+        "cancel": "Cancel",
+        "createRequest": "Create Request",
+        "creating": "Creating...",
+        "validation": {
+          "containerIdRequired": "Container ID is required for import request",
+          "documentRequired": "Document is required for import request",
+          "etaRequired": "Estimated Time of Arrival (ETA) is required",
+          "invalidFileType": "Only PDF or image files (JPG, PNG) are accepted",
+          "fileTooLarge": "File too large. Maximum size is 10MB"
+        },
+        "success": "Request created successfully!"
       }
     },
     "gate": {
       "title": "Gate Dashboard",
       "subtitle": "Vehicle in/out gate management",
       "welcome": "Welcome to the Gate Management System",
-      "searchByContainer": "Search by container code...",
-      "searchByLicensePlate": "Search by license plate...",
+      "searchByContainer": "🔍 Search by container code",
+      "searchByLicensePlate": "🔍 Search by license plate",
       "searchButton": "Search",
       "clearFilters": "Clear Filters",
       "statusLabel": "Status",
@@ -296,7 +316,7 @@
     "yard": {
       "title": "Yard Management",
       "welcome": "Welcome to the Yard Management System",
-      "searchPlaceholder": "Search by container code...",
+      "searchPlaceholder": "🔍 Search by container code",
       "searchButton": "Search",
       "clearFilters": "Clear Filters",
       "noData": "No Data",
@@ -364,7 +384,7 @@
     "containers": {
       "title": "Container Management",
       "welcome": "Welcome to the Container Management System",
-      "searchPlaceholder": "Search by container code...",
+      "searchPlaceholder": "🔍 Search by container code",
       "searchButton": "Search",
       "clearFilters": "Clear Filters",
       "noData": "No Data",

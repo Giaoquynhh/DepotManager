@@ -126,7 +126,6 @@ export default function DepotRequests() {
 		const map: Record<string, string> = {
 			IMPORT: t('pages.requests.filterOptions.import'),
 			EXPORT: t('pages.requests.filterOptions.export'),
-			CONVERT: t('pages.requests.filterOptions.convert')
 		};
 		return map[type] || type;
 	};
@@ -242,7 +241,6 @@ export default function DepotRequests() {
 								<option value="all">{t('pages.requests.allTypes')}</option>
 								<option value="IMPORT">{t('pages.requests.filterOptions.import')}</option>
 								<option value="EXPORT">{t('pages.requests.filterOptions.export')}</option>
-								<option value="CONVERT">{t('pages.requests.filterOptions.convert')}</option>
 							</select>
 						</div>
 
@@ -254,8 +252,10 @@ export default function DepotRequests() {
 								onChange={(e) => actions.setFilterStatus(e.target.value)}
 							>
 								<option value="all">{t('pages.requests.allStatuses')}</option>
-								<option value="PENDING">{t('pages.requests.filterOptions.pending')}</option>
+								<option value="PENDING">{safeT('pages.requests.filterOptions.pending', 'Chờ xử lý')}</option>
+								<option value="SCHEDULED">{safeT('pages.requests.filterOptions.scheduled', 'Đã lên lịch')}</option>
 								<option value="RECEIVED">{t('pages.requests.filterOptions.received')}</option>
+								<option value="FORWARDED">{safeT('pages.gate.statusOptions.forwarded', 'Đã chuyển tiếp')}</option>
 								<option value="COMPLETED">{t('pages.requests.filterOptions.completed')}</option>
 								<option value="EXPORTED">{t('pages.requests.filterOptions.exported')}</option>
 								<option value="REJECTED">{t('pages.requests.filterOptions.rejected')}</option>

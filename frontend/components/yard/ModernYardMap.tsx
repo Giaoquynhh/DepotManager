@@ -55,9 +55,13 @@ export default function ModernYardMap({
   const [selectedSlotForModal, setSelectedSlotForModal] = useState<string | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
 
-  // 🎯 Auto-scroll to selected slot
+  // 🎯 Auto-scroll to selected slot (disabled when modal is open)
   useEffect(() => {
     if (!selectedSlotId) return;
+    // Kiểm tra xem modal có đang mở không
+    const isModalOpen = document.body.classList.contains('modal-open');
+    if (isModalOpen) return; // Không scroll khi modal mở
+    
     const element = document.querySelector(`[data-slot-id="${selectedSlotId}"]`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
@@ -70,10 +74,9 @@ export default function ModernYardMap({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      // Only hide tooltip if clicking outside of slots and tooltip, and not on close button
+      // Only hide tooltip if clicking outside of slots and tooltip
       if (!target.closest('.yard-slot-tile') && 
-          !target.closest('.yard-tooltip') && 
-          !target.closest('.tooltip-close')) {
+          !target.closest('.yard-tooltip')) {
         setShowTooltip(null);
       }
     };
@@ -412,14 +415,6 @@ export default function ModernYardMap({
             <div className="tooltip-header">
               <span className="tooltip-code">{showTooltip.slot.code}</span>
               <span className="tooltip-status">{getSlotTooltip(showTooltip.slot).status}</span>
-              <button 
-                className="tooltip-close"
-                onClick={() => setShowTooltip(null)}
-                title="Đóng"
-                style={{ pointerEvents: 'auto' }}
-              >
-                ×
-              </button>
             </div>
             <div className="tooltip-details">
               <div className="tooltip-detail">

@@ -150,22 +150,11 @@ export default function CustomerRequests() {
 						<div className="header-left">
 							<h1 className="page-title gradient gradient-ultimate">{t('pages.requests.customerTitle')}</h1>
 						</div>
-
-						<div className="header-actions">
-							<Button 
-								variant="outline" 
-								icon="➕"
-								onClick={() => setShowCreateModal(true)}
-								className="create-btn"
-							>
-								{t('pages.requests.createRequest')}
-							</Button>
-						</div>
 					</div>
 				</div>
 
 				{/* Search and Filter */}
-				<div className="search-filter-section modern-search">
+				<div className="search-filter-section modern-search" style={{ paddingTop: '8px' }}>
 					<div className="search-row">
 						<div className="search-section">
 							<div className="search-input-group">
@@ -196,8 +185,16 @@ export default function CustomerRequests() {
 								<option value="all">{t('pages.requests.allTypes')}</option>
 								<option value="IMPORT">{t('pages.requests.filterOptions.import')}</option>
 								<option value="EXPORT">{t('pages.requests.filterOptions.export')}</option>
-								<option value="CONVERT">{t('pages.requests.filterOptions.convert')}</option>
 							</select>
+							
+							<Button 
+								variant="outline" 
+								icon="➕"
+								onClick={() => setShowCreateModal(true)}
+								className="create-btn"
+							>
+								{t('pages.requests.createRequest')}
+							</Button>
 						</div>
 					</div>
 				</div>

@@ -17,7 +17,7 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   // Determine if message is from current user based on role or sender info
-  const isOwn = message.sender?.role === 'Customer' || message.type === 'user';
+  const isOwn = message.sender?.role === 'Customer';
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('vi-VN', {
       hour: '2-digit',

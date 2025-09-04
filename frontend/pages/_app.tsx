@@ -10,6 +10,7 @@ import '../styles/depot-table.css';
 import '../styles/yard/futuristic-modal.css';
 import '../styles/yard-configuration.css';
 import DriverNotification from '@components/DriverNotification';
+import { Toaster } from 'sonner';
 
 
 export default function MyApp({ Component, pageProps }: AppProps) {
@@ -34,6 +35,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 				<title>Smartlog Container Manager</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 			</Head>
+						<Toaster position="top-right" richColors />
 			<Component {...pageProps} />
 			{userInfo && (
 				<DriverNotification 

@@ -4,7 +4,7 @@ import { useTranslation } from '@hooks/useTranslation';
 
 import useSWR from 'swr';
 import { useState } from 'react';
-import { reportsApi } from '@services/reports';
+import { containersApi } from '@services/containers';
 import React from 'react'; // Added for React.useMemo
 
 function ContainersList(){
@@ -25,7 +25,7 @@ function ContainersList(){
       pageSize 
     };
     
-    return await reportsApi.listContainers(params);
+    return await containersApi.list(params);
   });
 
   // Xử lý dữ liệu một lần và cache lại để tránh tính toán lại

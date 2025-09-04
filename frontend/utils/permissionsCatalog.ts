@@ -10,8 +10,6 @@ export type PermissionKey =
   | 'maintenance.repairs'
   | 'maintenance.inventory'
   | 'finance.invoices'
-  | 'finance.create_invoice'
-  | 'reports.view'
   | 'account.view'
   | 'driver.dashboard';
 
@@ -35,8 +33,6 @@ export const PERMISSION_CATALOG: PermissionItem[] = [
   { key: 'maintenance.repairs', label: 'Bảo trì - Phiếu sửa chữa', group: 'Bảo trì' },
   { key: 'maintenance.inventory', label: 'Bảo trì - Tồn kho', group: 'Bảo trì' },
   { key: 'finance.invoices', label: 'Tài chính - Hóa đơn', group: 'Tài chính' },
-  { key: 'finance.create_invoice', label: 'Tài chính - Tạo hóa đơn', group: 'Tài chính' },
-  { key: 'reports.view', label: 'Báo cáo', group: 'Báo cáo' },
   { key: 'driver.dashboard', label: 'Bảng điều khiển tài xế', group: 'Vận hành' },
 ];
 

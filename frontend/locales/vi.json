@@ -80,8 +80,8 @@
       "customerTitle": "Quản lý yêu cầu dịch vụ (Khách hàng)",
       "createRequest": "Tạo yêu cầu",
       "createRequestTitle": "Tạo yêu cầu mới",
-      "searchPlaceholder": "Tìm kiếm theo mã container...",
-      "searchByLicensePlate": "Tìm kiếm theo biển số xe...",
+      "searchPlaceholder": "🔍 Tìm kiếm theo mã container",
+      "searchByLicensePlate": "🔍 Tìm kiếm theo biển số xe",
       "allTypes": "Tất cả loại",
       "allStatuses": "Tất cả trạng thái",
       "noRequests": "Chưa có yêu cầu nào",
@@ -214,14 +214,34 @@
         "removedFromCustomerList": "Đã gỡ khỏi danh sách Khách hàng",
         "restoredInDepotList": "Đã khôi phục trong danh sách Depot",
         "restoredInCustomerList": "Đã khôi phục trong danh sách Khách hàng"
+      },
+      "form": {
+        "requestType": "Loại yêu cầu",
+        "containerId": "Mã định danh container",
+        "containerIdPlaceholder": "Nhập mã container...",
+        "documents": "Chứng từ (PDF/Ảnh)",
+        "selectDocumentFile": "Chọn file chứng từ...",
+        "eta": "Thời gian dự kiến (ETA)",
+        "fileFormat": "Định dạng: PDF, JPG, PNG. Kích thước tối đa: 10MB",
+        "cancel": "Hủy",
+        "createRequest": "Tạo yêu cầu",
+        "creating": "Đang tạo...",
+        "validation": {
+          "containerIdRequired": "Mã định danh container là bắt buộc cho yêu cầu nhập",
+          "documentRequired": "Chứng từ là bắt buộc cho yêu cầu nhập",
+          "etaRequired": "Thời gian dự kiến (ETA) là bắt buộc",
+          "invalidFileType": "Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)",
+          "fileTooLarge": "File quá lớn. Kích thước tối đa là 10MB"
+        },
+        "success": "Đã tạo yêu cầu thành công!"
       }
     },
     "gate": {
       "title": "Bảng điều khiển cổng",
       "subtitle": "Quản lý xe ra/vào cổng",
       "welcome": "Chào mừng đến với hệ thống quản lý cổng",
-      "searchByContainer": "Tìm kiếm theo mã container...",
-      "searchByLicensePlate": "Tìm kiếm theo biển số xe...",
+      "searchByContainer": "🔍 Tìm kiếm theo mã container",
+      "searchByLicensePlate": "🔍 Tìm kiếm theo biển số xe",
       "searchButton": "Tìm kiếm",
       "clearFilters": "Xóa bộ lọc",
       "statusLabel": "Trạng thái",
@@ -296,7 +316,7 @@
     "yard": {
       "title": "Quản lý bãi",
       "welcome": "Chào mừng đến với hệ thống quản lý bãi",
-      "searchPlaceholder": "Tìm kiếm theo mã container...",
+      "searchPlaceholder": "🔍 Tìm kiếm theo mã container",
       "searchButton": "Tìm kiếm",
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có dữ liệu",
@@ -364,7 +384,7 @@
     "containers": {
       "title": "Quản lý container",
       "welcome": "Chào mừng đến với hệ thống quản lý container",
-      "searchPlaceholder": "Tìm kiếm theo mã container...",
+      "searchPlaceholder": "🔍 Tìm kiếm theo mã container",
       "searchButton": "Tìm kiếm",
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có dữ liệu",

@@ -92,11 +92,29 @@
 .eta-date {
   color: #059669;
   font-weight: 500;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 .eta-empty {
   color: #9ca3af;
   font-style: italic;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 /* Payment Status Column */

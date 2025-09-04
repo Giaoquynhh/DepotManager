@@ -106,7 +106,7 @@ app.use('/driver-dashboard', driverDashboardRoutes);
 app.use('/containers', containerRoutes);
 app.use('/maintenance', maintenanceRoutes);
 app.use('/finance', financeRoutes);
-app.use('/reports', reportsRoutes);
+app.use('/reports', authenticate, reportsRoutes);
 
 const start = async () => {
 	await connectDatabase();

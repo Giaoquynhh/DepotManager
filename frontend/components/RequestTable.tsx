@@ -52,21 +52,29 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const { t, currentLanguage } = useTranslation();
   const dateLocale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
 
+  // Format ETA giống như Depot
+  const formatETA = (eta?: string) => {
+    if (!eta) return '-';
+    const d = new Date(eta);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      PENDING: { label: 'Chờ xử lý', className: 'status-pending' },
-      PICK_CONTAINER: { label: 'Đang chọn container', className: 'status-pick-container' },
-      RECEIVED: { label: 'Đã nhận', className: 'status-received' },
-      COMPLETED: { label: 'Hoàn thành', className: 'status-completed' },
-      EXPORTED: { label: 'Đã xuất', className: 'status-exported' },
-      REJECTED: { label: 'Từ chối', className: 'status-rejected' },
-      POSITIONED: { label: 'Đã xếp chỗ trong bãi', className: 'status-positioned' },
-      FORKLIFTING: { label: 'Đang nâng/hạ container', className: 'status-forklifting' },
-      IN_YARD: { label: 'Đã ở trong bãi', className: 'status-in-yard' },
-      IN_CAR: { label: 'Đã lên xe', className: 'status-in-car' },
-      LEFT_YARD: { label: 'Đã rời kho', className: 'status-left-yard' },
-      PENDING_ACCEPT: { label: 'Chờ chấp nhận', className: 'status-pending-accept' },
-      ACCEPT: { label: 'Đã chấp nhận', className: 'status-accept' }
+      PENDING: { label: t('pages.requests.filterOptions.pending'), className: 'status-pending' },
+      PICK_CONTAINER: { label: t('pages.requests.filterOptions.pickContainer'), className: 'status-pick-container' },
+      RECEIVED: { label: t('pages.requests.filterOptions.received'), className: 'status-received' },
+      COMPLETED: { label: t('pages.requests.filterOptions.completed'), className: 'status-completed' },
+      EXPORTED: { label: t('pages.requests.filterOptions.exported'), className: 'status-exported' },
+      REJECTED: { label: t('pages.requests.filterOptions.rejected'), className: 'status-rejected' },
+      POSITIONED: { label: t('pages.requests.filterOptions.positioned'), className: 'status-positioned' },
+      FORKLIFTING: { label: t('pages.requests.filterOptions.forklifting'), className: 'status-forklifting' },
+      IN_YARD: { label: t('pages.requests.filterOptions.inYard'), className: 'status-in-yard' },
+      IN_CAR: { label: t('pages.requests.filterOptions.inCar'), className: 'status-in-car' },
+      LEFT_YARD: { label: t('pages.requests.filterOptions.leftYard'), className: 'status-left-yard' },
+      PENDING_ACCEPT: { label: t('pages.requests.filterOptions.pendingAccept'), className: 'status-pending-accept' },
+      ACCEPT: { label: t('pages.requests.filterOptions.approved'), className: 'status-accept' }
     };
 
     const config = statusConfig[status] || { label: status, className: 'status-default' };
@@ -79,9 +87,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
 
   const getTypeLabel = (type: string) => {
     const typeLabels: Record<string, string> = {
-      IMPORT: 'Nhập',
-      EXPORT: 'Xuất',
-      CONVERT: 'Chuyển đổi'
+      IMPORT: t('pages.requests.filterOptions.import'),
+      EXPORT: t('pages.requests.filterOptions.export'),
+      CONVERT: t('pages.requests.filterOptions.convert')
     };
     return typeLabels[type as keyof typeof typeLabels] || type;
   };
@@ -269,11 +277,11 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                 </td>
                 <td>
                   {item.eta ? (
-                    <span className="eta-date">
-                      {new Date(item.eta).toLocaleString(dateLocale)}
-                    </span>
+                    <div className="eta-date">
+                      {formatETA(item.eta)}
+                    </div>
                   ) : (
-                    <span className="eta-empty">-</span>
+                    <div className="eta-empty">-</div>
                   )}
                 </td>
                 <td>
@@ -318,14 +326,14 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                     <div className="payment-status">
                       <span className={`status-indicator ${item.is_paid ? 'paid' : 'unpaid'}`}>
                         {item.is_paid ? '💰' : '⏳'} 
-                        {item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                        {item.is_paid ? t('pages.requests.payment.paid') : t('pages.requests.payment.unpaid')}
                       </span>
                     </div>
                     {/* Hiển thị thông tin payment request nếu có */}
                     {item.latest_payment && !item.is_paid && (
                       <div className="payment-request-info">
                         <span className="payment-request-badge">
-                          📤 Đã gửi yêu cầu thanh toán
+                          📤 {t('pages.requests.messages.paymentRequestSent')}
                         </span>
                       </div>
                     )}
@@ -333,7 +341,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                     {item.has_invoice && (
                       <div className="invoice-status">
                         <span className="status-indicator has-invoice">
-                          📄 Có hóa đơn
+                          📄 {t('pages.requests.invoice.has')}
                         </span>
                       </div>
                     )}
@@ -343,9 +351,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   <button
                     onClick={() => toggleChat(item.id)}
                     className={`btn btn-sm ${activeChatRequests.has(item.id) ? 'btn-primary' : 'btn-outline'}`}
-                    title={activeChatRequests.has(item.id) ? 'Đóng chat' : 'Mở chat'}
+                    title={activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.chat.open')}
                   >
-                    💬 {activeChatRequests.has(item.id) ? 'Đóng Chat' : 'Chat'}
+                    💬 {activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.tableHeaders.chat')}
                   </button>
                 </td>
                 <td>
@@ -357,9 +365,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           className="btn btn-sm btn-primary"
                           disabled={item.actions.loadingId === item.id + 'RECEIVED'}
                           onClick={() => item.actions!.changeStatus!(item.id, 'RECEIVED')}
-                          title="Tiếp nhận yêu cầu"
+                          title={t('pages.requests.actions.acceptRequest')}
                         >
-                          {item.actions.loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} Tiếp nhận
+                          {item.actions.loadingId === item.id + 'RECEIVED' ? '⏳' : '✅'} {t('pages.requests.actions.accept')}
                         </button>
                       )}
 
@@ -402,9 +410,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                               className="btn btn-sm btn-success"
                               disabled={item.actions.loadingId === item.id + 'COMPLETED'}
                               onClick={() => item.actions!.changeStatus!(item.id, 'COMPLETED')}
-                              title="Hoàn tất"
+                              title={t('pages.requests.actions.complete')}
                             >
-                              {item.actions.loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} Hoàn tất
+                              {item.actions.loadingId === item.id + 'COMPLETED' ? '⏳' : '✅'} {t('pages.requests.actions.complete')}
                             </button>
                           )}
                           {item.status === 'COMPLETED' && (
@@ -412,9 +420,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                               className="btn btn-sm btn-warning"
                               disabled={item.actions.loadingId === item.id + 'EXPORTED'}
                               onClick={() => item.actions!.changeStatus!(item.id, 'EXPORTED')}
-                              title="Xuất kho"
+                              title={t('pages.requests.actions.export')}
                             >
-                              {item.actions.loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} Xuất kho
+                              {item.actions.loadingId === item.id + 'EXPORTED' ? '⏳' : '📦'} {t('pages.requests.actions.export')}
                             </button>
                           )}
                           {(item.status === 'PENDING' || item.status === 'RECEIVED') && (
@@ -422,9 +430,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                               className="btn btn-sm btn-danger"
                               disabled={item.actions.loadingId === item.id + 'REJECTED'}
                               onClick={() => item.actions!.changeStatus!(item.id, 'REJECTED')}
-                              title="Từ chối"
+                              title={t('pages.requests.actions.reject')}
                             >
-                              {item.actions.loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} Từ chối
+                              {item.actions.loadingId === item.id + 'REJECTED' ? '⏳' : '❌'} {t('pages.requests.actions.reject')}
                             </button>
                           )}
                         </>
@@ -436,9 +444,9 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           className="btn btn-sm btn-info"
                           disabled={item.actions.loadingId === item.id + 'PAY'}
                           onClick={() => item.actions!.sendPayment!(item.id)}
-                          title="Gửi yêu cầu thanh toán"
+                          title={t('pages.requests.actions.sendPaymentTitle')}
                         >
-                          {item.actions.loadingId === item.id + 'PAY' ? '⏳' : '💰'} Thanh toán
+                          {item.actions.loadingId === item.id + 'PAY' ? '⏳' : '💰'} {t('pages.requests.actions.payment')}
                         </button>
                       )}
 
@@ -637,14 +645,11 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
             appointmentLocation={request.appointment_location_type && request.appointment_location_id ? 
               `${request.appointment_location_type} ${request.appointment_location_id}` : undefined}
             appointmentNote={request.appointment_note}
-            position={{ 
-              x: typeof window !== 'undefined' ? window.innerWidth - 420 - (index * 420) : 20 + (index * 420),
-              y: typeof window !== 'undefined' ? window.innerHeight - 520 : 20
-            }}
             onClose={() => toggleChat(requestId)}
             onStatusChange={(newStatus) => {
               console.log(`Request ${requestId} status changed to: ${newStatus}`);
             }}
+            positionIndex={index}
           />
         );
       })}

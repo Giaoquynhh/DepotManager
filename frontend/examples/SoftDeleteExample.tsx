@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useTranslation } from '../hooks/useTranslation';
 
 /**
  * Example component demonstrating soft-delete functionality
  */
 export default function SoftDeleteExample() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState([
     {
       id: 'req-1',
@@ -141,12 +143,12 @@ export default function SoftDeleteExample() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      PENDING: { label: 'Chờ xử lý', className: 'bg-yellow-100 text-yellow-800' },
-      APPROVED: { label: 'Đã chấp nhận', className: 'bg-green-100 text-green-800' },
-      IN_PROGRESS: { label: 'Đang xử lý', className: 'bg-blue-100 text-blue-800' },
-      REJECTED: { label: 'Từ chối', className: 'bg-red-100 text-red-800' },
-      CANCELLED: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-800' },
-      COMPLETED: { label: 'Hoàn thành', className: 'bg-green-100 text-green-800' }
+      PENDING: { label: t('pages.requests.filterOptions.pending'), className: 'bg-yellow-100 text-yellow-800' },
+      APPROVED: { label: t('pages.requests.filterOptions.approved'), className: 'bg-green-100 text-green-800' },
+      IN_PROGRESS: { label: t('pages.requests.filterOptions.inProgress'), className: 'bg-blue-100 text-blue-800' },
+      REJECTED: { label: t('pages.requests.filterOptions.rejected'), className: 'bg-red-100 text-red-800' },
+      CANCELLED: { label: t('status.cancelled'), className: 'bg-gray-100 text-gray-800' },
+      COMPLETED: { label: t('pages.requests.filterOptions.completed'), className: 'bg-green-100 text-green-800' }
     };
 
     const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-800' };

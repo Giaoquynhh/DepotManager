@@ -273,7 +273,7 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                             maxLength={500}
                         />
                         <div className="text-xs text-gray-500 mt-1">
-                            {formData.note.length}/500 ký tự
+                            {formData.note?.length || 0}/500 ký tự
                         </div>
                     </div>
 

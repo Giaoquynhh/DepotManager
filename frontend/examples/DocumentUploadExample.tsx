@@ -304,10 +304,6 @@ export default function DocumentUploadExample() {
  * Example of DocumentViewer component
  */
 export function DocumentViewerExample() {
-  const [documents, setDocuments] = useState(exampleDocuments);
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
-  const [showViewer, setShowViewer] = useState(false);
-
   const exampleDocuments = [
     {
       id: 'doc-1',
@@ -324,6 +320,10 @@ export function DocumentViewerExample() {
       file_size: 512000
     }
   ];
+
+  const [documents, setDocuments] = useState(exampleDocuments);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [showViewer, setShowViewer] = useState(false);
 
   const isImage = (mimeType: string) => {
     return mimeType.startsWith('image/');

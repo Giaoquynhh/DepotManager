@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@services/api';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ChatMessage {
 	id: string;
@@ -28,6 +29,7 @@ interface SimpleChatBoxProps {
 }
 
 export default function SimpleChatBox({ requestId, requestStatus, rejectedReason, requestType, containerNo, onClose, onStatusChange }: SimpleChatBoxProps) {
+	const { t } = useTranslation();
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -53,17 +55,17 @@ export default function SimpleChatBox({ requestId, requestStatus, rejectedReason
 	// Get status message based on request status
 	const getStatusMessage = (status: string) => {
 		const statusMessages: Record<string, string> = {
-			'PENDING': '📋 Đơn hàng đã được tạo và đang chờ xử lý',
-			'RECEIVED': '✅ Đơn hàng đã được tiếp nhận và đang xử lý',
-			'IN_PROGRESS': '🔄 Đơn hàng đang được xử lý tại kho',
-			'COMPLETED': '✅ Đơn hàng đã hoàn tất',
-			'EXPORTED': '📦 Đơn hàng đã xuất kho',
-			'REJECTED': `❌ Đơn hàng bị từ chối${rejectedReason ? `: ${rejectedReason}` : ''}`,
-			'CANCELLED': '❌ Đơn hàng đã bị hủy',
-			'IN_YARD': '🏭 Container đã vào kho',
-			'LEFT_YARD': '🚛 Container đã rời kho'
+			'PENDING': `📋 ${t('pages.requests.filterOptions.pending')}`,
+			'RECEIVED': `✅ ${t('pages.requests.filterOptions.received')}`,
+			'IN_PROGRESS': `🔄 ${t('pages.requests.filterOptions.inProgress')}`,
+			'COMPLETED': `✅ ${t('pages.requests.filterOptions.completed')}`,
+			'EXPORTED': `📦 ${t('pages.requests.filterOptions.exported')}`,
+			'REJECTED': `❌ ${t('pages.requests.filterOptions.rejected')}${rejectedReason ? `: ${rejectedReason}` : ''}`,
+			'CANCELLED': `❌ ${t('status.cancelled')}`,
+			'IN_YARD': `🏭 ${t('pages.requests.filterOptions.inYard')}`,
+			'LEFT_YARD': `🚛 ${t('pages.requests.filterOptions.leftYard')}`
 		};
-		return statusMessages[status] || `🔄 Trạng thái đơn hàng: ${status}`;
+		return statusMessages[status] || `🔄 ${t('pages.requests.statusLabel')}: ${status}`;
 	};
 
 	// Load messages from server

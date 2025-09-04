@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import SimpleChatBox from '../components/SimpleChatBox';
+import { useTranslation } from '../hooks/useTranslation';
 
 /**
  * Example component demonstrating how to use SimpleChatBox
  */
 export default function ChatBoxExample() {
+  const { t } = useTranslation();
   const [showChat, setShowChat] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState({
     id: 'example-request-123',
@@ -57,10 +59,10 @@ export default function ChatBoxExample() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      PENDING: { label: 'Chờ xử lý', className: 'bg-yellow-100 text-yellow-800' },
-      APPROVED: { label: 'Đã chấp nhận', className: 'bg-green-100 text-green-800' },
-      REJECTED: { label: 'Từ chối', className: 'bg-red-100 text-red-800' },
-      COMPLETED: { label: 'Hoàn thành', className: 'bg-blue-100 text-blue-800' }
+      PENDING: { label: t('pages.requests.filterOptions.pending'), className: 'bg-yellow-100 text-yellow-800' },
+      APPROVED: { label: t('pages.requests.filterOptions.approved'), className: 'bg-green-100 text-green-800' },
+      REJECTED: { label: t('pages.requests.filterOptions.rejected'), className: 'bg-red-100 text-red-800' },
+      COMPLETED: { label: t('pages.requests.filterOptions.completed'), className: 'bg-blue-100 text-blue-800' }
     };
 
     const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
@@ -149,7 +151,7 @@ export default function ChatBoxExample() {
         <SimpleChatBox
           requestId={selectedRequest.id}
           requestStatus={selectedRequest.status}
-          rejectedReason={selectedRequest.rejected_reason}
+          rejectedReason={selectedRequest.rejected_reason || undefined}
           requestType={selectedRequest.type}
           containerNo={selectedRequest.container_no}
           onClose={closeChat}
@@ -232,7 +234,7 @@ export function ChatBoxTableExample() {
         <SimpleChatBox
           requestId={selectedRequestId}
           requestStatus={requests.find(r => r.id === selectedRequestId)?.status}
-          rejectedReason={requests.find(r => r.id === selectedRequestId)?.rejected_reason}
+          rejectedReason={requests.find(r => r.id === selectedRequestId)?.rejected_reason || undefined}
           requestType={requests.find(r => r.id === selectedRequestId)?.type}
           containerNo={requests.find(r => r.id === selectedRequestId)?.container_no}
           onClose={closeChat}

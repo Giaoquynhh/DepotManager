@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '@services/api';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface RequestFormProps {
   onSuccess: () => void;
@@ -7,6 +8,7 @@ interface RequestFormProps {
 }
 
 export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ 
     type: 'IMPORT', 
     container_no: '', 
@@ -25,19 +27,19 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
     // Validation dựa trên loại yêu cầu
     if (form.type === 'IMPORT') {
       if (!form.container_no.trim()) {
-        setMessage('Mã định danh container là bắt buộc cho yêu cầu nhập');
+        setMessage(t('pages.requests.form.validation.containerIdRequired'));
         setLoading(false);
         return;
       }
       if (!selectedFile) {
-        setMessage('Chứng từ là bắt buộc cho yêu cầu nhập');
+        setMessage(t('pages.requests.form.validation.documentRequired'));
         setLoading(false);
         return;
       }
     }
     
     if (!form.etaDate || !form.etaTime) {
-      setMessage('Thời gian dự kiến (ETA) là bắt buộc');
+      setMessage(t('pages.requests.form.validation.etaRequired'));
       setLoading(false);
       return;
     }
@@ -67,12 +69,12 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
         },
       });
       
-      setMessage('Đã tạo yêu cầu thành công!');
+      setMessage(t('pages.requests.form.success'));
       setTimeout(() => {
         onSuccess();
       }, 1000);
     } catch (error: any) {
-      setMessage(error?.response?.data?.message || 'Có lỗi xảy ra');
+      setMessage(error?.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -90,13 +92,13 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
       const hasValidExtension = fileExtension && allowedExtensions.includes(`.${fileExtension}`);
       
       if (!hasValidMimeType && !hasValidExtension) {
-        setMessage('Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)');
+        setMessage(t('pages.requests.form.validation.invalidFileType'));
         return;
       }
       
       // Kiểm tra kích thước file (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        setMessage('File quá lớn. Kích thước tối đa là 10MB');
+        setMessage(t('pages.requests.form.validation.fileTooLarge'));
         return;
       }
       
@@ -113,15 +115,15 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
   return (
     <form onSubmit={handleSubmit} className="request-form">
       <div className="form-group">
-        <label htmlFor="type">Loại yêu cầu</label>
+        <label htmlFor="type">{t('pages.requests.form.requestType')}</label>
         <select 
           id="type"
           value={form.type} 
           onChange={e => setForm({...form, type: e.target.value})}
           required
         >
-          <option value="IMPORT">Nhập</option>
-          <option value="EXPORT">Xuất</option>
+          <option value="IMPORT">{t('pages.requests.filterOptions.import')}</option>
+          <option value="EXPORT">{t('pages.requests.filterOptions.export')}</option>
         </select>
       </div>
 
@@ -129,18 +131,18 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
       {form.type === 'IMPORT' && (
         <>
           <div className="form-group">
-            <label htmlFor="container_no">Mã định danh container <span className="required">*</span></label>
+            <label htmlFor="container_no">{t('pages.requests.form.containerId')} <span className="required">*</span></label>
             <input 
               id="container_no"
               type="text"
-              placeholder="Nhập mã container..." 
+              placeholder={t('pages.requests.form.containerIdPlaceholder')} 
               value={form.container_no} 
               onChange={e => setForm({...form, container_no: e.target.value})}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="document">Chứng từ (PDF/Ảnh) <span className="required">*</span></label>
+            <label htmlFor="document">{t('pages.requests.form.documents')} <span className="required">*</span></label>
             <div className="file-upload-container">
               <input
                 id="document"
@@ -152,7 +154,7 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
               <label htmlFor="document" className="file-upload-label">
                 <span className="file-upload-icon">📎</span>
                 <span className="file-upload-text">
-                  {selectedFile ? selectedFile.name : 'Chọn file chứng từ...'}
+                  {selectedFile ? selectedFile.name : t('pages.requests.form.selectDocumentFile')}
                 </span>
               </label>
             </div>
@@ -169,7 +171,7 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
               </div>
             )}
             <small className="file-hint">
-              Định dạng: PDF, JPG, PNG. Kích thước tối đa: 10MB
+              {t('pages.requests.form.fileFormat')}
             </small>
           </div>
         </>
@@ -177,7 +179,7 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
 
       {/* ETA - hiển thị cho cả 2 loại */}
       <div className="form-group">
-        <label htmlFor="eta">Thời gian dự kiến (ETA) <span className="required">*</span></label>
+        <label htmlFor="eta">{t('pages.requests.form.eta')} <span className="required">*</span></label>
         <div className="eta-inputs">
           <div className="eta-date">
             <input 
@@ -201,7 +203,7 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
       </div>
 
       {message && (
-        <div className={`form-message ${message.includes('thành công') ? 'success' : 'error'}`}>
+        <div className={`form-message ${message.includes(t('pages.requests.form.success')) ? 'success' : 'error'}`}>
           {message}
         </div>
       )}
@@ -213,14 +215,14 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
           onClick={onCancel}
           disabled={loading}
         >
-          Hủy
+          {t('pages.requests.form.cancel')}
         </button>
         <button 
           type="submit" 
           className="btn btn-primary" 
           disabled={loading}
         >
-          {loading ? 'Đang tạo...' : 'Tạo yêu cầu'}
+          {loading ? t('pages.requests.form.creating') : t('pages.requests.form.createRequest')}
         </button>
       </div>
     </form>

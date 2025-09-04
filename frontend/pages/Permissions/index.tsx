@@ -111,11 +111,9 @@ export default function PermissionsPage(){
       forklift: 'Xe nâng',
       maintenance: 'Bảo trì',
       finance: 'Tài chính',
-      reports: 'Báo cáo',
       gate: 'Cổng',
       inventory: 'Kho',
       invoices: 'Hóa đơn',
-      createInvoice: 'Tạo hóa đơn',
       repairs: 'Sửa chữa',
       // Permission labels
       usersPartnersView: 'Người dùng/Đối tác',
@@ -130,8 +128,6 @@ export default function PermissionsPage(){
       maintenanceRepairs: 'Bảo trì - Phiếu sửa chữa',
       maintenanceInventory: 'Bảo trì - Tồn kho',
       financeInvoices: 'Tài chính - Hóa đơn',
-      financeCreateInvoice: 'Tài chính - Tạo hóa đơn',
-      reportsView: 'Báo cáo',
       driverDashboard: 'Bảng điều khiển tài xế',
       
     },
@@ -169,11 +165,9 @@ export default function PermissionsPage(){
       forklift: 'Forklift',
       maintenance: 'Maintenance',
       finance: 'Finance',
-      reports: 'Reports',
       gate: 'Gate',
       inventory: 'Inventory',
       invoices: 'Invoices',
-      createInvoice: 'Create Invoice',
       repairs: 'Repairs',
       // Permission labels
       usersPartnersView: 'Users/Partners',
@@ -188,8 +182,6 @@ export default function PermissionsPage(){
       maintenanceRepairs: 'Maintenance - Repair Tickets',
       maintenanceInventory: 'Maintenance - Inventory',
       financeInvoices: 'Finance - Invoices',
-      financeCreateInvoice: 'Finance - Create Invoice',
-      reportsView: 'Reports',
       driverDashboard: 'Driver Dashboard',
       
     }
@@ -230,7 +222,6 @@ export default function PermissionsPage(){
       'Vận hành': { vi: 'Vận hành', en: 'Operations' },
       'Bảo trì': { vi: 'Bảo trì', en: 'Maintenance' },
       'Tài chính': { vi: 'Tài chính', en: 'Finance' },
-      'Báo cáo': { vi: 'Báo cáo', en: 'Reports' },
       'Cổng': { vi: 'Cổng', en: 'Gate' },
       'Kho': { vi: 'Kho', en: 'Inventory' },
       'Hóa đơn': { vi: 'Hóa đơn', en: 'Invoices' },
@@ -255,8 +246,6 @@ export default function PermissionsPage(){
       'maintenance.repairs': { vi: 'Bảo trì - Phiếu sửa chữa', en: 'Maintenance - Repair Tickets' },
       'maintenance.inventory': { vi: 'Bảo trì - Tồn kho', en: 'Maintenance - Inventory' },
       'finance.invoices': { vi: 'Tài chính - Hóa đơn', en: 'Finance - Invoices' },
-      'finance.create_invoice': { vi: 'Tài chính - Tạo hóa đơn', en: 'Finance - Create Invoice' },
-      'reports.view': { vi: 'Báo cáo', en: 'Reports' },
       'driver.dashboard': { vi: 'Bảng điều khiển tài xế', en: 'Driver Dashboard' }
     };
     
@@ -272,11 +261,9 @@ export default function PermissionsPage(){
         'users_partners.view',
         'permissions.manage',
         'requests.depot',
-        'reports.view',
         'account.view',
       ],
       HRManager: [
-        'reports.view',
         'account.view',
       ],
       SaleAdmin: [
@@ -287,23 +274,18 @@ export default function PermissionsPage(){
         'maintenance.repairs',
         'maintenance.inventory',
         'finance.invoices',
-        'finance.create_invoice',
-        'reports.view',
         'account.view',
       ],
       CustomerAdmin: [
         'users_partners.view', // nếu muốn cho CustomerAdmin xem người dùng/đối tác, có thể gỡ nếu không cần
         'requests.customer',
-        'reports.view',
         'account.view',
       ],
       CustomerUser: [
         'requests.customer',
-        'reports.view',
         'account.view',
       ],
       PartnerAdmin: [
-        'reports.view',
         'account.view',
       ],
       Security: [
@@ -314,20 +296,16 @@ export default function PermissionsPage(){
         'yard.view',
         'containers.manage',
         'forklift.view',
-        'reports.view',
         'account.view',
       ],
       MaintenanceManager: [
         'maintenance.repairs',
         'maintenance.inventory',
-        'reports.view',
         'account.view',
       ],
       Accountant: [
         'requests.depot',
         'finance.invoices',
-        'finance.create_invoice',
-        'reports.view',
         'account.view',
       ],
     };

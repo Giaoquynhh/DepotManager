@@ -6,6 +6,7 @@ import { useMemo, useState, useCallback } from 'react';
 import ModernYardMap from '@components/yard/ModernYardMap';
 import KeyboardShortcuts from '@components/yard/KeyboardShortcuts';
 import YardConfigurationModal from '@components/yard/YardConfigurationModal';
+import Toast from '@components/common/Toast';
 import { useTranslation } from '../../hooks/useTranslation';
 
 // Dùng stack map mới
@@ -21,6 +22,7 @@ export default function YardPage() {
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState('');
+  const [locateSuccess, setLocateSuccess] = useState('');
   const [showConfigModal, setShowConfigModal] = useState(false);
 
   const { t } = useTranslation();
@@ -85,6 +87,7 @@ export default function YardPage() {
     
     try {
       setLocateError('');
+      setLocateSuccess('');
       setLocating(true);
       const res = await yardApi.locate(query);
       const slotId = res?.slot_id || res?.slot?.id;
@@ -99,6 +102,7 @@ export default function YardPage() {
       setActiveSlot({ id: String(slotId), code: String(slotCode) });
       
       // 🎉 Success feedback
+      setLocateSuccess(`Đã tìm thấy container ${query} tại vị trí ${slotCode}`);
       setTimeout(() => {
         const element = document.querySelector(`[data-slot-id="${slotId}"]`);
         if (element) {
@@ -193,13 +197,7 @@ export default function YardPage() {
               />
             )}
             
-            {locateError && (
-              <div className="yard-error">
-                <div className="yard-error-icon">⚠️</div>
-                <div className="yard-error-title">Lỗi tìm kiếm</div>
-                <div className="yard-error-description">{locateError}</div>
-              </div>
-            )}
+
           </div>
         </div>
 
@@ -228,6 +226,22 @@ export default function YardPage() {
           visible={showConfigModal}
           onCancel={() => setShowConfigModal(false)}
           onSuccess={handleConfigSuccess}
+        />
+
+        {/* 🍞 Toast Notifications */}
+        <Toast
+          message={locateError}
+          type="error"
+          visible={!!locateError}
+          onClose={() => setLocateError('')}
+          duration={6000}
+        />
+        <Toast
+          message={locateSuccess}
+          type="success"
+          visible={!!locateSuccess}
+          onClose={() => setLocateSuccess('')}
+          duration={4000}
         />
       </main>
     </>

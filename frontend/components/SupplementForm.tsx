@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { api } from '@services/api';
 
 interface SupplementFormProps {
@@ -18,13 +19,13 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(selectedFile.type)) {
-        alert('Chỉ chấp nhận file PDF, JPG, PNG!');
+        toast.error('Chỉ chấp nhận file PDF, JPG, PNG!');
         return;
       }
 
       // Validate file size (10MB)
       if (selectedFile.size > 10 * 1024 * 1024) {
-        alert('File quá lớn! Tối đa 10MB.');
+        toast.error('File quá lớn! Tối đa 10MB.');
         return;
       }
 
@@ -52,13 +53,13 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(droppedFile.type)) {
-        alert('Chỉ chấp nhận file PDF, JPG, PNG!');
+        toast.error('Chỉ chấp nhận file PDF, JPG, PNG!');
         return;
       }
 
       // Validate file size (10MB)
       if (droppedFile.size > 10 * 1024 * 1024) {
-        alert('File quá lớn! Tối đa 10MB.');
+        toast.error('File quá lớn! Tối đa 10MB.');
         return;
       }
 
@@ -70,7 +71,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
     e.preventDefault();
     
     if (!file) {
-      alert('Vui lòng chọn file!');
+      toast.warning('Vui lòng chọn file!');
       return;
     }
 
@@ -87,7 +88,10 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       });
 
       // Hiển thị thông báo thành công với thông tin về việc tự động chuyển tiếp
-      alert('✅ Upload tài liệu bổ sung thành công!\n\n📤 Yêu cầu đã được tự động chuyển tiếp sang trạng thái FORWARDED.\n\n🔄 Hệ thống sẽ xử lý yêu cầu của bạn tiếp theo.\n\n💡 Lưu ý: Trạng thái sẽ được cập nhật sau khi refresh trang.');
+      toast.success('Upload tài liệu bổ sung thành công!', {
+        description: 'Yêu cầu đã được tự động chuyển tiếp sang trạng thái FORWARDED.',
+        duration: 5000,
+      });
       
       setFile(null);
       if (fileInputRef.current) {
@@ -102,7 +106,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
        console.error('Upload error:', error);
        console.error('Error response:', error.response);
        console.error('Error message:', error.response?.data?.message);
-       alert(error.response?.data?.message || 'Upload thất bại!');
+       toast.error(error.response?.data?.message || 'Upload thất bại!');
      } finally {
       setIsUploading(false);
     }

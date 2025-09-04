@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@services/api';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface ChatMessage {
 	id: string;
@@ -37,6 +38,7 @@ export default function DepotChatWindow({
 	hasSupplementDocuments = false,
 	lastSupplementUpdate
 }: DepotChatWindowProps) {
+	const { t } = useTranslation();
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [newMessage, setNewMessage] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -344,15 +346,15 @@ export default function DepotChatWindow({
 
 	const getStatusMessage = () => {
 		const statusMessages: Record<string, string> = {
-			'SCHEDULED': '📅 Đơn hàng đã được lên lịch hẹn - Chat đã được kích hoạt',
-			'APPROVED': '✅ Đơn hàng đã được chấp nhận - Chat đã được kích hoạt',
-			'IN_PROGRESS': '🔄 Đơn hàng đang được xử lý tại kho - Chat đã được kích hoạt',
-			'COMPLETED': '✅ Đơn hàng đã hoàn tất - Chat vẫn hoạt động',
-			'EXPORTED': '📦 Đơn hàng đã xuất kho - Chat vẫn hoạt động',
-			'PENDING_ACCEPT': '📧 Đơn hàng đã gửi xác nhận - Chat đã được kích hoạt',
-			'PENDING': '📋 Đơn hàng đang chờ xử lý - Chat sẽ được kích hoạt khi đơn hàng được lên lịch',
-			'RECEIVED': '📥 Đơn hàng đã được tiếp nhận - Chat sẽ được kích hoạt khi được chấp nhận',
-			'REJECTED': '❌ Đơn hàng bị từ chối - Chat không khả dụng'
+			'SCHEDULED': `📅 ${t('pages.requests.filterOptions.scheduled')} - Chat đã được kích hoạt`,
+			'APPROVED': `✅ ${t('pages.requests.filterOptions.approved')} - Chat đã được kích hoạt`,
+			'IN_PROGRESS': `🔄 ${t('pages.requests.filterOptions.inProgress')} - Chat đã được kích hoạt`,
+			'COMPLETED': `✅ ${t('pages.requests.filterOptions.completed')} - Chat vẫn hoạt động`,
+			'EXPORTED': `📦 ${t('pages.requests.filterOptions.exported')} - Chat vẫn hoạt động`,
+			'PENDING_ACCEPT': `📧 ${t('pages.requests.filterOptions.pendingAccept')} - Chat đã được kích hoạt`,
+			'PENDING': `📋 ${t('pages.requests.filterOptions.pending')} - Chat sẽ được kích hoạt khi đơn hàng được lên lịch`,
+			'RECEIVED': `📥 ${t('pages.requests.filterOptions.received')} - Chat sẽ được kích hoạt khi được chấp nhận`,
+			'REJECTED': `❌ ${t('pages.requests.filterOptions.rejected')} - Chat không khả dụng`
 		};
 		return statusMessages[requestStatus] || `🔄 Trạng thái đơn hàng: ${requestStatus}`;
 	};

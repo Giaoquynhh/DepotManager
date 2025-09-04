@@ -296,7 +296,7 @@ export default function Forklift() {
     }
   };
 
-  const getStatusColor = (status: self) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'badge-yellow';
       case 'ASSIGNED': return 'badge-orange';

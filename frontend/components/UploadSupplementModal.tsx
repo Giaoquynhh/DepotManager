@@ -90,7 +90,7 @@ export default function UploadSupplementModal({
     if (droppedFile) {
       const event = {
         target: { files: [droppedFile] }
-      } as React.ChangeEvent<HTMLInputElement>;
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileChange(event);
     }
   };

@@ -79,6 +79,8 @@ export default function DepotRequestTable({
 			COMPLETED: { label: safeT('pages.requests.filterOptions.completed', 'Completed'), className: 'status-completed' },
 			EXPORTED: { label: safeT('pages.requests.filterOptions.exported', 'Exported'), className: 'status-exported' },
 			REJECTED: { label: safeT('pages.requests.filterOptions.rejected', 'Rejected'), className: 'status-rejected' },
+			SCHEDULED: { label: safeT('pages.requests.filterOptions.scheduled', 'Đã lên lịch'), className: 'status-scheduled' },
+			FORWARDED: { label: safeT('pages.gate.statusOptions.forwarded', 'Đã chuyển tiếp'), className: 'status-forwarded' },
 			IN_YARD: { label: safeT('pages.requests.filterOptions.inYard', 'In yard'), className: 'status-in-yard' },
 			IN_CAR: { label: safeT('pages.requests.filterOptions.inCar', 'In car'), className: 'status-in-car' },
 			LEFT_YARD: { label: safeT('pages.requests.filterOptions.leftYard', 'Left yard'), className: 'status-left-yard' },
@@ -136,7 +138,7 @@ export default function DepotRequestTable({
 	}
 
 	return (
-		<div className="depot-requests">
+		<div className="depot-requests-table-wrapper">
 			<div className="table-container">
 				<table className="table table-modern">
 					<thead>
@@ -156,7 +158,7 @@ export default function DepotRequestTable({
 								)}
 							</button>
 						</th>
-						<th data-column="status">🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
+						<th data-column="status" style={{ whiteSpace: 'nowrap' }}>🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
 						<th data-column="documents">📄 {safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
 						<th data-column="payment">🔥 {safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
 						<th data-column="chat">💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>

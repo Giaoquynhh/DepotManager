@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { yardApi } from '@services/yard';
-import { reportsApi } from '@services/reports';
+import { containersApi } from '@services/containers';
 import { authApi } from '@services/auth';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -52,7 +52,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
   
   // State cho container filter
   const [showContainerFilter, setShowContainerFilter] = useState(false);
-  const [availableContainers, setAvailableContainers] = useState<Array<{container_no: string, service_gate_checked_at: string}>>([]);
+  const [availableContainers, setAvailableContainers] = useState<Array<{container_no: string, service_gate_checked_at?: string}>>([]);
   const [filterLoading, setFilterLoading] = useState(false);
   const [focusedTier, setFocusedTier] = useState<number | null>(null);
   
@@ -97,11 +97,35 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
     return () => clearInterval(t);
   }, []);
 
+  // Ngăn chặn scroll body khi modal mở
+  useEffect(() => {
+    if (visible) {
+      // Lưu vị trí scroll hiện tại
+      const scrollY = window.scrollY;
+      document.body.style.setProperty('--scroll-y', `${scrollY}px`);
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+      // Khôi phục vị trí scroll
+      const scrollY = document.body.style.getPropertyValue('--scroll-y');
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY));
+      }
+      document.body.style.removeProperty('--scroll-y');
+    }
+    
+    // Cleanup khi component unmount
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('--scroll-y');
+    };
+  }, [visible]);
+
   // Fetch containers đang chờ sắp xếp
   const fetchAvailableContainers = async () => {
     try {
       setFilterLoading(true);
-      const data = await reportsApi.listContainers({
+      const data = await containersApi.list({
         service_status: 'CHECKED',
         page: 1,
         pageSize: 100

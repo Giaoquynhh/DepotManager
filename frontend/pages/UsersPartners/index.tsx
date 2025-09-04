@@ -75,7 +75,7 @@ export default function UsersPartners(){
 			// Form placeholders
 			fullNamePlaceholder: 'Họ tên',
 			emailPlaceholder: 'Email',
-			tenantIdPlaceholder: 'tenant_id (ID khách hàng)',
+			tenantIdPlaceholder: 'mã công ty (ID khách hàng)',
 			// Form labels
 			driverLabel: 'Driver (Tài xế)',
 			// Form buttons
@@ -84,7 +84,7 @@ export default function UsersPartners(){
 			// Messages
 			pleaseEnterName: 'Vui lòng nhập họ tên',
 			pleaseEnterValidEmail: 'Vui lòng nhập email hợp lệ',
-			pleaseEnterTenantId: 'Vui lòng nhập tenant_id',
+			pleaseEnterTenantId: 'Vui lòng nhập mã công ty',
 			employeeCreated: 'Tạo nhân sự nội bộ thành công. Email mời đã được gửi!',
 			customerCreated: 'Tạo user khách hàng thành công. Email mời đã được gửi!',
 			userActionSuccess: 'Đã {action} user',
@@ -92,7 +92,7 @@ export default function UsersPartners(){
 			createCustomerError: 'Lỗi tạo user khách',
 			userActionError: 'Lỗi {action}',
 			// Info text
-			tenantIdInfo: 'Lấy tenant_id từ danh sách Customers hoặc tạo khách mới bên module Customers.',
+			tenantIdInfo: 'Lấy mã công ty từ danh sách Customers hoặc tạo khách mới bên module Customers.',
 			// Token section
 			inviteToken: 'Token mời:',
 			openRegisterToActivate: 'Mở /Register để kích hoạt'
@@ -139,7 +139,7 @@ export default function UsersPartners(){
 			// Form placeholders
 			fullNamePlaceholder: 'Full Name',
 			emailPlaceholder: 'Email',
-			tenantIdPlaceholder: 'tenant_id (Customer ID)',
+			tenantIdPlaceholder: 'mã công ty (Customer ID)',
 			// Form labels
 			driverLabel: 'Driver',
 			// Form buttons
@@ -148,7 +148,7 @@ export default function UsersPartners(){
 			// Messages
 			pleaseEnterName: 'Please enter full name',
 			pleaseEnterValidEmail: 'Please enter a valid email',
-			pleaseEnterTenantId: 'Please enter tenant_id',
+			pleaseEnterTenantId: 'Please enter mã công ty',
 			employeeCreated: 'Internal staff created successfully. Invitation email sent!',
 			customerCreated: 'Customer user created successfully. Invitation email sent!',
 			userActionSuccess: 'User {action} successfully',
@@ -156,7 +156,7 @@ export default function UsersPartners(){
 			createCustomerError: 'Error creating customer user',
 			userActionError: 'Error {action}',
 			// Info text
-			tenantIdInfo: 'Get tenant_id from Customers list or create new customer in Customers module.',
+			tenantIdInfo: 'Get mã công ty from Customers list or create new customer in Customers module.',
 			// Token section
 			inviteToken: 'Invite Token:',
 			openRegisterToActivate: 'Open /Register to activate'

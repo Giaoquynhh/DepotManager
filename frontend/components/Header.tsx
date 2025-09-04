@@ -707,44 +707,7 @@ export default function Header() {
                                      <span>{t('sidebar.invoices')}</span>
                 </Link>
             )}
-            {/* Finance - Create Invoice */}
-            {(() => {
-              const allow = canManageFinance(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'finance.create_invoice')
-                : allow;
-              return ok;
-            })() && (
-                <Link className={`sidebar-link ${router.pathname === '/finance/invoices/new' ? 'active' : ''}`} href="/finance/invoices/new">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                  </svg>
-                                     <span>{t('sidebar.createInvoice')}</span>
-                </Link>
-            )}
 
-            {/* Reports Module */}
-            {(() => {
-              const allow = true; // reports visible by default today
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'reports.view')
-                : allow;
-              return ok;
-            })() && (
-            <Link className={`sidebar-link ${router.pathname === '/Reports' ? 'active' : ''}`} href="/Reports">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 17H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path>
-                <path d="M15 17h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path>
-                <path d="M12 3v18"></path>
-                <path d="M9 9h6"></path>
-                <path d="M9 13h6"></path>
-              </svg>
-              <span>{t('sidebar.reports')}</span>
-            </Link>
-            )}
 
             {/* Account */}
             {(() => {

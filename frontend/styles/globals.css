@@ -105,7 +105,7 @@
   --line-height-relaxed: 1.75;
   
   /* Layout constants */
-  --header-height: 60px; /* Giảm chiều cao header từ 76px xuống 60px */
+  --header-height: 52px; /* Giảm chiều cao header từ 60px xuống 52px */
   --header-offset: 0px;  /* Không tạo khoảng hở để liền mạch với sidebar */
   --header-clearance: calc(var(--header-height) + var(--header-offset));
   
@@ -174,7 +174,7 @@ a, a:visited {
   max-width: 1400px; /* Tăng từ 1400px lên 1600px để khung rộng hơn */
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6);
+  padding: var(--space-4) 0 var(--space-6) var(--space-6); /* Bỏ padding phải để mở rộng tối đa */
   /* Cho phép container mở rộng về bên phải */
   overflow-x: visible;
 }
@@ -183,7 +183,7 @@ a, a:visited {
 .header {
   background: #200d6b; /* Navy blue */
   color: var(--color-text-inverse);
-  padding: var(--space-2) 0; /* Giảm padding từ space-3 (12px) xuống space-2 (8px) */
+  padding: var(--space-1) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
   box-shadow: var(--shadow-md);
   position: sticky;
   top: 0;
@@ -211,7 +211,7 @@ body.with-sidebar .header {
   width: 100%;
   margin: 0;
   padding: 0 var(--space-4); /* Thêm padding bên trái và phải để logo không quá sát lề */
-  /* Tổng chiều cao header = padding-top/bottom của .header (8px + 8px) + min-height này = 60px */
+  /* Tổng chiều cao header = padding-top/bottom của .header (4px + 4px) + min-height này = 52px */
   min-height: 44px;
   /* Đảm bảo header inner chiếm toàn bộ chiều rộng màn hình */
   width: 100vw;
@@ -973,7 +973,7 @@ button, input, select {
     transition: none;
     /* Container lệch về bên phải để không bị đè lên sidebar */
     margin-right: 0;
-    padding-right: var(--space-4); /* Thêm padding bên phải */
+    padding-right: 0; /* Bỏ padding phải để mở rộng tối đa */
     /* Cho phép container mở rộng về bên phải */
     overflow-x: visible;
     max-width: none; /* Bỏ giới hạn max-width khi có sidebar */
@@ -1368,12 +1368,29 @@ button, input, select {
   color: var(--color-gray-700);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 .eta-empty{
   color: var(--color-gray-400);
   font-weight: var(--font-weight-medium);
   font-style: italic;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
 }
 
 .payment-badge{
@@ -2513,7 +2530,7 @@ button, input, select {
 /* Desktop: dành sẵn gutter phải 20px cho Gate khi sidebar mở (đồng bộ Depot) */
 @media (min-width: 1024px) {
   .main-content.sidebar-visible {
-    right: 20px; /* Gutter phải cố định */
+    right: 0; /* Bỏ gutter phải để mở rộng tối đa */
   }
   .main-content.sidebar-hidden {
     right: 0; /* Toàn màn hình khi không có sidebar */
@@ -2539,7 +2556,7 @@ button, input, select {
 @media (min-width: 1024px) {
   body.with-sidebar .main-content .container {
     margin-left: 0; /* Hủy bỏ margin-left: 260px từ body.with-sidebar .container */
-    width: calc(100% - 20px); /* Trừ 20px để mép phải khớp Depot */
+    width: 100%; /* Mở rộng toàn bộ chiều rộng có sẵn */
   }
 }
 
@@ -3675,8 +3692,8 @@ main:has(.auth-hero) {
 
 /* Đảm bảo header của depot-requests có cùng kích thước với các trang khác */
 .depot-requests .modern-header {
-  padding: 1.25rem; /* Cùng padding với các trang khác */
-  margin-bottom: 1.5rem; /* Cùng margin-bottom với các trang khác */
+  padding: 1rem; /* Cùng padding với các trang khác */
+  margin-bottom: 1rem; /* Cùng margin-bottom với các trang khác */
 }
 .depot-requests-page {
   padding: 2rem;
@@ -3687,8 +3704,8 @@ main:has(.auth-hero) {
 .modern-header {
   background: linear-gradient(135deg, #1e3a8a, #1e40af);
   border-radius: var(--radius-xl);
-  padding: 1.25rem; /* Giảm từ 2rem xuống 1.25rem để thu nhỏ header */
-  margin-bottom: 1.5rem; /* Giảm margin-bottom để tăng diện tích giao diện chính */
+  padding: 1rem; /* Giảm từ 1.25rem xuống 1rem để thu nhỏ header hơn */
+  margin-bottom: 1rem; /* Giảm margin-bottom từ 1.5rem xuống 1rem */
   box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
   position: relative;
   overflow: hidden;
@@ -3804,13 +3821,27 @@ main:has(.auth-hero) {
 .search-filter-section {
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   border-radius: var(--radius-xl);
-  padding: var(--space-6); /* Cùng padding với table-container */
+  padding: var(--space-4) var(--space-6) var(--space-6) 0; /* Tăng padding-top từ space-2 lên space-4 */
   margin-bottom: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border: 2px solid #e2e8f0;
   overflow: hidden; /* tránh nội dung (chip) tràn ra ngoài bo góc */
   width: 100%;
   max-width: 100%;
+  min-height: 80px; /* Tăng chiều cao tối thiểu */
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.search-section {
+  flex: 1;
+  max-width: 500px;
 }
 
 /* Stickers cho Search & Filter - chỉ áp dụng tại trang Depot */
@@ -3852,14 +3883,9 @@ main:has(.auth-hero) {
   pointer-events: none;
 }
 
-/* Đưa emoji container vào bên trong icon của ô tìm kiếm (ẩn SVG, dùng 📦) */
+/* Ẩn emoji và hiển thị SVG icon bình thường */
 .depot-requests .search-filter-section::before { content: none; }
-.depot-requests .search-filter-section .search-icon svg { display: none; }
-.depot-requests .search-filter-section .search-icon::before {
-  content: '🔎';
-  font-size: 1rem;
-  line-height: 1;
-}
+.depot-requests .search-filter-section .search-icon::before { content: none; }
 .depot-requests .search-filter-section .search-input-group:focus-within .search-icon {
   color: #3b82f6;
 }
@@ -3973,8 +3999,11 @@ main:has(.auth-hero) {
 
 .filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .filter-label {
@@ -4245,6 +4274,10 @@ main:has(.auth-hero) {
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
   backdrop-filter: blur(10px);
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 140px;
 }
 
 .customer-requests .create-btn:hover {
@@ -4273,7 +4306,7 @@ main:has(.auth-hero) {
   .search-filter-section .filter-container { grid-template-columns: 1fr; }
   
   .search-filter-section {
-    padding: var(--space-4); /* Giảm padding cho mobile nhưng vẫn consistent */
+    padding: var(--space-2) var(--space-4) var(--space-4) 0; /* Xóa padding-left cho mobile */
   }
   
   .export-btn {
@@ -4313,7 +4346,7 @@ main:has(.auth-hero) {
   }
   
   .search-filter-section {
-    padding: var(--space-3); /* Giảm padding cho mobile nhỏ nhưng vẫn consistent */
+    padding: var(--space-2) var(--space-3) var(--space-3) 0; /* Xóa padding-left cho mobile nhỏ */
   }
   
   /* Search input responsive cho màn hình nhỏ */
@@ -4338,7 +4371,36 @@ main:has(.auth-hero) {
   align-items: center !important;
 }
 
+/* Customer page: giảm padding-top cho thanh tìm kiếm */
+.customer-requests .search-filter-section {
+  padding-top: 8px !important;
+}
+
+/* Customer page: đảm bảo filter-group được đẩy về bên phải */
+.customer-requests .search-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.customer-requests .search-section {
+  flex: 1 !important;
+  max-width: 500px !important;
+}
+
+.customer-requests .filter-group {
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+}
+
 /* ===== DEPOT REQUESTS PAGE COMPLETE ===== */
+
+/* ===== SEARCH INPUT PADDING FIX FOR ALL PAGES ===== */
+/* Điều chỉnh padding-left của input để chữ gần icon hơn cho tất cả các trang */
+.search-filter-section .search-input {
+  padding-left: 2rem !important;
+}
 
 /* ===== MODERN TABLE STYLES ===== */
 .table-container {
@@ -5244,6 +5306,22 @@ main:has(.auth-hero) {
   transform: translateY(-2px);
 }
 
+/* ===== FORCE SEARCH INPUT PADDING FIX ===== */
+/* CSS mạnh nhất để đảm bảo padding-left được áp dụng */
+.search-filter-section .search-input,
+.depot-requests .search-filter-section .search-input,
+.customer-requests .search-filter-section .search-input {
+  padding-left: 1.5rem !important;
+  min-width: 400px !important;
+  width: 100% !important;
+}
+
+/* Tăng kích thước search-input-group để chứa input rộng hơn */
+.search-filter-section .search-input-group {
+  min-width: 400px !important;
+  flex: 1 !important;
+}
+
 /* Invoice Page Styling */
 .invoice-page {
   padding: 2rem;
@@ -5390,7 +5468,7 @@ main:has(.auth-hero) {
 }
 
 .shimmer-text {
-  color: #000000 !important;
+  color: #1e3a8a !important;
   font-weight: 600;
 }
 
@@ -6137,7 +6215,7 @@ main:has(.auth-hero) {
   font-size: 2rem;
   font-weight: 800;
   margin: 0 0 0.5rem 0;
-  color: white;
+  color: #1e3a8a;
 }
 
 .login-subtitle {
@@ -6350,7 +6428,7 @@ main:has(.auth-hero) {
 
 .navy-login-btn:disabled .btn-content {
   opacity: 1;
-  color: #ffffff;
+  color: #1e3a8a;
   font-weight: 700;
 }
 
@@ -6361,10 +6439,10 @@ main:has(.auth-hero) {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: #ffffff !important;
+  color: #1e3a8a !important;
   font-weight: 700 !important;
   opacity: 1 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .loading-spinner {

@@ -20,10 +20,21 @@ export const getContainerType = (kind: string): string => {
   }
 };
 
-export const getGateStatusText = (status: string): string => {
+export const getGateStatusText = (status: string, t?: (key: string) => string): string => {
+  if (t) {
+    switch (status) {
+      case 'APPROVED': return t('pages.gate.statusOptions.scheduled');
+      case 'PENDING': return t('pages.requests.filterOptions.pending');
+      case 'REJECTED': return t('pages.requests.filterOptions.rejected');
+      case 'CANCELLED': return t('status.cancelled');
+      default: return t('pages.requests.location.unknown');
+    }
+  }
+  
+  // Fallback to hardcoded Vietnamese text
   switch (status) {
     case 'APPROVED': return 'Đã xác nhận';
-    case 'PENDING': return 'Đang chờ xử lý';
+    case 'PENDING': return 'Chờ xử lý';
     case 'REJECTED': return 'Đã từ chối';
     case 'CANCELLED': return 'Đã hủy';
     default: return 'Không xác định';

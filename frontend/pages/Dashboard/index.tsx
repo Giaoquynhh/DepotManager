@@ -74,8 +74,7 @@ export default function Dashboard(){
 					{isSaleAdmin(role) && (
                         <Card title="Tài chính & Hóa đơn" actions={<div style={{display:'flex',gap:8}}>
 							<Link className="btn" href="/finance/invoices">Danh sách Hóa đơn</Link>
-							<Link className="btn" href="/finance/invoices/new">Tạo hóa đơn</Link>
-						</div>}>
+							</div>}>
 							Phát hành hóa đơn, ghi nhận thanh toán, theo dõi công nợ.
 						</Card>
 					)}

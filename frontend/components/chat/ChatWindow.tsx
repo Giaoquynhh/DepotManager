@@ -3,6 +3,7 @@ import { api } from '@services/api';
 import ChatHeader from './ChatHeader';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ChatMessage {
   id: string;
@@ -27,8 +28,6 @@ interface ChatWindowProps {
   appointmentLocation?: string;
   appointmentNote?: string;
   onClose: () => void;
-  onMinimize: () => void;
-  onMouseDown: (e: React.MouseEvent) => void;
   onStatusChange?: (status: string) => void;
 }
 
@@ -42,10 +41,9 @@ export default function ChatWindow({
   appointmentLocation,
   appointmentNote,
   onClose,
-  onMinimize,
-  onMouseDown,
   onStatusChange
 }: ChatWindowProps) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
@@ -76,19 +74,19 @@ export default function ChatWindow({
   // Get status message based on request status
   const getStatusMessage = (status: string) => {
     const statusMessages: Record<string, string> = {
-      'PENDING': '📋 Đơn hàng đã được tạo và đang chờ xử lý',
-      'RECEIVED': '✅ Đơn hàng đã được tiếp nhận. Chat sẽ khả dụng khi được chấp nhận (APPROVED).',
-      'SCHEDULED': '📅 Đơn hàng đã được lên lịch hẹn',
-      'PENDING_ACCEPT': '📧 Đơn hàng đã được gửi xác nhận - Chat đã được kích hoạt', // Thêm PENDING_ACCEPT
-      'IN_PROGRESS': '🔄 Đơn hàng đang được xử lý tại kho',
-      'COMPLETED': '✅ Đơn hàng đã hoàn tất',
-      'EXPORTED': '📦 Đơn hàng đã xuất kho',
-      'REJECTED': `❌ Đơn hàng bị từ chối${rejectedReason ? `: ${rejectedReason}` : ''}`,
-      'CANCELLED': '❌ Đơn hàng đã bị hủy',
-      'IN_YARD': '🏭 Container đã vào kho',
-      'LEFT_YARD': '🚛 Container đã rời kho'
+      'PENDING': `📋 ${t('pages.requests.filterOptions.pending')}`,
+      'RECEIVED': `✅ ${t('pages.requests.filterOptions.received')}`,
+      'SCHEDULED': `📅 ${t('pages.requests.filterOptions.scheduled')}`,
+      'PENDING_ACCEPT': `📧 ${t('pages.requests.filterOptions.pendingAccept')}`,
+      'IN_PROGRESS': `🔄 ${t('pages.requests.filterOptions.inProgress')}`,
+      'COMPLETED': `✅ ${t('pages.requests.filterOptions.completed')}`,
+      'EXPORTED': `📦 ${t('pages.requests.filterOptions.exported')}`,
+      'REJECTED': `❌ ${t('pages.requests.filterOptions.rejected')}${rejectedReason ? `: ${rejectedReason}` : ''}`,
+      'CANCELLED': `❌ ${t('status.cancelled')}`,
+      'IN_YARD': `🏭 ${t('pages.requests.filterOptions.inYard')}`,
+      'LEFT_YARD': `🚛 ${t('pages.requests.filterOptions.leftYard')}`
     };
-    return statusMessages[status] || `🔄 Trạng thái đơn hàng: ${status}`;
+    return statusMessages[status] || `🔄 ${t('pages.requests.statusLabel')}: ${status}`;
   };
 
   // Get appointment message
@@ -419,8 +417,6 @@ export default function ChatWindow({
         title="Hỗ trợ Chat"
         subtitle={containerNo ? `Container: ${containerNo}` : undefined}
         onClose={onClose}
-        onMinimize={onMinimize}
-        onMouseDown={onMouseDown}
       />
       
       <div className="chat-messages">
