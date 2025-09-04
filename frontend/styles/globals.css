@@ -183,7 +183,7 @@ a, a:visited {
 .header {
   background: #200d6b; /* Navy blue */
   color: var(--color-text-inverse);
-  padding: var(--space-2) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
+  padding: var(--space-2) 0; 
   padding: var(--space-1) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
   box-shadow: var(--shadow-md);
   position: sticky;
@@ -4183,12 +4183,13 @@ main.container.depot-requests,
   background: linear-gradient(135deg, #1e40af, #3b82f6);
   box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
   margin-bottom: 1rem;
+  padding: 0.75rem;
 }
 
 .yard-page .modern-header .yard-title {
   color: #ffffff !important;
-  font-size: 2.5rem !important;
-  font-weight: 900 !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   letter-spacing: -0.5px;
   margin: 0;

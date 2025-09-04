@@ -242,6 +242,39 @@ export default function ModernYardMap({
         </div>
       </div>
 
+      {/* 🎨 Status Legend */}
+      <div className="yard-legend">
+        <div className="legend-items">
+          <div className="legend-item legend-title-item">
+            <span className="legend-title-text">{t('pages.yard.stackDetails.status')} {t('pages.yard.stackDetails.slot')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-empty"></div>
+            <span>{t('pages.yard.slotStatus.empty')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-hold"></div>
+            <span>{t('pages.yard.slotStatus.hold')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-suggested"></div>
+            <span>{t('pages.yard.slotStatus.suggested')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-selected"></div>
+            <span>{t('pages.yard.slotStatus.selected')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-occupied"></div>
+            <span>{t('pages.yard.slotStatus.occupied')}</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-color status-maintenance"></div>
+            <span>{t('pages.yard.slotStatus.under_maintenance')}</span>
+          </div>
+        </div>
+      </div>
+
       {/* 📊 Quick Stats Bar */}
       <div className="yard-stats-bar">
         <div className="yard-stat-card">
@@ -285,6 +318,31 @@ export default function ModernYardMap({
             <div className="yard-stat-label">{t('pages.yard.blockStats.hold')}</div>
           </div>
         </div>
+        
+        {/* 🎪 Action Bubbles */}
+        <div className="yard-action-bubbles">
+          <button 
+            className="yard-action-bubble"
+            onClick={onRefresh}
+            title="Làm mới dữ liệu"
+          >
+            🔄
+          </button>
+          <button 
+            className="yard-action-bubble"
+            onClick={onExport}
+            title="Xuất báo cáo"
+          >
+            📤
+          </button>
+          <button 
+            className="yard-action-bubble"
+            onClick={onSettings}
+            title="Cài đặt"
+          >
+            ⚙️
+          </button>
+        </div>
       </div>
 
       {/* 🏗️ Dynamic Block Cards */}
@@ -320,7 +378,14 @@ export default function ModernYardMap({
 
               {/* 🎯 Interactive Container Grid */}
               <div className="yard-slot-grid">
-                {block.slots.map((slot) => {
+                {block.slots
+                  .sort((a, b) => {
+                    // Sắp xếp theo thứ tự slot code (B1-1, B1-2, B1-3, ...)
+                    const aNum = parseInt(a.code.split('-')[1]) || 0;
+                    const bNum = parseInt(b.code.split('-')[1]) || 0;
+                    return aNum - bNum;
+                  })
+                  .map((slot) => {
                   const status = getSlotStatus(slot);
                   const isSuggested = suggestedSlots.includes(slot.id);
                   const isSelected = slot.id === selectedSlotId;
@@ -373,30 +438,6 @@ export default function ModernYardMap({
         })}
       </div>
 
-      {/* 🎪 Action Bubbles */}
-      <div className="yard-action-bubbles">
-        <button 
-          className="yard-action-bubble"
-          onClick={onRefresh}
-          title="Làm mới dữ liệu"
-        >
-          🔄
-        </button>
-        <button 
-          className="yard-action-bubble"
-          onClick={onExport}
-          title="Xuất báo cáo"
-        >
-          📤
-        </button>
-        <button 
-          className="yard-action-bubble"
-          onClick={onSettings}
-          title="Cài đặt"
-        >
-          ⚙️
-        </button>
-      </div>
 
       {/* 🎭 Enhanced Tooltip */}
       {showTooltip && (
@@ -433,37 +474,6 @@ export default function ModernYardMap({
           </div>
         </div>
       )}
-
-      {/* 🎨 Status Legend */}
-      <div className="yard-legend">
-        <div className="legend-title">{t('pages.yard.stackDetails.status')} Slot</div>
-        <div className="legend-items">
-          <div className="legend-item">
-            <div className="legend-color status-empty"></div>
-            <span>{t('pages.yard.slotStatus.empty')}</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color status-hold"></div>
-            <span>{t('pages.yard.slotStatus.hold')}</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color status-suggested"></div>
-            <span>{t('pages.yard.slotStatus.suggested')}</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color status-selected"></div>
-            <span>{t('pages.yard.slotStatus.selected')}</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color status-occupied"></div>
-            <span>{t('pages.yard.slotStatus.occupied')}</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color status-maintenance"></div>
-            <span>{t('pages.yard.slotStatus.under_maintenance')}</span>
-          </div>
-        </div>
-      </div>
 
       {/* 🌟 Futuristic Stack Details Modal */}
       <FuturisticStackDetailsModal

@@ -345,15 +345,16 @@
         "selected": "Đã chọn"
       },
       "stackDetails": {
-        "title": "Chi tiết stack",
+        "title": "Chi tiết ngăn xếp",
         "tier": "Tầng",
         "containers": "Container",
         "status": "Trạng thái",
+        "slot": "ô",
         "actions": "Hành động",
         "confirm": "Xác nhận",
         "release": "Giải phóng",
         "containerNo": "Số Container",
-        "holdNextTier": "GIỮ tầng kế tiếp",
+        "holdNextTier": "Đặt container",
         "tierHoldStatus": "Đang giữ",
         "receiveCheckedContainers": "Chỉ nhận container có trạng thái \"Đang chờ sắp xếp\" (CHECKED)",
         "systemAdminNote": "SystemAdmin: Có thể nhập container tùy ý",

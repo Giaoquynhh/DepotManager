@@ -96,18 +96,19 @@
 /* 🎯 Interactive Container Grid - Smart Tiles */
 .yard-slot-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(20, 1fr); /* Cố định 20 cột để giữ nguyên vị trí */
+  gap: 8px; /* Giảm gap để có thêm không gian */
   margin-top: 1.5rem;
   padding: 1rem;
   background: rgba(248, 250, 252, 0.5);
   border-radius: 16px;
   border: 1px solid rgba(203, 213, 225, 0.3);
+  overflow-x: auto; /* Cho phép scroll ngang nếu cần */
 }
 
 .yard-slot-tile {
-  width: 60px;
-  height: 60px;
+  width: 50px; /* Giảm kích thước để vừa 20 slot */
+  height: 50px;
   border-radius: 12px;
   cursor: pointer;
   position: relative;
@@ -247,7 +248,8 @@
 /* ⚡ Floating Search Portal - Glassmorphic Design */
 .yard-search-portal {
   position: relative;
-  margin-bottom: 2rem;
+  margin-top: -3.5rem;
+  margin-bottom: 1.5rem;
   z-index: 10;
 }
 
@@ -352,6 +354,7 @@
 .yard-stats-bar {
   display: flex;
   gap: 1rem;
+  margin-top: 1rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -417,18 +420,17 @@
 
 /* 🎪 Action Bubbles - Floating Action Buttons */
 .yard-action-bubbles {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  z-index: 1000;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: center;
+  margin-left: auto;
 }
 
 .yard-action-bubble {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--ocean-electric) 100%);
@@ -441,6 +443,7 @@
   box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
   position: relative;
   overflow: hidden;
+  font-size: 1.2rem;
 }
 
 .yard-action-bubble::before {
@@ -519,6 +522,15 @@
   50% { filter: brightness(1.2); }
 }
 
+@keyframes refresh-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.refresh-animation {
+  animation: refresh-spin 1s ease-in-out;
+}
+
 /* 🎨 Enhanced Typography - yard-title styling moved to globals.css */
 
 .yard-subtitle {
@@ -536,13 +548,14 @@
   }
   
   .yard-slot-grid {
-    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(20, 1fr); /* Giữ nguyên 20 cột */
+    gap: 6px; /* Giảm gap hơn nữa */
+    overflow-x: auto; /* Cho phép scroll ngang */
   }
   
   .yard-slot-tile {
-    width: 50px;
-    height: 50px;
+    width: 45px; /* Giảm kích thước để vừa 20 slot */
+    height: 45px;
     font-size: 10px;
   }
   
@@ -567,13 +580,14 @@
 
 @media (max-width: 480px) {
   .yard-slot-grid {
-    grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(20, 1fr); /* Giữ nguyên 20 cột */
+    gap: 4px; /* Giảm gap tối đa */
+    overflow-x: auto; /* Cho phép scroll ngang */
   }
   
   .yard-slot-tile {
-    width: 45px;
-    height: 45px;
+    width: 40px; /* Giảm kích thước tối đa */
+    height: 40px;
     font-size: 9px;
   }
   

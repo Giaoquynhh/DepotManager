@@ -341,10 +341,6 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
         <div className="futuristic-modal-header">
           <div className="futuristic-breadcrumb">
             <span className="futuristic-breadcrumb-item">
-              {details?.block?.yard?.name || 'Depot'}
-            </span>
-            <span className="futuristic-breadcrumb-separator">→</span>
-            <span className="futuristic-breadcrumb-item">
               {details?.block?.code || 'Block'}
             </span>
             <span className="futuristic-breadcrumb-separator">→</span>
@@ -404,23 +400,26 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
 
           {/* 🏗️ Vertical Tower Visualization */}
           <div className="futuristic-tier-tower">
-            {[...Array(Math.max(capacity || 0, (details?.placements?.length || 0)))].map((_, idx) => {
+            {[...Array(Math.max(capacity || 0, (details?.placements?.length || 0), 8))].map((_, idx) => {
               const tier = idx + 1;
               const p = byTier.get(tier);
               const status = p?.status || 'EMPTY';
               const activeHold = p ? isHoldActive(p) : false;
               const isTopOcc = p?.status === 'OCCUPIED' && !p?.removed_at && occTopTier === tier;
+              
+              // Test scrollbar với tier giả
+              const displayStatus = tier > 5 ? 'EMPTY' : status;
 
               return (
                 <div 
                   key={tier} 
-                  className={`futuristic-tier-card ${status.toLowerCase()} ${status === 'HOLD' && activeHold ? 'holding' : ''}`}
+                  className={`futuristic-tier-card ${displayStatus.toLowerCase()} ${displayStatus === 'HOLD' && activeHold ? 'holding' : ''}`}
                 >
                   {/* 🎯 Tier Header */}
                   <div className="futuristic-tier-header">
                     <div className="futuristic-tier-label">T{tier}</div>
-                    <div className="futuristic-tier-status" style={{ color: getTierStatusColor(status, p) }}>
-                      {status === 'HOLD' && activeHold && (
+                    <div className="futuristic-tier-status" style={{ color: getTierStatusColor(displayStatus, p) }}>
+                      {displayStatus === 'HOLD' && activeHold && (
                         <div className="futuristic-ttl-timer">
                           <div className="futuristic-ttl-circle">
                             <div className="futuristic-ttl-progress"></div>
@@ -430,7 +429,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                           </span>
                         </div>
                       )}
-                      <span>{getTierStatusText(status, p)}</span>
+                      <span>{getTierStatusText(displayStatus, p)}</span>
                     </div>
                   </div>
 
@@ -606,3 +605,4 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
     </div>
   );
 };
+

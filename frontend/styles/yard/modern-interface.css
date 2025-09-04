@@ -407,7 +407,7 @@
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 2rem;
-  margin: 3rem auto;
+  margin: 3rem auto 4rem auto;
   max-width: 1600px;
   box-shadow: var(--premium-shadow-lg);
   border: 1px solid var(--glass-border);

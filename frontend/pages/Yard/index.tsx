@@ -131,9 +131,54 @@ export default function YardPage() {
 
   // 🎯 Export handler
   const handleExport = useCallback(() => {
-    // TODO: Implement export functionality
-    console.log('Export yard data');
-  }, []);
+    if (!transformedMap || !transformedMap[0]) {
+      setLocateError('Không có dữ liệu để xuất báo cáo');
+      return;
+    }
+
+    try {
+      const yard = transformedMap[0];
+      const exportData = {
+        yardName: yard.name,
+        exportDate: new Date().toLocaleString('vi-VN'),
+        totalBlocks: stats.totalBlocks,
+        totalSlots: stats.totalSlots,
+        totalOccupied: stats.totalOcc,
+        totalHold: stats.totalHold,
+        blocks: yard.blocks.map(block => ({
+          blockCode: block.code,
+          totalSlots: block.slots.length,
+          occupiedSlots: block.slots.reduce((sum, slot) => sum + (slot.occupied_count || 0), 0),
+          holdSlots: block.slots.reduce((sum, slot) => sum + (slot.hold_count || 0), 0),
+          emptySlots: block.slots.length - block.slots.reduce((sum, slot) => sum + (slot.occupied_count || 0) + (slot.hold_count || 0), 0),
+          slots: block.slots.map(slot => ({
+            code: slot.code,
+            status: slot.status,
+            occupiedCount: slot.occupied_count || 0,
+            holdCount: slot.hold_count || 0
+          }))
+        }))
+      };
+
+      // Tạo file JSON để download
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `yard-report-${yard.name}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setLocateSuccess('Đã xuất báo cáo thành công!');
+    } catch (error) {
+      setLocateError('Lỗi khi xuất báo cáo');
+      console.error('Export error:', error);
+    }
+  }, [transformedMap, stats]);
 
   // 🎯 Settings handler
   const handleSettings = useCallback(() => {
