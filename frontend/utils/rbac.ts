@@ -5,6 +5,7 @@ export function homeFor(role: AppRole): string {
     if (isCustomerRole(role)) return '/Requests/Customer';
     if (isSaleAdmin(role) || isAccountant(role)) return '/Requests/Depot';
     if (canUseGate(role)) return '/Gate';
+    if (isDriver(role)) return '/DriverDashboard';
     return '/Account';
 }
 

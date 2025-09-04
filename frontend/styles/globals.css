@@ -171,10 +171,10 @@ a, a:visited {
 }
 
 .container {
-  max-width: 1400px; /* Tăng từ 1400px lên 1600px để khung rộng hơn */
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-4) 0 var(--space-6) var(--space-6); /* Bỏ padding phải để mở rộng tối đa */
+  padding: var(--space-6) var(--space-8) var(--space-8) var(--space-8); /* Tăng padding trái/phải để thoáng hơn */
   /* Cho phép container mở rộng về bên phải */
   overflow-x: visible;
 }
@@ -183,6 +183,7 @@ a, a:visited {
 .header {
   background: #200d6b; /* Navy blue */
   color: var(--color-text-inverse);
+  padding: var(--space-2) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
   padding: var(--space-1) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
   box-shadow: var(--shadow-md);
   position: sticky;
@@ -3690,10 +3691,17 @@ main:has(.auth-hero) {
   scrollbar-gutter: stable; /* Giữ ổn định lề phải khi có/không có thanh cuộn */
 }
 
+/* Nới container riêng cho trang Depot để nội dung thoáng và lấp màn hình hơn */
+main.container.depot-requests,
+.depot-requests.container {
+  padding: 2.5rem 2.5rem; /* tăng padding tổng thể trang */
+  max-width: 100%; /* sử dụng toàn bộ chiều rộng màn hình */
+}
+
 /* Đảm bảo header của depot-requests có cùng kích thước với các trang khác */
 .depot-requests .modern-header {
-  padding: 1rem; /* Cùng padding với các trang khác */
-  margin-bottom: 1rem; /* Cùng margin-bottom với các trang khác */
+  padding: 1rem; /* Giảm padding cho header */
+  margin-bottom: 1rem; /* Giảm khoảng cách dưới header */
 }
 .depot-requests-page {
   padding: 2rem;
@@ -3704,8 +3712,8 @@ main:has(.auth-hero) {
 .modern-header {
   background: linear-gradient(135deg, #1e3a8a, #1e40af);
   border-radius: var(--radius-xl);
-  padding: 1rem; /* Giảm từ 1.25rem xuống 1rem để thu nhỏ header hơn */
-  margin-bottom: 1rem; /* Giảm margin-bottom từ 1.5rem xuống 1rem */
+  padding: 0.75rem; /* Giảm padding cho header */
+  margin-bottom: 1rem; /* Giảm khoảng cách dưới header */
   box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
   position: relative;
   overflow: hidden;
@@ -3749,8 +3757,8 @@ main:has(.auth-hero) {
 /* Bảo đảm tiêu đề trong modern header luôn hiển thị màu trắng trên nền gradient */
 .modern-header .page-title {
   color: #ffffff !important;
-  font-size: 2.5rem !important;
-  font-weight: 900 !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
   text-align: left !important;
   margin-bottom: 0 !important;
   letter-spacing: -0.5px !important;
@@ -3765,9 +3773,9 @@ main:has(.auth-hero) {
 }
 
 .page-subtitle {
-  font-size: 1.2rem;
+  font-size: 1rem;
   opacity: 1;
-  margin: 0.5rem 0 0 0;
+  margin: 0.25rem 0 0 0;
   font-weight: 500;
   color: #e0e7ff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -3821,27 +3829,27 @@ main:has(.auth-hero) {
 .search-filter-section {
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   border-radius: var(--radius-xl);
-  padding: var(--space-4) var(--space-6) var(--space-6) 0; /* Tăng padding-top từ space-2 lên space-4 */
-  margin-bottom: 2rem;
+  padding: var(--space-10) var(--space-10) var(--space-10) var(--space-10); /* Tăng rất mạnh padding đều 4 phía */
+  margin-bottom: 3.5rem; /* Nới khoảng cách với bảng bên dưới */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border: 2px solid #e2e8f0;
   overflow: hidden; /* tránh nội dung (chip) tràn ra ngoài bo góc */
   width: 100%;
   max-width: 100%;
-  min-height: 80px; /* Tăng chiều cao tối thiểu */
+  min-height: 120px; /* Tăng chiều cao tối thiểu */
 }
 
 .search-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 2.5rem; /* Nới khoảng giữa các khối search & filter */
   width: 100%;
 }
 
 .search-section {
   flex: 1;
-  max-width: 500px;
+  max-width: 720px; /* Mở rộng hơn vùng nhập search cho cân đối */
 }
 
 /* Stickers cho Search & Filter - chỉ áp dụng tại trang Depot */
@@ -3987,7 +3995,7 @@ main:has(.auth-hero) {
 .filter-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  gap: 3rem; /* Nới khoảng giữa các nhóm filter nhiều hơn */
   align-items: end;
 }
 
@@ -4000,7 +4008,7 @@ main:has(.auth-hero) {
 .filter-group {
   display: flex;
   flex-direction: row;
-  gap: 0.75rem;
+  gap: 1.5rem; /* Nới khoảng giữa label/select nhiều hơn */
   align-items: center;
   margin-left: auto;
   flex-shrink: 0;
@@ -6538,4 +6546,15 @@ main:has(.auth-hero) {
   .logo-icon {
     font-size: 1.5rem;
   }
+}
+
+/* Spacing dưới khung tabs của Driver Dashboard */
+.driver-tabs-block {
+  margin-bottom: 32px;
+}
+@media (min-width: 1024px) {
+  .driver-tabs-block { margin-bottom: 40px; }
+}
+@media (max-width: 768px) {
+  .driver-tabs-block { margin-bottom: 18px; }
 }

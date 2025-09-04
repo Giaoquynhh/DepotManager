@@ -1,0 +1,134 @@
+/* Driver Dashboard Premium UI */
+
+.driver-dashboard-modern {
+  position: relative;
+}
+
+/* Use exact same header style as Requests/Depot */
+.driver-dashboard-modern .modern-header {
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  border-radius: var(--radius-xl);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.driver-dashboard-modern .modern-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: headerShine 3s ease-in-out infinite;
+}
+
+@keyframes headerShine {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Title effects - same as Requests/Depot */
+.driver-dashboard-modern .page-title {
+  color: #ffffff !important;
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+  text-align: left !important;
+  margin-bottom: 0 !important;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: -0.5px;
+}
+
+.driver-dashboard-modern .page-title.gradient-ultimate {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Soft glowing divider */
+.glow-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(59,130,246,.6), rgba(16,185,129,.6), transparent);
+  border-radius: 2px;
+  margin: 20px 0 12px 0;
+  position: relative;
+  overflow: hidden;
+}
+.glow-divider::after {
+  content: "";
+  position: absolute;
+  left: -20%;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+  animation: dividerPulse 2.8s ease-in-out infinite;
+}
+@keyframes dividerPulse {
+  0% { left: -20%; opacity: .2; }
+  50% { left: 60%; opacity: .7; }
+  100% { left: 120%; opacity: .2; }
+}
+
+/* Glassmorphism card */
+.driver-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.driver-card.card-hoverable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+/* Neumorphic stat tiles */
+.stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 32px; }
+.stat-tile {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 6px 6px 16px rgba(2, 6, 23, 0.08), -6px -6px 16px rgba(255, 255, 255, 0.9);
+  padding: 24px 20px;
+  display: flex; align-items: center;
+  transition: transform .2s ease, box-shadow .2s ease;
+  border: 1px solid rgba(2,6,23,.04);
+  margin-bottom: 12px;
+}
+.stat-tile:hover { transform: translateY(-3px); box-shadow: 10px 10px 24px rgba(2,6,23,0.10), -10px -10px 24px rgba(255,255,255,0.95); }
+.stat-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; }
+.stat-blue { background: linear-gradient(135deg,#dbeafe,#eff6ff); color:#1e3a8a; }
+.stat-green { background: linear-gradient(135deg,#dcfce7,#ecfeff); color:#065f46; }
+.stat-orange { background: linear-gradient(135deg,#fff7ed,#fffbeb); color:#9a3412; }
+.stat-purple { background: linear-gradient(135deg,#ede9fe,#f5f3ff); color:#5b21b6; }
+
+/* Quick action pill buttons with ripple */
+.quick-actions { display:flex; gap:20px; flex-wrap: wrap; margin-top: 16px; }
+.pill-btn { position: relative; border-radius: 999px; padding: 14px 24px; border: 0; color: #fff; cursor: pointer; transition: transform .12s ease, box-shadow .2s ease; margin: 6px 0; }
+.pill-btn:active { transform: scale(.98); }
+.pill-primary { background: linear-gradient(135deg,#0ea5e9,#2563eb); box-shadow: 0 8px 14px rgba(37,99,235,.28); }
+.pill-secondary { background: linear-gradient(135deg,#64748b,#0f172a); box-shadow: 0 8px 14px rgba(15,23,42,.28); }
+.pill-success { background: linear-gradient(135deg,#10b981,#22c55e); box-shadow: 0 8px 14px rgba(16,185,129,.28); }
+.pill-btn:hover { box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25); }
+.pill-btn .ripple { position: absolute; border-radius: 50%; transform: scale(0); animation: ripple 600ms linear; background: rgba(255,255,255,.7); }
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+/* Table modern adjustments */
+.driver-dashboard-modern .table-modern { border-radius: 14px; overflow: hidden; }
+
+/* Subtitle effects - same as Requests/Depot */
+.driver-dashboard-modern .page-subtitle {
+  font-size: 1.2rem;
+  opacity: 1;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+  color: #e0e7ff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+

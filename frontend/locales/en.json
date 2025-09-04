@@ -415,15 +415,6 @@
       "systemAdminAdded": "Container entered directly by SystemAdmin",
       "totalCurrentPage": "Total (current page)"
     },
-    "forklift": {
-      "title": "Forklift Management",
-      "welcome": "Welcome to the Forklift Management System",
-      "searchPlaceholder": "Search by license plate...",
-      "searchButton": "Search",
-      "clearFilters": "Clear Filters",
-      "noData": "No Data",
-      "noDataSubtitle": "No forklifts to display"
-    },
     "maintenance": {
       "repairs": {
         "title": "Repair Tickets List",
@@ -585,6 +576,12 @@
     },
     "forklift": {
       "title": "Forklift Management",
+      "welcome": "Welcome to the Forklift Management System",
+      "searchPlaceholder": "Search by license plate...",
+      "searchButton": "Search",
+      "clearFilters": "Clear Filters",
+      "noData": "No Data",
+      "noDataSubtitle": "No forklifts to display",
       "jobList": "Forklift Job List",
       "totalJobs": "Total: {count} jobs",
       "loadingJobs": "Loading job list...",
@@ -657,6 +654,82 @@
         "costTooHigh": "Cost too high. Please check again"
       }
     },
+    "driverDashboard": {
+      "title": "Driver Dashboard",
+      "subtitle": "Manage jobs and track forklift progress",
+      "tabs": {
+        "overview": "Overview",
+        "tasks": "Tasks",
+        "history": "History"
+      },
+      "messages": {
+        "errorLoading": "An error occurred while loading data",
+        "taskNotFound": "Task not found",
+        "enterCostBeforeApproval": "Please enter cost before submitting for approval",
+        "errorUpdatingStatus": "An error occurred while updating status",
+        "invalidCost": "Please enter a valid cost (greater than 0)",
+        "costTooHigh": "Cost too high. Please check again",
+        "costMustBeInteger": "Cost must be an integer",
+        "costCannotBeNegative": "Cost cannot be negative",
+        "confirmUpdatePendingApproval": "This task is pending approval. Are you sure you want to update the cost? This may affect the approval process.",
+        "errorUpdatingCost": "An error occurred while updating cost",
+        "selectImageFileBeforeUpload": "Please select an image file before uploading",
+        "confirmUploadPendingApproval": "This task is pending approval. Are you sure you want to update the report? This may affect the approval process.",
+        "errorUploadingImage": "An error occurred while uploading the report image",
+        "pleaseSelectImageFile": "Please select an image file (JPG, PNG, GIF, etc.)",
+        "fileTooLarge5MB": "File too large. Please choose a file smaller than 5MB",
+        "fileNameTooLong": "File name too long. Please use a shorter name",
+        "errorSelectingFile": "An error occurred while selecting file",
+        "invalidNumber": "Please enter a valid number",
+        "loadingData": "Loading data..."
+      },
+      "currentTask": {
+        "title": "Current Task",
+        "from": "From",
+        "to": "To"
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "viewTasks": "View tasks",
+        "viewHistory": "View history",
+        "refreshData": "Refresh data"
+      },
+      "assignedTasks": {
+        "title": "Assigned Tasks"
+      },
+      "tableHeaders": {
+        "container": "Container",
+        "from": "From",
+        "to": "To",
+        "cost": "Cost",
+        "report": "Report",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "cost": {
+        "inputPlaceholder": "Enter cost",
+        "currencyShort": "VND"
+      },
+      "report": {
+        "upload": "Upload",
+        "viewImage": "View image",
+        "none": "None"
+      },
+      "actions": {
+        "start": "Start",
+        "complete": "Complete"
+      },
+      "history": {
+        "title": "Task History",
+        "completedAt": "Completed At"
+      },
+      "stats": {
+        "totalTasks": "Total tasks",
+        "completedToday": "Completed today",
+        "pending": "Pending",
+        "completionRate": "Completion rate"
+      }
+    },
     "reports": {
       "title": "Reports",
       "welcome": "Welcome to the Reporting System",
@@ -673,7 +746,29 @@
       "searchButton": "Search",
       "clearFilters": "Clear Filters",
       "noData": "No Data",
-      "noDataSubtitle": "No accounts to display"
+      "noDataSubtitle": "No accounts to display",
+      "profile": {
+        "title": "Personal Profile",
+        "fullNamePlaceholder": "Full name",
+        "emailPlaceholder": "Email",
+        "phonePlaceholder": "Phone",
+        "readonlyInfo": "Read-only fields: role, tenant/partner. Changing email/phone may require verification.",
+        "updateProfile": "Update Profile"
+      },
+      "password": {
+        "title": "Change Password",
+        "oldPlaceholder": "Current password",
+        "newPlaceholder": "New password",
+        "confirmPlaceholder": "Confirm new password",
+        "policy": "Password ≥ 8 characters, including numbers, uppercase letters, special characters, and different from the old password.",
+        "changePassword": "Change Password"
+      },
+      "messages": {
+        "updateSuccess": "Profile updated successfully",
+        "updateFailed": "Profile update failed",
+        "passwordChangeSuccess": "Password changed successfully. Please log in again.",
+        "passwordChangeFailed": "Password change failed"
+      }
     }
   },
   "user": {

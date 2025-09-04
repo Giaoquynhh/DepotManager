@@ -415,15 +415,6 @@
       "systemAdminAdded": "Container được SystemAdmin nhập trực tiếp vào bãi",
       "totalCurrentPage": "Tổng (trang hiện tại)"
     },
-    "forklift": {
-      "title": "Quản lý xe nâng",
-      "welcome": "Chào mừng đến với hệ thống quản lý xe nâng",
-      "searchPlaceholder": "Tìm kiếm theo biển số xe...",
-      "searchButton": "Tìm kiếm",
-      "clearFilters": "Xóa bộ lọc",
-      "noData": "Không có dữ liệu",
-      "noDataSubtitle": "Không có xe nâng nào để hiển thị"
-    },
     "maintenance": {
       "repairs": {
         "title": "Danh sách phiếu sửa chữa",
@@ -657,6 +648,82 @@
         "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại"
       }
     },
+    "driverDashboard": {
+      "title": "Bảng điều khiển Tài xế",
+      "subtitle": "Quản lý công việc và theo dõi tiến độ xe nâng",
+      "tabs": {
+        "overview": "Tổng quan",
+        "tasks": "Công việc",
+        "history": "Lịch sử"
+      },
+      "messages": {
+        "errorLoading": "Có lỗi xảy ra khi tải dữ liệu",
+        "taskNotFound": "Không tìm thấy thông tin công việc",
+        "enterCostBeforeApproval": "Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt",
+        "errorUpdatingStatus": "Có lỗi xảy ra khi cập nhật trạng thái",
+        "invalidCost": "Vui lòng nhập chi phí hợp lệ (lớn hơn 0)",
+        "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại",
+        "costMustBeInteger": "Chi phí phải là số nguyên",
+        "costCannotBeNegative": "Chi phí không thể là số âm",
+        "confirmUpdatePendingApproval": "Task này đang chờ duyệt. Bạn có chắc muốn cập nhật chi phí? Việc này có thể ảnh hưởng đến quá trình duyệt.",
+        "errorUpdatingCost": "Có lỗi xảy ra khi cập nhật chi phí",
+        "selectImageFileBeforeUpload": "Vui lòng chọn file ảnh trước khi upload",
+        "confirmUploadPendingApproval": "Task này đang chờ duyệt. Bạn có chắc muốn cập nhật báo cáo? Việc này có thể ảnh hưởng đến quá trình duyệt.",
+        "errorUploadingImage": "Có lỗi xảy ra khi upload ảnh báo cáo",
+        "pleaseSelectImageFile": "Vui lòng chọn file ảnh (JPG, PNG, GIF, etc.)",
+        "fileTooLarge5MB": "File quá lớn. Vui lòng chọn file nhỏ hơn 5MB",
+        "fileNameTooLong": "Tên file quá dài. Vui lòng đổi tên file ngắn hơn",
+        "errorSelectingFile": "Có lỗi xảy ra khi chọn file",
+        "invalidNumber": "Vui lòng nhập số hợp lệ",
+        "loadingData": "Đang tải dữ liệu..."
+      },
+      "currentTask": {
+        "title": "Công việc hiện tại",
+        "from": "Từ vị trí",
+        "to": "Đến vị trí"
+      },
+      "quickActions": {
+        "title": "Thao tác nhanh",
+        "viewTasks": "Xem công việc",
+        "viewHistory": "Xem lịch sử",
+        "refreshData": "Làm mới dữ liệu"
+      },
+      "assignedTasks": {
+        "title": "Công việc được giao"
+      },
+      "tableHeaders": {
+        "container": "Container",
+        "from": "Từ vị trí",
+        "to": "Đến vị trí",
+        "cost": "Chi phí",
+        "report": "Báo cáo",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "cost": {
+        "inputPlaceholder": "Nhập chi phí",
+        "currencyShort": "VNĐ"
+      },
+      "report": {
+        "upload": "Tải lên",
+        "viewImage": "Xem ảnh",
+        "none": "Chưa có"
+      },
+      "actions": {
+        "start": "Bắt đầu",
+        "complete": "Hoàn thành"
+      },
+      "history": {
+        "title": "Lịch sử công việc",
+        "completedAt": "Ngày hoàn thành"
+      },
+      "stats": {
+        "totalTasks": "Tổng công việc",
+        "completedToday": "Hoàn thành hôm nay",
+        "pending": "Đang chờ",
+        "completionRate": "Tỷ lệ hoàn thành"
+      }
+    },
     "reports": {
       "title": "Báo cáo",
       "welcome": "Chào mừng đến với hệ thống báo cáo",
@@ -673,7 +740,29 @@
       "searchButton": "Tìm kiếm",
       "clearFilters": "Xóa bộ lọc",
       "noData": "Không có dữ liệu",
-      "noDataSubtitle": "Không có tài khoản nào để hiển thị"
+      "noDataSubtitle": "Không có tài khoản nào để hiển thị",
+      "profile": {
+        "title": "Hồ sơ cá nhân",
+        "fullNamePlaceholder": "Họ tên",
+        "emailPlaceholder": "Email",
+        "phonePlaceholder": "Điện thoại",
+        "readonlyInfo": "Trường chỉ đọc: role, tenant/partner. Đổi email/phone có thể yêu cầu xác minh.",
+        "updateProfile": "Cập nhật hồ sơ"
+      },
+      "password": {
+        "title": "Đổi mật khẩu",
+        "oldPlaceholder": "Mật khẩu cũ",
+        "newPlaceholder": "Mật khẩu mới",
+        "confirmPlaceholder": "Xác nhận mật khẩu mới",
+        "policy": "Mật khẩu ≥ 8 ký tự, gồm số, chữ hoa, ký tự đặc biệt, và khác mật khẩu cũ.",
+        "changePassword": "Đổi mật khẩu"
+      },
+      "messages": {
+        "updateSuccess": "Cập nhật thông tin thành công",
+        "updateFailed": "Cập nhật thất bại",
+        "passwordChangeSuccess": "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.",
+        "passwordChangeFailed": "Đổi mật khẩu thất bại"
+      }
     }
   },
   "user": {

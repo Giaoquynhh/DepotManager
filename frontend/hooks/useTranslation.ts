@@ -15,13 +15,16 @@ type TranslationKey = string;
 export function useTranslation() {
   const [currentLanguage, setCurrentLanguage] = useState<LocaleKey>('vi');
 
-  // Load language preference from localStorage on mount
+  // Load language preference from localStorage on mount - default to Vietnamese
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedLanguage = localStorage.getItem('preferred-language') as LocaleKey;
-      if (savedLanguage && (savedLanguage === 'vi' || savedLanguage === 'en')) {
+      const savedLanguage = localStorage.getItem('preferred-language') as LocaleKey || 'vi';
+      if (savedLanguage === 'vi' || savedLanguage === 'en') {
         setCurrentLanguage(savedLanguage);
         document.documentElement.setAttribute('lang', savedLanguage);
+      } else {
+        setCurrentLanguage('vi');
+        document.documentElement.setAttribute('lang', 'vi');
       }
     }
   }, []);

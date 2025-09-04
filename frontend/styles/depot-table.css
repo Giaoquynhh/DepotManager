@@ -198,7 +198,7 @@
 .document-badges {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px; /* nới khoảng giữa các badge tài liệu */
 }
 
 .document-badge {
@@ -295,7 +295,7 @@
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px; /* nới khoảng giữa các nút hành động */
 }
 
 .btn {
@@ -413,8 +413,8 @@
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid #dfe2e9;
-  padding: var(--space-4);
-  margin: 0;
+  padding: var(--space-10); /* tăng mạnh padding container */
+  margin: 0 0 var(--space-6) 0; /* nới khoảng cách dưới bảng */
 }
 
 .table {
@@ -425,7 +425,7 @@
 
 .table-modern th {
   background-color: #f9fafb;
-  padding: 12px 16px;
+  padding: 16px 24px; /* nới mạnh padding header */
   text-align: left;
   font-weight: 600;
   color: #374151;
@@ -434,7 +434,7 @@
 }
 
 .table-modern td {
-  padding: 12px 16px;
+  padding: 16px 24px; /* nới mạnh padding ô dữ liệu */
   border-bottom: 1px solid #f3f4f6;
   vertical-align: top;
 }

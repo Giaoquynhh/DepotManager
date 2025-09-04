@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Header from '@components/Header';
+import Card from '@components/Card';
 import { driverDashboardApi } from '@services/driverDashboard';
+import { useTranslation } from '@hooks/useTranslation';
 
 interface DashboardData {
   summary: {
@@ -60,6 +62,8 @@ export default function DriverDashboard() {
   const [editingCost, setEditingCost] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { t, currentLanguage } = useTranslation();
+  const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
 
   useEffect(() => {
     loadDashboardData();
@@ -79,7 +83,7 @@ export default function DriverDashboard() {
       setTaskHistory(history);
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải dữ liệu';
+      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorLoading');
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -91,12 +95,12 @@ export default function DriverDashboard() {
       if (newStatus === 'PENDING_APPROVAL') {
         const task = assignedTasks.find(t => t.id === taskId);
         if (!task) {
-          alert('Không tìm thấy thông tin công việc');
+          alert(t('pages.driverDashboard.messages.taskNotFound'));
           return;
         }
         
         if (!task.cost || task.cost <= 0) {
-          alert('Vui lòng nhập chi phí trước khi chuyển sang chờ duyệt');
+          alert(t('pages.driverDashboard.messages.enterCostBeforeApproval'));
           return;
         }
       }
@@ -105,7 +109,7 @@ export default function DriverDashboard() {
       await loadDashboardData();
     } catch (error: any) {
       console.error('Error updating task status:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
+      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingStatus');
       alert(errorMessage);
     }
   };
@@ -113,28 +117,28 @@ export default function DriverDashboard() {
   const handleCostUpdate = async (taskId: string, newCost: number) => {
     try {
       if (!newCost || newCost <= 0) {
-        alert('Vui lòng nhập chi phí hợp lệ (lớn hơn 0)');
+        alert(t('pages.driverDashboard.messages.invalidCost'));
         return;
       }
       
       if (newCost > 1000000000) {
-        alert('Chi phí quá cao. Vui lòng kiểm tra lại');
+        alert(t('pages.driverDashboard.messages.costTooHigh'));
         return;
       }
       
       if (!Number.isInteger(newCost)) {
-        alert('Chi phí phải là số nguyên');
+        alert(t('pages.driverDashboard.messages.costMustBeInteger'));
         return;
       }
       
       if (newCost < 0) {
-        alert('Chi phí không thể là số âm');
+        alert(t('pages.driverDashboard.messages.costCannotBeNegative'));
         return;
       }
       
       const task = assignedTasks.find(t => t.id === taskId);
       if (task?.status === 'PENDING_APPROVAL') {
-        const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật chi phí? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+        const confirmUpdate = confirm(t('pages.driverDashboard.messages.confirmUpdatePendingApproval'));
         if (!confirmUpdate) {
           return;
         }
@@ -145,7 +149,7 @@ export default function DriverDashboard() {
       await loadDashboardData();
     } catch (error: any) {
       console.error('Error updating task cost:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật chi phí';
+      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingCost');
       alert(errorMessage);
     } finally {
       setEditingCost(null);
@@ -154,13 +158,13 @@ export default function DriverDashboard() {
 
   const handleImageUpload = async (taskId: string) => {
     if (!selectedFile) {
-      alert('Vui lòng chọn file ảnh trước khi upload');
+      alert(t('pages.driverDashboard.messages.selectImageFileBeforeUpload'));
       return;
     }
     
     const task = assignedTasks.find(t => t.id === taskId);
     if (task?.status === 'PENDING_APPROVAL') {
-      const confirmUpdate = confirm('Task này đang chờ duyệt. Bạn có chắc muốn cập nhật báo cáo? Việc này có thể ảnh hưởng đến quá trình duyệt.');
+      const confirmUpdate = confirm(t('pages.driverDashboard.messages.confirmUploadPendingApproval'));
       if (!confirmUpdate) {
         return;
       }
@@ -178,7 +182,7 @@ export default function DriverDashboard() {
     } catch (error: any) {
       console.error('Error uploading image:', error);
       
-      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi upload ảnh báo cáo';
+      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUploadingImage');
       alert(errorMessage);
       setUploadingImage(null);
     } finally {
@@ -194,7 +198,7 @@ export default function DriverDashboard() {
       const file = event.target.files?.[0];
       if (file) {
         if (!file.type.startsWith('image/')) {
-          alert('Vui lòng chọn file ảnh (JPG, PNG, GIF, etc.)');
+          alert(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
           event.target.value = '';
           setSelectedFile(null);
           return;
@@ -202,14 +206,14 @@ export default function DriverDashboard() {
         
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-          alert('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+          alert(t('pages.driverDashboard.messages.fileTooLarge5MB'));
           event.target.value = '';
           setSelectedFile(null);
           return;
         }
         
         if (file.name.length > 100) {
-          alert('Tên file quá dài. Vui lòng đổi tên file ngắn hơn');
+          alert(t('pages.driverDashboard.messages.fileNameTooLong'));
           event.target.value = '';
           setSelectedFile(null);
           return;
@@ -220,7 +224,7 @@ export default function DriverDashboard() {
       }
     } catch (error) {
       console.error('Error selecting file:', error);
-      alert('Có lỗi xảy ra khi chọn file');
+      alert(t('pages.driverDashboard.messages.errorSelectingFile'));
       event.target.value = '';
       setSelectedFile(null);
     }
@@ -239,11 +243,11 @@ export default function DriverDashboard() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'Chờ thực hiện';
-      case 'IN_PROGRESS': return 'Đang thực hiện';
-      case 'PENDING_APPROVAL': return 'Chờ duyệt';
-      case 'COMPLETED': return 'Hoàn thành';
-      case 'CANCELLED': return 'Đã hủy';
+      case 'PENDING': return t('pages.forklift.status.pending');
+      case 'IN_PROGRESS': return t('pages.forklift.status.inProgress');
+      case 'PENDING_APPROVAL': return t('pages.forklift.status.pendingApproval');
+      case 'COMPLETED': return t('pages.forklift.status.completed');
+      case 'CANCELLED': return t('pages.forklift.status.cancelled');
       default: return status;
     }
   };
@@ -253,10 +257,10 @@ export default function DriverDashboard() {
       <>
         <Header />
         <main className="container">
-          <div className="text-center py-8">
-            <div className="loading-spinner spinner-lg spinner-primary"></div>
-            <p className="mt-4">Đang tải dữ liệu...</p>
-          </div>
+            <div className="text-center py-8">
+              <div className="loading-spinner spinner-lg spinner-primary"></div>
+              <p className="mt-4">{t('pages.driverDashboard.messages.loadingData')}</p>
+            </div>
         </main>
       </>
     );
@@ -266,113 +270,102 @@ export default function DriverDashboard() {
     <>
       <Header />
       
-      <main className="container">
-        <div className="page-header">
-          <div className="page-header-content">
-            <h1 className="page-title">Bảng điều khiển Tài xế</h1>
-            <p className="page-subtitle">Quản lý công việc và theo dõi tiến độ xe nâng</p>
-          </div>
-          <div className="page-actions">
-            <button 
-              className="btn btn-primary"
-              onClick={loadDashboardData}
-            >
-              Làm mới
-            </button>
-          </div>
-        </div>
-
-        <div className="card card-padding-md">
-          <div className="card-content">
-            <div className="flex space-x-8 border-b border-gray-200">
-              {[
-                { id: 'overview', label: 'Tổng quan', icon: '📊' },
-                { id: 'tasks', label: 'Công việc', icon: '📋' },
-                { id: 'history', label: 'Lịch sử', icon: '📚' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <span className="mr-2">{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
+      <main className="container driver-dashboard-modern">
+        <div className="page-header modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1 className="page-title gradient gradient-ultimate">{t('pages.driverDashboard.title')}</h1>
+              <p className="page-subtitle">{t('pages.driverDashboard.subtitle')}</p>
             </div>
           </div>
         </div>
 
+        <Card padding="lg" className="driver-card driver-tabs-block">
+          <div className="glow-divider"></div>
+          <div className="flex space-x-8 border-b border-gray-200">
+            {[
+              { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊' },
+              { id: 'tasks', label: t('pages.driverDashboard.tabs.tasks'), icon: '📋' },
+              { id: 'history', label: t('pages.driverDashboard.tabs.history'), icon: '📚' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </Card>
+
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="card card-padding-md">
+          <div className="space-y-16">
+            <div className="stat-grid grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card padding="md" hoverable className="driver-card stat-tile">
                 <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
+                  <div className="stat-icon stat-blue">
                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Tổng công việc</p>
+                    <p className="text-sm font-medium text-gray-600">{t('pages.driverDashboard.stats.totalTasks')}</p>
                     <p className="text-2xl font-semibold text-gray-900">{dashboardData?.summary.totalTasks || 0}</p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div className="card card-padding-md">
+              <Card padding="md" hoverable className="driver-card stat-tile">
                 <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
+                  <div className="stat-icon stat-green">
                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Hoàn thành hôm nay</p>
+                    <p className="text-sm font-medium text-gray-600">{t('pages.driverDashboard.stats.completedToday')}</p>
                     <p className="text-2xl font-semibold text-gray-900">{dashboardData?.summary.completedToday || 0}</p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div className="card card-padding-md">
+              <Card padding="md" hoverable className="driver-card stat-tile">
                 <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
+                  <div className="stat-icon stat-orange">
                     <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Đang chờ</p>
+                    <p className="text-sm font-medium text-gray-600">{t('pages.driverDashboard.stats.pending')}</p>
                     <p className="text-2xl font-semibold text-gray-900">{dashboardData?.summary.pendingTasks || 0}</p>
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              <div className="card card-padding-md">
+              <Card padding="md" hoverable className="driver-card stat-tile">
                 <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
+                  <div className="stat-icon stat-purple">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Tỷ lệ hoàn thành</p>
+                    <p className="text-sm font-medium text-gray-600">{t('pages.driverDashboard.stats.completionRate')}</p>
                     <p className="text-2xl font-semibold text-gray-900">{dashboardData?.summary.completionRate || 0}%</p>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
 
             {dashboardData?.currentTask && (
-              <div className="card card-padding-lg">
-                <div className="card-header">
-                  <h3 className="card-title">Công việc hiện tại</h3>
-                </div>
-                <div className="card-content">
+              <Card title={t('pages.driverDashboard.currentTask.title')} padding="lg" hoverable={false}>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-blue-800">
@@ -384,77 +377,58 @@ export default function DriverDashboard() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600">Từ vị trí:</p>
+                        <p className="text-gray-600">{t('pages.driverDashboard.currentTask.from')}:</p>
                         <p className="font-medium">
                           {dashboardData.currentTask.from_slot 
                             ? `${dashboardData.currentTask.from_slot.block.yard.name} - ${dashboardData.currentTask.from_slot.block.code} - ${dashboardData.currentTask.from_slot.code}`
-                            : 'Bên ngoài'
+                            : t('pages.forklift.location.outside')
                           }
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Đến vị trí:</p>
+                        <p className="text-gray-600">{t('pages.driverDashboard.currentTask.to')}:</p>
                         <p className="font-medium">
                           {dashboardData.currentTask.to_slot 
                             ? `${dashboardData.currentTask.to_slot.block.yard.name} - ${dashboardData.currentTask.to_slot.block.code} - ${dashboardData.currentTask.to_slot.code}`
-                            : 'Chưa xác định'
+                            : t('pages.requests.location.unknown')
                           }
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+              </Card>
             )}
 
-            <div className="card card-padding-lg">
-              <div className="card-header">
-                <h3 className="card-title">Thao tác nhanh</h3>
-              </div>
-              <div className="card-content">
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setActiveTab('tasks')}
-                    className="btn btn-primary"
-                  >
-                    Xem công việc
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('history')}
-                    className="btn btn-outline"
-                  >
-                    Xem lịch sử
-                  </button>
-                  <button
-                    onClick={loadDashboardData}
-                    className="btn btn-success"
-                  >
-                    Làm mới dữ liệu
-                  </button>
+            <Card title={t('pages.driverDashboard.quickActions.title')} padding="lg" className="driver-card">
+                <div className="quick-actions">
+                  <button onClick={() => setActiveTab('tasks')} className="pill-btn pill-primary" onMouseDown={(e)=>{
+                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
+                  }}>📋 {t('pages.driverDashboard.quickActions.viewTasks')}</button>
+                  <button onClick={() => setActiveTab('history')} className="pill-btn pill-secondary" onMouseDown={(e)=>{
+                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
+                  }}>📚 {t('pages.driverDashboard.quickActions.viewHistory')}</button>
+                  <button onClick={loadDashboardData} className="pill-btn pill-success" onMouseDown={(e)=>{
+                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
+                  }}>🔄 {t('pages.driverDashboard.quickActions.refreshData')}</button>
                 </div>
-              </div>
-            </div>
+            </Card>
           </div>
         )}
 
         {activeTab === 'tasks' && (
-          <div className="space-y-6">
-            <div className="card card-padding-lg">
-              <div className="card-header">
-                <h3 className="card-title">Công việc được giao</h3>
-              </div>
-              <div className="card-content">
+          <div className="space-y-16">
+            <Card title={t('pages.driverDashboard.assignedTasks.title')} padding="lg">
                 <div className="table-container">
                   <table className="table-modern">
                     <thead>
                       <tr>
-                        <th>Container</th>
-                        <th>Từ vị trí</th>
-                        <th>Đến vị trí</th>
-                        <th>Chi phí</th>
-                        <th>Báo cáo</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.report')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -483,7 +457,7 @@ export default function DriverDashboard() {
                                       color: '#64748b', 
                                       fontWeight: '600',
                                       minWidth: '50px'
-                                    }}>Tài xế:</span>
+                                    }}>{t('pages.forklift.driver.driverName')}</span>
                                     <span style={{ 
                                       color: '#1e293b', 
                                       fontWeight: '500',
@@ -505,7 +479,7 @@ export default function DriverDashboard() {
                                       color: '#64748b', 
                                       fontWeight: '600',
                                       minWidth: '50px'
-                                    }}>Biển số:</span>
+                                    }}>{t('pages.forklift.driver.licensePlate')}</span>
                                     <span style={{ 
                                       color: '#1e293b', 
                                       fontWeight: '500',
@@ -523,7 +497,7 @@ export default function DriverDashboard() {
                                 <span className="location-text">
                                   {task.from_slot 
                                     ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                    : 'Bên ngoài'
+                                    : t('pages.forklift.location.outside')
                                   }
                                 </span>
                               )}
@@ -534,7 +508,7 @@ export default function DriverDashboard() {
                             <span className="location-text">
                               {task.to_slot 
                                 ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                : 'Chưa xác định'
+                                : t('pages.requests.location.unknown')
                               }
                             </span>
                           </td>
@@ -559,7 +533,7 @@ export default function DriverDashboard() {
                                    <input
                                      type="number"
                                      min="0"
-                                     placeholder="Nhập chi phí"
+                                     placeholder={t('pages.driverDashboard.cost.inputPlaceholder')}
                                      className="input input-sm"
                                      data-task-id={task.id}
                                      style={{
@@ -594,18 +568,18 @@ export default function DriverDashboard() {
                                          if (!isNaN(value) && value >= 0) {
                                            handleCostUpdate(task.id, value);
                                          } else {
-                                           alert('Vui lòng nhập số hợp lệ');
-                                         }
+                                           alert(t('pages.driverDashboard.messages.invalidNumber'));
+                                          }
                                        }}
                                      >
-                                       Lưu
+                                       {t('common.save')}
                                      </button>
                                      <button
                                        className="btn btn-sm btn-outline"
                                        style={{ fontSize: '10px', padding: '2px 6px' }}
                                        onClick={() => setEditingCost(null)}
                                      >
-                                       Hủy
+                                       {t('common.cancel')}
                                      </button>
                                    </div>
                                  </div>
@@ -634,7 +608,7 @@ export default function DriverDashboard() {
                                          fontSize: '14px',
                                          fontFamily: 'monospace'
                                        }}>
-                                         {task.cost.toLocaleString('vi-VN')}
+                                         {task.cost.toLocaleString(locale)}
                                        </span>
                                        <span style={{
                                          fontSize: '10px',
@@ -644,7 +618,7 @@ export default function DriverDashboard() {
                                          borderRadius: '2px',
                                          fontWeight: '600'
                                        }}>
-                                         VNĐ
+                                         {t('pages.driverDashboard.cost.currencyShort')}
                                        </span>
                                      </div>
                                    ) : (
@@ -653,7 +627,7 @@ export default function DriverDashboard() {
                                        fontSize: '12px',
                                        fontStyle: 'italic'
                                      }}>
-                                       Chưa có
+                                       {t('pages.forklift.cost.noCost')}
                                      </span>
                                    )}
                                    {task.status !== 'PENDING_APPROVAL' && (
@@ -666,7 +640,7 @@ export default function DriverDashboard() {
                                         }}
                                         onClick={() => setEditingCost(task.id)}
                                       >
-                                        {task.cost ? 'Sửa' : 'Thêm'}
+                                        {task.cost ? t('common.edit') : t('common.add')}
                                       </button>
                                     )}
                                  </div>
@@ -712,7 +686,7 @@ export default function DriverDashboard() {
                                          style={{ fontSize: '10px', padding: '2px 6px' }}
                                          onClick={() => handleImageUpload(task.id)}
                                        >
-                                         Upload
+                                         {t('pages.driverDashboard.report.upload')}
                                        </button>
                                        <button
                                          className="btn btn-sm btn-outline"
@@ -722,7 +696,7 @@ export default function DriverDashboard() {
                                            setSelectedFile(null);
                                          }}
                                        >
-                                         Hủy
+                                         {t('common.cancel')}
                                        </button>
                                      </div>
                                    )}
@@ -737,7 +711,7 @@ export default function DriverDashboard() {
                                  }}>
                                    {task.report_image ? (
                                      <a href={task.report_image} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                       Xem ảnh
+                                       {t('pages.driverDashboard.report.viewImage')}
                                      </a>
                                    ) : (
                                      <span style={{ 
@@ -745,7 +719,7 @@ export default function DriverDashboard() {
                                        fontSize: '12px',
                                        fontStyle: 'italic'
                                      }}>
-                                       Chưa có
+                                       {t('pages.driverDashboard.report.none')}
                                      </span>
                                    )}
                                    {task.status !== 'PENDING_APPROVAL' && (
@@ -758,7 +732,7 @@ export default function DriverDashboard() {
                                       }}
                                       onClick={() => setUploadingImage(task.id)}
                                     >
-                                      {task.report_image ? 'Sửa' : 'Thêm'}
+                                      {task.report_image ? t('common.edit') : t('common.add')}
                                     </button>
                                    )}
                                  </div>
@@ -779,7 +753,7 @@ export default function DriverDashboard() {
                                   className="btn btn-sm btn-primary"
                                   onClick={() => handleStatusUpdate(task.id, 'IN_PROGRESS')}
                                 >
-                                  Bắt đầu
+                                  {t('pages.driverDashboard.actions.start')}
                                 </button>
                               )}
                               {task.status === 'IN_PROGRESS' && (
@@ -787,7 +761,7 @@ export default function DriverDashboard() {
                                   className="btn btn-sm btn-success"
                                   onClick={() => handleStatusUpdate(task.id, 'PENDING_APPROVAL')}
                                 >
-                                  Hoàn thành
+                                  {t('pages.driverDashboard.actions.complete')}
                                 </button>
                               )}
                             </div>
@@ -797,28 +771,23 @@ export default function DriverDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-            </div>
+            </Card>
           </div>
         )}
 
         {activeTab === 'history' && (
-          <div className="space-y-6">
-            <div className="card card-padding-lg">
-              <div className="card-header">
-                <h3 className="card-title">Lịch sử công việc</h3>
-              </div>
-              <div className="card-content">
+          <div className="space-y-16">
+            <Card title={t('pages.driverDashboard.history.title')} padding="lg">
                 <div className="table-container">
                   <table className="table-modern">
                     <thead>
                       <tr>
-                        <th>Container</th>
-                        <th>Từ vị trí</th>
-                        <th>Đến vị trí</th>
-                        <th>Chi phí</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày hoàn thành</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
+                        <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
+                        <th>{t('pages.driverDashboard.history.completedAt')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -831,7 +800,7 @@ export default function DriverDashboard() {
                             <span className="location-text">
                               {task.from_slot 
                                 ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : 'Bên ngoài'
+                                : t('pages.forklift.location.outside')
                               }
                             </span>
                           </td>
@@ -844,7 +813,7 @@ export default function DriverDashboard() {
                             </span>
                           </td>
                           <td>
-                            {task.cost ? `${task.cost.toLocaleString('vi-VN')} VNĐ` : 'N/A'}
+                            {task.cost ? `${task.cost.toLocaleString(locale)} ${t('pages.driverDashboard.cost.currencyShort')}` : t('common.na')}
                           </td>
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
@@ -852,15 +821,14 @@ export default function DriverDashboard() {
                             </span>
                           </td>
                           <td>
-                            {new Date(task.updated_at).toLocaleString('vi-VN')}
+                            {new Date(task.updated_at).toLocaleString(locale)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </div>
-            </div>
+            </Card>
           </div>
         )}
       </main>

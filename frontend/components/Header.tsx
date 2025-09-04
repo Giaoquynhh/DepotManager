@@ -94,15 +94,18 @@ export default function Header() {
         console.warn('Failed to restore nav state:', error);
       }
 
-             // Restore language preference
-       try {
-         const savedLanguage = localStorage.getItem('preferred-language');
-         if (savedLanguage && (savedLanguage === 'vi' || savedLanguage === 'en')) {
-           changeLanguage(savedLanguage as 'vi' | 'en');
-         }
-       } catch (error) {
-         console.warn('Failed to restore language preference:', error);
-       }
+                   // Restore language preference - default to Vietnamese
+      try {
+        const savedLanguage = localStorage.getItem('preferred-language') || 'vi';
+        if (savedLanguage === 'vi' || savedLanguage === 'en') {
+          changeLanguage(savedLanguage as 'vi' | 'en');
+        } else {
+          changeLanguage('vi'); // Default to Vietnamese
+        }
+      } catch (error) {
+        console.warn('Failed to restore language preference:', error);
+        changeLanguage('vi'); // Default to Vietnamese on error
+      }
     }
   }, []);
 

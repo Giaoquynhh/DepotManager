@@ -54,10 +54,14 @@ export default function PermissionsPage(){
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
   const [notification, setNotification] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
 
-  // Language detection from localStorage or browser
+  // Language detection from localStorage or browser - default to Vietnamese
   useEffect(() => {
-    const savedLang = localStorage.getItem('preferred-language') || navigator.language.startsWith('en') ? 'en' : 'vi';
-    setLanguage(savedLang);
+    const savedLang = localStorage.getItem('preferred-language') || 'vi';
+    if (savedLang === 'vi' || savedLang === 'en') {
+      setLanguage(savedLang);
+    } else {
+      setLanguage('vi');
+    }
   }, []);
 
   // Listen for language changes from header
@@ -200,7 +204,7 @@ export default function PermissionsPage(){
   const { data: users } = useSWR(isAllowed ? ['/users?role=&page=1&limit=100'] : null, ([u]) => fetcher(u));
 
   const roleOptions: AppRole[] = useMemo(()=>[
-    'SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin','CustomerUser','PartnerAdmin','Security','YardManager','MaintenanceManager','Accountant'
+    'SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin','CustomerUser','PartnerAdmin','Security','YardManager','MaintenanceManager','Accountant','Driver'
   ], []);
 
   // Group catalog by group for rendering
@@ -308,6 +312,10 @@ export default function PermissionsPage(){
         'finance.invoices',
         'account.view',
       ],
+      Driver: [
+        'driver.dashboard',
+        'account.view',
+      ],
     };
   }, []);
 
@@ -344,16 +352,20 @@ export default function PermissionsPage(){
     const newRole = selected[id] || user.role;
     if (!id) return;
     if (newRole === user.role) return;
-         if (String(user.email || '') === myEmail) { setMessage(language === 'vi' ? 'Không thể tự đổi vai trò của chính mình.' : 'Cannot change your own role.'); return; }
+         if (String(user.email || '') === myEmail) { 
+           showNotification('warning', language === 'vi' ? 'Không thể tự đổi vai trò của chính mình.' : 'Cannot change your own role.');
+           return; 
+         }
     setMessage('');
     setLoadingRow(id);
+    showNotification('info', language === 'vi' ? `Đang cập nhật vai trò cho ${user.email}...` : `Updating role for ${user.email}...`);
     try{
       await api.patch(`/users/${id}`, { role: newRole });
-             setMessage(language === 'vi' ? `Đã cập nhật vai trò cho ${user.email} -> ${newRole}` : `Updated role for ${user.email} -> ${newRole}`);
+      showNotification('success', language === 'vi' ? `✅ Đã cập nhật vai trò cho ${user.email} thành ${newRole}` : `✅ Updated role for ${user.email} to ${newRole}`);
       setSelected((s)=>({ ...s, [id]: newRole }));
       mutate(['/users?role=&page=1&limit=100']);
     }catch(e:any){
-             setMessage(e?.response?.data?.message || (language === 'vi' ? 'Lỗi cập nhật vai trò' : 'Error updating role'));
+      showNotification('warning', e?.response?.data?.message || (language === 'vi' ? '❌ Lỗi cập nhật vai trò' : '❌ Error updating role'));
     }finally{
       setLoadingRow('');
     }
@@ -362,7 +374,10 @@ export default function PermissionsPage(){
   const savePermissions = async (user: any) => {
     const id = user.id || user._id;
     if (!id) return;
-         if (String(user.email || '') === myEmail) { setMessage(language === 'vi' ? 'Không thể tự đổi chức năng của chính mình.' : 'Cannot change your own functions.'); return; }
+         if (String(user.email || '') === myEmail) { 
+           showNotification('warning', language === 'vi' ? 'Không thể tự đổi chức năng của chính mình.' : 'Cannot change your own functions.');
+           return; 
+         }
     const currentPerms: string[] = Array.isArray(user.permissions) ? user.permissions : [];
     const selRole = selected[id] || user.role;
     const roleDefault = rolePresets[selRole]?.slice(0,50) || [];
@@ -370,12 +385,13 @@ export default function PermissionsPage(){
     if (sameStringSet(newPerms, currentPerms)) return; // no changes
     setMessage('');
     setLoadingRow(id);
+    showNotification('info', language === 'vi' ? `Đang cập nhật chức năng cho ${user.email}...` : `Updating functions for ${user.email}...`);
     try {
       await api.patch(`/users/${id}`, { permissions: newPerms });
-             setMessage(language === 'vi' ? `Đã cập nhật chức năng cho ${user.email}` : `Updated functions for ${user.email}`);
+      showNotification('success', language === 'vi' ? `✅ Đã cập nhật chức năng cho ${user.email}` : `✅ Updated functions for ${user.email}`);
       mutate(['/users?role=&page=1&limit=100']);
     } catch (e:any) {
-             setMessage(e?.response?.data?.message || (language === 'vi' ? 'Lỗi cập nhật chức năng' : 'Error updating functions'));
+      showNotification('warning', e?.response?.data?.message || (language === 'vi' ? '❌ Lỗi cập nhật chức năng' : '❌ Error updating functions'));
     } finally {
       setLoadingRow('');
     }
@@ -552,17 +568,19 @@ export default function PermissionsPage(){
           gap: 8px;
           margin-top: 12px;
         }
-                 .btn-save {
-           background: #059669;
-           color: white;
-           border: none;
-           padding: 10px 20px;
-           border-radius: 6px;
-           font-size: 13px;
-           font-weight: 500;
-           cursor: pointer;
-           transition: background 0.2s;
-         }
+                         .btn-save {
+          background: #059669;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s;
+          text-align: left;
+          justify-content: flex-start;
+        }
         .btn-save:hover {
           background: #047857;
         }
@@ -570,17 +588,19 @@ export default function PermissionsPage(){
           background: #9ca3af;
           cursor: not-allowed;
         }
-                 .btn-cancel {
-           background: #6b7280;
-           color: white;
-           border: none;
-           padding: 10px 20px;
-           border-radius: 6px;
-           font-size: 13px;
-           font-weight: 500;
-           cursor: pointer;
-           transition: background 0.2s;
-         }
+                         .btn-cancel {
+          background: #6b7280;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s;
+          text-align: left;
+          justify-content: flex-start;
+        }
         .btn-cancel:hover {
           background: #4b5563;
         }
@@ -867,36 +887,41 @@ export default function PermissionsPage(){
                       </td>
                       <td>
                                                  <div className="action-buttons">
-                           <button 
-                             className="btn-save"
-                             disabled={isSelf || (sel === current && sameStringSet(checkedPerms, currPerms)) || loadingRow === id}
-                             onClick={async ()=>{
-                               if (sel !== current) await saveRole(u);
-                               if (!sameStringSet(checkedPerms, currPerms)) await savePermissions(u);
-                             }}
-                             title={language === 'vi' ? "Lưu tất cả thay đổi" : "Save all changes"}
-                           >
-                             {loadingRow === id ? t[language].saving : t[language].saveChanges}
-                           </button>
-                           <button
-                             className="btn-cancel"
-                             disabled={isSelf || loadingRow === id}
-                             onClick={()=> {
-                               setSelected(prev => {
-                                 const newState = { ...prev };
-                                 delete newState[id];
-                                 return newState;
-                               });
-                               setPermSelections(prev => {
-                                 const newState = { ...prev };
-                                 delete newState[id];
-                                 return newState;
-                               });
-                             }}
-                             title={language === 'vi' ? "Hủy thay đổi" : "Cancel changes"}
-                           >
-                             {t[language].cancel}
-                           </button>
+                                                       <button 
+                              className="btn-save"
+                              disabled={isSelf || (sel === current && sameStringSet(checkedPerms, currPerms)) || loadingRow === id}
+                              onClick={async ()=>{
+                                showNotification('info', language === 'vi' ? `🔄 Đang lưu thay đổi cho ${u.email}...` : `🔄 Saving changes for ${u.email}...`);
+                                if (sel !== current) await saveRole(u);
+                                if (!sameStringSet(checkedPerms, currPerms)) await savePermissions(u);
+                                if (sel === current && sameStringSet(checkedPerms, currPerms)) {
+                                  showNotification('info', language === 'vi' ? `ℹ️ Không có thay đổi nào để lưu cho ${u.email}` : `ℹ️ No changes to save for ${u.email}`);
+                                }
+                              }}
+                              title={language === 'vi' ? "Lưu tất cả thay đổi" : "Save all changes"}
+                            >
+                              {loadingRow === id ? t[language].saving : t[language].saveChanges}
+                            </button>
+                                                       <button
+                              className="btn-cancel"
+                              disabled={isSelf || loadingRow === id}
+                              onClick={()=> {
+                                setSelected(prev => {
+                                  const newState = { ...prev };
+                                  delete newState[id];
+                                  return newState;
+                                });
+                                setPermSelections(prev => {
+                                  const newState = { ...prev };
+                                  delete newState[id];
+                                  return newState;
+                                });
+                                showNotification('info', language === 'vi' ? `🔄 Đã hủy thay đổi cho ${u.email}` : `🔄 Cancelled changes for ${u.email}`);
+                              }}
+                              title={language === 'vi' ? "Hủy thay đổi" : "Cancel changes"}
+                            >
+                              {t[language].cancel}
+                            </button>
                          </div>
                       </td>
                     </tr>

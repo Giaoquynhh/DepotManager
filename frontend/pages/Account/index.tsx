@@ -3,10 +3,12 @@ import useSWR from 'swr';
 import { useEffect, useState } from 'react';
 import { api } from '@services/api';
 import Card from '@components/Card';
+import { useTranslation } from '@hooks/useTranslation';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
 export default function Account(){
+    const { t } = useTranslation();
 	const { data, mutate } = useSWR('/auth/me', fetcher);
 	const [form, setForm] = useState({ full_name:'', email:'', phone:'' });
 	const [msg, setMsg] = useState('');
@@ -24,22 +26,22 @@ export default function Account(){
 			const payload: any = { full_name: form.full_name, phone: form.phone };
 			if (form.email && form.email !== data?.email) payload.email = form.email;
 			const res = await api.patch('/auth/me', payload);
-			setMsg(res.data?.message || 'Cập nhật thông tin thành công');
+			setMsg(res.data?.message || t('pages.account.messages.updateSuccess'));
 			mutate();
-		}catch(e:any){ setMsg(e?.response?.data?.message || 'Cập nhật thất bại'); }
+		}catch(e:any){ setMsg(e?.response?.data?.message || t('pages.account.messages.updateFailed')); }
 	};
 
 	const onChangePassword = async () => {
 		setMsg('');
 		try{
 			await api.post('/auth/me/change-password', { old: pwd.old, new: pwd.New, confirm: pwd.confirm });
-			setMsg('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
+			setMsg(t('pages.account.messages.passwordChangeSuccess'));
 			if (typeof window !== 'undefined'){
 				localStorage.removeItem('token');
 				localStorage.removeItem('refresh_token');
 				setTimeout(()=>{ window.location.href = '/Login'; }, 1200);
 			}
-		}catch(e:any){ setMsg(e?.response?.data?.message || 'Đổi mật khẩu thất bại'); }
+		}catch(e:any){ setMsg(e?.response?.data?.message || t('pages.account.messages.passwordChangeFailed')); }
 	};
 
 	return (
@@ -58,7 +60,7 @@ export default function Account(){
 					<div className="glass-card profile-card">
 						<div className="card-header">
 							<h2 className="card-title">
-								<span className="shimmer-text">👤 Hồ sơ cá nhân</span>
+								<span className="shimmer-text">👤 {t('pages.account.profile.title')}</span>
 							</h2>
 						</div>
 						
@@ -67,7 +69,7 @@ export default function Account(){
 								<span className="input-icon">👤</span>
 								<input 
 									type="text" 
-									placeholder="Họ tên" 
+									placeholder={t('pages.account.profile.fullNamePlaceholder')} 
 									value={form.full_name} 
 									onChange={e=>setForm({...form, full_name:e.target.value})}
 									className="futuristic-input"
@@ -78,7 +80,7 @@ export default function Account(){
 								<span className="input-icon">📧</span>
 								<input 
 									type="email" 
-									placeholder="Email" 
+									placeholder={t('pages.account.profile.emailPlaceholder')} 
 									value={form.email} 
 									onChange={e=>setForm({...form, email:e.target.value})}
 									className="futuristic-input"
@@ -89,7 +91,7 @@ export default function Account(){
 								<span className="input-icon">📱</span>
 								<input 
 									type="text" 
-									placeholder="Điện thoại" 
+									placeholder={t('pages.account.profile.phonePlaceholder')} 
 									value={form.phone} 
 									onChange={e=>setForm({...form, phone:e.target.value})}
 									className="futuristic-input"
@@ -97,11 +99,11 @@ export default function Account(){
 							</div>
 							
 							<div className="info-text">
-								✨ Trường chỉ đọc: role, tenant/partner. Đổi email/phone có thể yêu cầu xác minh.
+								✨ {t('pages.account.profile.readonlyInfo')}
 							</div>
 							
 							<button className="futuristic-btn primary-btn" onClick={onUpdate}>
-								<span className="btn-text">Cập nhật hồ sơ</span>
+								<span className="btn-text">{t('pages.account.profile.updateProfile')}</span>
 								<div className="btn-ripple"></div>
 							</button>
 							
@@ -113,7 +115,7 @@ export default function Account(){
 					<div className="glass-card password-card">
 						<div className="card-header">
 							<h2 className="card-title">
-								<span className="shimmer-text">🔑 Đổi mật khẩu</span>
+								<span className="shimmer-text">🔑 {t('pages.account.password.title')}</span>
 							</h2>
 						</div>
 						
@@ -122,7 +124,7 @@ export default function Account(){
 								<span className="input-icon">🔒</span>
 								<input 
 									type="password" 
-									placeholder="Mật khẩu cũ" 
+									placeholder={t('pages.account.password.oldPlaceholder')} 
 									value={pwd.old} 
 									onChange={e=>setPwd({...pwd, old:e.target.value})}
 									className="futuristic-input"
@@ -133,7 +135,7 @@ export default function Account(){
 								<span className="input-icon">🔑</span>
 								<input 
 									type="password" 
-									placeholder="Mật khẩu mới" 
+									placeholder={t('pages.account.password.newPlaceholder')} 
 									value={pwd.New} 
 									onChange={e=>setPwd({...pwd, New:e.target.value})}
 									className="futuristic-input"
@@ -144,7 +146,7 @@ export default function Account(){
 								<span className="input-icon">🔐</span>
 								<input 
 									type="password" 
-									placeholder="Xác nhận mật khẩu mới" 
+									placeholder={t('pages.account.password.confirmPlaceholder')} 
 									value={pwd.confirm} 
 									onChange={e=>setPwd({...pwd, confirm:e.target.value})}
 									className="futuristic-input"
@@ -152,11 +154,11 @@ export default function Account(){
 							</div>
 							
 							<div className="info-text">
-								🛡️ Mật khẩu ≥ 8 ký tự, gồm số, chữ hoa, ký tự đặc biệt, và khác mật khẩu cũ.
+								🛡️ {t('pages.account.password.policy')}
 							</div>
 							
 							<button className="futuristic-btn secondary-btn" onClick={onChangePassword}>
-								<span className="btn-text">Đổi mật khẩu</span>
+								<span className="btn-text">{t('pages.account.password.changePassword')}</span>
 								<div className="btn-ripple"></div>
 							</button>
 						</div>
