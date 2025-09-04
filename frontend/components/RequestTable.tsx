@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { api } from '@services/api';
-import { yardApi } from '../services/yard';
 import ChatWindowStandalone from './chat/ChatWindowStandalone';
 import InvoiceViewer from './InvoiceViewer';
 import { useTranslation } from '../hooks/useTranslation';
@@ -45,8 +44,6 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const [selectedDocument, setSelectedDocument] = React.useState<any>(null);
   const [showImageModal, setShowImageModal] = React.useState(false);
   const [activeChatRequests, setActiveChatRequests] = React.useState<Set<string>>(new Set());
-  const [containerLocations, setContainerLocations] = useState<Record<string, string>>({});
-  const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
   const [showInvoiceViewer, setShowInvoiceViewer] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string>('');
   const { t, currentLanguage } = useTranslation();
@@ -68,6 +65,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       COMPLETED: { label: t('pages.requests.filterOptions.completed'), className: 'status-completed' },
       EXPORTED: { label: t('pages.requests.filterOptions.exported'), className: 'status-exported' },
       REJECTED: { label: t('pages.requests.filterOptions.rejected'), className: 'status-rejected' },
+      SCHEDULED: { label: t('pages.requests.filterOptions.scheduled'), className: 'status-scheduled' },
+      FORWARDED: { label: t('pages.gate.statusOptions.forwarded'), className: 'status-forwarded' },
       POSITIONED: { label: t('pages.requests.filterOptions.positioned'), className: 'status-positioned' },
       FORKLIFTING: { label: t('pages.requests.filterOptions.forklifting'), className: 'status-forklifting' },
       IN_YARD: { label: t('pages.requests.filterOptions.inYard'), className: 'status-in-yard' },
@@ -168,64 +167,6 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
     return ext === 'pdf';
   };
 
-  // Function để lấy vị trí container từ API yard (tương tự như depot)
-  const getContainerLocation = async (containerNo: string) => {
-    if (!containerNo) return null;
-    
-    // Kiểm tra cache
-    if (containerLocations[containerNo]) {
-      return containerLocations[containerNo];
-    }
-    
-    // Kiểm tra đang loading
-    if (loadingLocations.has(containerNo)) {
-      return null;
-    }
-    
-    try {
-      setLoadingLocations(prev => new Set(prev).add(containerNo));
-      
-      // Gọi API yard để lấy vị trí container
-      const locationData = await yardApi.locate(containerNo);
-      
-      if (locationData && locationData.slot) {
-        const yardName = locationData.slot.block?.yard?.name || 'Depot';
-        const blockCode = locationData.slot.block?.code || '';
-        const slotCode = locationData.slot.code || '';
-        const location = `${yardName} / ${blockCode} / ${slotCode}`;
-        
-        // Cache kết quả
-        setContainerLocations(prev => ({
-          ...prev,
-          [containerNo]: location
-        }));
-        
-        return location;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error fetching container location:', error);
-      return null;
-    } finally {
-      setLoadingLocations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(containerNo);
-        return newSet;
-      });
-    }
-  };
-
-  // Load vị trí cho tất cả container khi component mount
-  useEffect(() => {
-    if (data && data.length > 0) {
-      data.forEach(item => {
-        if (item.container_no && item.type === 'EXPORT') {
-          getContainerLocation(item.container_no);
-        }
-      });
-    }
-  }, [data]);
 
   if (loading) {
     return (
@@ -285,22 +226,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   )}
                 </td>
                 <td>
-                  <div className="status-with-location">
-                    {getStatusBadge(item.status)}
-                    {item.type === 'EXPORT' && item.container_no && (
-                      <div className="location-info">
-                        <span className="location-badge">
-                          {loadingLocations.has(item.container_no) ? (
-                            <span className="loading-location">⏳ {t('common.loading')}</span>
-                          ) : (
-                            <>
-                              📍 {containerLocations[item.container_no] || t('pages.requests.location.unknown')}
-                            </>
-                          )}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {getStatusBadge(item.status)}
                 </td>
                 <td>
                   {hasDocuments(item) ? (

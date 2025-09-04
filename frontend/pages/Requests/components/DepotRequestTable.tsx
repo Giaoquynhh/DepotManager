@@ -206,7 +206,7 @@ export default function DepotRequestTable({
 									<div className="eta-empty">-</div>
 								)}
 							</td>
-							<td>
+							<td data-column="status">
 								{getStatusBadge(item.status)}
 							</td>
 							<td>
