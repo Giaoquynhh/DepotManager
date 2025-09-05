@@ -73,7 +73,12 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       IN_CAR: { label: t('pages.requests.filterOptions.inCar'), className: 'status-in-car' },
       LEFT_YARD: { label: t('pages.requests.filterOptions.leftYard'), className: 'status-left-yard' },
       PENDING_ACCEPT: { label: t('pages.requests.filterOptions.pendingAccept'), className: 'status-pending-accept' },
-      ACCEPT: { label: t('pages.requests.filterOptions.approved'), className: 'status-accept' }
+      ACCEPT: { label: t('pages.requests.filterOptions.approved'), className: 'status-accept' },
+      GATE_IN: { label: t('pages.gate.statusOptions.gateIn'), className: 'status-gate-in' },
+      GATE_OUT: { label: t('pages.gate.statusOptions.gateOut'), className: 'status-gate-out' },
+      GATE_REJECTED: { label: t('pages.gate.statusOptions.gateRejected'), className: 'status-gate-rejected' },
+      CHECKING: { label: t('pages.requests.filterOptions.checking'), className: 'status-checking' },
+      CHECKED: { label: t('pages.requests.filterOptions.checked'), className: 'status-checked' }
     };
 
     const config = statusConfig[status] || { label: status, className: 'status-default' };
@@ -303,11 +308,11 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           className="btn btn-sm btn-info"
                           onClick={() => {
                             // TODO: Open upload modal
-                            alert('Tính năng upload đang được phát triển!');
+                            alert(t('pages.requests.messages.uploadFeatureInDevelopment'));
                           }}
-                          title="Gửi thông tin chi tiết"
+                          title={t('pages.requests.actions.sendDetails')}
                         >
-                          📎 Gửi thông tin
+                          📎 {t('pages.requests.actions.sendDetails')}
                         </button>
                       )}
 
@@ -319,12 +324,12 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                             							if (item.actions?.handleOpenSupplementPopup) {
 								item.actions.handleOpenSupplementPopup(item.id);
 							} else {
-								alert('Tính năng bổ sung thông tin đang được phát triển!');
+								alert(t('pages.requests.messages.supplementFeatureInDevelopment'));
 							}
                           }}
-                          title="Bổ sung thông tin"
+                          title={t('pages.requests.actions.supplementInfo')}
                         >
-                          📋 Bổ sung thông tin
+                          📋 {t('pages.requests.actions.supplementInfo')}
                         </button>
                       )}
 
@@ -386,45 +391,45 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                                if (item.actions?.handleViewInvoice) {
                                  item.actions.handleViewInvoice(item.id);
                                } else {
-                                 alert('Tính năng xem hóa đơn đang được phát triển!');
+                                 alert(t('pages.requests.messages.viewInvoiceFeatureInDevelopment'));
                                }
                              }}
-                             title="Xem hóa đơn sửa chữa"
+                             title={t('pages.requests.actions.viewRepairInvoiceTitle')}
                            >
-                             {item.actions.loadingId === item.id + 'VIEW_INVOICE' ? '⏳' : '📄'} Xem hóa đơn
+                             {item.actions.loadingId === item.id + 'VIEW_INVOICE' ? '⏳' : '📄'} {t('pages.requests.actions.viewRepairInvoice')}
                            </button>
                           <button
                             className="btn btn-sm btn-success"
                             disabled={item.actions.loadingId === item.id + 'ACCEPT'}
                             onClick={() => {
-                              if (window.confirm('Bạn có chắc chắn muốn chấp nhận hóa đơn sửa chữa này?')) {
+                              if (window.confirm(t('pages.requests.messages.confirmAcceptRepairInvoice'))) {
                                 if (item.actions?.handleAccept) {
                                   item.actions.handleAccept(item.id);
                                 } else {
-                                  alert('Tính năng chấp nhận đang được phát triển!');
+                                  alert(t('pages.requests.messages.acceptFeatureInDevelopment'));
                                 }
                               }
                             }}
-                            title="Chấp nhận hóa đơn sửa chữa"
+                            title={t('pages.requests.actions.acceptRepairInvoice')}
                           >
-                            {item.actions.loadingId === item.id + 'ACCEPT' ? '⏳' : '✅'} Chấp nhận
+                            {item.actions.loadingId === item.id + 'ACCEPT' ? '⏳' : '✅'} {t('pages.requests.actions.accept')}
                           </button>
                           <button
                             className="btn btn-sm btn-danger"
                             disabled={item.actions.loadingId === item.id + 'REJECT'}
                             onClick={() => {
-                              const reason = window.prompt('Nhập lý do từ chối:');
+                              const reason = window.prompt(t('pages.requests.prompts.enterRejectionReason'));
                               if (reason) {
                                 if (item.actions?.handleRejectByCustomer) {
                                   item.actions.handleRejectByCustomer(item.id, reason);
                                 } else {
-                                  alert('Tính năng từ chối đang được phát triển!');
+                                  alert(t('pages.requests.messages.rejectFeatureInDevelopment'));
                                 }
                               }
                             }}
-                            title="Từ chối hóa đơn sửa chữa"
+                            title={t('pages.requests.actions.rejectRepairInvoice')}
                           >
-                            {item.actions.loadingId === item.id + 'REJECT' ? '⏳' : '❌'} Từ chối
+                            {item.actions.loadingId === item.id + 'REJECT' ? '⏳' : '❌'} {t('pages.requests.actions.reject')}
                           </button>
                         </>
                       )}
@@ -435,13 +440,13 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           className="btn btn-sm btn-outline"
                           disabled={item.actions.loadingId === item.id + 'DELETE'}
                           onClick={() => {
-                            if (window.confirm('Xóa khỏi danh sách của bạn?\nRequest vẫn hiển thị trạng thái Từ chối bên Kho.')) {
+                            if (window.confirm(t('pages.requests.messages.confirmSoftDeleteCustomer'))) {
                               item.actions!.softDeleteRequest!(item.id, 'customer');
                             }
                           }}
-                          title="Xóa khỏi danh sách"
+                          title={t('pages.requests.actions.removeFromList')}
                         >
-                          {item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Xóa
+                          {item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} {t('common.remove')}
                         </button>
                       )}
 
@@ -451,17 +456,17 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           <button
                             className="btn btn-sm btn-info"
                             onClick={() => handleViewInvoice(item.id)}
-                            title="Xem hóa đơn"
+                            title={t('pages.requests.actions.viewInvoice')}
                           >
-                            📄 Xem hóa đơn
+                            📄 {t('pages.requests.actions.viewInvoice')}
                           </button>
                           {!item.is_paid && (
                             <button
                               className="btn btn-sm btn-success"
                               onClick={() => handlePayment(item.id)}
-                              title="Thanh toán hóa đơn"
+                              title={t('pages.requests.actions.payInvoice')}
                             >
-                              💰 Thanh toán
+                              💰 {t('pages.requests.actions.payment')}
                             </button>
                           )}
                         </>

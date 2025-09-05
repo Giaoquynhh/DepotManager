@@ -563,11 +563,6 @@ export default function PermissionsPage(){
          }
         
         /* Enhanced Action Buttons */
-        .action-buttons {
-          display: flex;
-          gap: 8px;
-          margin-top: 12px;
-        }
                          .btn-save {
           background: #059669;
           color: white;
@@ -796,16 +791,14 @@ export default function PermissionsPage(){
                              className="btn-control"
                              disabled={isSelf || loadingRow === id}
                              onClick={()=> {
-                               // Loại bỏ permissions.manage khỏi danh sách chọn tất cả
-                               const allPermissions = (PERMISSION_CATALOG.map(i=>i.key) as string[]).filter(key => key !== 'permissions.manage');
-                               setPermSelections(prev=>({ ...prev, [id]: allPermissions.slice(0,50) }));
+                               setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
                                showNotification('info', 
                                  language === 'vi' ? 
-                                   `Đã chọn tất cả chức năng cho ${u.email} (trừ Phân quyền)` :
-                                   `Selected all functions for ${u.email} (except Permissions)`
+                                   `Đã chọn tất cả chức năng cho ${u.email}` :
+                                   `Selected all functions for ${u.email}`
                                );
                              }}
-                             title={language === 'vi' ? "Chọn tất cả chức năng (trừ Phân quyền)" : "Select all functions (except Permissions)"}
+                             title={language === 'vi' ? "Chọn tất cả chức năng" : "Select all functions"}
                            >
                              {t[language].selectAll}
                            </button>
@@ -829,16 +822,14 @@ export default function PermissionsPage(){
                                className="btn-control"
                                disabled={isSelf || loadingRow === id}
                                onClick={()=> {
-                                 // Loại bỏ permissions.manage khỏi role presets
-                                 const rolePermissions = (rolePresets[sel] || []).filter(key => key !== 'permissions.manage');
-                                 setPermSelections(prev=>({ ...prev, [id]: rolePermissions.slice(0,50) }));
+                                 setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
                                  showNotification('info', 
                                    language === 'vi' ? 
-                                     `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email} (trừ Phân quyền)` :
-                                     `Applied default functions for role ${sel} to ${u.email} (except Permissions)`
+                                     `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                     `Applied default functions for role ${sel} to ${u.email}`
                                  );
                                }}
-                               title={language === 'vi' ? `Áp dụng chức năng mặc định của vai trò ${sel} (trừ Phân quyền)` : `Apply default functions for role ${sel} (except Permissions)`}
+                               title={language === 'vi' ? `Áp dụng chức năng mặc định của vai trò ${sel}` : `Apply default functions for role ${sel}`}
                              >
                                {t[language].applyByRole}
                              </button>
@@ -857,18 +848,8 @@ export default function PermissionsPage(){
                                    <input
                                      type="checkbox"
                                      checked={checkedPerms.includes(key)}
-                                     disabled={isSelf || loadingRow === id || key === 'permissions.manage'}
+                                     disabled={isSelf || loadingRow === id}
                                      onChange={(e)=>{
-                                       // Không cho phép thay đổi permission "permissions.manage"
-                                       if (key === 'permissions.manage') {
-                                         showNotification('warning', 
-                                           language === 'vi' ? 
-                                             'Không thể thay đổi chức năng "Phân quyền" - chỉ dành cho SystemAdmin' :
-                                             'Cannot change "Permissions" function - SystemAdmin only'
-                                         );
-                                         return;
-                                       }
-                                       
                                        setPermSelections(prev=>{
                                          const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
                                          const has = base.includes(key);
@@ -892,17 +873,7 @@ export default function PermissionsPage(){
                                        });
                                      }}
                                    />
-                                   <span style={{
-                                     color: key === 'permissions.manage' ? '#9ca3af' : '#4b5563',
-                                     opacity: key === 'permissions.manage' ? 0.6 : 1
-                                   }}>
-                                     {translatePermissionLabel(key)}
-                                     {key === 'permissions.manage' && (
-                                       <span style={{fontSize: '10px', color: '#ef4444', marginLeft: '4px'}}>
-                                         (🔒 Khóa)
-                                       </span>
-                                     )}
-                                   </span>
+                                   <span style={{color:'#4b5563'}}>{translatePermissionLabel(key)}</span>
                                  </label>
                                ))}
                             </div>
@@ -910,7 +881,6 @@ export default function PermissionsPage(){
                         </div>
                       </td>
                       <td>
-                                                 <div className="action-buttons">
                                                        <button 
                               className="btn-save"
                               disabled={isSelf || (sel === current && sameStringSet(checkedPerms, currPerms)) || loadingRow === id}
@@ -943,10 +913,10 @@ export default function PermissionsPage(){
                                 showNotification('info', language === 'vi' ? `🔄 Đã hủy thay đổi cho ${u.email}` : `🔄 Cancelled changes for ${u.email}`);
                               }}
                               title={language === 'vi' ? "Hủy thay đổi" : "Cancel changes"}
+                              style={{marginTop: '8px'}}
                             >
                               {t[language].cancel}
                             </button>
-                         </div>
                       </td>
                     </tr>
                   );
@@ -1036,13 +1006,11 @@ export default function PermissionsPage(){
                          className="btn-control"
                          disabled={isSelf || loadingRow === id}
                          onClick={()=> {
-                           // Loại bỏ permissions.manage khỏi danh sách chọn tất cả
-                           const allPermissions = (PERMISSION_CATALOG.map(i=>i.key) as string[]).filter(key => key !== 'permissions.manage');
-                           setPermSelections(prev=>({ ...prev, [id]: allPermissions.slice(0,50) }));
+                           setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
                            showNotification('info', 
                              language === 'vi' ? 
-                               `Đã chọn tất cả chức năng cho ${u.email} (trừ Phân quyền)` :
-                               `Selected all functions for ${u.email} (except Permissions)`
+                               `Đã chọn tất cả chức năng cho ${u.email}` :
+                               `Selected all functions for ${u.email}`
                            );
                          }}
                        >
@@ -1067,13 +1035,11 @@ export default function PermissionsPage(){
                            className="btn-control"
                            disabled={isSelf || loadingRow === id}
                            onClick={()=> {
-                             // Loại bỏ permissions.manage khỏi role presets
-                             const rolePermissions = (rolePresets[sel] || []).filter(key => key !== 'permissions.manage');
-                             setPermSelections(prev=>({ ...prev, [id]: rolePermissions.slice(0,50) }));
+                             setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
                              showNotification('info', 
                                language === 'vi' ? 
-                                 `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email} (trừ Phân quyền)` :
-                                 `Applied default functions for role ${sel} to ${u.email} (except Permissions)`
+                                 `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                 `Applied default functions for role ${sel} to ${u.email}`
                              );
                            }}
                          >
@@ -1094,18 +1060,8 @@ export default function PermissionsPage(){
                                <input
                                  type="checkbox"
                                  checked={checkedPerms.includes(key)}
-                                 disabled={isSelf || loadingRow === id || key === 'permissions.manage'}
+                                 disabled={isSelf || loadingRow === id}
                                  onChange={(e)=>{
-                                   // Không cho phép thay đổi permission "permissions.manage"
-                                   if (key === 'permissions.manage') {
-                                     showNotification('warning', 
-                                       language === 'vi' ? 
-                                         'Không thể thay đổi chức năng "Phân quyền" - chỉ dành cho SystemAdmin' :
-                                         'Cannot change "Permissions" function - SystemAdmin only'
-                                     );
-                                     return;
-                                   }
-                                   
                                    setPermSelections(prev=>{
                                      const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
                                      const has = base.includes(key);
@@ -1129,18 +1085,7 @@ export default function PermissionsPage(){
                                    });
                                  }}
                                />
-                               <span style={{
-                                 color: key === 'permissions.manage' ? '#9ca3af' : '#4b5563',
-                                 opacity: key === 'permissions.manage' ? 0.6 : 1,
-                                 fontSize:'11px'
-                               }}>
-                                 {translatePermissionLabel(key)}
-                                 {key === 'permissions.manage' && (
-                                   <span style={{fontSize: '9px', color: '#ef4444', marginLeft: '4px'}}>
-                                     (🔒 Khóa)
-                                   </span>
-                                 )}
-                               </span>
+                               <span style={{color:'#4b5563', fontSize:'11px'}}>{translatePermissionLabel(key)}</span>
                              </label>
                            ))}
                         </div>
@@ -1148,7 +1093,6 @@ export default function PermissionsPage(){
                     </div>
                   </div>
                   
-                  <div className="action-buttons">
                                          <button 
                        className="btn-save"
                        disabled={isSelf || (sel === current && sameStringSet(checkedPerms, currPerms)) || loadingRow === id}
@@ -1175,10 +1119,10 @@ export default function PermissionsPage(){
                            return newState;
                          });
                        }}
+                       style={{marginTop: '8px'}}
                      >
                        {t[language].cancel}
                      </button>
-                  </div>
                 </div>
               );
             })}
