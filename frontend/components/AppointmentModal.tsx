@@ -11,8 +11,6 @@ interface AppointmentModalProps {
 interface AppointmentData {
     appointment_time: string;
     location_type: 'gate' | 'yard';
-    location_id: string;
-    gate_ref?: string;
     note?: string;
 }
 
@@ -41,8 +39,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
     const [formData, setFormData] = useState<AppointmentData>({
         appointment_time: getDefaultAppointmentTime(),
         location_type: 'gate',
-        location_id: '',
-        gate_ref: '',
         note: ''
     });
     const [locations, setLocations] = useState<Location[]>([]);
@@ -95,9 +91,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
             }
         }
 
-        if (!formData.location_id) {
-            newErrors.location_id = 'Địa điểm là bắt buộc';
-        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -116,8 +109,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
              const appointmentData = {
                  appointment_time: new Date(formData.appointment_time), // Backend expects Date object, not string
                  appointment_location_type: formData.location_type,
-                 appointment_location_id: formData.location_id,
-                 gate_ref: formData.gate_ref || undefined,
                  appointment_note: formData.note || undefined
              };
                          console.log('Sending appointment data:', appointmentData);
@@ -128,8 +119,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
             setFormData({
                 appointment_time: getDefaultAppointmentTime(),
                 location_type: 'gate',
-                location_id: '',
-                gate_ref: '',
                 note: ''
             });
             setErrors({});
@@ -249,7 +238,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                             value={formData.location_type}
                             onChange={(e) => {
                                 handleInputChange('location_type', e.target.value as 'gate' | 'yard');
-                                handleInputChange('location_id', ''); // Reset location_id when type changes
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         >
@@ -258,44 +246,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                         </select>
                     </div>
 
-                    {/* Địa điểm cụ thể */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Địa điểm *
-                        </label>
-                        <select
-                            value={formData.location_id}
-                            onChange={(e) => handleInputChange('location_id', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md ${
-                                errors.location_id ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                        >
-                            <option value="">Chọn địa điểm</option>
-                            {filteredLocations.map(location => (
-                                <option key={location.id} value={location.id}>
-                                    {location.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.location_id && (
-                            <p className="text-red-500 text-sm mt-1">{errors.location_id}</p>
-                        )}
-                    </div>
-
-                    {/* GATE REF */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            GATE REF <span className="text-gray-500 text-sm">(tùy chọn)</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.gate_ref}
-                            onChange={(e) => handleInputChange('gate_ref', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Nhập GATE REF nếu có"
-                            maxLength={100}
-                        />
-                    </div>
 
                     {/* Ghi chú */}
                     <div>

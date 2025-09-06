@@ -232,6 +232,66 @@ export class DriverDashboardService {
 				}
 			}
 
+			// Nếu forklift task chuyển sang COMPLETED, cập nhật ServiceRequest và YardPlacement
+			if (status === 'COMPLETED' && task.container_no) {
+				const latestRequest = await tx.serviceRequest.findFirst({
+					where: { container_no: task.container_no },
+					orderBy: { createdAt: 'desc' }
+				});
+
+				if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+					// Logic mới: Phân biệt giữa IMPORT và EXPORT
+					let newStatus: string;
+					if (latestRequest.type === 'EXPORT') {
+						// Export request: FORKLIFTING → IN_CAR
+						newStatus = 'IN_CAR';
+						
+						// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
+						await tx.yardPlacement.updateMany({
+							where: { 
+								container_no: task.container_no,
+								status: { in: ['OCCUPIED', 'HOLD'] }
+							},
+							data: { 
+								status: 'REMOVED',
+								removed_at: new Date(),
+								updatedAt: new Date()
+							}
+						});
+					} else {
+						// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
+						newStatus = 'IN_YARD';
+					}
+
+					// Cập nhật trạng thái ServiceRequest
+					await tx.serviceRequest.update({
+						where: { id: latestRequest.id },
+						data: { 
+							status: newStatus,
+							updatedAt: new Date()
+						}
+					});
+
+					// Ghi log audit cho việc thay đổi trạng thái ServiceRequest
+					await tx.auditLog.create({
+						data: {
+							actor_id: driverId,
+							action: 'REQUEST_STATUS_UPDATED',
+							entity: 'ServiceRequest',
+							entity_id: latestRequest.id,
+							meta: {
+								oldStatus: latestRequest.status,
+								newStatus: newStatus,
+								containerNo: task.container_no,
+								requestType: latestRequest.type,
+								taskId: taskId,
+								timestamp: new Date()
+							}
+						}
+					});
+				}
+			}
+
 			return updatedForkliftTask;
 		});
 

@@ -157,22 +157,22 @@ export default function GateActionButtons({
     }
   };
 
+  // Hiển thị action GATE_OUT cho IN_YARD và IN_CAR
+  if (currentStatus === 'IN_YARD' || currentStatus === 'IN_CAR') {
+    return (
+      <button
+        onClick={handleGateOut}
+        disabled={isLoading}
+        className="action-btn action-btn-success"
+        style={{ backgroundColor: 'var(--color-green-600)' }}
+      >
+        {isLoading ? 'Đang xử lý...' : 'GATE_OUT - Xe rời kho'}
+      </button>
+    );
+  }
+
   // Chỉ hiển thị buttons khi status là FORWARDED
   if (currentStatus !== 'FORWARDED') {
-    // Hiển thị action GATE_OUT cho IN_YARD và IN_CAR
-    if (currentStatus === 'IN_YARD' || currentStatus === 'IN_CAR') {
-      return (
-        <button
-          onClick={handleGateOut}
-          disabled={isLoading}
-          className="action-btn action-btn-success"
-          style={{ backgroundColor: 'var(--color-green-600)' }}
-        >
-          {isLoading ? 'Đang xử lý...' : 'GATE_OUT - Xe rời kho'}
-        </button>
-      );
-    }
-    
     return (
       <span style={{ 
         color: 'var(--color-gray-500)', 
@@ -184,8 +184,6 @@ export default function GateActionButtons({
         {currentStatus === 'GATE_REJECTED' && 'Đã từ chối'}
         {currentStatus === 'COMPLETED' && 'Hoàn tất'}
         {currentStatus === 'SCHEDULED' && 'Đã lên lịch'}
-        {currentStatus === 'IN_YARD' && 'Đã ở bãi - Chờ xe rời kho'}
-        {currentStatus === 'IN_CAR' && 'Đã lên xe - Chờ xe rời kho'}
       </span>
     );
   }

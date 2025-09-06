@@ -563,6 +563,83 @@ export class GateService {
         return 'application/octet-stream';
     }
   }
+
+  /**
+   * Lấy lịch sử xe ra vào cổng
+   */
+  async getGateHistory(params: any): Promise<any> {
+    const {
+      container_no,
+      driver_name,
+      license_plate,
+      page = 1,
+      limit = 20,
+      status = 'GATE_OUT'
+    } = params;
+
+    const skip = (page - 1) * limit;
+
+    // Tạo điều kiện where
+    const where: any = {
+      status: status
+    };
+
+    if (container_no) {
+      where.container_no = {
+        contains: container_no,
+        mode: 'insensitive'
+      };
+    }
+
+    if (driver_name) {
+      where.driver_name = {
+        contains: driver_name,
+        mode: 'insensitive'
+      };
+    }
+
+    if (license_plate) {
+      where.license_plate = {
+        contains: license_plate,
+        mode: 'insensitive'
+      };
+    }
+
+    // Lấy dữ liệu
+    const [requests, total] = await Promise.all([
+      prisma.serviceRequest.findMany({
+        where,
+        select: {
+          id: true,
+          container_no: true,
+          type: true,
+          driver_name: true,
+          license_plate: true,
+          time_in: true,
+          time_out: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true
+        },
+        orderBy: {
+          time_out: 'desc' // Sắp xếp theo thời gian ra mới nhất
+        },
+        skip,
+        take: limit
+      }),
+      prisma.serviceRequest.count({ where })
+    ]);
+
+    return {
+      data: requests,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  }
 }
 
 

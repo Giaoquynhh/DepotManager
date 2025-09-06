@@ -380,6 +380,8 @@
       "statusOptions": {
         "scheduled": "Scheduled",
         "forwarded": "Forwarded",
+        "inYard": "In Yard",
+        "inCar": "In Car",
         "gateIn": "Gate In",
         "gateOut": "Gate Out",
         "gateRejected": "Rejected",

@@ -339,6 +339,7 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setLoadingId,
 		handleViewInvoice,
 		handleAccept,
+		handleAcceptScheduled,
 		handleRejectByCustomer,
 		handleAcceptWithModal,
 		confirmAccept,

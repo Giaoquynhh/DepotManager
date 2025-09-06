@@ -49,6 +49,10 @@ export default function GateRequestTable({ requests, loading, onRefresh }: GateR
         return t('pages.gate.statusOptions.scheduled');
       case 'FORWARDED':
         return t('pages.gate.statusOptions.forwarded');
+      case 'IN_YARD':
+        return `🏭 ${t('pages.gate.statusOptions.inYard')}`;
+      case 'IN_CAR':
+        return `🚛 ${t('pages.gate.statusOptions.inCar')}`;
       case 'GATE_IN':
         return `🟢 ${t('pages.gate.statusOptions.gateIn')}`;
       case 'GATE_OUT':

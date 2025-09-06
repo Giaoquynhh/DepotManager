@@ -435,144 +435,6 @@ export default function DriverDashboard() {
                                alignItems: 'center',
                                justifyContent: 'center'
                              }}>
-                               {editingCost === task.id ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#fef3c7',
-                                   borderRadius: '6px',
-                                   border: '1px solid #f59e0b'
-                                 }}>
-                                   <input
-                                     type="number"
-                                     min="0"
-                                     placeholder={t('pages.driverDashboard.cost.inputPlaceholder')}
-                                     className="input input-sm"
-                                     data-task-id={task.id}
-                                     style={{
-                                       width: '100px',
-                                       textAlign: 'center',
-                                       fontSize: '12px'
-                                     }}
-                                     defaultValue={task.cost || ''}
-                                     onKeyPress={(e) => {
-                                       if (e.key === 'Enter') {
-                                         const value = parseInt((e.target as HTMLInputElement).value);
-                                         if (!isNaN(value) && value >= 0) {
-                                           handleCostUpdate(task.id, value);
-                                         }
-                                       }
-                                     }}
-                                   />
-                                   <div style={{
-                                     display: 'flex',
-                                     gap: '4px'
-                                   }}>
-                                     <button
-                                       className="btn btn-sm btn-success"
-                                       style={{ fontSize: '10px', padding: '2px 6px' }}
-                                       onClick={() => {
-                                         const input = document.querySelector(`input[data-task-id="${task.id}"]`) as HTMLInputElement;
-                                         if (!input) {
-                                           console.error('Input not found for task:', task.id);
-                                           return;
-                                         }
-                                         const value = parseInt(input.value || '0');
-                                         if (!isNaN(value) && value >= 0) {
-                                           handleCostUpdate(task.id, value);
-                                         } else {
-                                           showError(t('pages.driverDashboard.messages.invalidNumber'));
-                                          }
-                                       }}
-                                     >
-                                       {t('common.save')}
-                                     </button>
-                                     <button
-                                       className="btn btn-sm btn-outline"
-                                       style={{ fontSize: '10px', padding: '2px 6px' }}
-                                       onClick={() => {
-                                         setEditingCost(null);
-                                         showSuccess(t('pages.driverDashboard.messages.editCancelled'));
-                                       }}
-                                     >
-                                       {t('common.cancel')}
-                                     </button>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '4px',
-                                   padding: '6px'
-                                 }}>
-                                   {task.cost && task.cost > 0 ? (
-                                     <div style={{
-                                       display: 'flex',
-                                       flexDirection: 'column',
-                                       alignItems: 'center',
-                                       gap: '4px',
-                                       padding: '6px',
-                                       backgroundColor: '#f0fdf4',
-                                       borderRadius: '4px',
-                                       border: '1px solid #bbf7d0'
-                                     }}>
-                                       <span style={{ 
-                                         color: '#059669', 
-                                         fontWeight: '700',
-                                         fontSize: '14px',
-                                         fontFamily: 'monospace'
-                                       }}>
-                                         {task.cost.toLocaleString(locale)}
-                                       </span>
-                                       <span style={{
-                                         fontSize: '10px',
-                                         color: '#16a34a',
-                                         backgroundColor: '#dcfce7',
-                                         padding: '2px 4px',
-                                         borderRadius: '2px',
-                                         fontWeight: '600'
-                                       }}>
-                                         {t('pages.driverDashboard.cost.currencyShort')}
-                                       </span>
-                                     </div>
-                                   ) : (
-                                     <span style={{ 
-                                       color: '#94a3b8', 
-                                       fontSize: '12px',
-                                       fontStyle: 'italic'
-                                     }}>
-                                       {t('pages.forklift.cost.noCost')}
-                                     </span>
-                                   )}
-                                   {task.status !== 'PENDING_APPROVAL' && (
-                                      <button
-                                        className="btn btn-sm btn-outline"
-                                        style={{
-                                          fontSize: '10px',
-                                          padding: '2px 6px',
-                                          marginTop: '4px'
-                                        }}
-                                        onClick={() => setEditingCost(task.id)}
-                                      >
-                                        {task.cost ? t('common.edit') : t('common.add')}
-                                      </button>
-                                    )}
-                                 </div>
-                               )}
-                             </div>
-                           </td>
-                          
-                           <td>
-                             <div style={{
-                               display: 'flex',
-                               alignItems: 'center',
-                               justifyContent: 'center'
-                             }}>
                                {uploadingImage === task.id ? (
                                  <div style={{
                                    display: 'flex',
@@ -631,10 +493,13 @@ export default function DriverDashboard() {
                                  }}>
                                    {task.report_image ? (
                                      <a 
-                                       href={task.report_image.startsWith('http') 
-                                         ? task.report_image 
-                                         : `http://localhost:1000${task.report_image}`
-                                       } 
+                                       href={(() => {
+                                         const url = task.report_image.startsWith('http') 
+                                           ? task.report_image 
+                                           : `http://localhost:1000${task.report_image}`;
+                                         console.log('Generated image URL:', url);
+                                         return url;
+                                       })()} 
                                        target="_blank" 
                                        rel="noopener noreferrer" 
                                        className="text-blue-600 hover:underline"

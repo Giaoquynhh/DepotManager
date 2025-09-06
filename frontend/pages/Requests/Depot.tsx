@@ -20,7 +20,12 @@ import { useTranslation } from '../../hooks/useTranslation';
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
 export default function DepotRequests() {
-	const { data, error, isLoading } = useSWR('/requests?page=1&limit=20', fetcher);
+	const { data, error, isLoading, isValidating } = useSWR('/requests?page=1&limit=20', fetcher, {
+		revalidateOnFocus: true, // Tự động cập nhật khi focus vào tab
+		revalidateOnReconnect: true, // Tự động cập nhật khi kết nối lại
+		refreshInterval: 30000, // Tự động cập nhật mỗi 30 giây
+		dedupingInterval: 5000, // Tránh duplicate requests trong 5 giây
+	});
 	const [state, actions] = useDepotActions();
 	const { t } = useTranslation();
 
@@ -197,6 +202,29 @@ export default function DepotRequests() {
 					<div className="header-content">
 						<div className="header-left">
 						<h1 className="page-title gradient gradient-ultimate">{t('pages.requests.depotTitle')}</h1>
+						{isValidating && !isLoading && (
+							<div className="auto-refresh-indicator" style={{
+								display: 'inline-flex',
+								alignItems: 'center',
+								marginLeft: '12px',
+								fontSize: '12px',
+								color: '#666',
+								background: '#f0f8ff',
+								padding: '4px 8px',
+								borderRadius: '4px',
+								border: '1px solid #e0e0e0'
+							}}>
+								<div style={{
+									width: '8px',
+									height: '8px',
+									borderRadius: '50%',
+									background: '#4CAF50',
+									marginRight: '6px',
+									animation: 'pulse 1.5s infinite'
+								}}></div>
+								Đang cập nhật...
+							</div>
+						)}
 					</div>
 
 						<div className="header-actions">

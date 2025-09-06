@@ -383,6 +383,8 @@
       "statusOptions": {
         "scheduled": "Đã lên lịch",
         "forwarded": "Đã chuyển tiếp",
+        "inYard": "Trong bãi",
+        "inCar": "Trên xe",
         "gateIn": "Đã cho phép vào",
         "gateOut": "Đã cho phép ra",
         "gateRejected": "Đã từ chối",
@@ -819,7 +821,8 @@
         "approve": "✅ Duyệt",
         "approveTitle": "Duyệt và hoàn thành công việc",
         "editCost": "💰 Chỉnh sửa chi phí",
-        "driverAssigned": "Đã gán tài xế"
+        "driverAssigned": "Đã gán tài xế",
+        "inProgress": "Đang thực hiện..."
       },
       "modal": {
         "editCost": "Chỉnh sửa chi phí",
@@ -888,6 +891,11 @@
         "fileTooLarge5MB": "File quá lớn. Vui lòng chọn file nhỏ hơn 5MB",
         "fileNameTooLong": "Tên file quá dài. Vui lòng đổi tên file ngắn hơn",
         "errorSelectingFile": "Có lỗi xảy ra khi chọn file",
+        "fileSelectedSuccessfully": "Đã chọn file thành công",
+        "uploadCancelled": "Đã hủy upload",
+        "dataLoadedSuccessfully": "Tải dữ liệu thành công",
+        "imageUploadedSuccessfully": "Upload ảnh thành công",
+        "statusUpdatedSuccessfully": "Cập nhật trạng thái thành công",
         "invalidNumber": "Vui lòng nhập số hợp lệ",
         "loadingData": "Đang tải dữ liệu...",
         "requireReportBeforeComplete": "Vui lòng thêm tài liệu báo cáo trước khi hoàn thành công việc",

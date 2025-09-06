@@ -284,6 +284,26 @@ export class GateController {
       });
     }
   }
+
+  /**
+   * Lấy lịch sử xe ra vào cổng
+   */
+  async getGateHistory(req: AuthRequest, res: Response) {
+    try {
+      const params = req.query;
+      const result = await this.gateService.getGateHistory(params);
+      
+      res.json({
+        message: 'Lấy lịch sử xe ra vào cổng thành công',
+        data: result.data,
+        pagination: result.pagination
+      });
+    } catch (error: any) {
+      res.status(400).json({ 
+        message: error.message || 'Có lỗi xảy ra khi lấy lịch sử xe ra vào cổng' 
+      });
+    }
+  }
 }
 
 export default new GateController();

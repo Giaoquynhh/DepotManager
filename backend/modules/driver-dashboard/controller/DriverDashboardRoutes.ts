@@ -10,7 +10,7 @@ import fs from 'fs';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Sử dụng đường dẫn tuyệt đối cố định
-    const uploadPath = 'D:\\container34\\manageContainer\\backend\\uploads\\reports';
+    const uploadPath = 'D:\\container35\\manageContainer\\backend\\uploads\\reports';
     
     console.log('=== MULTER DEBUG ===');
     console.log('Multer upload destination:', uploadPath);
@@ -28,7 +28,9 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = file.fieldname + '-' + uniqueSuffix + '-' + file.originalname;
+    // Làm sạch tên file để tránh ký tự đặc biệt
+    const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filename = file.fieldname + '-' + uniqueSuffix + '-' + cleanOriginalName;
     console.log('Generated filename:', filename);
     cb(null, filename);
   }
@@ -74,7 +76,7 @@ router.post('/tasks/:taskId/report', upload.single('report_image'), (req, res) =
 router.get('/reports/:filename', (req, res) => {
   const { filename } = req.params;
   // Sử dụng đường dẫn tuyệt đối cố định
-  const filePath = path.join('D:\\container34\\manageContainer\\backend\\uploads\\reports', filename);
+  const filePath = path.join('D:\\container35\\manageContainer\\backend\\uploads\\reports', filename);
   
   console.log('=== SERVING FILE DEBUG ===');
   console.log('Filename:', filename);

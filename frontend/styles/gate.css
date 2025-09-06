@@ -498,6 +498,16 @@
   color: var(--color-red-800);
 }
 
+.status-in-yard {
+  background: var(--color-indigo-100);
+  color: var(--color-indigo-800);
+}
+
+.status-in-car {
+  background: var(--color-orange-100);
+  color: var(--color-orange-800);
+}
+
 .status-completed {
   background: var(--color-emerald-100);
   color: var(--color-emerald-800);
@@ -515,6 +525,67 @@
   min-width: 100px;
   text-align: center;
   font-size: var(--font-size-sm);
+}
+
+/* Gate History Styling */
+.gate-history-container {
+  padding: var(--space-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.history-table-container {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th {
+  background-color: var(--color-gray-50);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+  text-align: left;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-200);
+  font-size: var(--font-size-sm);
+}
+
+.history-table td {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-100);
+  font-size: var(--font-size-sm);
+}
+
+.history-table tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: var(--color-gray-200);
+  border-color: var(--color-gray-300);
 }
 
 /* License Plate Styling */

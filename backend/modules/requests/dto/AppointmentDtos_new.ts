@@ -4,7 +4,7 @@ import Joi from 'joi';
 export interface CreateAppointmentDto {
     appointment_time: string; // ISO8601 datetime
     location_type: 'gate' | 'yard';
-    location_id: string;
+    location_id?: string;
     gate_ref?: string;
     note?: string;
 }
@@ -40,7 +40,7 @@ export const createAppointmentSchema = Joi.object({
         'any.only': 'Loại địa điểm phải là gate hoặc yard',
         'any.required': 'Loại địa điểm là bắt buộc'
     }),
-    location_id: Joi.string().required().messages({
+    location_id: Joi.string().allow('').optional().messages({
         'any.required': 'ID địa điểm là bắt buộc'
     }),
     gate_ref: Joi.string().allow('').optional().max(100).messages({

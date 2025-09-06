@@ -7,10 +7,10 @@ const gateController = new GateController();
 
 // Không cần auth middleware vì đã có trong main.ts
 
-// Forward request từ Kho sang Gate (SaleAdmin)
+// Forward request từ Kho sang Gate (SaleAdmin, SystemAdmin)
 router.patch(
   '/requests/:id/forward',
-  requireRoles('SaleAdmin'),
+  requireRoles('SaleAdmin', 'SystemAdmin'),
   gateController.forwardRequest.bind(gateController)
 );
 
@@ -21,24 +21,24 @@ router.patch(
   gateController.approveGate.bind(gateController)
 );
 
-// Gate reject request (SaleAdmin)
+// Gate reject request (SaleAdmin, SystemAdmin)
 router.patch(
   '/requests/:id/reject',
-  requireRoles('SaleAdmin'),
+  requireRoles('SaleAdmin', 'SystemAdmin'),
   gateController.rejectGate.bind(gateController)
 );
 
-// Gate chấp nhận xe vào (YardManager)
+// Gate chấp nhận xe vào (YardManager, SystemAdmin)
 router.patch(
   '/requests/:id/gate-accept',
-  requireRoles('YardManager'),
+  requireRoles('YardManager', 'SystemAdmin'),
   gateController.acceptGate.bind(gateController)
 );
 
-// Gate từ chối xe (YardManager)
+// Gate từ chối xe (YardManager, SystemAdmin)
 router.patch(
   '/requests/:id/gate-reject',
-  requireRoles('YardManager'),
+  requireRoles('YardManager', 'SystemAdmin'),
   gateController.rejectGate.bind(gateController)
 );
 
@@ -70,11 +70,18 @@ router.get(
   gateController.viewDocument.bind(gateController)
 );
 
-// Gate OUT - Xe rời kho (YardManager, SaleAdmin)
+// Gate OUT - Xe rời kho (YardManager, SaleAdmin, SystemAdmin)
 router.patch(
   '/requests/:id/gate-out',
-  requireRoles('YardManager', 'SaleAdmin'),
+  requireRoles('YardManager', 'SaleAdmin', 'SystemAdmin'),
   gateController.gateOut.bind(gateController)
+);
+
+// Lịch sử xe ra vào cổng (tất cả role có thể thấy trang Gate)
+router.get(
+  '/history',
+  requireRoles('SystemAdmin', 'BusinessAdmin', 'YardManager', 'SaleAdmin', 'MaintenanceManager'),
+  gateController.getGateHistory.bind(gateController)
 );
 
 export default router;

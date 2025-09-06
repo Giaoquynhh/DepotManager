@@ -4,8 +4,6 @@ import { api } from '@services/api';
 interface AppointmentFormData {
   appointment_time: string;
   location_type: 'gate' | 'yard';
-  location_id: string;
-  gate_ref?: string;
   note?: string;
 }
 
@@ -56,8 +54,6 @@ export default function AppointmentForm({
   const [formData, setFormData] = useState<AppointmentFormData>({
     appointment_time: getDefaultAppointmentTime(),
     location_type: 'gate',
-    location_id: '',
-    gate_ref: '',
     note: ''
   });
   const [locations, setLocations] = useState<Location[]>([]);
@@ -106,9 +102,6 @@ export default function AppointmentForm({
          newErrors.location_type = 'Vui lòng chọn loại địa điểm';
        }
 
-       if (!formData.location_id) {
-         newErrors.location_id = 'Vui lòng chọn địa điểm';
-       }
 
        // Validate appointment_time is in the future
        if (formData.appointment_time) {
@@ -141,8 +134,6 @@ export default function AppointmentForm({
        const appointmentData = {
          appointment_time: new Date(formData.appointment_time), // Backend expects Date object, not string
          appointment_location_type: formData.location_type,
-         appointment_location_id: formData.location_id,
-         gate_ref: formData.gate_ref?.trim() || undefined,
          appointment_note: formData.note?.trim() || undefined
        };
        
@@ -158,10 +149,6 @@ export default function AppointmentForm({
          return;
        }
        
-       if (!appointmentData.appointment_location_id) {
-         onError('Địa điểm là bắt buộc');
-         return;
-       }
        
        // Debug logging
        console.log('=== DEBUG APPOINTMENT SUBMISSION ===');
@@ -321,46 +308,7 @@ export default function AppointmentForm({
           </div>
         </div>
 
-        {/* Location */}
-        <div className="appointment-form-group">
-          <label className="appointment-form-label" htmlFor="location_id">
-            Địa điểm *
-          </label>
-          <select
-            id="location_id"
-            className={`appointment-form-select ${errors.location_id ? 'error' : ''}`}
-            value={formData.location_id}
-            onChange={(e) => handleInputChange('location_id', e.target.value)}
-            disabled={loading}
-          >
-            <option value="">Chọn địa điểm</option>
-            {filteredLocations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.name}
-              </option>
-            ))}
-          </select>
-          {errors.location_id && (
-            <span className="appointment-form-error">{errors.location_id}</span>
-          )}
-        </div>
 
-        {/* Gate Ref */}
-        <div className="appointment-form-group">
-          <label className="appointment-form-label" htmlFor="gate_ref">
-            GATE REF <span className="text-gray-500 text-sm">(tùy chọn)</span>
-          </label>
-          <input
-            type="text"
-            id="gate_ref"
-            className="appointment-form-input"
-            value={formData.gate_ref}
-            onChange={(e) => handleInputChange('gate_ref', e.target.value)}
-            placeholder="Nhập GATE REF nếu có"
-            maxLength={100}
-            disabled={loading}
-          />
-        </div>
 
 
 

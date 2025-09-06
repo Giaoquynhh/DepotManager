@@ -480,14 +480,66 @@ export class ForkliftController {
 				return res.status(400).json({ message: 'Job is not in progress, pending, or assigned status' });
 			}
 
-			const updatedJob = await prisma.forkliftTask.update({
-				where: { id: jobId },
-				data: {
-					status: 'COMPLETED'
+			// Thực hiện transaction để cập nhật cả forklift task, service request và yard placement
+			const updatedJob = await prisma.$transaction(async (tx) => {
+				// Cập nhật trạng thái forklift task sang COMPLETED
+				const updatedForkliftTask = await tx.forkliftTask.update({
+					where: { id: jobId },
+					data: { 
+						status: 'COMPLETED',
+						updatedAt: new Date()
+					}
+				});
+
+				// Cập nhật ServiceRequest từ FORKLIFTING sang trạng thái mới
+				if (job.container_no) {
+					const latestRequest = await tx.serviceRequest.findFirst({
+						where: { container_no: job.container_no },
+						orderBy: { createdAt: 'desc' }
+					});
+
+					if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+						// Logic mới: Phân biệt giữa IMPORT và EXPORT
+						let newStatus: string;
+						if (latestRequest.type === 'EXPORT') {
+							// Export request: FORKLIFTING → IN_CAR
+							newStatus = 'IN_CAR';
+							
+							// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
+							await tx.yardPlacement.updateMany({
+								where: { 
+									container_no: job.container_no,
+									status: { in: ['OCCUPIED', 'HOLD'] }
+								},
+								data: { 
+									status: 'REMOVED',
+									removed_at: new Date(),
+									updatedAt: new Date()
+								}
+							});
+						} else {
+							// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
+							newStatus = 'IN_YARD';
+						}
+
+						await tx.serviceRequest.update({
+							where: { id: latestRequest.id },
+							data: { 
+								status: newStatus,
+								updatedAt: new Date()
+							}
+						});
+					}
 				}
+
+				return updatedForkliftTask;
 			});
 
-			await audit(req.user!._id, 'FORKLIFT_JOB_COMPLETED', 'FORKLIFT_TASK', jobId);
+			await audit(req.user!._id, 'FORKLIFT_JOB_COMPLETED', 'FORKLIFT_TASK', jobId, { 
+				previous_status: job.status,
+				new_status: 'COMPLETED',
+				completed_at: new Date()
+			});
 
 			return res.json({
 				success: true,
@@ -596,6 +648,19 @@ export class ForkliftController {
 						if (latestRequest.type === 'EXPORT') {
 							// Export request: FORKLIFTING → IN_CAR
 							newStatus = 'IN_CAR';
+							
+							// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
+							await tx.yardPlacement.updateMany({
+								where: { 
+									container_no: job.container_no,
+									status: { in: ['OCCUPIED', 'HOLD'] }
+								},
+								data: { 
+									status: 'REMOVED',
+									removed_at: new Date(),
+									updatedAt: new Date()
+								}
+							});
 						} else {
 							// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
 							newStatus = 'IN_YARD';

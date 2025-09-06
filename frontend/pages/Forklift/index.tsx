@@ -97,7 +97,87 @@ export default function Forklift() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [costModalOpen, setCostModalOpen] = useState(false);
 
+  // Modal styles
+  const modalStyles = {
+    modal: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    },
+    modalContent: {
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      padding: '0',
+      maxWidth: '500px',
+      width: '90%',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+    },
+    modalHeader: {
+      padding: '20px',
+      borderBottom: '1px solid #e5e7eb',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    modalTitle: {
+      margin: 0,
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#1f2937'
+    },
+    modalClose: {
+      background: 'none',
+      border: 'none',
+      fontSize: '24px',
+      cursor: 'pointer',
+      color: '#6b7280',
+      padding: '0',
+      width: '30px',
+      height: '30px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    modalBody: {
+      padding: '20px'
+    },
+    modalFooter: {
+      padding: '20px',
+      borderTop: '1px solid #e5e7eb',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '10px'
+    },
+    formGroup: {
+      marginBottom: '20px'
+    },
+    formLabel: {
+      display: 'block',
+      marginBottom: '8px',
+      fontWeight: '500',
+      color: '#374151'
+    },
+    formInput: {
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid #d1d5db',
+      borderRadius: '6px',
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'border-color 0.2s'
+    }
+  };
 
   useEffect(() => {
     // Lấy thông tin user role
@@ -762,114 +842,119 @@ export default function Forklift() {
                              borderRadius: '6px',
                              border: '1px solid #e2e8f0'
                            }}>
-                                                         {task.status === 'PENDING' && !task.assigned_driver_id && (
-                               <button
-                                 className="btn btn-sm btn-outline"
-                                 style={{
-                                   width: '100%',
-                                   margin: '0',
-                                   padding: '6px 8px',
-                                   fontSize: '11px',
-                                   fontWeight: '600'
-                                 }}
-                                 onClick={() => handleCancelJob(task.id)}
-                               >
-{t('pages.forklift.actions.cancel')}
-                               </button>
-                             )}
-                                                         {task.status === 'ASSIGNED' && (
-                               <div style={{ 
-                                 color: '#6b7280', 
-                                 fontSize: '11px',
-                                 textAlign: 'center',
-                                 padding: '8px',
-                                 backgroundColor: '#f3f4f6',
-                                 borderRadius: '4px',
-                                 border: '1px solid #d1d5db'
-                               }}>
-{t('pages.forklift.actions.driverAssigned')}
-                               </div>
-                             )}
-                                                         {/* Không hiển thị gì khi đã gán tài xế - chỉ để trống */}
-                                                         {task.status === 'ASSIGNED' && (
-                               <button
-                                 className="btn btn-sm btn-primary"
-                                 style={{
-                                   width: '100%',
-                                   margin: '0',
-                                   padding: '6px 8px',
-                                   fontSize: '11px',
-                                   fontWeight: '600'
-                                 }}
-                                 onClick={() => handleBeginWork(task.id)}
-                               >
-{t('pages.forklift.actions.startWork')}
-                               </button>
-                             )}
-                                                         {task.status === 'IN_PROGRESS' && (
-                               <button
-                                 className="btn btn-sm btn-success"
-                                 style={{
-                                   width: '100%',
-                                   margin: '0',
-                                   padding: '6px 8px',
-                                   fontSize: '11px',
-                                   fontWeight: '600'
-                                 }}
-                                 onClick={() => handleCompleteJob(task.id)}
-                               >
-{t('pages.forklift.actions.complete')}
-                               </button>
-                             )}
-                             
-                                                           {task.status === 'PENDING_APPROVAL' && (
-                                <button
-                                  className="btn btn-sm btn-success"
-                                  style={{
-                                    width: '100%',
-                                    margin: '0',
-                                    padding: '6px 8px',
+                            {/* Không hiển thị action nào khi task đang trong quá trình thực hiện */}
+                            {task.status === 'IN_PROGRESS' ? (
+                              <div style={{ 
+                                color: '#6b7280', 
+                                fontSize: '11px',
+                                textAlign: 'center',
+                                padding: '8px',
+                                backgroundColor: '#f3f4f6',
+                                borderRadius: '4px',
+                                border: '1px solid #d1d5db',
+                                fontStyle: 'italic'
+                              }}>
+                                {t('pages.forklift.actions.inProgress')}
+                              </div>
+                            ) : (
+                              <>
+                                {task.status === 'PENDING' && !task.assigned_driver_id && (
+                                  <button
+                                    className="btn btn-sm btn-outline"
+                                    style={{
+                                      width: '100%',
+                                      margin: '0',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => handleCancelJob(task.id)}
+                                  >
+                                    {t('pages.forklift.actions.cancel')}
+                                  </button>
+                                )}
+                                
+                                {task.status === 'ASSIGNED' && (
+                                  <div style={{ 
+                                    color: '#6b7280', 
                                     fontSize: '11px',
-                                    fontWeight: '600'
-                                  }}
-                                  onClick={() => handleApproveJob(task.id)}
-                                  title={t('pages.forklift.actions.approveTitle')}
-                                >
-{t('pages.forklift.actions.approve')}
-                                </button>
-                              )}
-                            {/* Gán tài xế lần đầu */}
-                            {task.status === 'PENDING' && !task.assigned_driver_id && (
-                              <button
-                                className="btn btn-sm btn-info"
-                                 style={{
-                                   width: '100%',
-                                   margin: '0',
-                                   padding: '6px 8px',
-                                   fontSize: '11px',
-                                   fontWeight: '600'
-                                 }}
-                                onClick={() => handleAssignDriver(task)}
-                              >
-{t('pages.forklift.actions.assignDriver')}
-                               </button>
-                            )}
-                            
-                            {/* Gán lại tài xế khác */}
-                            {task.status === 'PENDING' && task.assigned_driver_id && (
-                              <button
-                                className="btn btn-sm btn-warning"
-                                 style={{
-                                   width: '100%',
-                                   margin: '0',
-                                   padding: '6px 8px',
-                                   fontSize: '11px',
-                                   fontWeight: '600'
-                                 }}
-                                onClick={() => handleAssignDriver(task)}
-                              >
-{t('pages.forklift.actions.reassignDriver')}
-                               </button>
+                                    textAlign: 'center',
+                                    padding: '8px',
+                                    backgroundColor: '#f3f4f6',
+                                    borderRadius: '4px',
+                                    border: '1px solid #d1d5db'
+                                  }}>
+                                    {t('pages.forklift.actions.driverAssigned')}
+                                  </div>
+                                )}
+                                
+                                {task.status === 'ASSIGNED' && (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    style={{
+                                      width: '100%',
+                                      margin: '0',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => handleBeginWork(task.id)}
+                                  >
+                                    {t('pages.forklift.actions.startWork')}
+                                  </button>
+                                )}
+                                
+                                {task.status === 'PENDING_APPROVAL' && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    style={{
+                                      width: '100%',
+                                      margin: '0',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => handleApproveJob(task.id)}
+                                    title={t('pages.forklift.actions.approveTitle')}
+                                  >
+                                    {t('pages.forklift.actions.approve')}
+                                  </button>
+                                )}
+                                
+                                {/* Gán tài xế lần đầu */}
+                                {task.status === 'PENDING' && !task.assigned_driver_id && (
+                                  <button
+                                    className="btn btn-sm btn-info"
+                                    style={{
+                                      width: '100%',
+                                      margin: '0',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => handleAssignDriver(task)}
+                                  >
+                                    {t('pages.forklift.actions.assignDriver')}
+                                  </button>
+                                )}
+                                
+                                {/* Gán lại tài xế khác */}
+                                {task.status === 'PENDING' && task.assigned_driver_id && (
+                                  <button
+                                    className="btn btn-sm btn-warning"
+                                    style={{
+                                      width: '100%',
+                                      margin: '0',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => handleAssignDriver(task)}
+                                  >
+                                    {t('pages.forklift.actions.reassignDriver')}
+                                  </button>
+                                )}
+                              </>
                             )}
                           </div>
                         </td>
@@ -905,7 +990,7 @@ export default function Forklift() {
         />
       )}
       {/* Update Cost Modal */}
-      {selectedTask && (
+      {selectedTask && costModalOpen && (
         <div style={modalStyles.modal}>
           <div style={modalStyles.modalContent}>
             <div style={modalStyles.modalHeader}>

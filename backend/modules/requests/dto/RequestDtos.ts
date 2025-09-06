@@ -48,9 +48,9 @@ export const uploadDocSchema = Joi.object({
 export const scheduleRequestSchema = Joi.object({
 	appointment_time: Joi.date().required(),
 	appointment_location_type: Joi.string().valid('gate', 'yard').optional(),
-	appointment_location_id: Joi.string().optional(),
-	gate_ref: Joi.string().optional(),
-	appointment_note: Joi.string().optional()
+	appointment_location_id: Joi.string().allow('').optional(),
+	gate_ref: Joi.string().allow('').optional(),
+	appointment_note: Joi.string().allow('').optional()
 });
 
 export const addInfoSchema = Joi.object({
