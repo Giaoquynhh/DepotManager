@@ -491,7 +491,7 @@ export class YardService {
 			// Tạo yard mới
 			const yard = await tx.yard.create({
 				data: {
-					name: 'Depot A'
+					name: 'B'
 				}
 			});
 
@@ -556,7 +556,7 @@ export class YardService {
 			// Tạo cấu hình mặc định
 			const yard = await tx.yard.create({
 				data: {
-					name: 'Depot A'
+					name: 'B'
 				}
 			});
 

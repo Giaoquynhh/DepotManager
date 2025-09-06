@@ -90,7 +90,6 @@ export default function DocumentViewer({
             <button className="btn btn-secondary" onClick={handleDownload}>
               📥 Tải xuống
             </button>
-            <button className="modal-close" onClick={onClose}>×</button>
           </div>
         </div>
 

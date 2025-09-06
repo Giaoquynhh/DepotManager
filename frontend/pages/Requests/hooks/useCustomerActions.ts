@@ -6,6 +6,18 @@ export interface CustomerActionsState {
 	msg: { text: string; ok: boolean } | null;
 	loadingId: string;
 	me: any;
+	// Delete modal states
+	showDeleteModal: boolean;
+	deleteRequestId: string;
+	deleteLoading: boolean;
+	// Reject modal states
+	showRejectModal: boolean;
+	rejectRequestId: string;
+	rejectLoading: boolean;
+	// Accept modal states
+	showAcceptModal: boolean;
+	acceptRequestId: string;
+	acceptLoading: boolean;
 }
 
 export interface CustomerActions {
@@ -15,12 +27,38 @@ export interface CustomerActions {
 	handleAccept: (id: string) => Promise<void>;
 	handleAcceptScheduled: (id: string) => Promise<void>;
 	handleRejectByCustomer: (id: string, reason: string) => Promise<void>;
+	// Accept modal actions
+	handleAcceptWithModal: (requestId: string) => void;
+	confirmAccept: () => Promise<void>;
+	cancelAccept: () => void;
+	// Reject modal actions
+	handleRejectWithModal: (requestId: string) => void;
+	confirmReject: (reason: string) => Promise<void>;
+	cancelReject: () => void;
+	// Delete modal actions
+	handleDeleteWithModal: (requestId: string) => void;
+	confirmDelete: () => Promise<void>;
+	cancelDelete: () => void;
 }
 
 export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 	const [msg, setMsg] = useState<{ text: string; ok: boolean }|null>(null);
 	const [loadingId, setLoadingId] = useState<string>('');
 	const [me, setMe] = useState<any>(null);
+	// Delete modal states
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteRequestId, setDeleteRequestId] = useState<string>('');
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	
+	// Reject modal states
+	const [showRejectModal, setShowRejectModal] = useState(false);
+	const [rejectRequestId, setRejectRequestId] = useState<string>('');
+	const [rejectLoading, setRejectLoading] = useState(false);
+	
+	// Accept modal states
+	const [showAcceptModal, setShowAcceptModal] = useState(false);
+	const [acceptRequestId, setAcceptRequestId] = useState<string>('');
+	const [acceptLoading, setAcceptLoading] = useState(false);
 
 	// Load user info
 	useEffect(() => {
@@ -178,10 +216,122 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		}
 	};
 
+	// Reject modal actions
+	const handleRejectWithModal = (requestId: string) => {
+		setRejectRequestId(requestId);
+		setShowRejectModal(true);
+	};
+
+	const confirmReject = async (reason: string) => {
+		if (!rejectRequestId) return;
+		
+		setRejectLoading(true);
+		try {
+			await api.patch(`/requests/${rejectRequestId}/reject-by-customer`, { reason });
+			mutate('/requests?page=1&limit=20');
+			setMsg({ text: 'Đã từ chối hóa đơn sửa chữa thành công', ok: true });
+			
+			// Đóng modal sau 1 giây
+			setTimeout(() => {
+				setShowRejectModal(false);
+				setRejectRequestId('');
+			}, 1000);
+		} catch (e: any) {
+			setMsg({ text: `Không thể từ chối: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+		} finally {
+			setRejectLoading(false);
+		}
+	};
+
+	const cancelReject = () => {
+		setShowRejectModal(false);
+		setRejectRequestId('');
+	};
+
+	// Accept modal actions
+	const handleAcceptWithModal = (requestId: string) => {
+		setAcceptRequestId(requestId);
+		setShowAcceptModal(true);
+	};
+
+	const confirmAccept = async () => {
+		if (!acceptRequestId) return;
+		
+		setAcceptLoading(true);
+		try {
+			await api.patch(`/requests/${acceptRequestId}/accept`);
+			mutate('/requests?page=1&limit=20');
+			setMsg({ text: 'Đã chấp nhận hóa đơn sửa chữa thành công', ok: true });
+			
+			// Đóng modal sau 1 giây
+			setTimeout(() => {
+				setShowAcceptModal(false);
+				setAcceptRequestId('');
+			}, 1000);
+		} catch (e: any) {
+			setMsg({ text: `Không thể chấp nhận: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
+		} finally {
+			setAcceptLoading(false);
+		}
+	};
+
+	const cancelAccept = () => {
+		setShowAcceptModal(false);
+		setAcceptRequestId('');
+	};
+
+	// Mở modal gỡ bỏ
+	const handleDeleteWithModal = (requestId: string) => {
+		setDeleteRequestId(requestId);
+		setShowDeleteModal(true);
+	};
+
+	// Xác nhận gỡ bỏ
+	const confirmDelete = async () => {
+		if (!deleteRequestId) return;
+		setDeleteLoading(true);
+		setMsg(null);
+		try {
+			await api.delete(`/requests/${deleteRequestId}?scope=customer`);
+			mutate('/requests?page=1&limit=20');
+			setMsg({
+				text: 'Yêu cầu đã được gỡ bỏ khỏi danh sách khách hàng!',
+				ok: true
+			});
+			setTimeout(() => {
+				setShowDeleteModal(false);
+				setDeleteRequestId('');
+			}, 1000);
+		} catch (e: any) {
+			setMsg({
+				text: `Không thể gỡ bỏ: ${e?.response?.data?.message || 'Lỗi không xác định'}`,
+				ok: false
+			});
+		} finally {
+			setDeleteLoading(false);
+		}
+	};
+
+	// Hủy gỡ bỏ
+	const cancelDelete = () => {
+		setShowDeleteModal(false);
+		setDeleteRequestId('');
+		setDeleteLoading(false);
+	};
+
 	const state: CustomerActionsState = {
 		msg,
 		loadingId,
-		me
+		me,
+		showDeleteModal,
+		deleteRequestId,
+		deleteLoading,
+		showRejectModal,
+		rejectRequestId,
+		rejectLoading,
+		showAcceptModal,
+		acceptRequestId,
+		acceptLoading
 	};
 
 	const actions: CustomerActions = {
@@ -189,8 +339,16 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setLoadingId,
 		handleViewInvoice,
 		handleAccept,
-		handleAcceptScheduled,
-		handleRejectByCustomer
+		handleRejectByCustomer,
+		handleAcceptWithModal,
+		confirmAccept,
+		cancelAccept,
+		handleRejectWithModal,
+		confirmReject,
+		cancelReject,
+		handleDeleteWithModal,
+		confirmDelete,
+		cancelDelete
 	};
 
 	return [state, actions];

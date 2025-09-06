@@ -235,6 +235,26 @@ export default function PermissionsPage(){
     return groupTranslations[groupName]?.[language] || groupName;
   };
 
+  // Function to translate role names
+  const translateRoleName = (role: string) => {
+    const roleTranslations: Record<string, Record<'vi' | 'en', string>> = {
+      'SystemAdmin': { vi: 'Quản trị hệ thống', en: 'SystemAdmin' },
+      'BusinessAdmin': { vi: 'Quản trị kinh doanh', en: 'BusinessAdmin' },
+      'HRManager': { vi: 'Quản lý nhân sự', en: 'HRManager' },
+      'SaleAdmin': { vi: 'Quản trị bán hàng', en: 'SaleAdmin' },
+      'CustomerAdmin': { vi: 'Quản trị khách hàng', en: 'CustomerAdmin' },
+      'CustomerUser': { vi: 'Người dùng khách hàng', en: 'CustomerUser' },
+      'PartnerAdmin': { vi: 'Quản trị đối tác', en: 'PartnerAdmin' },
+      'Security': { vi: 'Bảo vệ', en: 'Security' },
+      'YardManager': { vi: 'Quản lý bãi', en: 'YardManager' },
+      'MaintenanceManager': { vi: 'Quản lý bảo trì', en: 'MaintenanceManager' },
+      'Accountant': { vi: 'Kế toán', en: 'Accountant' },
+      'Driver': { vi: 'Tài xế', en: 'Driver' }
+    };
+    
+    return roleTranslations[role]?.[language] || role;
+  };
+
   // Function to translate permission labels
   const translatePermissionLabel = (key: string) => {
     const permissionTranslations: Record<string, Record<'vi' | 'en', string>> = {
@@ -361,7 +381,7 @@ export default function PermissionsPage(){
     showNotification('info', language === 'vi' ? `Đang cập nhật vai trò cho ${user.email}...` : `Updating role for ${user.email}...`);
     try{
       await api.patch(`/users/${id}`, { role: newRole });
-      showNotification('success', language === 'vi' ? `✅ Đã cập nhật vai trò cho ${user.email} thành ${newRole}` : `✅ Updated role for ${user.email} to ${newRole}`);
+      showNotification('success', language === 'vi' ? `✅ Đã cập nhật vai trò cho ${user.email} thành ${translateRoleName(newRole)}` : `✅ Updated role for ${user.email} to ${newRole}`);
       setSelected((s)=>({ ...s, [id]: newRole }));
       mutate(['/users?role=&page=1&limit=100']);
     }catch(e:any){
@@ -748,12 +768,12 @@ export default function PermissionsPage(){
                         <div style={{fontSize:'14px', color:'#374151'}}>{u.full_name}</div>
                       </td>
                       <td>
-                        <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${current}` : `Current Role: ${current}`}>
+                        <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                           {current === 'SystemAdmin' && '👑'}
                           {current === 'BusinessAdmin' && '💼'}
                           {current === 'SaleAdmin' && '💰'}
                           {current === 'Driver' && '🚗'}
-                          {current}
+                          {translateRoleName(current)}
                         </span>
                       </td>
                       <td>
@@ -777,7 +797,7 @@ export default function PermissionsPage(){
                                                      title={language === 'vi' ? "Chọn vai trò mới" : "Select new role"}
                         >
                           {roleOptions.map(r => (
-                            <option key={r} value={r}>{r}</option>
+                            <option key={r} value={r}>{translateRoleName(r)}</option>
                           ))}
                         </select>
                                                  {isSelf && (
@@ -825,11 +845,11 @@ export default function PermissionsPage(){
                                  setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
                                  showNotification('info', 
                                    language === 'vi' ? 
-                                     `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                     `Đã áp dụng chức năng mặc định của vai trò ${translateRoleName(sel)} cho ${u.email}` :
                                      `Applied default functions for role ${sel} to ${u.email}`
                                  );
                                }}
-                               title={language === 'vi' ? `Áp dụng chức năng mặc định của vai trò ${sel}` : `Apply default functions for role ${sel}`}
+                               title={language === 'vi' ? `Áp dụng chức năng mặc định của vai trò ${translateRoleName(sel)}` : `Apply default functions for role ${sel}`}
                              >
                                {t[language].applyByRole}
                              </button>
@@ -955,12 +975,12 @@ export default function PermissionsPage(){
                       <div className="user-email">{u.email}</div>
                       <div className="user-name">{u.full_name}</div>
                     </div>
-                    <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${current}` : `Current Role: ${current}`}>
+                    <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                       {current === 'SystemAdmin' && '👑'}
                       {current === 'BusinessAdmin' && '💼'}
                       {current === 'SaleAdmin' && '💰'}
                       {current === 'Driver' && '🚗'}
-                      {current}
+                      {translateRoleName(current)}
                     </span>
                   </div>
                   
@@ -987,7 +1007,7 @@ export default function PermissionsPage(){
                       }}
                     >
                       {roleOptions.map(r => (
-                        <option key={r} value={r}>{r}</option>
+                        <option key={r} value={r}>{translateRoleName(r)}</option>
                       ))}
                     </select>
                                          {isSelf && (
@@ -1038,7 +1058,7 @@ export default function PermissionsPage(){
                              setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
                              showNotification('info', 
                                language === 'vi' ? 
-                                 `Đã áp dụng chức năng mặc định của vai trò ${sel} cho ${u.email}` :
+                                 `Đã áp dụng chức năng mặc định của vai trò ${translateRoleName(sel)} cho ${u.email}` :
                                  `Applied default functions for role ${sel} to ${u.email}`
                              );
                            }}

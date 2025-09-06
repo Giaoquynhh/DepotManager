@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { maintenanceApi } from '@services/maintenance';
 import { mutate } from 'swr';
+import { useTranslation } from '@hooks/useTranslation';
 import ContainerRepairModal from './ContainerRepairModal';
 import PendingContainersModalContainer from './PendingContainersModalContainer';
+import NotificationModal from './NotificationModal';
 
 interface PendingContainersModalProps {
   isOpen: boolean;
@@ -11,6 +13,8 @@ interface PendingContainersModalProps {
 }
 
 export default function PendingContainersModal({ isOpen, onClose, onRepairCreated }: PendingContainersModalProps) {
+  const { t } = useTranslation();
+  
   // State quản lý danh sách container IMPORT đang chờ kiểm tra
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -18,6 +22,32 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
   const [checkResults, setCheckResults] = useState<{[key: string]: 'PASS' | 'FAIL' | 'FAIL_WITH_OPTIONS' | 'UNREPAIRABLE' | 'REPAIRABLE' | null}>({});
   const [isCreateRepairModalOpen, setIsCreateRepairModalOpen] = useState(false);
   const [selectedContainerForRepair, setSelectedContainerForRepair] = useState<any>(null);
+  
+  // State cho notification modal
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error' | 'info' | 'warning';
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
+
+  const showNotification = (type: 'success' | 'error' | 'info' | 'warning', title: string, message: string) => {
+    setNotification({
+      isOpen: true,
+      type,
+      title,
+      message
+    });
+  };
+
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isOpen: false }));
+  };
 
   const fetchPendingContainers = async () => {
     if (!isOpen) return;
@@ -28,7 +58,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+        throw new Error(t('pages.maintenance.repairs.pendingContainers.messages.loginRequired'));
       }
 
       const controller = new AbortController();
@@ -68,19 +98,19 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       console.error('Error fetching pending containers:', err);
       
       if (err.name === 'AbortError') {
-        setError('Yêu cầu bị timeout. Vui lòng thử lại.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.requestTimeout'));
       } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        setError('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và đảm bảo backend server đang chạy.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.connectionError'));
       } else if (err.message.includes('401')) {
-        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.sessionExpired'));
       } else if (err.message.includes('403')) {
-        setError('Bạn không có quyền truy cập dữ liệu này.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.accessDenied'));
       } else if (err.message.includes('404')) {
-        setError('API endpoint không tồn tại. Vui lòng liên hệ admin.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.apiNotFound'));
       } else if (err.message.includes('500')) {
-        setError('Lỗi server. Vui lòng thử lại sau.');
+        setError(t('pages.maintenance.repairs.pendingContainers.messages.serverError'));
       } else {
-        setError(err.message || 'Có lỗi xảy ra khi tải dữ liệu');
+        setError(err.message || t('pages.maintenance.repairs.pendingContainers.messages.unknownError'));
       }
     } finally {
       setLoading(false);
@@ -92,7 +122,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       // Cập nhật request status thành CHECKING trong database
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+        throw new Error(t('pages.maintenance.repairs.pendingContainers.messages.loginRequired'));
       }
 
       // Cập nhật request status thành CHECKING
@@ -149,10 +179,14 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
         }
       }
 
-      alert('Đã bắt đầu kiểm tra container. Trạng thái đã chuyển sang CHECKING và đã tạo phiếu sửa chữa.');
+      showNotification('success', t('common.success'), t('pages.maintenance.repairs.pendingContainers.messages.inspectionStarted'));
+      // Đóng popup sau khi bắt đầu kiểm tra
+      setTimeout(() => {
+        onClose();
+      }, 2000);
     } catch (err: any) {
       console.error('Error starting container check:', err);
-      alert(`Lỗi khi bắt đầu kiểm tra container: ${err.message}`);
+      showNotification('error', t('common.error'), `${t('pages.maintenance.repairs.pendingContainers.messages.errorStartingInspection')}: ${err.message}`);
     }
   };
 
@@ -161,7 +195,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       // Tìm container và phiếu sửa chữa
       const container = requests.find(req => req.id === requestId);
       if (!container) {
-        alert('Không tìm thấy container');
+        showNotification('error', t('common.error'), t('pages.maintenance.repairs.pendingContainers.messages.containerNotFound'));
         return;
       }
 
@@ -193,7 +227,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
           }
           
           setRequests(prev => prev.filter(req => req.id !== requestId));
-          alert('Kết quả kiểm tra: Đạt chuẩn. Container đã được xóa khỏi danh sách chờ.');
+          showNotification('success', t('common.success'), t('pages.maintenance.repairs.pendingContainers.messages.inspectionPassed'));
         } else {
           setCheckResults(prev => ({
             ...prev,
@@ -209,7 +243,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
         // Nếu không tìm thấy phiếu sửa chữa, xử lý như cũ
         if (result === 'PASS') {
           setRequests(prev => prev.filter(req => req.id !== requestId));
-          alert('Kết quả kiểm tra: Đạt chuẩn. Container đã được xóa khỏi danh sách chờ.');
+          showNotification('success', t('common.success'), t('pages.maintenance.repairs.pendingContainers.messages.inspectionPassed'));
         } else {
           setCheckResults(prev => ({
             ...prev,
@@ -219,7 +253,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       }
     } catch (error: any) {
       console.error('Lỗi khi xử lý kết quả kiểm tra:', error);
-      alert(`Lỗi khi xử lý kết quả kiểm tra: ${error?.message || 'Không xác định'}`);
+      showNotification('error', t('common.error'), `${t('pages.maintenance.repairs.pendingContainers.messages.errorProcessingResult')}: ${error?.message || 'Không xác định'}`);
     }
   };
 
@@ -229,7 +263,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
         // Tìm container và phiếu sửa chữa
         const container = requests.find(req => req.id === requestId);
         if (!container) {
-          alert('Không tìm thấy container');
+          showNotification('error', t('common.error'), t('pages.maintenance.repairs.pendingContainers.messages.containerNotFound'));
           return;
         }
 
@@ -263,13 +297,13 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
           mutate(['repairs', 'REJECTED']);
         }
 
-        const reason = 'Container không đạt chuẩn';
+        const reason = t('pages.maintenance.repairs.pendingContainers.messages.inspectionFailed');
         setCheckResults(prev => ({
           ...prev,
           [requestId]: option
         }));
         setRequests(prev => prev.filter(req => req.id !== requestId));
-        alert(`Kết quả kiểm tra: ${reason}. Container đã được xóa khỏi danh sách chờ.`);
+        showNotification('warning', t('pages.maintenance.repairs.pendingContainers.messages.inspectionFailed'), `${reason}. Container đã được xóa khỏi danh sách chờ.`);
       } else {
         const container = requests.find(req => req.id === requestId);
         
@@ -277,7 +311,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
           try {
             const token = localStorage.getItem('token');
             if (!token) {
-              throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+              throw new Error(t('pages.maintenance.repairs.pendingContainers.messages.loginRequired'));
             }
             
             const response = await fetch(`/backend/maintenance/equipments?type=CONTAINER&code=${container?.container_no}`, {
@@ -327,24 +361,24 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       }
     } catch (error: any) {
       console.error('Lỗi khi xử lý tùy chọn thất bại:', error);
-      alert(`Lỗi khi xử lý tùy chọn thất bại: ${error?.message || 'Không xác định'}`);
+      showNotification('error', t('common.error'), `${t('pages.maintenance.repairs.pendingContainers.messages.errorProcessingOption')}: ${error?.message || 'Không xác định'}`);
     }
   };
 
   const handleCreateRepairForContainer = async (form: any) => {
     try {
       if (!form.problem_description || form.problem_description.trim() === '') {
-        alert('Vui lòng nhập mô tả lỗi');
+        showNotification('warning', t('common.warning'), t('pages.maintenance.repairs.pendingContainers.messages.pleaseEnterErrorDescription'));
         return;
       }
       
       if (form.estimated_cost < 0) {
-        alert('Chi phí dự toán không thể âm');
+        showNotification('warning', t('common.warning'), t('pages.maintenance.repairs.pendingContainers.messages.costCannotBeNegative'));
         return;
       }
       
       if (form.estimated_cost === 0) {
-        const confirmZero = window.confirm('Chi phí dự toán là 0. Bạn có chắc chắn muốn tiếp tục?');
+        const confirmZero = window.confirm(t('pages.maintenance.repairs.pendingContainers.messages.confirmZeroCost'));
         if (!confirmZero) {
           return;
         }
@@ -361,7 +395,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       const result = await maintenanceApi.createRepair(payload);
       
       if (!result) {
-        throw new Error('API không trả về dữ liệu');
+        throw new Error(t('pages.maintenance.repairs.pendingContainers.messages.apiNoData'));
       }
       
       // Cập nhật request status thành CHECKED
@@ -392,35 +426,35 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
       
       mutate(['repairs', 'CHECKING']);
       
-      alert('Đã tạo phiếu sửa chữa thành công cho container! Container đã được xóa khỏi danh sách chờ.');
+      showNotification('success', t('common.success'), t('pages.maintenance.repairs.pendingContainers.messages.repairCreated'));
       
     } catch (err: any) {
       console.error('Error creating repair:', err);
       
-      let errorMessage = 'Lỗi khi tạo phiếu sửa chữa';
+      let errorMessage = t('pages.maintenance.repairs.pendingContainers.messages.errorCreatingRepair');
       
       if (err.response) {
         const status = err.response.status;
         const data = err.response.data;
         
         if (status === 400) {
-          errorMessage = `Lỗi dữ liệu: ${data?.message || 'Dữ liệu không hợp lệ'}`;
+          errorMessage = `${t('pages.maintenance.repairs.pendingContainers.messages.dataError')}: ${data?.message || t('pages.maintenance.repairs.pendingContainers.messages.invalidData')}`;
         } else if (status === 401) {
-          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          errorMessage = t('pages.maintenance.repairs.pendingContainers.messages.sessionExpired');
         } else if (status === 403) {
-          errorMessage = 'Bạn không có quyền tạo phiếu sửa chữa.';
+          errorMessage = t('pages.maintenance.repairs.pendingContainers.messages.noPermissionCreateRepair');
         } else if (status === 500) {
-          errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+          errorMessage = t('pages.maintenance.repairs.pendingContainers.messages.serverErrorWithStatus');
         } else {
-          errorMessage = `Lỗi server (${status}): ${data?.message || 'Không xác định'}`;
+          errorMessage = `${t('pages.maintenance.repairs.pendingContainers.messages.serverErrorWithStatus')} (${status}): ${data?.message || 'Không xác định'}`;
         }
       } else if (err.request) {
-        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+        errorMessage = t('pages.maintenance.repairs.pendingContainers.messages.networkError');
       } else {
         errorMessage = `Lỗi: ${err.message}`;
       }
       
-      alert(errorMessage);
+      showNotification('error', t('common.error'), errorMessage);
     }
   };
 
@@ -460,7 +494,7 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
           onCheckContainer={handleCheckContainer}
           onCheckResult={handleCheckResult}
           onFailOption={handleFailOption}
-          title="Danh sách container IMPORT đang chờ (GATE_IN)"
+          title={t('pages.maintenance.repairs.pendingContainers.title')}
         />
       </div>
 
@@ -472,6 +506,16 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
         }}
         onSubmit={handleCreateRepairForContainer}
         selectedContainer={selectedContainerForRepair}
+      />
+
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        autoClose={true}
+        autoCloseDelay={3000}
       />
     </>
   );

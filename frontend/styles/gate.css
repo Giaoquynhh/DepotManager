@@ -1042,14 +1042,24 @@
 /* Document Viewer Styles */
 .document-viewer-overlay {
   z-index: 1500; /* Cao hơn modal-overlay chung (1400) */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .document-viewer-modal {
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 90vw;
-  height: 90vh;
+  max-width: calc(100vw - 300px); /* Trừ đi chiều rộng sidebar */
+  max-height: 80vh;
+  width: calc(100vw - 300px);
+  height: 80vh;
   z-index: 1501; /* Cao hơn overlay */
+  margin-left: 280px; /* Đẩy modal sang phải để tránh sidebar */
 }
 
 .document-viewer-modal .modal-header {
@@ -1058,6 +1068,8 @@
   align-items: center;
   padding: 16px 24px;
   border-bottom: 1px solid var(--color-gray-200);
+  background: white;
+  color: var(--color-gray-900);
 }
 
 .document-viewer-modal .modal-header h3 {
@@ -1074,11 +1086,12 @@
 
 .document-viewer-modal .modal-body {
   flex: 1;
-  padding: 0;
+  padding: 20px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--color-gray-50);
 }
 
 .document-preview {
@@ -1087,22 +1100,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-gray-50);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .image-preview {
   max-width: 100%;
   max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .pdf-preview {
   width: 100%;
   height: 100%;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .file-info {
@@ -1163,14 +1181,82 @@
 }
 
 .btn-secondary {
-  background: var(--color-gray-100);
-  color: var(--color-gray-700);
-  border: 1px solid var(--color-gray-200);
+  background: transparent !important;
+  color: var(--color-gray-700) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 16px;
 }
 
 .btn-secondary:hover {
-  background: var(--color-gray-200);
-  border-color: var(--color-gray-300);
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: none !important;
+  color: var(--color-gray-700) !important;
+}
+
+/* Document Viewer Responsive */
+@media (max-width: 1024px) {
+  .document-viewer-modal {
+    max-width: calc(100vw - 200px);
+    width: calc(100vw - 200px);
+    margin-left: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .document-viewer-modal {
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 95vw;
+    height: 90vh;
+    margin-left: 0; /* Reset margin trên mobile */
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .document-viewer-modal .modal-body {
+    padding: 15px;
+  }
+  
+  .image-preview {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .document-viewer-modal {
+    max-width: 98vw;
+    max-height: 95vh;
+    width: 98vw;
+    height: 95vh;
+    margin-left: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .document-viewer-modal .modal-body {
+    padding: 10px;
+  }
+  
+  .document-viewer-modal .modal-header {
+    padding: 12px 16px;
+  }
+  
+  .document-viewer-modal .modal-header h3 {
+    font-size: 16px;
+  }
+}
+
+/* Xử lý khi sidebar đóng */
+@media (min-width: 1025px) {
+  body:not(.with-sidebar) .document-viewer-modal {
+    max-width: 90vw;
+    width: 90vw;
+    margin-left: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* Responsive Design */

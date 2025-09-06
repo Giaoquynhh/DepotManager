@@ -3,6 +3,7 @@ import Header from '@components/Header';
 import Card from '@components/Card';
 import { driverDashboardApi } from '@services/driverDashboard';
 import { useTranslation } from '@hooks/useTranslation';
+import { useToast } from '@hooks/useToastHook';
 
 interface DashboardData {
   summary: {
@@ -76,6 +77,7 @@ export default function DriverDashboard() {
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { t, currentLanguage } = useTranslation();
+  const { showSuccess, showError, ToastContainer } = useToast();
   const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
 
   useEffect(() => {
@@ -94,10 +96,11 @@ export default function DriverDashboard() {
       setDashboardData(dashboard);
       setAssignedTasks(tasks);
       setTaskHistory(history);
+      showSuccess(t('pages.driverDashboard.messages.dataLoadedSuccessfully'));
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorLoading');
-      alert(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -107,17 +110,17 @@ export default function DriverDashboard() {
     try {
       await driverDashboardApi.updateTaskStatus(taskId, newStatus, notes);
       await loadDashboardData();
+      showSuccess(t('pages.driverDashboard.messages.statusUpdatedSuccessfully'));
     } catch (error: any) {
       console.error('Error updating task status:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingStatus');
-      alert(errorMessage);
+      showError(errorMessage);
     }
   };
 
-
   const handleImageUpload = async (taskId: string) => {
     if (!selectedFile) {
-      alert(t('pages.driverDashboard.messages.selectImageFileBeforeUpload'));
+      showError(t('pages.driverDashboard.messages.selectImageFileBeforeUpload'));
       return;
     }
     
@@ -138,11 +141,12 @@ export default function DriverDashboard() {
       setSelectedFile(null);
       setUploadingImage(null);
       await loadDashboardData();
+      showSuccess(t('pages.driverDashboard.messages.imageUploadedSuccessfully'));
     } catch (error: any) {
       console.error('Error uploading image:', error);
       
       const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUploadingImage');
-      alert(errorMessage);
+      showError(errorMessage);
       setUploadingImage(null);
     } finally {
       if (uploadingImage === taskId) {
@@ -157,7 +161,7 @@ export default function DriverDashboard() {
       const file = event.target.files?.[0];
       if (file) {
         if (!file.type.startsWith('image/')) {
-          alert(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
+          showError(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
           event.target.value = '';
           setSelectedFile(null);
           return;
@@ -165,14 +169,14 @@ export default function DriverDashboard() {
         
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-          alert(t('pages.driverDashboard.messages.fileTooLarge5MB'));
+          showError(t('pages.driverDashboard.messages.fileTooLarge5MB'));
           event.target.value = '';
           setSelectedFile(null);
           return;
         }
         
         if (file.name.length > 100) {
-          alert(t('pages.driverDashboard.messages.fileNameTooLong'));
+          showError(t('pages.driverDashboard.messages.fileNameTooLong'));
           event.target.value = '';
           setSelectedFile(null);
           return;
@@ -180,10 +184,11 @@ export default function DriverDashboard() {
         
         setSelectedFile(file);
         setUploadingImage(taskId);
+        showSuccess(t('pages.driverDashboard.messages.fileSelectedSuccessfully'));
       }
     } catch (error) {
       console.error('Error selecting file:', error);
-      alert(t('pages.driverDashboard.messages.errorSelectingFile'));
+      showError(t('pages.driverDashboard.messages.errorSelectingFile'));
       event.target.value = '';
       setSelectedFile(null);
     }
@@ -239,32 +244,29 @@ export default function DriverDashboard() {
           </div>
         </div>
 
-        <Card padding="lg" className="driver-card driver-tabs-block">
-          <div className="glow-divider"></div>
-          <div className="flex space-x-8 border-b border-gray-200">
+        <Card title="Điều hướng" padding="lg" className="driver-card">
+          <div className="quick-actions">
             {[
-              { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊' },
-              { id: 'tasks', label: t('pages.driverDashboard.tabs.tasks'), icon: '📋' },
-              { id: 'history', label: t('pages.driverDashboard.tabs.history'), icon: '📚' }
+              { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊', className: 'pill-btn pill-primary' },
+              { id: 'tasks', label: t('pages.driverDashboard.tabs.tasks'), icon: '📋', className: 'pill-btn pill-secondary' },
+              { id: 'history', label: t('pages.driverDashboard.tabs.history'), icon: '📚', className: 'pill-btn pill-secondary' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={tab.className}
+                onMouseDown={(e)=>{
+                  const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
+                }}
               >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
         </Card>
 
         {activeTab === 'overview' && (
-          <div className="space-y-16">
+          <div className="space-y-16" style={{ marginTop: '32px' }}>
             <div className="stat-grid grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card padding="md" hoverable className="driver-card stat-tile">
                 <div className="flex items-center">
@@ -323,54 +325,7 @@ export default function DriverDashboard() {
               </Card>
             </div>
 
-            {dashboardData?.currentTask && (
-              <Card title={t('pages.driverDashboard.currentTask.title')} padding="lg" hoverable={false}>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-blue-800">
-                        Container: {dashboardData.currentTask.container_info?.container_no}
-                      </span>
-                      <span className={`badge badge-md ${getStatusColor(dashboardData.currentTask.status)}`}>
-                        {getStatusText(dashboardData.currentTask.status)}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">{t('pages.driverDashboard.currentTask.from')}:</p>
-                        <p className="font-medium">
-                          {dashboardData.currentTask.from_slot 
-                            ? `${dashboardData.currentTask.from_slot.block.yard.name} - ${dashboardData.currentTask.from_slot.block.code} - ${dashboardData.currentTask.from_slot.code}`
-                            : t('pages.forklift.location.outside')
-                          }
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">{t('pages.driverDashboard.currentTask.to')}:</p>
-                        <p className="font-medium">
-                          {dashboardData.currentTask.to_slot 
-                            ? `${dashboardData.currentTask.to_slot.block.yard.name} - ${dashboardData.currentTask.to_slot.block.code} - ${dashboardData.currentTask.to_slot.code}`
-                            : t('pages.requests.location.unknown')
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-              </Card>
-            )}
 
-            <Card title={t('pages.driverDashboard.quickActions.title')} padding="lg" className="driver-card">
-                <div className="quick-actions">
-                  <button onClick={() => setActiveTab('tasks')} className="pill-btn pill-primary" onMouseDown={(e)=>{
-                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
-                  }}>📋 {t('pages.driverDashboard.quickActions.viewTasks')}</button>
-                  <button onClick={() => setActiveTab('history')} className="pill-btn pill-secondary" onMouseDown={(e)=>{
-                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
-                  }}>📚 {t('pages.driverDashboard.quickActions.viewHistory')}</button>
-                  <button onClick={loadDashboardData} className="pill-btn pill-success" onMouseDown={(e)=>{
-                    const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
-                  }}>🔄 {t('pages.driverDashboard.quickActions.refreshData')}</button>
-                </div>
-            </Card>
           </div>
         )}
 
@@ -480,6 +435,144 @@ export default function DriverDashboard() {
                                alignItems: 'center',
                                justifyContent: 'center'
                              }}>
+                               {editingCost === task.id ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#fef3c7',
+                                   borderRadius: '6px',
+                                   border: '1px solid #f59e0b'
+                                 }}>
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     placeholder={t('pages.driverDashboard.cost.inputPlaceholder')}
+                                     className="input input-sm"
+                                     data-task-id={task.id}
+                                     style={{
+                                       width: '100px',
+                                       textAlign: 'center',
+                                       fontSize: '12px'
+                                     }}
+                                     defaultValue={task.cost || ''}
+                                     onKeyPress={(e) => {
+                                       if (e.key === 'Enter') {
+                                         const value = parseInt((e.target as HTMLInputElement).value);
+                                         if (!isNaN(value) && value >= 0) {
+                                           handleCostUpdate(task.id, value);
+                                         }
+                                       }
+                                     }}
+                                   />
+                                   <div style={{
+                                     display: 'flex',
+                                     gap: '4px'
+                                   }}>
+                                     <button
+                                       className="btn btn-sm btn-success"
+                                       style={{ fontSize: '10px', padding: '2px 6px' }}
+                                       onClick={() => {
+                                         const input = document.querySelector(`input[data-task-id="${task.id}"]`) as HTMLInputElement;
+                                         if (!input) {
+                                           console.error('Input not found for task:', task.id);
+                                           return;
+                                         }
+                                         const value = parseInt(input.value || '0');
+                                         if (!isNaN(value) && value >= 0) {
+                                           handleCostUpdate(task.id, value);
+                                         } else {
+                                           showError(t('pages.driverDashboard.messages.invalidNumber'));
+                                          }
+                                       }}
+                                     >
+                                       {t('common.save')}
+                                     </button>
+                                     <button
+                                       className="btn btn-sm btn-outline"
+                                       style={{ fontSize: '10px', padding: '2px 6px' }}
+                                       onClick={() => {
+                                         setEditingCost(null);
+                                         showSuccess(t('pages.driverDashboard.messages.editCancelled'));
+                                       }}
+                                     >
+                                       {t('common.cancel')}
+                                     </button>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   alignItems: 'center',
+                                   gap: '4px',
+                                   padding: '6px'
+                                 }}>
+                                   {task.cost && task.cost > 0 ? (
+                                     <div style={{
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       alignItems: 'center',
+                                       gap: '4px',
+                                       padding: '6px',
+                                       backgroundColor: '#f0fdf4',
+                                       borderRadius: '4px',
+                                       border: '1px solid #bbf7d0'
+                                     }}>
+                                       <span style={{ 
+                                         color: '#059669', 
+                                         fontWeight: '700',
+                                         fontSize: '14px',
+                                         fontFamily: 'monospace'
+                                       }}>
+                                         {task.cost.toLocaleString(locale)}
+                                       </span>
+                                       <span style={{
+                                         fontSize: '10px',
+                                         color: '#16a34a',
+                                         backgroundColor: '#dcfce7',
+                                         padding: '2px 4px',
+                                         borderRadius: '2px',
+                                         fontWeight: '600'
+                                       }}>
+                                         {t('pages.driverDashboard.cost.currencyShort')}
+                                       </span>
+                                     </div>
+                                   ) : (
+                                     <span style={{ 
+                                       color: '#94a3b8', 
+                                       fontSize: '12px',
+                                       fontStyle: 'italic'
+                                     }}>
+                                       {t('pages.forklift.cost.noCost')}
+                                     </span>
+                                   )}
+                                   {task.status !== 'PENDING_APPROVAL' && (
+                                      <button
+                                        className="btn btn-sm btn-outline"
+                                        style={{
+                                          fontSize: '10px',
+                                          padding: '2px 6px',
+                                          marginTop: '4px'
+                                        }}
+                                        onClick={() => setEditingCost(task.id)}
+                                      >
+                                        {task.cost ? t('common.edit') : t('common.add')}
+                                      </button>
+                                    )}
+                                 </div>
+                               )}
+                             </div>
+                           </td>
+                          
+                           <td>
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}>
                                {uploadingImage === task.id ? (
                                  <div style={{
                                    display: 'flex',
@@ -520,6 +613,7 @@ export default function DriverDashboard() {
                                          onClick={() => {
                                            setUploadingImage(null);
                                            setSelectedFile(null);
+                                           showSuccess(t('pages.driverDashboard.messages.uploadCancelled'));
                                          }}
                                        >
                                          {t('common.cancel')}
@@ -673,6 +767,7 @@ export default function DriverDashboard() {
           </div>
         )}
       </main>
+      <ToastContainer />
     </>
   );
 }
