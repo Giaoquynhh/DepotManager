@@ -11,6 +11,9 @@ import AppointmentMini from '@components/appointment/AppointmentMini';
 import SupplementDocuments from '@components/SupplementDocuments';
 import DocumentViewerModal from './components/DocumentViewerModal';
 import ContainerSelectionModal from '@components/ContainerSelectionModal';
+import RejectModal from '@components/RejectModal';
+import DeleteModal from '@components/DeleteModal';
+import ToastNotification from '@components/ToastNotification';
 import { useDepotActions } from './hooks/useDepotActions';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -271,10 +274,11 @@ export default function DepotRequests() {
 					onDocumentClick={actions.handleDocumentClick}
 					onToggleSupplement={actions.toggleSupplement}
 					onChangeAppointment={actions.handleChangeAppointment}
-					onReject={(id: string) => { void actions.handleReject(id); }}
+					onReject={(id: string) => { actions.handleRejectWithModal(id); }}
 					onChangeStatus={(id: string, status: string) => { void actions.changeStatus(id, status); }}
 					onSendPayment={(id: string) => { void actions.sendPayment(id); }}
 					onSoftDelete={(id: string, scope: string) => { void actions.softDeleteRequest(id, scope as 'depot' | 'customer'); }}
+					onDeleteWithModal={(id: string) => { actions.handleDeleteWithModal(id); }}
 					onViewInvoice={(id: string) => { void actions.handleViewInvoice(id); }}
 					onSendCustomerConfirmation={(id: string) => { void actions.handleSendCustomerConfirmation(id); }}
 					onAddDocument={(requestId: string, containerNo: string) => { void actions.handleAddDocument(requestId, containerNo); }}
@@ -414,6 +418,35 @@ export default function DepotRequests() {
 					onClose={() => actions.setShowAppointmentModal(false)}
 					onSuccess={actions.handleAppointmentSuccess}
 				/>
+
+				{/* Reject Modal */}
+				<RejectModal
+					visible={state.showRejectModal}
+					onConfirm={actions.confirmReject}
+					onCancel={actions.cancelReject}
+					loading={state.rejectLoading}
+				/>
+
+				{/* Delete Modal */}
+				<DeleteModal
+					visible={state.showDeleteModal}
+					onConfirm={actions.confirmDelete}
+					onCancel={actions.cancelDelete}
+					loading={state.deleteLoading}
+					itemName={state.requestsData.find(r => r.id === state.deleteRequestId)?.container_no}
+					itemType="yêu cầu"
+				/>
+
+				{/* Toast Notification */}
+				{state.msg && (
+					<ToastNotification
+						visible={!!state.msg}
+						message={state.msg.text}
+						type={state.msg.ok ? 'success' : 'error'}
+						duration={4000}
+						onClose={() => actions.setMsg(null)}
+					/>
+				)}
 			</main>
 		</>
 	);

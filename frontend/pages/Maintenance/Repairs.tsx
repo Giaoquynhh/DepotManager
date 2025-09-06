@@ -240,12 +240,13 @@ export default function RepairsPage() {
         </div>
 
         <div className="search-filter-section modern-search" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-          <div className="filter-group">
+          <div className="filter-group" style={{marginLeft: '0'}}>
             <label className="filter-label">{t('pages.maintenance.repairs.filterByStatus')}</label>
             <select 
               value={filter} 
               onChange={e => handleFilterChange(e.target.value)}
               className="filter-select"
+              style={{marginLeft: '0'}}
             >
               <option value="">{t('pages.maintenance.repairs.allStatuses')}</option>
               <option value="CHECKING">{t('pages.maintenance.repairs.statusChecking')}</option>

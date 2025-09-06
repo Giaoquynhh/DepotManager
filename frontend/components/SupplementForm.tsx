@@ -118,11 +118,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       
       console.log('Upload response:', response.data);
 
-      // Hiển thị thông báo thành công với thông tin về việc tự động chuyển tiếp
-      toast.success(t('pages.requests.supplementUploadSuccess'), {
-        description: t('pages.requests.supplementUploadSuccessDescription'),
-        duration: 5000,
-      });
+      // Thông báo sẽ được hiển thị qua callback onSuccess
       
       setFiles([]);
       if (fileInputRef.current) {

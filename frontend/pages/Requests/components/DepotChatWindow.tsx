@@ -346,17 +346,17 @@ export default function DepotChatWindow({
 
 	const getStatusMessage = () => {
 		const statusMessages: Record<string, string> = {
-			'SCHEDULED': `📅 ${t('pages.requests.filterOptions.scheduled')} - Chat đã được kích hoạt`,
-			'APPROVED': `✅ ${t('pages.requests.filterOptions.approved')} - Chat đã được kích hoạt`,
-			'IN_PROGRESS': `🔄 ${t('pages.requests.filterOptions.inProgress')} - Chat đã được kích hoạt`,
-			'COMPLETED': `✅ ${t('pages.requests.filterOptions.completed')} - Chat vẫn hoạt động`,
-			'EXPORTED': `📦 ${t('pages.requests.filterOptions.exported')} - Chat vẫn hoạt động`,
-			'PENDING_ACCEPT': `📧 ${t('pages.requests.filterOptions.pendingAccept')} - Chat đã được kích hoạt`,
-			'PENDING': `📋 ${t('pages.requests.filterOptions.pending')} - Chat sẽ được kích hoạt khi đơn hàng được lên lịch`,
-			'RECEIVED': `📥 ${t('pages.requests.filterOptions.received')} - Chat sẽ được kích hoạt khi được chấp nhận`,
-			'REJECTED': `❌ ${t('pages.requests.filterOptions.rejected')} - Chat không khả dụng`
+			'SCHEDULED': `📅 ${t('pages.requests.filterOptions.scheduled')} - ${t('pages.requests.chat.activated')}`,
+			'APPROVED': `✅ ${t('pages.requests.filterOptions.approved')} - ${t('pages.requests.chat.activated')}`,
+			'IN_PROGRESS': `🔄 ${t('pages.requests.filterOptions.inProgress')} - ${t('pages.requests.chat.activated')}`,
+			'COMPLETED': `✅ ${t('pages.requests.filterOptions.completed')} - ${t('pages.requests.chat.stillActive')}`,
+			'EXPORTED': `📦 ${t('pages.requests.filterOptions.exported')} - ${t('pages.requests.chat.stillActive')}`,
+			'PENDING_ACCEPT': `📧 ${t('pages.requests.filterOptions.pendingAccept')} - ${t('pages.requests.chat.activated')}`,
+			'PENDING': `📋 ${t('pages.requests.filterOptions.pending')} - ${t('pages.requests.chat.willActivateWhenScheduled')}`,
+			'RECEIVED': `📥 ${t('pages.requests.filterOptions.received')} - ${t('pages.requests.chat.willActivateWhenAccepted')}`,
+			'REJECTED': `❌ ${t('pages.requests.filterOptions.rejected')} - ${t('pages.requests.chat.notAvailable')}`
 		};
-		return statusMessages[requestStatus] || `🔄 Trạng thái đơn hàng: ${requestStatus}`;
+		return statusMessages[requestStatus] || `🔄 ${t('pages.requests.chat.orderStatus')}: ${requestStatus}`;
 	};
 
 	if (!isChatAllowed) {
@@ -365,9 +365,9 @@ export default function DepotChatWindow({
 				className="depot-chat-window"
 			>
 				<div className="chat-header" onMouseDown={onMouseDown}>
-					<div className="chat-title">
-						💬 Chat - {containerNo}
-					</div>
+				<div className="chat-title">
+					💬 {t('pages.requests.chat.title')} - {containerNo}
+				</div>
 					<div className="chat-actions">
 						<button onMouseDown={(e) => e.stopPropagation()} onClick={onMinimize} className="chat-btn chat-minimize">−</button>
 						<button onMouseDown={(e) => e.stopPropagation()} onClick={onClose} className="chat-btn chat-close">×</button>
@@ -378,10 +378,10 @@ export default function DepotChatWindow({
 						{getStatusMessage()}
 					</div>
 					<div className="chat-info">
-						<p><strong>Container:</strong> {containerNo}</p>
-						<p><strong>Loại:</strong> {requestType === 'IMPORT' ? 'Nhập' : requestType === 'EXPORT' ? 'Xuất' : 'Chuyển đổi'}</p>
-						<p><strong>Trạng thái:</strong> {requestStatus}</p>
-						<p><strong>Lưu ý:</strong> Chat khả dụng khi đơn hàng ở trạng thái SCHEDULED trở lên</p>
+						<p><strong>{t('pages.requests.chat.container')}:</strong> {containerNo}</p>
+						<p><strong>{t('pages.requests.chat.type')}:</strong> {requestType === 'IMPORT' ? t('pages.requests.chat.import') : requestType === 'EXPORT' ? t('pages.requests.chat.export') : t('pages.requests.chat.conversion')}</p>
+						<p><strong>{t('pages.requests.chat.status')}:</strong> {requestStatus}</p>
+						<p><strong>{t('pages.requests.chat.note')}:</strong> {t('pages.requests.chat.availableWhenScheduled')}</p>
 					</div>
 				</div>
 			</div>
@@ -394,7 +394,7 @@ export default function DepotChatWindow({
 		>
 			<div className="chat-header" onMouseDown={onMouseDown}>
 				<div className="chat-title">
-					💬 Chat - {containerNo}
+					💬 {t('pages.requests.chat.title')} - {containerNo}
 				</div>
 				<div className="chat-actions">
 					<button onMouseDown={(e) => e.stopPropagation()} onClick={onMinimize} className="chat-btn chat-minimize">−</button>
@@ -406,7 +406,7 @@ export default function DepotChatWindow({
 				{loading ? (
 					<div className="chat-loading">
 						<div className="loading-spinner"></div>
-						<p>Đang tải tin nhắn...</p>
+						<p>{t('pages.requests.chat.loadingMessages')}</p>
 					</div>
 				) : (
 					<>
@@ -420,10 +420,10 @@ export default function DepotChatWindow({
 										onClick={() => {
 											const testMessage: ChatMessage = {
 												id: `test-supplement-${Date.now()}`,
-												message: `📋 **THÔNG BÁO:** Khách hàng đã bổ sung thông tin cho đơn hàng!\n\n📅 Thời gian cập nhật: ${new Date().toLocaleString('vi-VN')}\n📦 Container: ${containerNo}\n\nVui lòng kiểm tra và xử lý thông tin mới.`,
+												message: `📋 **${t('pages.requests.chat.notification')}:** ${t('pages.requests.chat.customerSupplementedInfo')}!\n\n📅 ${t('pages.requests.chat.updateTime')}: ${new Date().toLocaleString('vi-VN')}\n📦 Container: ${containerNo}\n\n${t('pages.requests.chat.pleaseCheckNewInfo')}.`,
 												sender: {
 													id: 'system',
-													full_name: 'Hệ thống',
+													full_name: t('pages.requests.chat.system'),
 													email: 'system@depot.com',
 													role: 'System'
 												},
@@ -441,7 +441,7 @@ export default function DepotChatWindow({
 											cursor: 'pointer'
 										}}
 									>
-										🧪 Test Supplement Notification
+										🧪 {t('pages.requests.chat.testSupplementNotification')}
 									</button>
 									
 									{/* Debug button để test localStorage */}
@@ -463,7 +463,7 @@ export default function DepotChatWindow({
 											marginLeft: '8px'
 										}}
 									>
-										🔍 Debug localStorage
+										🔍 {t('pages.requests.chat.debugLocalStorage')}
 									</button>
 								</div>
 							)}
@@ -472,8 +472,8 @@ export default function DepotChatWindow({
 						<div className="chat-messages">
 							{messages.length === 0 ? (
 								<div className="chat-empty">
-									<p>Chưa có tin nhắn nào</p>
-									<small>Bắt đầu cuộc trò chuyện với khách hàng</small>
+									<p>{t('pages.requests.chat.noMessages')}</p>
+									<small>{t('pages.requests.chat.startConversation')}</small>
 								</div>
 							) : (
 								messages.map((message) => (
@@ -509,7 +509,7 @@ export default function DepotChatWindow({
 							<div className="chat-input-wrapper">
 								<textarea
 									className="chat-input"
-									placeholder="Nhập tin nhắn..."
+									placeholder={t('pages.requests.chat.enterMessage')}
 									value={newMessage}
 									onChange={(e) => setNewMessage(e.target.value)}
 									onKeyPress={handleKeyPress}

@@ -1,9 +1,13 @@
+import { useTranslation } from '@hooks/useTranslation';
+
 interface PendingContainersModalHeaderProps {
   onClose: () => void;
   title?: string;
 }
 
 export default function PendingContainersModalHeader({ onClose, title }: PendingContainersModalHeaderProps) {
+  const { t } = useTranslation();
+  
   return (
     <div style={{
       display: 'flex',
@@ -12,7 +16,7 @@ export default function PendingContainersModalHeader({ onClose, title }: Pending
       marginBottom: '20px'
     }}>
       <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-        {title || 'Danh sách container đang chờ'}
+        {title || t('pages.maintenance.repairs.pendingContainers.defaultTitle')}
       </h3>
       <button 
         onClick={onClose}

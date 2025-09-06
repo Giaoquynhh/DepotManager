@@ -22,7 +22,7 @@ async function main(){
 	// Khôi phục layout bãi cố định (dữ liệu thật): tạo Yard/Block/Slot nếu chưa có
 	const yards = await prisma.yard.count();
 	if (yards === 0) {
-		const yard = await prisma.yard.create({ data: { name: 'Depot A' } });
+		const yard = await prisma.yard.create({ data: { name: 'B' } });
 		for (let bi = 1; bi <= 2; bi++) {
 			const block = await prisma.yardBlock.create({ data: { yard_id: yard.id, code: `B${bi}` } });
 			const slots = new Array(20).fill(0).map((_, idx) => ({
@@ -36,7 +36,7 @@ async function main(){
 			}));
 			await prisma.yardSlot.createMany({ data: slots });
 		}
-		console.log('Seeded Yard layout (Depot A, B1-B2, 20 slots/block)');
+		console.log('Seeded Yard layout (B, B1-B2, 20 slots/block)');
 	} else {
 		console.log('Yard layout already exists, skipping.');
 	}

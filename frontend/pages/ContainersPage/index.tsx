@@ -169,7 +169,7 @@ function ContainersList(){
         <select 
           value={status} 
           onChange={e=>{ setStatus(e.target.value); setPage(1); mutate(); }}
-          style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, minWidth:160}}
+          style={{padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:6, width: 'fit-content'}}
         >
           <option value="">{t('pages.containers.allStatuses')}</option>
           <option value="WAITING">{t('pages.containers.statusWaiting')}</option>

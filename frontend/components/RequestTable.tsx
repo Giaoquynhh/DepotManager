@@ -34,6 +34,8 @@ interface RequestTableProps {
       handleAccept?: (id: string) => void;
       handleAcceptScheduled?: (id: string) => void;
       handleRejectByCustomer?: (id: string, reason: string) => void;
+      handleRejectWithModal?: (id: string) => void;
+      onDeleteWithModal?: (id: string) => void;
       actLabel?: Record<string, string>;
     };
   })[];
@@ -419,12 +421,14 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                             className="btn btn-sm btn-success"
                             disabled={item.actions.loadingId === item.id + 'ACCEPT'}
                             onClick={() => {
-                              if (window.confirm(t('pages.requests.messages.confirmAcceptRepairInvoice'))) {
-                                if (item.actions?.handleAccept) {
+                              if (item.actions?.handleAcceptWithModal) {
+                                item.actions.handleAcceptWithModal(item.id);
+                              } else if (item.actions?.handleAccept) {
+                                if (window.confirm(t('pages.requests.messages.confirmAcceptRepairInvoice'))) {
                                   item.actions.handleAccept(item.id);
-                                } else {
-                                  alert(t('pages.requests.messages.acceptFeatureInDevelopment'));
                                 }
+                              } else {
+                                alert(t('pages.requests.messages.acceptFeatureInDevelopment'));
                               }
                             }}
                             title={t('pages.requests.actions.acceptRepairInvoice')}
@@ -435,13 +439,15 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                             className="btn btn-sm btn-danger"
                             disabled={item.actions.loadingId === item.id + 'REJECT'}
                             onClick={() => {
-                              const reason = window.prompt(t('pages.requests.prompts.enterRejectionReason'));
-                              if (reason) {
-                                if (item.actions?.handleRejectByCustomer) {
+                              if (item.actions?.handleRejectWithModal) {
+                                item.actions.handleRejectWithModal(item.id);
+                              } else if (item.actions?.handleRejectByCustomer) {
+                                const reason = window.prompt(t('pages.requests.prompts.enterRejectionReason'));
+                                if (reason) {
                                   item.actions.handleRejectByCustomer(item.id, reason);
-                                } else {
-                                  alert(t('pages.requests.messages.rejectFeatureInDevelopment'));
                                 }
+                              } else {
+                                alert(t('pages.requests.messages.rejectFeatureInDevelopment'));
                               }
                             }}
                             title={t('pages.requests.actions.rejectRepairInvoice')}
@@ -452,13 +458,17 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                       )}
 
                       {/* Soft delete for REJECTED requests */}
-                      {item.status === 'REJECTED' && item.actions.softDeleteRequest && (
+                      {item.status === 'REJECTED' && (item.actions.softDeleteRequest || item.actions.onDeleteWithModal) && (
                         <button
                           className="btn btn-sm btn-outline"
                           disabled={item.actions.loadingId === item.id + 'DELETE'}
                           onClick={() => {
-                            if (window.confirm(t('pages.requests.messages.confirmSoftDeleteCustomer'))) {
-                              item.actions!.softDeleteRequest!(item.id, 'customer');
+                            if (item.actions.onDeleteWithModal) {
+                              item.actions.onDeleteWithModal(item.id);
+                            } else if (item.actions.softDeleteRequest) {
+                              if (window.confirm(t('pages.requests.messages.confirmSoftDeleteCustomer'))) {
+                                item.actions.softDeleteRequest(item.id, 'customer');
+                              }
                             }
                           }}
                           title={t('pages.requests.actions.removeFromList')}

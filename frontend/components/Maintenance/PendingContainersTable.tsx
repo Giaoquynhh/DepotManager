@@ -1,3 +1,5 @@
+import { useTranslation } from '@hooks/useTranslation';
+
 interface PendingContainersTableProps {
   requests: any[];
   checkResults: {[key: string]: 'PASS' | 'FAIL' | 'FAIL_WITH_OPTIONS' | 'UNREPAIRABLE' | 'REPAIRABLE' | null};
@@ -13,6 +15,7 @@ export default function PendingContainersTable({
   onCheckResult, 
   onFailOption 
 }: PendingContainersTableProps) {
+  const { t } = useTranslation();
   return (
     <div style={{ overflow: 'auto' }}>
       <table style={{
@@ -25,11 +28,11 @@ export default function PendingContainersTable({
             background: '#f8fafc',
             borderBottom: '1px solid #e2e8f0'
           }}>
-            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>Container No</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>Loại</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>Trạng thái</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>Biển số xe</th>
-            <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600' }}>Hành động</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>{t('pages.maintenance.repairs.pendingContainers.tableHeaders.containerNo')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>{t('pages.maintenance.repairs.pendingContainers.tableHeaders.type')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>{t('pages.maintenance.repairs.pendingContainers.tableHeaders.status')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600' }}>{t('pages.maintenance.repairs.pendingContainers.tableHeaders.licensePlate')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600' }}>{t('pages.maintenance.repairs.pendingContainers.tableHeaders.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -50,8 +53,8 @@ export default function PendingContainersTable({
                     color: request.type === 'IMPORT' ? '#1e40af' : 
                            request.type === 'EXPORT' ? '#92400e' : '#3730a3'
                   }}>
-                    {request.type === 'IMPORT' ? 'Import' :
-                     request.type === 'EXPORT' ? 'Export' : request.type}
+                    {request.type === 'IMPORT' ? t('pages.maintenance.repairs.pendingContainers.types.import') :
+                     request.type === 'EXPORT' ? t('pages.maintenance.repairs.pendingContainers.types.export') : request.type}
                   </span>
                 </td>
                 <td style={{ padding: '12px 8px' }}>
@@ -69,7 +72,10 @@ export default function PendingContainersTable({
                            request.status === 'COMPLETED' ? '#065f46' :
                            request.status === 'REJECTED' ? '#991b1b' : '#3730a3'
                   }}>
-                    {request.status}
+                    {request.status === 'GATE_IN' ? t('pages.maintenance.repairs.pendingContainers.statuses.gateIn') :
+                     request.status === 'CHECKING' ? t('pages.maintenance.repairs.pendingContainers.statuses.checking') :
+                     request.status === 'COMPLETED' ? t('pages.maintenance.repairs.pendingContainers.statuses.completed') :
+                     request.status === 'REJECTED' ? t('pages.maintenance.repairs.pendingContainers.statuses.rejected') : request.status}
                   </span>
                 </td>
                 <td style={{ padding: '12px 8px' }}>{request.license_plate || '-'}</td>
@@ -88,7 +94,7 @@ export default function PendingContainersTable({
                         fontWeight: '500'
                       }}
                     >
-                      Bắt đầu kiểm tra
+                      {t('pages.maintenance.repairs.pendingContainers.actions.startInspection')}
                     </button>
                   )}
                   
@@ -111,7 +117,7 @@ export default function PendingContainersTable({
                           fontWeight: '500'
                         }}
                       >
-                        Đạt chuẩn
+                        {t('pages.maintenance.repairs.pendingContainers.actions.passStandard')}
                       </button>
                       <button 
                         onClick={() => onCheckResult(request.id, 'FAIL')}
@@ -126,7 +132,7 @@ export default function PendingContainersTable({
                           fontWeight: '500'
                         }}
                       >
-                        Không đạt chuẩn
+                        {t('pages.maintenance.repairs.pendingContainers.actions.failStandard')}
                       </button>
                     </div>
                   )}
@@ -144,7 +150,7 @@ export default function PendingContainersTable({
                         fontWeight: '500',
                         marginBottom: '4px'
                       }}>
-                        Chọn loại hỏng hóc:
+                        {t('pages.maintenance.repairs.pendingContainers.actions.selectDamageType')}
                       </div>
                       <div style={{
                         display: 'flex',
@@ -164,7 +170,7 @@ export default function PendingContainersTable({
                             fontWeight: '500'
                           }}
                         >
-                          Không thể sửa
+                          {t('pages.maintenance.repairs.pendingContainers.actions.unrepairable')}
                         </button>
                         <button 
                           onClick={() => onFailOption(request.id, 'REPAIRABLE')}
@@ -179,7 +185,7 @@ export default function PendingContainersTable({
                             fontWeight: '500'
                           }}
                         >
-                          Có thể sửa
+                          {t('pages.maintenance.repairs.pendingContainers.actions.repairable')}
                         </button>
                       </div>
                     </div>
@@ -194,7 +200,7 @@ export default function PendingContainersTable({
                       background: '#d1fae5',
                       color: '#065f46'
                     }}>
-                      Đạt chuẩn
+                      {t('pages.maintenance.repairs.pendingContainers.actions.passStandard')}
                     </span>
                   )}
                   
@@ -213,14 +219,14 @@ export default function PendingContainersTable({
                         background: '#fef3c7',
                         color: '#92400e'
                       }}>
-                        Đang sửa chữa
+                        {t('pages.maintenance.repairs.pendingContainers.actions.underRepair')}
                       </span>
                       <span style={{
                         fontSize: '10px',
                         color: '#92400e',
                         textAlign: 'center'
                       }}>
-                        Đã tạo phiếu sửa chữa
+                        {t('pages.maintenance.repairs.pendingContainers.actions.repairTicketCreated')}
                       </span>
                     </div>
                   )}
@@ -240,7 +246,7 @@ export default function PendingContainersTable({
                         background: '#fee2e2',
                         color: '#991b1b'
                       }}>
-                        Bị từ chối
+                        {t('pages.maintenance.repairs.pendingContainers.actions.rejected')}
                       </span>
                       <span style={{
                         fontSize: '10px',
@@ -276,7 +282,7 @@ export default function PendingContainersTable({
                 fontSize: '14px'
               }}>
                 <div style={{ marginBottom: '8px' }}>📭</div>
-                Không có container nào đang chờ
+                {t('pages.maintenance.repairs.pendingContainers.messages.noContainersWaiting')}
               </td>
             </tr>
           )}
