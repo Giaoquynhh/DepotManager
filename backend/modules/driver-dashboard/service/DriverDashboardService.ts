@@ -92,26 +92,47 @@ export class DriverDashboardService {
 		const tasksWithContainerInfo = await Promise.all(
 			tasks.map(async (task) => {
 				try {
-					const containerInfo = await prisma.serviceRequest.findFirst({
-						where: { container_no: task.container_no },
-						select: {
-							driver_name: true,
-							license_plate: true,
-							status: true,
-							type: true
-						},
-						orderBy: { createdAt: 'desc' }
-					});
+					const [containerInfo, actualLocation] = await Promise.all([
+						prisma.serviceRequest.findFirst({
+							where: { container_no: task.container_no },
+							select: {
+								driver_name: true,
+								license_plate: true,
+								status: true,
+								type: true
+							},
+							orderBy: { createdAt: 'desc' }
+						}),
+						prisma.yardPlacement.findFirst({
+							where: { 
+								container_no: task.container_no, 
+								status: { in: ['HOLD', 'OCCUPIED'] } 
+							},
+							include: { 
+								slot: { 
+									include: { 
+										block: { 
+											include: { 
+												yard: true 
+											} 
+										} 
+									} 
+								} 
+							}
+						})
+					]);
 
 					return {
 						...task,
-						container_info: containerInfo
+						container_info: containerInfo,
+						actual_location: actualLocation
 					};
 				} catch (error) {
 					console.log(`Could not find container info for ${task.container_no}:`, error);
 					return {
 						...task,
-						container_info: null
+						container_info: null,
+						actual_location: null
 					};
 				}
 			})
@@ -135,10 +156,6 @@ export class DriverDashboardService {
 
 		// Kiểm tra validation khi hoàn thành task
 		if (status === 'COMPLETED') {
-			if (!task.cost || task.cost <= 0) {
-				throw new Error('Không thể hoàn thành task: Chi phí chưa được nhập hoặc không hợp lệ');
-			}
-			
 			if (!task.report_status) {
 				throw new Error('Không thể hoàn thành task: Báo cáo chưa được gửi');
 			}
@@ -146,10 +163,6 @@ export class DriverDashboardService {
 
 		// Kiểm tra validation khi chuyển sang chờ duyệt
 		if (status === 'PENDING_APPROVAL') {
-			if (!task.cost || task.cost <= 0) {
-				throw new Error('Không thể chuyển sang chờ duyệt: Chi phí chưa được nhập hoặc không hợp lệ');
-			}
-			
 			if (!task.report_status) {
 				throw new Error('Không thể chuyển sang chờ duyệt: Báo cáo chưa được gửi');
 			}
@@ -267,26 +280,47 @@ export class DriverDashboardService {
 		const tasksWithContainerInfo = await Promise.all(
 			tasks.map(async (task) => {
 				try {
-					const containerInfo = await prisma.serviceRequest.findFirst({
-						where: { container_no: task.container_no },
-						select: {
-							driver_name: true,
-							license_plate: true,
-							status: true,
-							type: true
-						},
-						orderBy: { createdAt: 'desc' }
-					});
+					const [containerInfo, actualLocation] = await Promise.all([
+						prisma.serviceRequest.findFirst({
+							where: { container_no: task.container_no },
+							select: {
+								driver_name: true,
+								license_plate: true,
+								status: true,
+								type: true
+							},
+							orderBy: { createdAt: 'desc' }
+						}),
+						prisma.yardPlacement.findFirst({
+							where: { 
+								container_no: task.container_no, 
+								status: { in: ['HOLD', 'OCCUPIED'] } 
+							},
+							include: { 
+								slot: { 
+									include: { 
+										block: { 
+											include: { 
+												yard: true 
+											} 
+										} 
+									} 
+								} 
+							}
+						})
+					]);
 
 					return {
 						...task,
-						container_info: containerInfo
+						container_info: containerInfo,
+						actual_location: actualLocation
 					};
 				} catch (error) {
 					console.log(`Could not find container info for ${task.container_no}:`, error);
 					return {
 						...task,
-						container_info: null
+						container_info: null,
+						actual_location: null
 					};
 				}
 			})
@@ -358,77 +392,36 @@ export class DriverDashboardService {
 				throw new Error('Tên file không hợp lệ');
 			}
 
-			// Tạo tên file duy nhất
-			const fileName = `report_${taskId}_${Date.now()}_${file.originalname}`;
-			const relativePath = `/uploads/reports/${fileName}`; // Thêm dấu / ở đầu để tạo URL đúng
+		// Sử dụng tên file từ multer
+		const fileName = file.filename;
+		const relativePath = `/uploads/reports/${fileName}`; // Thêm dấu / ở đầu để tạo URL đúng
 
-			// Lưu file vào thư mục uploads
-			const fs = require('fs');
-			const path = require('path');
-			
-			// Sử dụng đường dẫn tuyệt đối cố định để đảm bảo chính xác
-			const fixedUploadDir = 'D:\\container21\\manageContainer\\backend\\uploads\\reports';
-			
-			console.log('=== UPLOAD DEBUG INFO ===');
-			console.log('Current file location:', __dirname);
-			console.log('Upload directory path (fixed):', fixedUploadDir);
-			console.log('File info:', {
-				originalname: file.originalname,
-				mimetype: file.mimetype,
-				size: file.size,
-				hasBuffer: !!file.buffer,
-				hasPath: !!file.path
-			});
-			
-			// Tạo thư mục nếu chưa tồn tại - sử dụng đường dẫn cố định
-			if (!fs.existsSync(fixedUploadDir)) {
-				console.log('Creating upload directory:', fixedUploadDir);
-				fs.mkdirSync(fixedUploadDir, { recursive: true });
-				console.log('Upload directory created successfully');
-			} else {
-				console.log('Upload directory already exists');
-			}
-			
-			// Lưu file - sử dụng stream thay vì buffer
-			const absolutePath = path.join(fixedUploadDir, fileName);
-			
-			console.log('File upload details:', {
-				fileName,
-				relativePath,
-				absolutePath,
-				uploadDir: fixedUploadDir,
-				hasBuffer: !!file.buffer,
-				hasPath: !!file.path,
-				fileSize: file.size
-			});
-			
-			// Kiểm tra xem file có buffer hay stream
-			if (file.buffer) {
-				console.log('Saving file using buffer to:', absolutePath);
-				fs.writeFileSync(absolutePath, file.buffer);
-				console.log('File saved successfully using buffer');
-			} else if (file.path) {
-				// Nếu sử dụng diskStorage, file đã được lưu
-				// Chỉ cần copy từ temp location
-				const tempPath = file.path;
-				console.log('Copying file from temp path:', tempPath);
-				if (fs.existsSync(tempPath)) {
-					fs.copyFileSync(tempPath, absolutePath);
-					console.log('File copied successfully from temp path');
-				} else {
-					throw new Error(`Temp file not found: ${tempPath}`);
-				}
-			} else {
-				throw new Error('Không thể lưu file: không có buffer hoặc path');
-			}
-
-			// Kiểm tra file đã được lưu
-			if (fs.existsSync(absolutePath)) {
-				const stats = fs.statSync(absolutePath);
-				console.log('File saved successfully. Size:', stats.size, 'bytes');
-			} else {
-				throw new Error('File was not saved successfully');
-			}
+		// Multer đã lưu file, chỉ cần kiểm tra và cập nhật database
+		const fs = require('fs');
+		const path = require('path');
+		
+		console.log('=== UPLOAD DEBUG INFO ===');
+		console.log('File info:', {
+			originalname: file.originalname,
+			mimetype: file.mimetype,
+			size: file.size,
+			hasBuffer: !!file.buffer,
+			hasPath: !!file.path,
+			filename: file.filename
+		});
+		
+		// Kiểm tra file đã được multer lưu
+		if (!file.path) {
+			throw new Error('File was not saved by multer');
+		}
+		
+		// Kiểm tra file tồn tại
+		if (!fs.existsSync(file.path)) {
+			throw new Error(`File not found at: ${file.path}`);
+		}
+		
+		const stats = fs.statSync(file.path);
+		console.log('File saved by multer. Size:', stats.size, 'bytes');
 
 			// Cập nhật task với thông tin báo cáo
 			const updatedTask = await prisma.forkliftTask.update({

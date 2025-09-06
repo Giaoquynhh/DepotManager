@@ -689,7 +689,10 @@
         "costMustBeInteger": "Chi phí phải là số nguyên",
         "costCannotBeNegative": "Chi phí không thể là số âm",
         "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại"
-      }
+      },
+      "autoRefresh": "Tự động cập nhật",
+      "lastUpdate": "Cập nhật lần cuối",
+      "refreshNow": "Làm mới ngay"
     },
     "driverDashboard": {
       "title": "Bảng điều khiển Tài xế",
@@ -718,7 +721,9 @@
         "fileNameTooLong": "Tên file quá dài. Vui lòng đổi tên file ngắn hơn",
         "errorSelectingFile": "Có lỗi xảy ra khi chọn file",
         "invalidNumber": "Vui lòng nhập số hợp lệ",
-        "loadingData": "Đang tải dữ liệu..."
+        "loadingData": "Đang tải dữ liệu...",
+        "requireReportBeforeComplete": "Vui lòng thêm tài liệu báo cáo trước khi hoàn thành công việc",
+        "requireReportTooltip": "Cần có tài liệu báo cáo để hoàn thành"
       },
       "currentTask": {
         "title": "Công việc hiện tại",

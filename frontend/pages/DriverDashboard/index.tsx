@@ -23,10 +23,24 @@ interface ForkliftTask {
   status: 'PENDING' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
   assigned_driver_id?: string;
   created_by: string;
-  cost?: number;
   report_image?: string;
   created_at: string;
   updated_at: string;
+  actual_location?: {
+    id: string;
+    tier: number;
+    status: string;
+    slot: {
+      id: string;
+      code: string;
+      block: {
+        code: string;
+        yard: {
+          name: string;
+        };
+      };
+    };
+  } | null;
   from_slot?: {
     id: string;
     code: string;
@@ -59,7 +73,6 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'history'>('overview');
   
-  const [editingCost, setEditingCost] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { t, currentLanguage } = useTranslation();
@@ -92,19 +105,6 @@ export default function DriverDashboard() {
 
   const handleStatusUpdate = async (taskId: string, newStatus: string, notes?: string) => {
     try {
-      if (newStatus === 'PENDING_APPROVAL') {
-        const task = assignedTasks.find(t => t.id === taskId);
-        if (!task) {
-          alert(t('pages.driverDashboard.messages.taskNotFound'));
-          return;
-        }
-        
-        if (!task.cost || task.cost <= 0) {
-          alert(t('pages.driverDashboard.messages.enterCostBeforeApproval'));
-          return;
-        }
-      }
-      
       await driverDashboardApi.updateTaskStatus(taskId, newStatus, notes);
       await loadDashboardData();
     } catch (error: any) {
@@ -114,47 +114,6 @@ export default function DriverDashboard() {
     }
   };
 
-  const handleCostUpdate = async (taskId: string, newCost: number) => {
-    try {
-      if (!newCost || newCost <= 0) {
-        alert(t('pages.driverDashboard.messages.invalidCost'));
-        return;
-      }
-      
-      if (newCost > 1000000000) {
-        alert(t('pages.driverDashboard.messages.costTooHigh'));
-        return;
-      }
-      
-      if (!Number.isInteger(newCost)) {
-        alert(t('pages.driverDashboard.messages.costMustBeInteger'));
-        return;
-      }
-      
-      if (newCost < 0) {
-        alert(t('pages.driverDashboard.messages.costCannotBeNegative'));
-        return;
-      }
-      
-      const task = assignedTasks.find(t => t.id === taskId);
-      if (task?.status === 'PENDING_APPROVAL') {
-        const confirmUpdate = confirm(t('pages.driverDashboard.messages.confirmUpdatePendingApproval'));
-        if (!confirmUpdate) {
-          return;
-        }
-      }
-      
-      await driverDashboardApi.updateTaskCost(taskId, newCost);
-      setEditingCost(null);
-      await loadDashboardData();
-    } catch (error: any) {
-      console.error('Error updating task cost:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingCost');
-      alert(errorMessage);
-    } finally {
-      setEditingCost(null);
-    }
-  };
 
   const handleImageUpload = async (taskId: string) => {
     if (!selectedFile) {
@@ -425,7 +384,6 @@ export default function DriverDashboard() {
                         <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.report')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.actions')}</th>
@@ -506,147 +464,15 @@ export default function DriverDashboard() {
                           
                           <td>
                             <span className="location-text">
-                              {task.to_slot 
-                                ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                : t('pages.requests.location.unknown')
+                              {task.actual_location 
+                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                : (task.to_slot 
+                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                  : t('pages.requests.location.unknown')
+                                )
                               }
                             </span>
                           </td>
-                          
-                           <td>
-                             <div style={{
-                               display: 'flex',
-                               alignItems: 'center',
-                               justifyContent: 'center'
-                             }}>
-                               {editingCost === task.id ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#fef3c7',
-                                   borderRadius: '6px',
-                                   border: '1px solid #f59e0b'
-                                 }}>
-                                   <input
-                                     type="number"
-                                     min="0"
-                                     placeholder={t('pages.driverDashboard.cost.inputPlaceholder')}
-                                     className="input input-sm"
-                                     data-task-id={task.id}
-                                     style={{
-                                       width: '100px',
-                                       textAlign: 'center',
-                                       fontSize: '12px'
-                                     }}
-                                     defaultValue={task.cost || ''}
-                                     onKeyPress={(e) => {
-                                       if (e.key === 'Enter') {
-                                         const value = parseInt((e.target as HTMLInputElement).value);
-                                         if (!isNaN(value) && value >= 0) {
-                                           handleCostUpdate(task.id, value);
-                                         }
-                                       }
-                                     }}
-                                   />
-                                   <div style={{
-                                     display: 'flex',
-                                     gap: '4px'
-                                   }}>
-                                     <button
-                                       className="btn btn-sm btn-success"
-                                       style={{ fontSize: '10px', padding: '2px 6px' }}
-                                       onClick={() => {
-                                         const input = document.querySelector(`input[data-task-id="${task.id}"]`) as HTMLInputElement;
-                                         if (!input) {
-                                           console.error('Input not found for task:', task.id);
-                                           return;
-                                         }
-                                         const value = parseInt(input.value || '0');
-                                         if (!isNaN(value) && value >= 0) {
-                                           handleCostUpdate(task.id, value);
-                                         } else {
-                                           alert(t('pages.driverDashboard.messages.invalidNumber'));
-                                          }
-                                       }}
-                                     >
-                                       {t('common.save')}
-                                     </button>
-                                     <button
-                                       className="btn btn-sm btn-outline"
-                                       style={{ fontSize: '10px', padding: '2px 6px' }}
-                                       onClick={() => setEditingCost(null)}
-                                     >
-                                       {t('common.cancel')}
-                                     </button>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '4px',
-                                   padding: '6px'
-                                 }}>
-                                   {task.cost && task.cost > 0 ? (
-                                     <div style={{
-                                       display: 'flex',
-                                       flexDirection: 'column',
-                                       alignItems: 'center',
-                                       gap: '4px',
-                                       padding: '6px',
-                                       backgroundColor: '#f0fdf4',
-                                       borderRadius: '4px',
-                                       border: '1px solid #bbf7d0'
-                                     }}>
-                                       <span style={{ 
-                                         color: '#059669', 
-                                         fontWeight: '700',
-                                         fontSize: '14px',
-                                         fontFamily: 'monospace'
-                                       }}>
-                                         {task.cost.toLocaleString(locale)}
-                                       </span>
-                                       <span style={{
-                                         fontSize: '10px',
-                                         color: '#16a34a',
-                                         backgroundColor: '#dcfce7',
-                                         padding: '2px 4px',
-                                         borderRadius: '2px',
-                                         fontWeight: '600'
-                                       }}>
-                                         {t('pages.driverDashboard.cost.currencyShort')}
-                                       </span>
-                                     </div>
-                                   ) : (
-                                     <span style={{ 
-                                       color: '#94a3b8', 
-                                       fontSize: '12px',
-                                       fontStyle: 'italic'
-                                     }}>
-                                       {t('pages.forklift.cost.noCost')}
-                                     </span>
-                                   )}
-                                   {task.status !== 'PENDING_APPROVAL' && (
-                                      <button
-                                        className="btn btn-sm btn-outline"
-                                        style={{
-                                          fontSize: '10px',
-                                          padding: '2px 6px',
-                                          marginTop: '4px'
-                                        }}
-                                        onClick={() => setEditingCost(task.id)}
-                                      >
-                                        {task.cost ? t('common.edit') : t('common.add')}
-                                      </button>
-                                    )}
-                                 </div>
-                               )}
-                             </div>
-                           </td>
                           
                            <td>
                              <div style={{
@@ -710,7 +536,15 @@ export default function DriverDashboard() {
                                    padding: '6px'
                                  }}>
                                    {task.report_image ? (
-                                     <a href={task.report_image} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                     <a 
+                                       href={task.report_image.startsWith('http') 
+                                         ? task.report_image 
+                                         : `http://localhost:1000${task.report_image}`
+                                       } 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       className="text-blue-600 hover:underline"
+                                     >
                                        {t('pages.driverDashboard.report.viewImage')}
                                      </a>
                                    ) : (
@@ -758,8 +592,16 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button 
-                                  className="btn btn-sm btn-success"
-                                  onClick={() => handleStatusUpdate(task.id, 'PENDING_APPROVAL')}
+                                  className={`btn btn-sm ${task.report_image ? 'btn-success' : 'btn-disabled'}`}
+                                  onClick={() => {
+                                    if (!task.report_image) {
+                                      alert(t('pages.driverDashboard.messages.requireReportBeforeComplete'));
+                                      return;
+                                    }
+                                    handleStatusUpdate(task.id, 'COMPLETED');
+                                  }}
+                                  disabled={!task.report_image}
+                                  title={!task.report_image ? t('pages.driverDashboard.messages.requireReportTooltip') : ''}
                                 >
                                   {t('pages.driverDashboard.actions.complete')}
                                 </button>
@@ -785,7 +627,6 @@ export default function DriverDashboard() {
                         <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
                         <th>{t('pages.driverDashboard.history.completedAt')}</th>
                       </tr>
@@ -806,14 +647,14 @@ export default function DriverDashboard() {
                           </td>
                           <td>
                             <span className="location-text">
-                              {task.to_slot 
-                                ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                : 'Chưa xác định'
+                              {task.actual_location 
+                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                : (task.to_slot 
+                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                  : 'Chưa xác định'
+                                )
                               }
                             </span>
-                          </td>
-                          <td>
-                            {task.cost ? `${task.cost.toLocaleString(locale)} ${t('pages.driverDashboard.cost.currencyShort')}` : t('common.na')}
                           </td>
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
