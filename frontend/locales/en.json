@@ -860,7 +860,10 @@
         "costMustBeInteger": "Cost must be an integer",
         "costCannotBeNegative": "Cost cannot be negative",
         "costTooHigh": "Cost too high. Please check again"
-      }
+      },
+      "autoRefresh": "Auto refresh",
+      "lastUpdate": "Last update",
+      "refreshNow": "Refresh now"
     },
     "driverDashboard": {
       "title": "Driver Dashboard",

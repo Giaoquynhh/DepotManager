@@ -94,6 +94,9 @@ export default function Forklift() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ForkliftTask | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
 
   useEffect(() => {
@@ -118,17 +121,56 @@ export default function Forklift() {
       });
   }, []);
 
-  const loadForkliftTasks = async () => {
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh || !userRole) return;
+
+    const interval = setInterval(() => {
+      // Chỉ refresh khi trang đang focus
+      if (document.hasFocus()) {
+        loadForkliftTasks(false); // Không hiển thị loading spinner cho auto-refresh
+        setLastRefresh(new Date());
+      }
+    }, 5000); // Refresh mỗi 5 giây
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, userRole]);
+
+  // Cleanup khi component unmount
+  useEffect(() => {
+    return () => {
+      // Clear any pending intervals
+    };
+  }, []);
+
+  const loadForkliftTasks = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
+      
       const response = await api.get('/forklift/jobs');
       console.log('🔍 Forklift jobs data:', response.data);
-      setTasks(response.data.data || []);
+      const newTasks = response.data.data || [];
+      
+      // Chỉ cập nhật state nếu có thay đổi thực sự
+      setTasks(prevTasks => {
+        if (JSON.stringify(prevTasks) !== JSON.stringify(newTasks)) {
+          return newTasks;
+        }
+        return prevTasks;
+      });
     } catch (err: any) {
       setError(err?.response?.data?.message || t('pages.forklift.loadError'));
       console.error('Load tasks error:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -276,6 +318,47 @@ export default function Forklift() {
             </div>
 
             <div className="header-actions">
+              <div className="flex items-center gap-4">
+                {/* Auto-refresh toggle */}
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoRefresh}
+                      onChange={(e) => setAutoRefresh(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {t('pages.forklift.autoRefresh')}
+                    </span>
+                  </label>
+                </div>
+                
+                {/* Last refresh time */}
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  {isRefreshing && (
+                    <svg className="w-3 h-3 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {t('pages.forklift.lastUpdate')}: {lastRefresh.toLocaleTimeString('vi-VN')}
+                </div>
+                
+                {/* Manual refresh button */}
+                <button
+                  onClick={() => {
+                    loadForkliftTasks();
+                    setLastRefresh(new Date());
+                  }}
+                  className="btn btn-outline btn-sm"
+                  title={t('pages.forklift.refreshNow')}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>

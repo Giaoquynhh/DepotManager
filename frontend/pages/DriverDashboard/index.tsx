@@ -24,10 +24,24 @@ interface ForkliftTask {
   status: 'PENDING' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
   assigned_driver_id?: string;
   created_by: string;
-  cost?: number;
   report_image?: string;
   created_at: string;
   updated_at: string;
+  actual_location?: {
+    id: string;
+    tier: number;
+    status: string;
+    slot: {
+      id: string;
+      code: string;
+      block: {
+        code: string;
+        yard: {
+          name: string;
+        };
+      };
+    };
+  } | null;
   from_slot?: {
     id: string;
     code: string;
@@ -60,7 +74,6 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'history'>('overview');
   
-  const [editingCost, setEditingCost] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { t, currentLanguage } = useTranslation();
@@ -95,19 +108,6 @@ export default function DriverDashboard() {
 
   const handleStatusUpdate = async (taskId: string, newStatus: string, notes?: string) => {
     try {
-      if (newStatus === 'PENDING_APPROVAL') {
-        const task = assignedTasks.find(t => t.id === taskId);
-        if (!task) {
-          showError(t('pages.driverDashboard.messages.taskNotFound'));
-          return;
-        }
-        
-        if (!task.cost || task.cost <= 0) {
-          showError(t('pages.driverDashboard.messages.enterCostBeforeApproval'));
-          return;
-        }
-      }
-      
       await driverDashboardApi.updateTaskStatus(taskId, newStatus, notes);
       await loadDashboardData();
       showSuccess(t('pages.driverDashboard.messages.statusUpdatedSuccessfully'));
@@ -115,49 +115,6 @@ export default function DriverDashboard() {
       console.error('Error updating task status:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingStatus');
       showError(errorMessage);
-    }
-  };
-
-  const handleCostUpdate = async (taskId: string, newCost: number) => {
-    try {
-      if (!newCost || newCost <= 0) {
-        showError(t('pages.driverDashboard.messages.invalidCost'));
-        return;
-      }
-      
-      if (newCost > 1000000000) {
-        showError(t('pages.driverDashboard.messages.costTooHigh'));
-        return;
-      }
-      
-      if (!Number.isInteger(newCost)) {
-        showError(t('pages.driverDashboard.messages.costMustBeInteger'));
-        return;
-      }
-      
-      if (newCost < 0) {
-        showError(t('pages.driverDashboard.messages.costCannotBeNegative'));
-        return;
-      }
-      
-      const task = assignedTasks.find(t => t.id === taskId);
-      if (task?.status === 'PENDING_APPROVAL') {
-        const confirmUpdate = confirm(t('pages.driverDashboard.messages.confirmUpdatePendingApproval'));
-        if (!confirmUpdate) {
-          return;
-        }
-      }
-      
-      await driverDashboardApi.updateTaskCost(taskId, newCost);
-      setEditingCost(null);
-      await loadDashboardData();
-      showSuccess(t('pages.driverDashboard.messages.costUpdatedSuccessfully'));
-    } catch (error: any) {
-      console.error('Error updating task cost:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUpdatingCost');
-      showError(errorMessage);
-    } finally {
-      setEditingCost(null);
     }
   };
 
@@ -382,7 +339,6 @@ export default function DriverDashboard() {
                         <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.report')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.actions')}</th>
@@ -463,9 +419,12 @@ export default function DriverDashboard() {
                           
                           <td>
                             <span className="location-text">
-                              {task.to_slot 
-                                ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                : t('pages.requests.location.unknown')
+                              {task.actual_location 
+                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                : (task.to_slot 
+                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                  : t('pages.requests.location.unknown')
+                                )
                               }
                             </span>
                           </td>
@@ -671,7 +630,15 @@ export default function DriverDashboard() {
                                    padding: '6px'
                                  }}>
                                    {task.report_image ? (
-                                     <a href={task.report_image} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                     <a 
+                                       href={task.report_image.startsWith('http') 
+                                         ? task.report_image 
+                                         : `http://localhost:1000${task.report_image}`
+                                       } 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       className="text-blue-600 hover:underline"
+                                     >
                                        {t('pages.driverDashboard.report.viewImage')}
                                      </a>
                                    ) : (
@@ -719,8 +686,16 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button 
-                                  className="btn btn-sm btn-success"
-                                  onClick={() => handleStatusUpdate(task.id, 'PENDING_APPROVAL')}
+                                  className={`btn btn-sm ${task.report_image ? 'btn-success' : 'btn-disabled'}`}
+                                  onClick={() => {
+                                    if (!task.report_image) {
+                                      alert(t('pages.driverDashboard.messages.requireReportBeforeComplete'));
+                                      return;
+                                    }
+                                    handleStatusUpdate(task.id, 'COMPLETED');
+                                  }}
+                                  disabled={!task.report_image}
+                                  title={!task.report_image ? t('pages.driverDashboard.messages.requireReportTooltip') : ''}
                                 >
                                   {t('pages.driverDashboard.actions.complete')}
                                 </button>
@@ -746,7 +721,6 @@ export default function DriverDashboard() {
                         <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.cost')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
                         <th>{t('pages.driverDashboard.history.completedAt')}</th>
                       </tr>
@@ -767,14 +741,14 @@ export default function DriverDashboard() {
                           </td>
                           <td>
                             <span className="location-text">
-                              {task.to_slot 
-                                ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                : 'Chưa xác định'
+                              {task.actual_location 
+                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                : (task.to_slot 
+                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                  : 'Chưa xác định'
+                                )
                               }
                             </span>
-                          </td>
-                          <td>
-                            {task.cost ? `${task.cost.toLocaleString(locale)} ${t('pages.driverDashboard.cost.currencyShort')}` : t('common.na')}
                           </td>
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
