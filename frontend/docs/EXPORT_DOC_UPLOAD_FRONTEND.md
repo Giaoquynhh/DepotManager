@@ -125,7 +125,7 @@ const getContainerLocation = (containerNo: string) => {
     // Fallback: Tạo vị trí mô phỏng dựa trên container_no
     // Trong thực tế, cần lấy từ API containers
     if (containerNo === 'ISO 9999') {
-        return 'Depot A / B1 / B1-10'; // Vị trí mô phỏng
+        return 'B / B1-10 / B1-10'; // Vị trí mô phỏng
     }
     
     return null;

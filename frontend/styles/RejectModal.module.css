@@ -1,0 +1,330 @@
+/* RejectModal Styles */
+.rejectModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rejectModalContainer {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.rejectModalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(135deg, #fef2f2 0%, #fef7f7 100%);
+}
+
+.rejectModalIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  border-radius: 12px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.rejectModalTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.rejectModalBody {
+  padding: 24px;
+}
+
+.rejectModalMessage {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.rejectModalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rejectModalLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.required {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.rejectModalTextarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #1f2937 !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease;
+  resize: vertical;
+  min-height: 100px;
+  max-height: 200px;
+}
+
+.rejectModalTextarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+
+.rejectModalTextarea.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+
+.rejectModalTextarea:disabled {
+  background: #f9fafb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+.rejectModalTextarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+
+.rejectModalCharCount {
+  text-align: right;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.rejectModalError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 4px;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.rejectModalFooter {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px 24px;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.rejectModalBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.rejectModalBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rejectModalBtnCancel {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.rejectModalBtnCancel:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+.rejectModalBtnConfirm {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.rejectModalBtnConfirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.rejectModalBtnConfirm:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+.rejectModalSpinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .rejectModalOverlay {
+    padding: 16px;
+  }
+  
+  .rejectModalContainer {
+    max-width: 100%;
+  }
+  
+  .rejectModalHeader {
+    padding: 20px 20px 16px 20px;
+  }
+  
+  .rejectModalBody {
+    padding: 20px;
+  }
+  
+  .rejectModalFooter {
+    padding: 16px 20px 20px 20px;
+    flex-direction: column;
+  }
+  
+  .rejectModalBtn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .rejectModalTitle {
+    font-size: 18px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .rejectModalContainer {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .rejectModalHeader {
+    background: linear-gradient(135deg, #2d1b1b 0%, #3d1f1f 100%);
+    border-bottom-color: #374151;
+  }
+  
+  .rejectModalTitle {
+    color: #f9fafb;
+  }
+  
+  .rejectModalMessage {
+    color: #d1d5db;
+  }
+  
+  .rejectModalLabel {
+    color: #e5e7eb;
+  }
+  
+  .rejectModalTextarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .rejectModalTextarea:focus {
+    border-color: #3b82f6;
+  }
+  
+  .rejectModalTextarea:disabled {
+    background: #2d3748;
+    color: #718096;
+  }
+  
+  .rejectModalFooter {
+    background: #111827;
+    border-top-color: #374151;
+  }
+  
+  .rejectModalBtnCancel {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+  
+  .rejectModalBtnCancel:hover:not(:disabled) {
+    background: #4b5563;
+    color: #f9fafb;
+  }
+}

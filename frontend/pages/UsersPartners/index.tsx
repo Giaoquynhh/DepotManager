@@ -64,6 +64,25 @@ export default function UsersPartners(){
 		return roleMap[language][role as keyof typeof roleMap.vi] || role;
 	};
 
+	// Function to get status display name
+	const getStatusDisplayName = (status: string) => {
+		const statusMap = {
+			vi: {
+				ACTIVE: 'Hoạt động',
+				INVITED: 'Đã mời',
+				DISABLED: 'Vô hiệu hóa',
+				LOCKED: 'Đã khóa',
+			},
+			en: {
+				ACTIVE: 'Active',
+				INVITED: 'Invited',
+				DISABLED: 'Disabled',
+				LOCKED: 'Locked',
+			}
+		};
+		return statusMap[language][status as keyof typeof statusMap.vi] || status;
+	};
+
 	// Translations
 	const t = {
 		vi: {
@@ -81,11 +100,11 @@ export default function UsersPartners(){
 			status: 'Trạng thái',
 			company: 'Công ty',
 			actions: 'Hành động',
-			// Status badges
-			active: 'ACTIVE',
-			invited: 'INVITED',
-			disabled: 'DISABLED',
-			locked: 'LOCKED',
+			// Status badges (now handled by getStatusDisplayName function)
+			active: 'Hoạt động',
+			invited: 'Đã mời',
+			disabled: 'Vô hiệu hóa',
+			locked: 'Đã khóa',
 			// Action buttons
 			disable: 'Vô hiệu hóa',
 			enable: 'Bật lại',
@@ -154,11 +173,11 @@ export default function UsersPartners(){
 			status: 'Status',
 			company: 'Company',
 			actions: 'Actions',
-			// Status badges
-			active: 'ACTIVE',
-			invited: 'INVITED',
-			disabled: 'DISABLED',
-			locked: 'LOCKED',
+			// Status badges (now handled by getStatusDisplayName function)
+			active: 'Active',
+			invited: 'Invited',
+			disabled: 'Disabled',
+			locked: 'Locked',
 			// Action buttons
 			disable: 'Disable',
 			enable: 'Enable',
@@ -517,7 +536,7 @@ export default function UsersPartners(){
                                                          borderRadius: '4px',
                                                          fontSize: '12px'
                                                      }}>
-                                                         {u.status}
+                                                         {getStatusDisplayName(u.status)}
                                                      </span>
                                                  </td>
                                                  {activeTab === 'partners' && (

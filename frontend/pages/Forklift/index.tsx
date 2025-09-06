@@ -4,6 +4,7 @@ import { api } from '@services/api';
 import { isSaleAdmin, isYardManager, isSystemAdmin } from '@utils/rbac';
 import AssignDriverModal from '@components/Forklift/AssignDriverModal';
 import { useTranslation } from '@hooks/useTranslation';
+import { useToast } from '@hooks/useToastHook';
 
 interface ForkliftTask {
   id: string;
@@ -87,6 +88,7 @@ interface ForkliftTask {
 
 export default function Forklift() {
   const { t } = useTranslation();
+  const { showSuccess, showError, ToastContainer } = useToast();
   const [tasks, setTasks] = useState<ForkliftTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,7 +215,7 @@ export default function Forklift() {
     setAssignModalOpen(true);
   };
 
-  const handleDriverAssigned = (driverId: string) => {
+  const handleDriverAssigned = (driverId: string, driverName: string) => {
     // Update the task in the list with the new driver
     if (selectedTask) {
       setTasks(prev => prev.map(task => 
@@ -221,6 +223,12 @@ export default function Forklift() {
           ? { ...task, assigned_driver_id: driverId }
           : task
       ));
+      
+      // Hiển thị thông báo thành công
+      showSuccess(
+        t('pages.forklift.modal.assignSuccess'),
+        t('pages.forklift.modal.assignSuccessMessage').replace('{driverName}', driverName).replace('{containerNo}', selectedTask.container_no)
+      );
     }
     loadForkliftTasks(); // Refresh the list
   };
@@ -231,8 +239,14 @@ export default function Forklift() {
       loadForkliftTasks(); // Refresh the list
       setCostModalOpen(false);
       setSelectedTask(null);
+      
+      // Hiển thị thông báo thành công
+      showSuccess(
+        t('pages.forklift.messages.updateCostSuccess'),
+        t('pages.forklift.messages.updateCostSuccessMessage').replace('{cost}', cost.toLocaleString('vi-VN'))
+      );
     } catch (err: any) {
-      alert(err?.response?.data?.message || t('pages.forklift.messages.updateCostError'));
+      showError(t('pages.forklift.messages.updateCostError'), err?.response?.data?.message || t('pages.forklift.messages.updateCostError'));
     }
   };
 
@@ -393,7 +407,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.containerNo')}
                         </th>
@@ -402,7 +416,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.pickupLocation')}
                         </th>
@@ -411,7 +425,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.dropoffLocation')}
                         </th>
@@ -420,7 +434,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.status')}
                         </th>
@@ -429,7 +443,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.forklift')}
                         </th>
@@ -438,7 +452,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.cost')}
                         </th>
@@ -448,7 +462,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.createdAt')}
                         </th>
@@ -457,7 +471,7 @@ export default function Forklift() {
                           textAlign: 'center' as const,
                           fontWeight: '700',
                           color: '#374151',
-                          fontSize: '14px'
+                          fontSize: '12px'
                         }}>
 {t('pages.forklift.tableHeaders.actions')}
                         </th>
@@ -883,7 +897,7 @@ export default function Forklift() {
                                     fontWeight: '600'
                                   }}
                                   onClick={() => handleApproveJob(task.id)}
-                                  title="Duyệt và hoàn thành công việc"
+                                  title={t('pages.forklift.actions.approveTitle')}
                                 >
 {t('pages.forklift.actions.approve')}
                                 </button>
@@ -963,12 +977,13 @@ export default function Forklift() {
           jobData={{
             id: selectedTask.id,
             container_no: selectedTask.container_no,
-            source_location: selectedTask.from_slot?.code || 'Vị trí nguồn',
+            source_location: selectedTask.from_slot?.code || t('pages.forklift.location.sourceLocation'),
             destination_location: selectedTask.actual_location ? 
               `${selectedTask.actual_location.slot.code} (Tier ${selectedTask.actual_location.tier})` : 
-              (selectedTask.to_slot?.code || 'Vị trí đích'),
+              (selectedTask.to_slot?.code || t('pages.forklift.location.destinationLocation')),
             status: selectedTask.status
           }}
+          currentDriverId={selectedTask.assigned_driver_id}
         />
       )}
 
@@ -991,15 +1006,54 @@ export default function Forklift() {
             <div style={modalStyles.modalBody}>
               <div style={modalStyles.formGroup}>
                 <label htmlFor="cost" style={modalStyles.formLabel}>{t('pages.forklift.modal.costLabel')}</label>
-                                 <input
-                   type="number"
-                   id="cost"
-                   style={modalStyles.formInput}
-                   placeholder={t('pages.forklift.modal.costPlaceholder')}
-                   defaultValue={selectedTask.cost || 0}
-                   min="0"
-                   step="1"
-                 />
+                <input
+                  type="number"
+                  id="cost"
+                  style={modalStyles.formInput}
+                  placeholder={t('pages.forklift.modal.costPlaceholder')}
+                  defaultValue={selectedTask.cost || 0}
+                  min="0"
+                  step="1"
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    const formattedValue = value.toLocaleString('vi-VN');
+                    
+                    // Hiển thị số đã format
+                    const displayElement = document.getElementById('cost-formatted-display');
+                    if (displayElement) {
+                      if (value > 0) {
+                        displayElement.textContent = `Số đã nhập: ${formattedValue} VNĐ`;
+                        displayElement.style.display = 'block';
+                      } else {
+                        displayElement.style.display = 'none';
+                      }
+                    }
+                  }}
+                />
+                {/* Gợi ý chi phí */}
+                <div style={{
+                  marginTop: '8px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '4px',
+                  border: '1px solid #e9ecef',
+                  fontSize: '12px',
+                  color: '#6c757d'
+                }}>
+                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 Gợi ý chi phí:</div>
+                  <div style={{ marginBottom: '2px' }}>• <strong>Dịch vụ cơ bản:</strong> 50,000 - 200,000 VNĐ</div>
+                  <div style={{ marginBottom: '2px' }}>• <strong>Dịch vụ phức tạp:</strong> 200,000 - 500,000 VNĐ</div>
+                  <div style={{ marginBottom: '2px' }}>• <strong>Dịch vụ đặc biệt:</strong> 500,000 - 1,000,000 VNĐ</div>
+                  <div style={{ color: '#dc3545', fontWeight: '500' }}>• <strong>Giới hạn tối đa:</strong> 1,000,000,000 VNĐ (1 tỷ)</div>
+                </div>
+                {/* Hiển thị số đã format */}
+                <div id="cost-formatted-display" style={{
+                  marginTop: '4px',
+                  fontSize: '11px',
+                  color: '#28a745',
+                  fontWeight: '500',
+                  fontFamily: 'monospace'
+                }}></div>
               </div>
             </div>
             <div style={modalStyles.modalFooter}>
@@ -1020,13 +1074,13 @@ export default function Forklift() {
                    
                    // Kiểm tra có nhập gì không
                    if (!costValue) {
-                     alert(t('pages.forklift.messages.pleaseEnterCost'));
+                     showError(t('pages.forklift.messages.pleaseEnterCost'));
                      return;
                    }
                    
                    // Kiểm tra có phải là số không
                    if (isNaN(Number(costValue))) {
-                     alert(t('pages.forklift.messages.costMustBeNumber'));
+                     showError(t('pages.forklift.messages.costMustBeNumber'));
                      return;
                    }
                    
@@ -1034,19 +1088,19 @@ export default function Forklift() {
                    
                    // Kiểm tra có phải là số nguyên không
                    if (!Number.isInteger(cost)) {
-                     alert(t('pages.forklift.messages.costMustBeInteger'));
+                     showError(t('pages.forklift.messages.costMustBeInteger'));
                      return;
                    }
                    
                    // Kiểm tra có phải là số không âm không
                    if (cost < 0) {
-                     alert(t('pages.forklift.messages.costCannotBeNegative'));
+                     showError(t('pages.forklift.messages.costCannotBeNegative'));
                      return;
                    }
                    
                    // Kiểm tra giới hạn chi phí (1 tỷ VNĐ)
                    if (cost > 1000000000) {
-                     alert(t('pages.forklift.messages.costTooHigh'));
+                     showError(t('pages.forklift.messages.costTooHigh'));
                      return;
                    }
                    
@@ -1059,6 +1113,7 @@ export default function Forklift() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </>
   );
 }

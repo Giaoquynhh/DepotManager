@@ -60,12 +60,13 @@ export default function Account(){
 					<div className="glass-card profile-card">
 						<div className="card-header">
 							<h2 className="card-title">
-								<span className="shimmer-text">👤 {t('pages.account.profile.title')}</span>
+								<span className="shimmer-text">👤</span>
+								<span className="shimmer-text">{t('pages.account.profile.title')}</span>
 							</h2>
 						</div>
 						
 						<div className="form-group">
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">👤</span>
 								<input 
 									type="text" 
@@ -76,7 +77,7 @@ export default function Account(){
 								/>
 							</div>
 							
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">📧</span>
 								<input 
 									type="email" 
@@ -87,7 +88,7 @@ export default function Account(){
 								/>
 							</div>
 							
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">📱</span>
 								<input 
 									type="text" 
@@ -115,12 +116,13 @@ export default function Account(){
 					<div className="glass-card password-card">
 						<div className="card-header">
 							<h2 className="card-title">
-								<span className="shimmer-text">🔑 {t('pages.account.password.title')}</span>
+								<span className="shimmer-text">🔑</span>
+								<span className="shimmer-text">{t('pages.account.password.title')}</span>
 							</h2>
 						</div>
 						
 						<div className="form-group">
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">🔒</span>
 								<input 
 									type="password" 
@@ -131,7 +133,7 @@ export default function Account(){
 								/>
 							</div>
 							
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">🔑</span>
 								<input 
 									type="password" 
@@ -142,7 +144,7 @@ export default function Account(){
 								/>
 							</div>
 							
-							<div className="input-wrapper">
+							<div className="input-field">
 								<span className="input-icon">🔐</span>
 								<input 
 									type="password" 

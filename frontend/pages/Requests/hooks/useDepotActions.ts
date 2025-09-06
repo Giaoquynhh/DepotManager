@@ -20,6 +20,14 @@ export interface DepotActionsState {
 	activeChatRequests: Set<string>; // Thêm state để quản lý chat đang mở
 	showContainerSelectionModal: boolean; // Thêm state cho container selection modal
 	selectedRequestForContainer: any; // Thêm thông tin request được chọn để chọn container
+	// Reject modal states
+	showRejectModal: boolean;
+	rejectRequestId: string;
+	rejectLoading: boolean;
+	// Delete modal states
+	showDeleteModal: boolean;
+	deleteRequestId: string;
+	deleteLoading: boolean;
 }
 
 export interface DepotActions {
@@ -36,6 +44,14 @@ export interface DepotActions {
 	setRequestsData: (data: any[]) => void; // Thêm setter cho requests data
 	setShowContainerSelectionModal: (show: boolean) => void;
 	setSelectedRequestForContainer: (request: any) => void;
+	// Reject modal setters
+	setShowRejectModal: (show: boolean) => void;
+	setRejectRequestId: (id: string) => void;
+	setRejectLoading: (loading: boolean) => void;
+	// Delete modal setters
+	setShowDeleteModal: (show: boolean) => void;
+	setDeleteRequestId: (id: string) => void;
+	setDeleteLoading: (loading: boolean) => void;
 
 	// Actions
 	changeStatus: (id: string, status: string) => Promise<void>;
@@ -46,6 +62,13 @@ export interface DepotActions {
 	toggleSupplement: (requestId: string) => void;
 	handleChangeAppointment: (requestId: string) => void;
 	handleReject: (requestId: string) => Promise<void>;
+	handleRejectWithModal: (requestId: string) => void; // Mở modal từ chối
+	confirmReject: (reason: string) => Promise<void>; // Xác nhận từ chối với lý do
+	cancelReject: () => void; // Hủy từ chối
+	// Delete modal actions
+	handleDeleteWithModal: (requestId: string) => void; // Mở modal gỡ bỏ
+	confirmDelete: () => Promise<void>; // Xác nhận gỡ bỏ
+	cancelDelete: () => void; // Hủy gỡ bỏ
 	sendPayment: (id: string) => Promise<void>;
 	softDeleteRequest: (id: string, scope: 'depot' | 'customer') => Promise<void>;
 	restoreRequest: (id: string, scope: 'depot' | 'customer') => Promise<void>;
@@ -79,6 +102,14 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	const [activeChatRequests, setActiveChatRequests] = useState<Set<string>>(new Set());
 	const [showContainerSelectionModal, setShowContainerSelectionModal] = useState(false);
 	const [selectedRequestForContainer, setSelectedRequestForContainer] = useState<any>(null);
+	// Reject modal states
+	const [showRejectModal, setShowRejectModal] = useState(false);
+	const [rejectRequestId, setRejectRequestId] = useState<string>('');
+	const [rejectLoading, setRejectLoading] = useState(false);
+	// Delete modal states
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteRequestId, setDeleteRequestId] = useState<string>('');
+	const [deleteLoading, setDeleteLoading] = useState(false);
 	
 	// i18n
 	const { t } = useTranslation();
@@ -126,14 +157,11 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		try {
 			let payload: any = { status };
 			if (status === 'REJECTED') {
-				const reasonPrompt = safeT('pages.requests.prompts.enterRejectionReason', 'Enter rejection reason');
-				const reason = window.prompt(reasonPrompt);
-				if (!reason) {
-					setLoadingId('');
-					return;
-				}
-				payload.reason = reason;
-				await api.patch(`/requests/${id}/status`, payload);
+				// Sử dụng modal mới thay vì window.prompt
+				setRejectRequestId(id);
+				setShowRejectModal(true);
+				setLoadingId('');
+				return;
 			} else if (status === 'RECEIVED') {
 				// Kiểm tra loại request
 				const request = requestsData.find(r => r.id === id);
@@ -237,6 +265,98 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		} finally {
 			setLoadingId('');
 		}
+	};
+
+	// Mở modal từ chối
+	const handleRejectWithModal = (requestId: string) => {
+		setRejectRequestId(requestId);
+		setShowRejectModal(true);
+	};
+
+	// Xác nhận từ chối với lý do
+	const confirmReject = async (reason: string) => {
+		if (!rejectRequestId) return;
+		
+		setRejectLoading(true);
+		setMsg(null);
+		
+		try {
+			await api.patch(`/requests/${rejectRequestId}/status`, { status: 'REJECTED', reason });
+			mutate('/requests?page=1&limit=20');
+			
+			// Hiển thị thông báo thành công
+			setMsg({ 
+				text: 'Yêu cầu đã được từ chối thành công!', 
+				ok: true 
+			});
+			
+			// Đóng modal sau khi hiển thị thông báo
+			setTimeout(() => {
+				setShowRejectModal(false);
+				setRejectRequestId('');
+			}, 1000);
+			
+		} catch (e: any) {
+			setMsg({ 
+				text: `Không thể từ chối: ${e?.response?.data?.message || 'Lỗi không xác định'}`, 
+				ok: false 
+			});
+		} finally {
+			setRejectLoading(false);
+		}
+	};
+
+	// Hủy từ chối
+	const cancelReject = () => {
+		setShowRejectModal(false);
+		setRejectRequestId('');
+		setRejectLoading(false);
+	};
+
+	// Mở modal gỡ bỏ
+	const handleDeleteWithModal = (requestId: string) => {
+		setDeleteRequestId(requestId);
+		setShowDeleteModal(true);
+	};
+
+	// Xác nhận gỡ bỏ
+	const confirmDelete = async () => {
+		if (!deleteRequestId) return;
+		
+		setDeleteLoading(true);
+		setMsg(null);
+		
+		try {
+			await api.delete(`/requests/${deleteRequestId}?scope=depot`);
+			mutate('/requests?page=1&limit=20');
+			
+			// Hiển thị thông báo thành công
+			setMsg({ 
+				text: 'Yêu cầu đã được gỡ bỏ khỏi danh sách Depot!', 
+				ok: true 
+			});
+			
+			// Đóng modal sau khi hiển thị thông báo
+			setTimeout(() => {
+				setShowDeleteModal(false);
+				setDeleteRequestId('');
+			}, 1000);
+			
+		} catch (e: any) {
+			setMsg({ 
+				text: `Không thể gỡ bỏ: ${e?.response?.data?.message || 'Lỗi không xác định'}`, 
+				ok: false 
+			});
+		} finally {
+			setDeleteLoading(false);
+		}
+	};
+
+	// Hủy gỡ bỏ
+	const cancelDelete = () => {
+		setShowDeleteModal(false);
+		setDeleteRequestId('');
+		setDeleteLoading(false);
 	};
 
 	const sendPayment = async (id: string) => {
@@ -523,7 +643,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 					
 					// Hiển thị thông báo thành công
 					setMsg({ 
-						text: formatT('pages.requests.messages.documentUploadSuccess', '✅ Uploaded document successfully for container {{containerNo}}! Status automatically changed from PICK_CONTAINER to SCHEDULED.', { containerNo }), 
+						text: formatT('pages.requests.messages.documentUploadSuccess', 'Uploaded document successfully for container {{containerNo}}! Status automatically changed from PICK_CONTAINER to SCHEDULED.', { containerNo }), 
 						ok: true 
 					});
 					
@@ -533,7 +653,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				} catch (error: any) {
 					console.error('❌ Error uploading document:', error);
 					setMsg({ 
-						text: `❌ ${safeT('pages.requests.messages.uploadDocumentFailed', 'Cannot upload document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
+						text: `${safeT('pages.requests.messages.uploadDocumentFailed', 'Cannot upload document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
 						ok: false 
 					});
 				} finally {
@@ -603,7 +723,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 					
 					// Hiển thị thông báo thành công
 					setMsg({ 
-						text: formatT('pages.requests.messages.exportDocumentUploadSuccess', '✅ Uploaded export document successfully! Status automatically changed from PICK_CONTAINER to SCHEDULED.'), 
+						text: formatT('pages.requests.messages.exportDocumentUploadSuccess', 'Uploaded export document successfully! Status automatically changed from PICK_CONTAINER to SCHEDULED.'), 
 						ok: true 
 					});
 					
@@ -613,7 +733,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 				} catch (error: any) {
 					console.error('❌ Error uploading export document:', error);
 					setMsg({ 
-						text: `❌ ${safeT('pages.requests.messages.uploadExportDocumentFailed', 'Cannot upload export document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
+						text: `${safeT('pages.requests.messages.uploadExportDocumentFailed', 'Cannot upload export document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
 						ok: false 
 					});
 				} finally {
@@ -671,7 +791,13 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		requestsData,
 		activeChatRequests,
 		showContainerSelectionModal,
-		selectedRequestForContainer
+		selectedRequestForContainer,
+		showRejectModal,
+		rejectRequestId,
+		rejectLoading,
+		showDeleteModal,
+		deleteRequestId,
+		deleteLoading
 	};
 
 	const actions: DepotActions = {
@@ -687,6 +813,12 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setRequestsData: setRequestsDataWithLog,
 		setShowContainerSelectionModal,
 		setSelectedRequestForContainer,
+		setShowRejectModal,
+		setRejectRequestId,
+		setRejectLoading,
+		setShowDeleteModal,
+		setDeleteRequestId,
+		setDeleteLoading,
 		changeStatus,
 		handleAppointmentSuccess,
 		toggleAppointment,
@@ -695,6 +827,12 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		toggleSupplement,
 		handleChangeAppointment,
 		handleReject,
+		handleRejectWithModal,
+		confirmReject,
+		cancelReject,
+		handleDeleteWithModal,
+		confirmDelete,
+		cancelDelete,
 		sendPayment,
 		softDeleteRequest,
 		restoreRequest,

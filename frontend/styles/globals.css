@@ -4486,10 +4486,10 @@ main.container.depot-requests,
 }
 
 .table-modern td:nth-child(3) { /* Cột ETA */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: unset;
   white-space: nowrap;
-  max-width: 130px;
+  max-width: 150px;
   word-wrap: break-word;
 }
 
@@ -4542,10 +4542,10 @@ main.container.depot-requests,
 }
 
 .table-modern td:nth-child(7) { /* Cột Chat */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: unset;
   white-space: nowrap;
-  max-width: 80px;
+  max-width: 100px;
   word-wrap: break-word;
 }
 
@@ -5498,6 +5498,10 @@ main.container.depot-requests,
   font-weight: 700;
   margin: 0;
   color: #000000 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .shimmer-text {
@@ -5517,19 +5521,14 @@ main.container.depot-requests,
   gap: 1.5rem;
 }
 
-.input-wrapper {
-  position: relative;
+.input-field {
   display: flex;
   align-items: center;
-  margin-left: 3rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .input-icon {
-  position: absolute;
-  left: -2.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
   font-size: 1.2rem;
   filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
   background: rgba(255, 255, 255, 0.9);
@@ -5540,10 +5539,16 @@ main.container.depot-requests,
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  order: 1;
+}
+
+.input-field input {
+  order: 2;
+  flex: 1;
 }
 
 .futuristic-input {
-  width: 100%;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -5553,6 +5558,7 @@ main.container.depot-requests,
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  flex: 1;
 }
 
 .futuristic-input::placeholder {

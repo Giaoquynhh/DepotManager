@@ -10,6 +10,10 @@ import SearchBar from '@components/SearchBar';
 import AppointmentModal from '@components/AppointmentModal';
 import UploadModal from '@components/UploadModal';
 import SupplementMini from '@components/SupplementMini';
+import DeleteModal from '@components/DeleteModal';
+import RejectModal from '@components/RejectModal';
+import AcceptModal from '@components/AcceptModal';
+import ToastNotification from '@components/ToastNotification';
 import { useCustomerActions } from './hooks/useCustomerActions';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -28,7 +32,7 @@ export default function CustomerRequests() {
 	
 	// Use customer actions hook
 	const [customerState, customerActions] = useCustomerActions();
-	const { msg, loadingId, me } = customerState;
+	const { msg, loadingId, me, showDeleteModal, deleteRequestId, deleteLoading, showRejectModal, rejectRequestId, rejectLoading, showAcceptModal, acceptRequestId, acceptLoading } = customerState;
 
 	const handleCreateSuccess = () => {
 		setShowCreateModal(false);
@@ -124,7 +128,8 @@ export default function CustomerRequests() {
 
 	const handleUploadSuccess = () => {
 		mutate('/requests?page=1&limit=20');
-		customerActions.setMsg({ text: t('pages.requests.messages.uploadDocumentSuccess'), ok: true });
+		// Không set message ở đây để tránh duplicate với handleSupplementSuccess
+		// customerActions.setMsg({ text: t('pages.requests.messages.uploadDocumentSuccess'), ok: true });
 	};
 
 	const requestsWithActions = filteredData?.map((item: any) => ({
@@ -135,8 +140,9 @@ export default function CustomerRequests() {
 			loadingId,
 			handleOpenSupplementPopup,
 			handleViewInvoice: customerActions.handleViewInvoice,
-			handleAccept: customerActions.handleAccept,
-			handleRejectByCustomer: customerActions.handleRejectByCustomer
+			handleAcceptWithModal: customerActions.handleAcceptWithModal,
+			handleRejectWithModal: customerActions.handleRejectWithModal,
+			onDeleteWithModal: customerActions.handleDeleteWithModal
 		}
 	}));
 
@@ -206,11 +212,15 @@ export default function CustomerRequests() {
 					userRole={me?.role || me?.roles?.[0]}
 				/>
 
-				{/* Status Message */}
+				{/* Toast Notification */}
 				{msg && (
-					<div className={`status-message ${msg.ok ? 'success' : 'error'}`}>
-						{msg.text}
-					</div>
+					<ToastNotification
+						visible={!!msg}
+						message={msg.text}
+						type={msg.ok ? 'success' : 'error'}
+						duration={4000}
+						onClose={() => customerActions.setMsg(null)}
+					/>
 				)}
 
 				{/* Create Request Modal */}
@@ -240,6 +250,41 @@ export default function CustomerRequests() {
 					visible={showSupplementPopup}
 					onClose={() => setShowSupplementPopup(false)}
 					onSuccess={handleSupplementSuccess}
+				/>
+
+				{/* Accept Modal */}
+				<AcceptModal
+					visible={showAcceptModal}
+					onConfirm={customerActions.confirmAccept}
+					onCancel={customerActions.cancelAccept}
+					loading={acceptLoading}
+					title={t('pages.requests.acceptModal.title')}
+					message={t('pages.requests.acceptModal.message')}
+					confirmText={t('pages.requests.acceptModal.confirm')}
+					cancelText={t('pages.requests.acceptModal.cancel')}
+				/>
+
+				{/* Reject Modal */}
+				<RejectModal
+					visible={showRejectModal}
+					onConfirm={customerActions.confirmReject}
+					onCancel={customerActions.cancelReject}
+					loading={rejectLoading}
+					title={t('pages.requests.rejectModal.title')}
+					message={t('pages.requests.rejectModal.message')}
+					placeholder={t('pages.requests.rejectModal.placeholder')}
+					confirmText={t('pages.requests.rejectModal.confirm')}
+					cancelText={t('pages.requests.rejectModal.cancel')}
+				/>
+
+				{/* Delete Modal */}
+				<DeleteModal
+					visible={showDeleteModal}
+					onConfirm={customerActions.confirmDelete}
+					onCancel={customerActions.cancelDelete}
+					loading={deleteLoading}
+					itemName={filteredData?.find(r => r.id === deleteRequestId)?.container_no}
+					itemType="yêu cầu"
 				/>
 			</main>
 		</>

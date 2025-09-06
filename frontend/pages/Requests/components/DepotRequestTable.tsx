@@ -12,6 +12,7 @@ interface DepotRequestTableProps {
 	onChangeStatus?: (id: string, status: string) => void;
 	onSendPayment?: (id: string) => void;
 	onSoftDelete?: (id: string, scope: string) => void;
+	onDeleteWithModal?: (id: string) => void;
 	onViewInvoice?: (id: string) => void;
 	onSendCustomerConfirmation?: (id: string) => void;
 	onAddDocument?: (requestId: string, containerNo: string) => void;
@@ -40,6 +41,7 @@ export default function DepotRequestTable({
 	onChangeStatus,
 	onSendPayment,
 	onSoftDelete,
+	onDeleteWithModal,
 	onViewInvoice,
 	onSendCustomerConfirmation,
 	onAddDocument,
@@ -449,15 +451,11 @@ export default function DepotRequestTable({
 											<button
 												className="btn btn-sm btn-outline"
 												disabled={loadingId === item.id + 'DELETE'}
-												onClick={() => {
-													if (window.confirm(safeT('pages.requests.softDeleteConfirm', 'Remove from Depot list?\nRequest will still show Rejected on the Customer side.'))) {
-												onSoftDelete?.(item.id, 'depot');
-											}
-										}}
-										title={safeT('pages.requests.softDeleteTitle', 'Remove from Depot list')}
-									>
-										{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} {safeT('common.remove', 'Remove')}
-									</button>
+												onClick={() => onDeleteWithModal?.(item.id)}
+												title="Gỡ bỏ khỏi danh sách Depot"
+											>
+												{loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} Gỡ bỏ
+											</button>
 										</div>
 									)}
 								</div>
