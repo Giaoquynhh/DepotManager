@@ -143,7 +143,9 @@ export default function UsersPartners() {
                                 <h3 style={{margin:0, fontSize:18, fontWeight:700, color:'#0b2b6d'}}>
                   {role === 'CustomerAdmin' 
                     ? 'Danh sách người dùng công ty' 
-                    : (activeTab === 'users' ? 'Danh sách người dùng' : 'Danh sách đối tác')
+                    : (['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) 
+                        ? (activeTab === 'users' ? 'Danh sách người dùng' : 'Danh sách đối tác')
+                        : 'Danh sách người dùng')
                   }
                                 </h3>
                                 <div style={{display:'flex', gap:8}}>
@@ -264,7 +266,7 @@ export default function UsersPartners() {
                                 <table className="table">
                                                                          <thead style={{background: '#f8fafc'}}>
                                          <tr>
-                      {(role === 'CustomerAdmin' || activeTab === 'users') ? (
+                      {(role === 'CustomerAdmin' || !['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                         <>
                           <th>{translations[language].email}</th>
                           <th>{translations[language].fullName}</th>
@@ -282,7 +284,7 @@ export default function UsersPartners() {
                                          </tr>
                                      </thead>
                   
-                  {(role === 'CustomerAdmin' || activeTab === 'users') ? (
+                  {(role === 'CustomerAdmin' || !['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                     <UserTable
                       users={filteredUsers}
                       role={role}

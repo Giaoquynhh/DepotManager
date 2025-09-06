@@ -1,5 +1,30 @@
 # Container Management System
 
+## 🚀 Tính năng mới: Container Duplicate Validation
+
+### **Ngăn chặn tạo request import trùng lặp**
+
+Hệ thống đã được cập nhật với logic validation để ngăn chặn tạo request import với container number đã tồn tại trong hệ thống.
+
+#### **Logic Validation Nâng Cao:**
+- ✅ **Kiểm tra ServiceRequest**: Container với status chưa hoàn thành (PENDING, SCHEDULED, etc.)
+- ✅ **Kiểm tra RepairTicket**: Container đang trong quy trình sửa chữa (CHECKED)
+- ✅ **Kiểm tra YardPlacement**: Container đã được đặt vào yard (OCCUPIED)
+- ✅ **Đồng bộ với UI**: Sử dụng cùng query logic như Yard/ContainersPage
+- ✅ **Cho phép tạo mới**: Chỉ khi container thực sự không có trong depot
+
+#### **Error Messages:**
+```
+Container ISO 1234 đã tồn tại trong hệ thống với trạng thái PENDING. 
+Chỉ có thể tạo request mới khi container không còn trong hệ thống.
+```
+
+#### **Files Modified:**
+- `backend/modules/requests/service/RequestBaseService.ts` - Enhanced validation logic
+- `backend/docs/ENHANCED_CONTAINER_VALIDATION.md` - Enhanced documentation
+- `backend/test-enhanced-container-validation.js` - Enhanced test script
+- `frontend/docs/CONTAINER_DUPLICATE_VALIDATION_FRONTEND.md` - Frontend docs
+
 ## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR và GATE_OUT
 
 ### **Workflow mới với trạng thái IN_CAR và GATE_OUT**

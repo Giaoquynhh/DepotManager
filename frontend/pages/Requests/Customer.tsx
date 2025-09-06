@@ -106,6 +106,9 @@ export default function CustomerRequests() {
 	};
 
 	const handleSupplementSuccess = () => {
+		// Đóng popup bổ sung thông tin
+		setShowSupplementPopup(false);
+		
 		// Refresh danh sách request để cập nhật trạng thái
 		// Vì request đã chuyển sang FORWARDED, cần refresh để hiển thị đúng
 		mutate('/requests?page=1&limit=20');
@@ -136,6 +139,7 @@ export default function CustomerRequests() {
 			handleOpenSupplementPopup,
 			handleViewInvoice: customerActions.handleViewInvoice,
 			handleAccept: customerActions.handleAccept,
+			handleAcceptScheduled: customerActions.handleAcceptScheduled,
 			handleRejectByCustomer: customerActions.handleRejectByCustomer
 		}
 	}));

@@ -126,10 +126,6 @@ export class RequestService {
 		return await RequestDocumentService.uploadDocument(actor, request_id, type, file);
 	}
 
-	async uploadMultipleDocuments(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT'|'EXPORT_DOC', files: Express.Multer.File[]) {
-		return await RequestDocumentService.uploadMultipleDocuments(actor, request_id, type, files);
-	}
-
 	async listDocuments(actor: any, request_id: string, type?: string) {
 		return await RequestDocumentService.listDocuments(actor, request_id, type);
 	}
@@ -146,10 +142,6 @@ export class RequestService {
 	// Customer operations
 	async acceptRequest(actor: any, id: string) {
 		return await RequestCustomerService.acceptRequest(actor, id);
-	}
-
-	async acceptScheduledRequest(actor: any, id: string) {
-		return await RequestCustomerService.acceptScheduledRequest(actor, id);
 	}
 
 	async rejectByCustomer(actor: any, id: string, reason: string) {
