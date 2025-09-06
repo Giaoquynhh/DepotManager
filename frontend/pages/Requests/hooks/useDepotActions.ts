@@ -559,51 +559,67 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		console.log('🔍 handleUploadDocument called:', { requestId });
 		setLoadingId(requestId + 'UPLOAD_DOC');
 		try {
-			// Tạo input file element
+			// Tạo input file element với multiple files support
 			const fileInput = document.createElement('input');
 			fileInput.type = 'file';
 			fileInput.accept = '.pdf,.jpg,.jpeg,.png';
+			fileInput.multiple = true; // Cho phép chọn nhiều files
 			fileInput.style.display = 'none';
 			
 			fileInput.onchange = async (event) => {
 				const target = event.target as HTMLInputElement;
-				const file = target.files?.[0];
+				const files = target.files;
 				
-				if (!file) {
+				if (!files || files.length === 0) {
 					setLoadingId('');
 					return;
 				}
 				
 				try {
-					// Kiểm tra kích thước file (10MB)
-					if (file.size > 10 * 1024 * 1024) {
+					// Kiểm tra số lượng files (tối đa 10 files)
+					if (files.length > 10) {
 						setMsg({ 
-							text: safeT('pages.requests.messages.fileTooLarge', 'File quá lớn. Kích thước tối đa là 10MB'), 
+							text: safeT('pages.requests.messages.tooManyFiles', 'Chỉ được upload tối đa 10 files cùng lúc'), 
 							ok: false 
 						});
 						setLoadingId('');
 						return;
 					}
 					
-					// Tạo FormData
+					// Kiểm tra kích thước từng file (10MB mỗi file)
+					for (let i = 0; i < files.length; i++) {
+						const file = files[i];
+						if (file.size > 10 * 1024 * 1024) {
+							setMsg({ 
+								text: safeT('pages.requests.messages.fileTooLarge', `File "${file.name}" quá lớn. Kích thước tối đa là 10MB`), 
+								ok: false 
+							});
+							setLoadingId('');
+							return;
+						}
+					}
+					
+					// Tạo FormData với multiple files
 					const formData = new FormData();
-					formData.append('file', file);
+					for (let i = 0; i < files.length; i++) {
+						formData.append('files', files[i]);
+					}
 					formData.append('type', 'EXPORT_DOC');
 					
-					console.log('📤 Uploading EXPORT_DOC:', { requestId, fileName: file.name, fileSize: file.size });
+					console.log('📤 Uploading multiple EXPORT_DOCs:', { requestId, fileCount: files.length, fileNames: Array.from(files).map(f => f.name) });
 					
-					// Upload document
-					const response = await api.post(`/requests/${requestId}/docs`, formData, {
+					// Upload multiple documents
+					const response = await api.post(`/requests/${requestId}/docs/multiple`, formData, {
 						headers: {
 							'Content-Type': 'multipart/form-data',
 						},
 					});
 					
-					console.log('✅ Document upload successful:', response.data);
+					console.log('✅ Multiple documents upload successful:', response.data);
 					
 					// Hiển thị thông báo thành công
 					setMsg({ 
-						text: formatT('pages.requests.messages.exportDocumentUploadSuccess', '✅ Uploaded export document successfully! Status automatically changed from PICK_CONTAINER to SCHEDULED.'), 
+						text: formatT('pages.requests.messages.exportDocumentsUploadSuccess', `✅ Đã upload thành công ${files.length} chứng từ xuất! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.`), 
 						ok: true 
 					});
 					
@@ -611,9 +627,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 					mutate('/requests?page=1&limit=20');
 					
 				} catch (error: any) {
-					console.error('❌ Error uploading export document:', error);
+					console.error('❌ Error uploading export documents:', error);
 					setMsg({ 
-						text: `❌ ${safeT('pages.requests.messages.uploadExportDocumentFailed', 'Cannot upload export document')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
+						text: `❌ ${safeT('pages.requests.messages.uploadExportDocumentsFailed', 'Cannot upload export documents')}: ${error?.response?.data?.message || safeT('common.unknownError', 'Unknown error')}`, 
 						ok: false 
 					});
 				} finally {

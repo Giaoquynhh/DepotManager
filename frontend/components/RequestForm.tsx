@@ -57,6 +57,15 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
       }
     }
     
+    // Validation cho EXPORT - chứng từ là bắt buộc
+    if (form.type === 'EXPORT') {
+      if (selectedFiles.length === 0) {
+        setMessage('Chứng từ là bắt buộc cho yêu cầu xuất khẩu');
+        setLoading(false);
+        return;
+      }
+    }
+    
     if (!form.etaDate || !form.etaTime) {
       setMessage(t('pages.requests.form.validation.etaRequired'));
       setLoading(false);
@@ -68,10 +77,13 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
       const formData = new FormData();
       formData.append('type', form.type);
       
-      // Chỉ gửi container_no và documents cho loại IMPORT
+      // Gửi container_no cho loại IMPORT
       if (form.type === 'IMPORT') {
         formData.append('container_no', form.container_no);
-        // Gửi tất cả files đã chọn
+      }
+      
+      // Gửi documents cho cả IMPORT và EXPORT
+      if (selectedFiles.length > 0) {
         selectedFiles.forEach((file, index) => {
           formData.append(`documents`, file);
         });
@@ -253,6 +265,65 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
           </div>
         </div>
       </div>
+
+      {/* Luồng Xuất - hiển thị khi type = EXPORT */}
+      {form.type === 'EXPORT' && (
+        <div className="form-group">
+          <label htmlFor="export-documents">Chứng từ <span className="required">*</span></label>
+          <div className="file-upload-container">
+            <input
+              id="export-documents"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileChange}
+              className="file-input"
+              multiple
+            />
+            <label htmlFor="export-documents" className="file-upload-label">
+              <span className="file-upload-icon">📎</span>
+              <span className="file-upload-text">
+                {selectedFiles.length > 0 
+                  ? `${selectedFiles.length} file(s) đã chọn` 
+                  : 'Chọn chứng từ (PDF, JPG, PNG)'
+                }
+              </span>
+            </label>
+          </div>
+          
+          {/* Hiển thị danh sách files đã chọn */}
+          {selectedFiles.length > 0 && (
+            <div className="files-list">
+              <div className="files-header">
+                <span>Files đã chọn ({selectedFiles.length}):</span>
+                <button 
+                  type="button" 
+                  onClick={clearAllFiles}
+                  className="clear-all-btn"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="file-preview">
+                  <span className="file-name">{file.name}</span>
+                  <span className="file-size">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  <button 
+                    type="button" 
+                    onClick={() => removeFile(index)}
+                    className="file-remove"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <small className="file-hint">
+            Định dạng hỗ trợ: PDF, JPG, PNG - Có thể chọn nhiều file cùng lúc
+          </small>
+        </div>
+      )}
 
       {message && (
         <div className={`form-message ${message.includes(t('pages.requests.form.success')) ? 'success' : 'error'}`}>

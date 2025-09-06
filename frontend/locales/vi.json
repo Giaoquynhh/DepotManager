@@ -215,7 +215,11 @@
         "rejectRepairInvoice": "Từ chối hóa đơn sửa chữa",
         "removeFromList": "Xóa khỏi danh sách",
         "viewInvoice": "Xem hóa đơn",
-        "payInvoice": "Thanh toán hóa đơn"
+        "payInvoice": "Thanh toán hóa đơn",
+        "uploadDocumentTitle": "Tải lên chứng từ xuất",
+        "uploadDocumentsTitle": "Tải lên chứng từ xuất (hỗ trợ nhiều files)",
+        "uploadDocument": "Tải lên chứng từ",
+        "uploadDocuments": "Tải lên chứng từ"
       },
       "softDeleteConfirm": "Gỡ khỏi danh sách Depot\\nYêu cầu vẫn sẽ hiển thị là Từ chối ở phía Khách hàng.",
       "softDeleteTitle": "Gỡ khỏi danh sách Depot",
@@ -241,6 +245,10 @@
         "fileTooLarge": "Tệp quá lớn. Kích thước tối đa là 10MB",
         "invalidFileType": "Chỉ chấp nhận tệp PDF hoặc hình ảnh (JPG, PNG)",
         "uploadDocumentFailed": "Không thể tải lên chứng từ",
+        "uploadDocumentsFailed": "Không thể tải lên chứng từ",
+        "uploadDocumentsSuccess": "Tải lên chứng từ thành công!",
+        "exportDocumentsUploadSuccess": "Đã tải lên thành công {count} chứng từ xuất! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.",
+        "tooManyFiles": "Chỉ được tải lên tối đa 10 files cùng lúc",
         "cannotAddDocument": "Không thể thêm chứng từ",
         "uploadDocumentSuccess": "Tải lên file thành công!",
         "supplementUploadSuccessForwarded": "Tải lên tài liệu bổ sung thành công. Yêu cầu đã được tự động chuyển tiếp.",
