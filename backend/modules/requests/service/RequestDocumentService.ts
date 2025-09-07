@@ -53,7 +53,7 @@ export class RequestDocumentService {
 		const version = (last?.version || 0) + 1;
 		
 		// Xử lý file upload
-		const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
+		const uploadDir = path.join(process.cwd(), 'uploads');
 		if (!fs.existsSync(uploadDir)) {
 			fs.mkdirSync(uploadDir, { recursive: true });
 		}
@@ -139,7 +139,7 @@ export class RequestDocumentService {
 			}
 		}
 
-		const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
+		const uploadDir = path.join(process.cwd(), 'uploads');
 		if (!fs.existsSync(uploadDir)) {
 			fs.mkdirSync(uploadDir, { recursive: true });
 		}

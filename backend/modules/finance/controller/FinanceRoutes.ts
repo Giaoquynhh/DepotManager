@@ -12,7 +12,7 @@ import { requireRoles } from '../../../shared/middlewares/rbac';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Sử dụng đường dẫn tuyệt đối cố định
-    const uploadPath = 'D:\\container21\\manageContainer\\backend\\uploads';
+    const uploadPath = 'D:\\container35\\manageContainer\\backend\\uploads';
     
     // Tạo thư mục nếu chưa tồn tại
     if (!fs.existsSync(uploadPath)) {
@@ -102,7 +102,7 @@ router.get('/eir/container/:container_no', authenticate, async (req: any, res: a
 
     const eirDoc = request.docs[0];
     const filename = eirDoc.storage_key;
-    const filePath = path.join('D:\\container21\\manageContainer\\backend\\uploads', filename);
+    const filePath = path.join('D:\\container35\\manageContainer\\backend\\uploads', filename);
     
     console.log('🔍 EIR doc:', eirDoc);
     console.log('🔍 Filename:', filename);
@@ -274,7 +274,7 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
         return res.status(400).json({ success: false, message: 'Tên file là bắt buộc' });
       }
 
-      const filePath = path.join('D:\\container21\\manageContainer\\backend\\uploads', filename);
+      const filePath = path.join('D:\\container35\\manageContainer\\backend\\uploads', filename);
       
       // Kiểm tra file có tồn tại không
       if (!fs.existsSync(filePath)) {

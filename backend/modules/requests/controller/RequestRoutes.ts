@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { requireRoles } from '../../../shared/middlewares/rbac';
 
-const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
+const uploadDir = path.join(process.cwd(),  'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // Cấu hình multer cho file upload

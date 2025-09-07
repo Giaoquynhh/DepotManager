@@ -220,7 +220,15 @@ export default function RequestForm({ onSuccess, onCancel }: RequestFormProps) {
                 </div>
                 {selectedFiles.map((file, index) => (
                   <div key={index} className="file-preview">
-                    <span className="file-name">{file.name}</span>
+                    <span className="file-name" style={{ 
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '200px'
+                    }}>
+                      {file.name}
+                    </span>
                     <span className="file-size">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                     <button 
                       type="button" 

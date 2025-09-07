@@ -14,7 +14,7 @@ export class RequestService {
 		
 		// Xử lý upload files chỉ khi có files (IMPORT)
 		if (files && files.length > 0) {
-			const uploadDir = path.join(process.cwd(), 'backend', 'uploads');
+			const uploadDir = path.join(process.cwd(), 'uploads');
 			if (!fs.existsSync(uploadDir)) {
 				fs.mkdirSync(uploadDir, { recursive: true });
 			}
