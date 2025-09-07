@@ -98,3 +98,4 @@ Forklift Complete → Request IN_CAR → YardPlacement REMOVED → Container ẩ
 - YardPlacement status: `OCCUPIED` → `REMOVED`
 - YardPlacement removed_at: `NULL` → `timestamp`
 - ServiceRequest status: `FORKLIFTING` → `IN_CAR` (export only)
+
