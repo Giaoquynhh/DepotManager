@@ -1,0 +1,127 @@
+/* 
+ * Page-Specific Styles
+ * Styles for specific pages and components
+ */
+
+/* ===== PERMISSIONS PAGE STYLES ===== */
+.permissions-page .container {
+  /* Căn chỉnh đặc biệt cho trang permissions để bố cục cân bằng hoàn hảo */
+  padding-left: var(--space-4) !important; /* Giảm padding bên trái */
+  padding-right: var(--space-4) !important; /* Giữ padding bên phải cân bằng */
+}
+
+.permissions-page .page-header {
+  /* Căn chỉnh header trang permissions */
+  padding-left: 0;
+  padding-right: 0;
+  margin-bottom: var(--space-6);
+}
+
+.permissions-page .search-bar {
+  /* Căn chỉnh search bar trang permissions */
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* Căn chỉnh Card component trong trang permissions */
+.permissions-page .card {
+  padding: var(--space-6);
+  margin: 0;
+}
+
+/* Căn chỉnh table container trong trang permissions */
+.permissions-page .table-container {
+  padding: var(--space-4);
+  margin: 0;
+}
+
+/* Căn chỉnh search input trong trang permissions */
+.permissions-page input[type="text"] {
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Căn chỉnh bố cục tổng thể cho trang permissions */
+.permissions-page {
+  /* Đảm bảo bố cục cân bằng hoàn hảo */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.permissions-page .card {
+  /* Căn chỉnh card để cân bằng */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* Đảm bảo cột hành động có đủ không gian */
+.table-modern th:last-child,
+.table-modern td:last-child {
+  min-width: 200px; /* Đặt min-width cho cột hành động */
+  max-width: none; /* Cho phép mở rộng khi cần */
+  white-space: nowrap; /* Ngăn text bị xuống dòng */
+}
+
+/* Gate Page Styling */
+.gate-page {
+  padding: 2rem;
+  background: var(--color-background);
+}
+
+.gate-page .modern-header {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  border: 2px solid #60a5fa;
+  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+}
+
+/* Repair Page Styling */
+.repair-page {
+  padding: 2rem;
+  background: var(--color-background);
+}
+
+.repair-page .modern-header {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: 2px solid #c084fc;
+  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3);
+}
+
+.repair-page .pending-containers-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.repair-page .pending-containers-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Inventory Page Styling */
+.inventory-page {
+  padding: 2rem;
+  background: var(--color-background);
+}
+
+.inventory-page .modern-header {
+  background: linear-gradient(135deg, #059669, #10b981);
+  border: 2px solid #34d399;
+  box-shadow: 0 20px 40px rgba(5, 150, 105, 0.3);
+}
+
+.inventory-page .add-product-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.inventory-page .add-product-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}

@@ -1,0 +1,174 @@
+/* 
+ * KPI Chips Styles
+ * Styles for KPI chips and status filter components
+ */
+
+/* KPI Chips (Depot Requests) */
+.kpi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.modern-header .kpi-chips {
+  margin-top: var(--space-4);
+}
+
+.kpi-chip {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: saturate(1.1) blur(2px);
+}
+
+/* KPI chip stickers - icon cho từng chip bằng CSS variable theo thứ tự */
+.kpi-chip::before {
+  content: var(--chip-icon, '');
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  transform: translateY(0);
+}
+
+/* Map icon theo thứ tự: All, Pending, Received, Completed, Exported, Rejected */
+.depot-requests .kpi-chips .kpi-chip:nth-child(1) { --chip-icon: '📊'; }
+.depot-requests .kpi-chips .kpi-chip:nth-child(2) { --chip-icon: '⏳'; }
+.depot-requests .kpi-chips .kpi-chip:nth-child(3) { --chip-icon: '📥'; }
+.depot-requests .kpi-chips .kpi-chip:nth-child(4) { --chip-icon: '✅'; }
+.depot-requests .kpi-chips .kpi-chip:nth-child(5) { --chip-icon: '🚚'; }
+.depot-requests .kpi-chips .kpi-chip:nth-child(6) { --chip-icon: '❌'; }
+
+/* Hiệu ứng hover nhẹ cho icon */
+.kpi-chip:hover::before {
+  transform: translateY(-1px) scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.kpi-chip .count {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 2px 6px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.kpi-chip:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+
+.kpi-chip:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.kpi-chip.active {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+/* Active color accents by chip order (All, Pending, Received, Completed, Exported, Rejected) */
+.kpi-chips .kpi-chip:nth-child(1).active {
+  background: linear-gradient(135deg, var(--color-blue-500, #3b82f6), var(--color-blue-600, #2563eb));
+}
+.kpi-chips .kpi-chip:nth-child(2).active {
+  background: linear-gradient(135deg, var(--color-amber-500, #f59e0b), var(--color-amber-600, #d97706));
+}
+.kpi-chips .kpi-chip:nth-child(3).active {
+  background: linear-gradient(135deg, var(--color-indigo-500, #6366f1), var(--color-indigo-600, #4f46e5));
+}
+.kpi-chips .kpi-chip:nth-child(4).active {
+  background: linear-gradient(135deg, var(--color-emerald-500, #10b981), var(--color-emerald-600, #059669));
+}
+.kpi-chips .kpi-chip:nth-child(5).active {
+  background: linear-gradient(135deg, var(--color-violet-500, #8b5cf6), var(--color-violet-600, #7c3aed));
+}
+.kpi-chips .kpi-chip:nth-child(6).active {
+  background: linear-gradient(135deg, var(--color-rose-500, #ef4444), var(--color-rose-600, #dc2626));
+}
+
+/* Light variant for chips used on white/light backgrounds (filter area) */
+.kpi-chips--light .kpi-chip {
+  background: var(--color-gray-50, #f9fafb);
+  border-color: var(--color-gray-200, #e5e7eb);
+  color: var(--color-gray-800, #1f2937);
+  backdrop-filter: none;
+}
+
+.kpi-chips--light .kpi-chip .count {
+  background: var(--color-gray-100, #f3f4f6);
+  border-color: var(--color-gray-200, #e5e7eb);
+  color: var(--color-gray-700, #374151);
+}
+
+.kpi-chips--light .kpi-chip:hover {
+  background: var(--color-gray-100, #f3f4f6);
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.06);
+}
+
+/* When active, keep gradient but ensure text/count are white for contrast */
+.kpi-chips--light .kpi-chip.active {
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.kpi-chips--light .kpi-chip.active .count {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* Status filter group: enforce horizontal layout */
+.status-filter-group {
+  width: 100%;
+}
+
+.status-filter-group .filter-label {
+  text-align: center;
+}
+
+.status-filter-group .kpi-chips {
+  justify-content: flex-start; /* canh trái để thẳng hàng với select */
+  align-items: center;
+  flex-wrap: wrap; /* cho phép xuống dòng khi tràn */
+  overflow: visible; /* tránh tạo thanh cuộn ngang */
+  row-gap: var(--space-2, 0.5rem);
+  width: auto; /* không chiếm full để căn trái tự nhiên */
+  max-width: 100%;
+  min-width: 0; /* tránh tràn trong grid */
+  box-sizing: border-box;
+  padding-inline: var(--space-2, 0.5rem); /* đệm hai bên để không chạm mép */
+  margin-top: 0; /* bỏ margin-top mặc định của .kpi-chips để cân đối với label */
+}
+
+/* Bỏ sticker trước nhóm KPI chips theo yêu cầu */
+.depot-requests .status-filter-group .kpi-chips::before {
+  content: none;
+  display: none;
+}
+
+.status-filter-group .kpi-chip {
+  flex: 0 0 auto; /* không co giãn, xếp ngang */
+}
+
+/* Sticky table header support: allow horizontal scroll and prevent vertical clipping */
+.table-container {
+  --sticky-table-offset: 0px; /* đảm bảo th dính sát top container, không tạo khoảng trống phía trên */
+  overflow-x: auto;
+  overflow-y: visible;
+}

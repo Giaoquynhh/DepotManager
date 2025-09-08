@@ -1,0 +1,172 @@
+/* Modern Table styles */
+.table-container{
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  /* overflow: hidden; */ /* Loại bỏ overflow hidden để tránh cắt mất nội dung */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  /* Thêm scroll ngang khi cần thiết */
+  overflow-x: auto;
+}
+
+.table-modern{
+  width: 100%;
+  border-collapse: collapse;
+  /* Đảm bảo bảng có thể mở rộng */
+  min-width: 1200px; /* Đặt min-width để đảm bảo tất cả cột hiển thị đầy đủ */
+}
+
+.table-modern th{
+  background: var(--color-gray-50) !important; /* #F9FAFB - xám sáng */
+  color: var(--color-gray-700) !important; /* #374151 - xám đậm */
+  font-weight: var(--font-weight-bold) !important;
+  text-align: left;
+  padding: var(--space-4);
+  border-bottom: 2px solid var(--color-gray-200);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: nowrap; /* Ngăn text bị xuống dòng */
+  vertical-align: middle; /* Căn giữa theo chiều dọc */
+}
+
+.table-modern td{
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-200);
+  vertical-align: middle;
+  color: var(--color-gray-900) !important; /* #111827 - đen */
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap; /* Ngăn text bị xuống dòng */
+  overflow: hidden; /* Ẩn nội dung vượt quá */
+  text-overflow: ellipsis; /* Hiển thị ... khi text quá dài */
+}
+
+.table-row{
+  transition: all 0.2s ease;
+}
+
+.table-row:hover{
+  background: var(--color-gray-50) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.type-label{
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-navy-primary);
+  background: var(--color-blue-100);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container-id{
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-navy-primary);
+  font-size: var(--font-size-sm);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.eta-date{
+  color: var(--color-gray-700);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+}
+
+.eta-empty{
+  color: var(--color-gray-400);
+  font-weight: var(--font-weight-medium);
+  font-style: italic;
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+}
+
+.payment-badge{
+  background: var(--color-yellow-100);
+  color: var(--color-yellow-800);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading and Empty states */
+.table-loading,
+.table-empty{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  color: var(--color-gray-600);
+}
+
+.loading-spinner{
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-gray-200);
+  border-top: 3px solid var(--color-navy-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--space-2);
+}
+
+.empty-icon{
+  font-size: 48px;
+  margin-bottom: var(--space-2);
+}
+
+.table-empty p{
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-2) 0;
+  color: var(--color-gray-700);
+}
+
+.table-empty small{
+  color: var(--color-gray-400);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Page Header */
+.page-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid #e8eef6;
+}
+
+.page-title{
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy-primary);
+  margin: 0;
+}
+
+.page-actions{
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}

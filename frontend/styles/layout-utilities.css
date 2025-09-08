@@ -1,0 +1,181 @@
+/* Main Content Layout */
+.main-content {
+  position: absolute;
+  top: var(--header-clearance); /* Giữ vị trí dưới header */
+  right: 0;
+  left: 0;
+  padding: 0; /* Tránh double padding với .container, đồng bộ với Depot */
+  transition: left 0.3s ease-in-out;
+  overflow-y: auto; /* Cho phép cuộn nội dung */
+  scrollbar-gutter: stable; /* Cố định khoảng trống thanh cuộn để lề phải nhất quán */
+  height: calc(100% - var(--header-clearance));
+}
+
+.main-content.full-width {
+  transform: translateX(0) !important; /* When sidebar is hidden */
+}
+
+/* Khi sidebar bị ẩn - Giao diện to hơn */
+.main-content.sidebar-hidden {
+  left: 0;
+}
+
+/* Khi sidebar mở - Giao diện nhỏ hơn */
+.main-content.sidebar-visible {
+  left: 240px; /* Dịch theo độ rộng sidebar */
+}
+
+/* Desktop: dành sẵn gutter phải 20px cho Gate khi sidebar mở (đồng bộ Depot) */
+@media (min-width: 1024px) {
+  .main-content.sidebar-visible {
+    right: 0; /* Bỏ gutter phải để mở rộng tối đa */
+  }
+  .main-content.sidebar-hidden {
+    right: 0; /* Toàn màn hình khi không có sidebar */
+  }
+}
+
+/* Gate main uses an inner container; avoid double offset vs sidebar */
+.main-content .container {
+  width: 100%;
+  max-width: 1600px; /* Giới hạn chiều rộng rộng hơn trên màn hình lớn */
+}
+/* Khi sidebar mở: bám trái (không center) để mép phải khớp Depot */
+.main-content.sidebar-visible .container {
+  margin-left: 0;
+  margin-right: auto;
+}
+/* Khi sidebar ẩn: vẫn center như mặc định của .container */
+.main-content.sidebar-hidden .container {
+  margin: 0 auto;
+}
+
+/* On desktop, override sidebar offset for containers nested in main content */
+@media (min-width: 1024px) {
+  body.with-sidebar .main-content .container {
+    margin-left: 0; /* Hủy bỏ margin-left: 260px từ body.with-sidebar .container */
+    width: 100%; /* Mở rộng toàn bộ chiều rộng có sẵn */
+  }
+}
+
+/* ETA Input Styling */
+.eta-inputs {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.eta-date,
+.eta-time {
+  flex: 1;
+}
+
+.eta-date input,
+.eta-time input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  transition: var(--transition-default);
+}
+
+.eta-date input:focus,
+.eta-time input:focus {
+  outline: none;
+  border-color: var(--color-navy-primary);
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+.eta-date input:hover,
+.eta-time input:hover {
+  border-color: var(--color-gray-500);
+}
+
+/* Register Page Specific Styles */
+.register-form input[type=text],
+.register-form input[type=password] {
+  background: #ffffff !important;
+  border: 2px solid var(--color-gray-300) !important;
+  color: var(--color-text-primary) !important;
+  padding: var(--space-4) !important;
+  font-size: var(--font-size-base) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.register-form input[type=text]:focus,
+.register-form input[type=password]:focus {
+  border-color: var(--color-navy-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1) !important;
+  outline: none !important;
+}
+
+.register-form input[type=text]:hover,
+.register-form input[type=password]:hover {
+  border-color: var(--color-gray-500) !important;
+}
+
+/* Import Yard Components CSS */
+@import './yard.css';
+
+/* Location Details Styling for Forklift Management */
+.location-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 200px;
+}
+
+.location-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+}
+
+.location-tier {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  width: fit-content;
+}
+
+.location-coordinates {
+  font-family: var(--font-family-mono);
+  padding: 2px var(--space-2);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  width: fit-content;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-600);
+}
+
+/* Enhanced table styling for location columns */
+.table-modern td:nth-child(2),
+.table-modern td:nth-child(3) {
+  min-width: 220px;
+  max-width: 280px;
+  vertical-align: top;
+  padding: var(--space-3);
+}
+
+/* Container ID styling */
+.container-id {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-navy-primary);
+  background: var(--color-navy-50);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-navy-200);
+  display: inline-block;
+}

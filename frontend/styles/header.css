@@ -1,0 +1,325 @@
+/* Header - Navy background */
+.header {
+  background: #200d6b; /* Navy blue */
+  color: var(--color-text-inverse);
+  padding: var(--space-2) 0; 
+  padding: var(--space-1) 0; /* Giảm padding từ space-2 (8px) xuống space-1 (4px) */
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+}
+
+/* Khi có sidebar, làm header liền mạch với sidebar: bỏ shadow và dùng màu navy */
+body.with-sidebar .header {
+  box-shadow: none;
+  /* Dùng màu navy để liền mạch */
+  background: #200445; /* Navy blue */
+  /* Header chiếm toàn bộ chiều rộng màn hình với khoảng cách hợp lý */
+  width: 100vw;
+  margin-left: 0;
+  left: 0;
+}
+
+/* Header Inner Layout */
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--space-4); /* Thêm padding bên trái và phải để logo không quá sát lề */
+  /* Tổng chiều cao header = padding-top/bottom của .header (4px + 4px) + min-height này = 52px */
+  min-height: 44px;
+  /* Đảm bảo header inner chiếm toàn bộ chiều rộng màn hình */
+  width: 100vw;
+  margin-left: 0;
+  left: 0;
+}
+
+/* Navigation Toggle Button - Đã ẩn */
+/* .nav-toggle {
+  position: relative;
+  left: 0;
+  top: 0;
+  transform: none;
+  background: var(--color-white);
+  color: var(--color-navy-primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  z-index: 1;
+  grid-column: 1;
+}
+
+.nav-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+  background: var(--color-gray-50);
+}
+
+.nav-toggle:active {
+  transform: scale(0.98);
+}
+
+.nav-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */
+
+/* Brand Section */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: 0;
+  min-width: 0;
+  flex-shrink: 0;
+  /* Đảm bảo logo có khoảng cách hợp lý với lề trái */
+  justify-content: flex-start;
+  padding-left: var(--space-2); /* Thêm padding nhỏ để logo không quá sát lề */
+  position: relative;
+  left: 0; /* Đảm bảo sát bên trái */
+  /* Logo có khoảng cách hợp lý với lề trái */
+  margin-left: 0 !important;
+  padding-left: var(--space-2) !important;
+}
+
+.header-logo-link {
+  display: flex;
+  align-items: center;
+  transition: var(--transition-default);
+}
+
+.header-logo-link:hover {
+  transform: scale(1.02);
+}
+
+.logo {
+  height: 36px; /* Giảm từ 48px xuống 36px */
+  width: auto;
+  transition: var(--transition-default);
+}
+
+.header-title {
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-xl); /* Giảm từ 2xl (24px) xuống xl (20px) */
+  color: var(--color-text-inverse);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Header Actions Section */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  visibility: visible;
+  opacity: 1;
+  justify-self: end;
+  min-width: max-content;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.user-role {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-inverse);
+  opacity: 0.8;
+  font-weight: var(--font-weight-medium);
+}
+
+.user-email {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-inverse);
+  opacity: 0.9;
+  font-weight: var(--font-weight-medium);
+}
+
+.user-loading {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2);
+}
+
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--color-text-inverse);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  visibility: visible;
+  opacity: 1;
+  position: relative;
+  z-index: 20;
+}
+
+.header-logout-btn,
+.header-login-btn {
+  background: transparent !important;
+  color: var(--color-text-inverse) !important;
+  border: 2px solid var(--color-text-inverse) !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md) !important;
+  transition: var(--transition-default);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 10;
+  min-height: 32px; /* Giảm từ 36px xuống 32px */
+  min-width: auto;
+}
+
+.header-logout-btn:hover,
+.header-login-btn:hover {
+  background: var(--color-text-inverse);
+  color: var(--color-navy-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Account Dropdown Styles */
+.account-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.header-account-btn {
+  background: transparent !important;
+  color: var(--color-text-inverse) !important;
+  border: 2px solid var(--color-text-inverse) !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md) !important;
+  transition: var(--transition-default);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 10;
+  min-height: 32px; /* Giảm từ 36px xuống 32px */
+  min-width: auto;
+}
+
+.header-account-btn:hover {
+  background: var(--color-text-inverse);
+  color: var(--color-navy-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-2);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 220px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition-default);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--color-gray-50);
+  color: var(--color-navy-primary);
+}
+
+.dropdown-item svg {
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+}
+
+.dropdown-item:hover svg {
+  color: var(--color-navy-primary);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--color-gray-200);
+  margin: var(--space-1) 0;
+}
+
+.dropdown-item-danger {
+  color: var(--color-danger);
+}
+
+.dropdown-item-danger:hover {
+  background: var(--color-red-50);
+  color: var(--color-danger);
+}
+
+.dropdown-item-danger svg {
+  color: var(--color-danger);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

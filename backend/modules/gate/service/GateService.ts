@@ -577,7 +577,10 @@ export class GateService {
       status = 'GATE_OUT'
     } = params;
 
-    const skip = (page - 1) * limit;
+    // Convert string to number for pagination
+    const pageNum = parseInt(page.toString(), 10);
+    const limitNum = parseInt(limit.toString(), 10);
+    const skip = (pageNum - 1) * limitNum;
 
     // Tạo điều kiện where
     const where: any = {
@@ -625,7 +628,7 @@ export class GateService {
           time_out: 'desc' // Sắp xếp theo thời gian ra mới nhất
         },
         skip,
-        take: limit
+        take: limitNum
       }),
       prisma.serviceRequest.count({ where })
     ]);
@@ -633,10 +636,10 @@ export class GateService {
     return {
       data: requests,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limitNum)
       }
     };
   }

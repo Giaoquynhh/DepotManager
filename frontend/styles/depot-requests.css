@@ -1,0 +1,731 @@
+/* 
+ * Depot Requests Page Styles
+ * Styles specifically for the Depot Requests page
+ */
+
+/* ===== DEPOT REQUESTS PAGE - MODERN DESIGN ===== */
+.depot-requests {
+    /* Fix clipping của native dropdown do main { overflow: hidden } */
+    overflow: auto; /* Cho phép cuộn nội dung nếu cần, thay vì visible */
+    scrollbar-gutter: stable; /* Giữ ổn định lề phải khi có/không có thanh cuộn */
+  }
+  
+  /* Nới container riêng cho trang Depot để nội dung thoáng và lấp màn hình hơn */
+  main.container.depot-requests,
+  .depot-requests.container {
+    padding: 2.5rem 2.5rem; /* tăng padding tổng thể trang */
+    max-width: 100%; /* sử dụng toàn bộ chiều rộng màn hình */
+  }
+  
+  /* Đảm bảo header của depot-requests có cùng kích thước với các trang khác */
+  .depot-requests .modern-header {
+    padding: 1rem; /* Giảm padding cho header */
+    margin-bottom: 1rem; /* Giảm khoảng cách dưới header */
+  }
+  .depot-requests-page {
+    padding: 2rem;
+    background: var(--color-background);
+  }
+  
+  /* Modern Header Styles */
+  .modern-header {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    border-radius: var(--radius-xl);
+    padding: 0.75rem; /* Giảm padding cho header */
+    margin-bottom: 1rem; /* Giảm khoảng cách dưới header */
+    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #3b82f6;
+  }
+  
+  .modern-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+  }
+  
+  .modern-header .header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%; /* đảm bảo chiếm hết bề ngang để đẩy actions sang phải */
+  }
+  
+  .modern-header .header-left {
+    color: white;
+    flex: 1; /* chiếm phần còn lại, đẩy actions sang phải */
+  }
+  
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+  
+  /* Bảo đảm tiêu đề trong modern header luôn hiển thị màu trắng trên nền gradient */
+  .modern-header .page-title {
+    color: #ffffff !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+    margin-bottom: 0 !important;
+    letter-spacing: -0.5px !important;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Cho phép biến thể gradient hiển thị đúng, không bị rule màu trắng ghi đè */
+  .modern-header .page-title.gradient,
+  .modern-header .page-title.gradient-ultimate {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+  
+  .page-subtitle {
+    font-size: 1rem;
+    opacity: 1;
+    margin: 0.25rem 0 0 0;
+    font-weight: 500;
+    color: #e0e7ff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modern-header .header-actions {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto; /* sát bên phải */
+    justify-content: flex-end;
+  }
+  
+  .export-btn {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border: 2px solid #60a5fa;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  }
+  
+  .export-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  .export-btn:hover::before {
+    left: 100%;
+  }
+  
+  .export-btn:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    border-color: #93c5fd;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.5);
+  }
+  
+  /* Modern Search & Filter Styles */
+  .search-filter-section {
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    border-radius: var(--radius-xl);
+    padding: var(--space-10) var(--space-10) var(--space-10) var(--space-10); /* Tăng rất mạnh padding đều 4 phía */
+    margin-bottom: 3.5rem; /* Nới khoảng cách với bảng bên dưới */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e2e8f0;
+    overflow: hidden; /* tránh nội dung (chip) tràn ra ngoài bo góc */
+    width: 100%;
+    max-width: 100%;
+    min-height: 120px; /* Tăng chiều cao tối thiểu */
+  }
+  
+  .search-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2.5rem; /* Nới khoảng giữa các khối search & filter */
+    width: 100%;
+  }
+  
+  .search-section {
+    flex: 1;
+    max-width: 720px; /* Mở rộng hơn vùng nhập search cho cân đối */
+  }
+  
+  /* Stickers cho Search & Filter - chỉ áp dụng tại trang Depot */
+  .depot-requests .search-filter-section { position: relative; }
+  .depot-requests .search-filter-section::before {
+    content: '🔎';
+    position: absolute;
+    left: 0.75rem;
+    top: 0.6rem;
+    font-size: 1.35rem;
+    opacity: 0.15;
+    pointer-events: none;
+    filter: saturate(1.1) brightness(1.05);
+  }
+  .depot-requests .search-filter-section::after {
+    content: '✨';
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.6rem;
+    font-size: 1.35rem;
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  
+  /* Thêm khoảng trống bên phải input để icon không đè chữ */
+  .depot-requests .search-filter-section .search-input {
+    padding-right: 2.5rem;
+  }
+  
+  /* Icon nhỏ trang trí phía cuối cụm search */
+  .depot-requests .search-filter-section .search-input-group::after {
+    content: '✨';
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  
+  /* Ẩn emoji và hiển thị SVG icon bình thường */
+  .depot-requests .search-filter-section::before { content: none; }
+  .depot-requests .search-filter-section .search-icon::before { content: none; }
+  .depot-requests .search-filter-section .search-input-group:focus-within .search-icon {
+    color: #3b82f6;
+  }
+  
+  /* Đảm bảo icon 🔎 nằm trên nền input (không bị che) */
+  .depot-requests .search-filter-section .search-icon {
+    z-index: 4;
+  }
+  
+  .search-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Depot page: không cần khoảng trống dưới ô tìm kiếm trong cụm search-filter */
+  .depot-requests .search-filter-section .search-container {
+    margin-bottom: 0;
+  }
+  
+  /* Đảm bảo search input trong Depot page có đủ không gian cho icon */
+  
+  /* Đảm bảo search input trong Depot page có đủ không gian cho icon */
+  .search-filter-section .search-input-group {
+    position: relative;
+    max-width: 500px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-filter-section .search-icon {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    z-index: 2;
+    transition: color 0.3s ease;
+    pointer-events: none;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .search-filter-section .search-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3.5rem;
+    border: 2px solid #cbd5e1;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #1e293b;
+    font-weight: 500;
+    box-sizing: border-box;
+  }
+  
+  .search-filter-section .search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+    color: #0f172a;
+  }
+  
+  .search-filter-section .search-input:focus + .search-icon {
+    color: #3b82f6;
+  }
+  
+  
+  
+  .search-filter-section .search-input-group::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3.5rem;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .search-filter-section .search-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3.5rem;
+    border: 2px solid #cbd5e1;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #1e293b;
+    font-weight: 500;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .filter-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 3rem; /* Nới khoảng giữa các nhóm filter nhiều hơn */
+    align-items: end;
+  }
+  
+  /* Depot filter layout: 2 columns (Type | Status) on wide screens */
+  .search-filter-section .filter-container {
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    align-items: center;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem; /* Nới khoảng giữa label/select nhiều hơn */
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  
+  .filter-label {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .modern-select {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 18px 18px;
+    padding-right: 2.5rem; /* space for arrow */
+    transition: var(--transition-default);
+    cursor: pointer;
+  }
+  
+  /* Depot page: tăng padding dọc để chiều cao select khớp với ô tìm kiếm */
+  .depot-requests .search-filter-section .modern-select {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .modern-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.15);
+    color: var(--color-text-primary);
+    /* Arrow to primary on focus */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23001F3F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+  
+  .modern-select:hover {
+    border-color: var(--color-gray-400);
+    background-color: var(--color-gray-50);
+  }
+  
+  .modern-select:disabled {
+    background-color: var(--color-gray-100);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+  
+  .modern-select::-ms-expand {
+    display: none;
+  }
+  
+  .clear-filters-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: end;
+  }
+  
+  .clear-filters-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+  
+  /* Status Message Improvements */
+  .status-message {
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-lg);
+    margin: 1rem 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  .status-message.success {
+    background: var(--color-green-100);
+    border: 1px solid var(--color-green-200);
+    color: var(--color-green-700);
+  }
+  
+  .status-message.error {
+    background: var(--color-red-100);
+    border: 1px solid var(--color-red-200);
+    color: var(--color-red-700);
+  }
+  
+  /* Animation for status messages */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Customer Requests Page Styling */
+  .customer-requests {
+    padding: 2rem;
+    background: var(--color-background);
+  }
+  
+  .customer-requests .modern-header {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    border: 2px solid #3b82f6;
+    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
+  }
+  
+  /* Yard Page Styling */
+  .yard-page {
+    padding: 2rem;
+    background: var(--color-background);
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  /* Custom Scrollbar for Yard Page */
+  .yard-page::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .yard-page::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  .yard-page::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+  }
+  
+  .yard-page::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  }
+  
+  /* Firefox scrollbar */
+  .yard-page {
+    scrollbar-width: thin;
+    scrollbar-color: #3b82f6 rgba(255, 255, 255, 0.1);
+  }
+  
+  .yard-page .modern-header {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .yard-page .modern-header .yard-title {
+    color: #ffffff !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+  
+  /* Hiệu ứng gradient cho yard-title giống các trang khác */
+  .yard-page .modern-header .yard-title.gradient {
+    background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+  
+  .yard-page .modern-header .yard-title.gradient-ultimate {
+    background: linear-gradient(90deg,
+      #ffffff 0%,
+      #f0f9ff 20%,
+      #e0f2fe 40%,
+      #bae6fd 60%,
+      #e0f2fe 80%,
+      #ffffff 100%);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 4s ease-in-out infinite;
+    text-shadow: none;
+  }
+  
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  
+  
+  
+  
+  /* Containers Page Styling */
+  .containers-page {
+    padding: 2rem;
+    background: var(--color-background);
+  }
+  
+  .containers-page .modern-header {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    border: 2px solid #f87171;
+    box-shadow: 0 20px 40px rgba(220, 38, 38, 0.3);
+  }
+  
+  
+  
+  /* Forklift Page Styling */
+  .forklift-page {
+    padding: 2rem;
+    background: var(--color-background);
+  }
+  
+  .forklift-page .modern-header {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    border: 2px solid #fb923c;
+    box-shadow: 0 20px 40px rgba(245, 158, 11, 0.3);
+  }
+  
+  
+  
+  .forklift-page .refresh-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    backdrop-filter: blur(10px);
+  }
+  
+  .forklift-page .refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+  }
+  
+  .forklift-page .refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  
+  
+  .customer-requests .create-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    backdrop-filter: blur(10px);
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 140px;
+  }
+  
+  .customer-requests .create-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+  }
+  
+  /* Responsive Design for Depot Page */
+  @media (max-width: 768px) {
+    .modern-header,
+    .depot-requests .modern-header {
+      padding: 1rem; /* Giảm từ 1.5rem xuống 1rem */
+    }
+    
+    .page-title {
+      font-size: 2rem;
+    }
+    
+    .header-content {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+    
+    .search-filter-section .filter-container { grid-template-columns: 1fr; }
+    
+    .search-filter-section {
+      padding: var(--space-2) var(--space-4) var(--space-4) 0; /* Xóa padding-left cho mobile */
+    }
+    
+    .export-btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+    }
+    
+    /* Search input responsive */
+    .search-filter-section .search-input-group {
+      max-width: 100%;
+    }
+    
+    .search-filter-section .search-input {
+      padding: 0.875rem 0.875rem 0.875rem 3rem;
+      font-size: 0.9rem;
+    }
+    
+    .search-filter-section .search-icon {
+      left: 1rem;
+      width: 18px;
+      height: 18px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .modern-header,
+    .depot-requests .modern-header {
+      padding: 0.75rem; /* Giảm từ 1rem xuống 0.75rem */
+    }
+    
+    .page-title {
+      font-size: 1.75rem;
+    }
+    
+    .page-subtitle {
+      font-size: 1rem;
+    }
+    
+    .search-filter-section {
+      padding: var(--space-2) var(--space-3) var(--space-3) 0; /* Xóa padding-left cho mobile nhỏ */
+    }
+    
+    /* Search input responsive cho màn hình nhỏ */
+    .search-filter-section .search-input {
+      padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+      font-size: 0.875rem;
+    }
+    
+    .search-filter-section .search-icon {
+      left: 0.875rem;
+      width: 16px;
+      height: 16px;
+    }
+  }
+    
+  
+  
+  /* Invoice page: nút sát bên phải */
+  .invoice-page .search-filter-section {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  
+  /* Customer page: giảm padding-top cho thanh tìm kiếm */
+  .customer-requests .search-filter-section {
+    padding-top: 8px !important;
+  }
+  
+  /* Customer page: đảm bảo filter-group được đẩy về bên phải */
+  .customer-requests .search-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  .customer-requests .search-section {
+    flex: 1 !important;
+    max-width: 500px !important;
+  }
+  
+  .customer-requests .filter-group {
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* ===== DEPOT REQUESTS PAGE COMPLETE ===== */
+  
+  /* ===== SEARCH INPUT PADDING FIX FOR ALL PAGES ===== */
+  /* Điều chỉnh padding-left của input để chữ gần icon hơn cho tất cả các trang */
+  .search-filter-section .search-input {
+    padding-left: 2rem !important;
+  }

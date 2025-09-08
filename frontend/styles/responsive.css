@@ -1,0 +1,174 @@
+/* Mobile & Tablet Responsive */
+@media (max-width: 1023px) {
+  .container {
+    padding: var(--space-4);
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: calc(var(--header-clearance) + 10px); /* Thêm 10px để sidebar không đè lên header */
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    max-height: calc(100vh - var(--header-clearance));
+    flex-direction: column;
+    gap: var(--space-2);
+    background: var(--color-bg-navy);
+    padding: var(--space-3);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+  }
+  
+  .sidebar.closed {
+    transform: none; /* Không thể ẩn trên mobile */
+  }
+  
+  body.with-sidebar .container {
+    margin-left: 0;
+  }
+  
+  /* Mobile dropdown adjustments */
+  .account-dropdown-menu {
+    right: auto;
+    left: 0;
+    min-width: 200px;
+  }
+  
+  .header-account-btn {
+    padding: var(--space-2) !important;
+    min-width: 36px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-3);
+  }
+  
+  .header-inner {
+    padding: 0 var(--space-4);
+    grid-template-columns: 36px 1fr auto;
+  }
+  
+  .nav-toggle {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .header-brand {
+    margin-left: 0;
+  }
+  
+  .header-title {
+    font-size: var(--font-size-xl);
+    display: none; /* Hide title on very small screens */
+  }
+  
+  .user-info {
+    display: none; /* Hide user info on mobile */
+  }
+  
+  .header-actions {
+    gap: var(--space-2);
+  }
+  
+  .header-logout-btn,
+  .header-login-btn {
+    padding: var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  .header-logout-btn span,
+  .header-login-btn span {
+    display: none; /* Show only icon on mobile */
+  }
+  
+  /* On small mobile screens, hide the text label inside the account button */
+  .header-account-btn span {
+    display: none;
+  }
+}
+
+/* Medium Mobile */
+@media (min-width: 641px) and (max-width: 768px) {
+  .header-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .user-email {
+    display: none; /* Hide email, keep only role */
+  }
+}
+
+/* Modal Responsive */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: var(--space-2);
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+    border-radius: var(--radius-lg);
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
+
+/* Responsive adjustments */
+
+/* Tablet adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .search-input-group {
+    flex: 1.5; /* Giảm từ 2 xuống 1.5 cho tablet */
+  }
+  
+  .filter-select {
+    min-width: 140px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .search-bar{
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  
+  .search-input-group {
+    flex: 1;
+    margin-bottom: var(--space-2);
+  }
+  
+  .filter-select{
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .page-layout {
+    padding: var(--space-4);
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+  
+  .page-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .page-title {
+    font-size: var(--font-size-xl);
+  }
+}

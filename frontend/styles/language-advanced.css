@@ -1,0 +1,268 @@
+/* Language Toggle with Dropdown */
+.language-toggle-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.language-toggle-dropdown .dropdown-content {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e9ecef;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  min-width: 200px;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  transition: all var(--transition-normal);
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+}
+
+.language-toggle-dropdown:hover .dropdown-content {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.language-toggle-dropdown .dropdown-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.language-toggle-dropdown .dropdown-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 6px;
+}
+
+.language-toggle-dropdown .dropdown-subtitle {
+  font-size: 12px;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* Language Options in Dropdown */
+.language-option-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: #f8f9fa;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.language-option-item:last-child {
+  margin-bottom: 0;
+}
+
+.language-option-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+  transition: left var(--transition-slow);
+}
+
+.language-option-item:hover::before {
+  left: 100%;
+}
+
+.language-option-item:hover {
+  border-color: #007bff;
+  background: rgba(0, 123, 255, 0.1);
+  transform: translateX(6px);
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);
+}
+
+.language-option-item.active {
+  border-color: #007bff;
+  background: rgba(0, 123, 255, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.2);
+}
+
+.language-option-item .option-flag {
+  width: 24px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 2px solid #dee2e6;
+  transition: all var(--transition-normal);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.language-option-item:hover .option-flag {
+  border-color: #007bff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.language-option-item .option-info {
+  flex: 1;
+}
+
+.language-option-item .option-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 2px;
+}
+
+.language-option-item .option-native {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.language-option-item .option-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: #28a745;
+  color: #ffffff;
+  font-size: 12px;
+  opacity: 0;
+  transition: all var(--transition-normal);
+}
+
+.language-option-item.active .option-status {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Floating Language Toggle (for mobile) */
+.language-toggle-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-xl);
+  transition: all var(--transition-normal);
+  font-size: 20px;
+}
+
+.language-toggle-floating:hover {
+  background: var(--color-primary-dark);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-2xl);
+}
+
+.language-toggle-floating:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .language-toggle-container {
+    padding: 3px;
+  }
+  
+  .language-toggle-btn {
+    padding: 6px 12px;
+    min-width: 100px;
+    font-size: 12px;
+  }
+  
+  .language-flag {
+    width: 18px;
+    height: 14px;
+  }
+  
+  .language-toggle-dropdown .dropdown-content {
+    right: -20px;
+    min-width: 180px;
+  }
+  
+  .language-toggle-floating {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .language-toggle-btn {
+    padding: 4px 8px;
+    min-width: 80px;
+    font-size: 11px;
+  }
+  
+  .language-flag {
+    width: 16px;
+    height: 12px;
+  }
+  
+  .language-toggle-dropdown .dropdown-content {
+    right: -30px;
+    min-width: 160px;
+    padding: 12px;
+  }
+  
+  .language-option-item {
+    padding: 10px 12px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .language-toggle-container,
+  .language-toggle-compact,
+  .language-toggle-dropdown .dropdown-content {
+    background: var(--color-gray-900);
+    border-color: var(--color-gray-700);
+  }
+  
+  .language-option-item {
+    background: var(--color-gray-800);
+  }
+  
+  .language-option-item:hover {
+    background: var(--color-primary-900);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .language-toggle-container,
+  .language-toggle-compact {
+    border-width: 3px;
+  }
+  
+  .language-toggle-btn {
+    font-weight: 800;
+  }
+  
+  .language-flag {
+    border-width: 2px;
+  }
+}

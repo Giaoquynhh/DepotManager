@@ -1,0 +1,196 @@
+/* ===== MULTI-LANGUAGE SYSTEM COMPLETE ===== */
+
+/* ===== LANGUAGE TOGGLE BUTTON - VIETNAMESE ↔ ENGLISH ===== */
+
+/* Language Toggle Button Container */
+.language-toggle-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e9ecef;
+  border-radius: var(--radius-full);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  user-select: none;
+}
+
+.language-toggle-container:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.language-toggle-container:active {
+  transform: translateY(0);
+}
+
+/* Language Toggle Button */
+.language-toggle-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.language-toggle-btn:hover {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+/* Language Flag */
+.language-flag {
+  width: 20px;
+  height: 15px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 2px solid #dee2e6;
+  transition: all var(--transition-normal);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.language-toggle-btn:hover .language-flag {
+  border-color: #007bff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Language Name */
+.language-name {
+  font-weight: 600;
+  transition: all var(--transition-normal);
+}
+
+/* Language Code */
+.language-code {
+  font-size: 12px;
+  color: #6c757d;
+  font-family: monospace;
+  font-weight: 500;
+  opacity: 0.9;
+  transition: all var(--transition-normal);
+}
+
+.language-toggle-btn:hover .language-code {
+  color: #007bff;
+  opacity: 1;
+}
+
+/* Toggle Switch Icon */
+.toggle-switch-icon {
+  color: #6c757d;
+  font-size: 16px;
+  margin-left: 8px;
+  transition: all var(--transition-normal);
+}
+
+.language-toggle-btn:hover .toggle-switch-icon {
+  color: #007bff;
+  transform: rotate(180deg);
+}
+
+/* Language Toggle States */
+.language-toggle-container[data-lang="vi"] .language-toggle-btn {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.language-toggle-container[data-lang="vi"] .language-flag {
+  border-color: #dc3545;
+}
+
+.language-toggle-container[data-lang="vi"] .language-code {
+  color: #dc3545;
+}
+
+.language-toggle-container[data-lang="en"] .language-toggle-btn {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+.language-toggle-container[data-lang="en"] .language-flag {
+  border-color: #007bff;
+}
+
+.language-toggle-container[data-lang="en"] .language-code {
+  color: #007bff;
+}
+
+/* Compact Language Toggle (for header) */
+.language-toggle-compact {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  user-select: none;
+  min-width: 80px;
+}
+
+.language-toggle-compact:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.language-toggle-compact .compact-flag {
+  width: 18px;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  margin-right: 6px;
+  transition: all var(--transition-normal);
+}
+
+.language-toggle-compact:hover .compact-flag {
+  border-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.language-toggle-compact .compact-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: monospace;
+  transition: all var(--transition-normal);
+}
+
+.language-toggle-compact:hover .compact-code {
+  color: var(--color-primary);
+}
+
+/* Language Toggle Animation */
+@keyframes languageSwitch {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+.language-toggle-container.switching {
+  animation: languageSwitch 0.6s ease-in-out;
+}

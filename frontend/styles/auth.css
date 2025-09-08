@@ -1,0 +1,204 @@
+/* Auth Pages - Login/Register */
+.header-inner.auth-center {
+  justify-content: center;
+  /* Mở rộng header full-width chỉ cho trang Login/Register */
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  /* Phù hợp với Grid: chỉ 1 cột, căn giữa nội dung */
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center; /* đảm bảo căn giữa theo trục dọc */
+}
+
+/* Đảm bảo trang đăng nhập không có thanh cuộn */
+body:has(.auth-hero) {
+  overflow: hidden !important;
+}
+
+/* Đảm bảo main element trong trang đăng nhập không có thanh cuộn */
+main:has(.auth-hero) {
+  overflow: hidden !important;
+}
+
+.header-inner.auth-center .header-brand {
+  margin-left: 0;
+  justify-self: center;
+  grid-column: 1; /* ghi đè grid-column:2 ở trạng thái mặc định */
+}
+
+.header-inner.auth-center .header-actions {
+  display: none;
+}
+
+/* Ẩn nav-toggle nếu vì lý do nào đó vẫn tồn tại trong auth pages */
+.header-inner.auth-center .nav-toggle {
+  display: none !important;
+}
+
+.auth-hero {
+  background:
+    radial-gradient( circle at 20% 20%, #e6f0ff 0%, transparent 40%),
+    radial-gradient( circle at 80% 30%, #eaf7ff 0%, transparent 45%),
+    linear-gradient(135deg, #f5f7fb 0%, #eef2ff 100%);
+  height: calc(100vh - var(--header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  overflow: hidden;
+}
+
+.auth-card {
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-gray-100);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-bg-primary);
+  overflow: hidden;
+  max-height: calc(100vh - var(--header-height) - 64px); /* Giới hạn chiều cao tối đa */
+}
+
+.auth-card h2 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.auth-card .muted {
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+}
+
+.input-icon {
+  position: relative;
+}
+
+.input-icon svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-gray-500);
+  pointer-events: none;
+}
+
+.input-icon input {
+  padding-left: 40px !important;
+  height: 44px;
+  border-radius: 12px;
+  border-color: var(--color-gray-300);
+  background: #ffffff;
+}
+
+.input-icon.has-action input {
+  padding-right: 44px !important;
+}
+
+.input-icon input:hover {
+  border-color: var(--color-gray-500);
+}
+
+.input-icon input:focus {
+  border-color: #0d3b66;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.15);
+}
+
+/* Input right action button (e.g., show/hide password) */
+.input-icon .input-action {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-gray-600);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition-default);
+}
+
+.input-icon .input-action:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-800);
+}
+
+.input-icon .input-action:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.15);
+}
+
+.btn-login {
+  background: linear-gradient(135deg, #0d3b66 0%, #145a9e 100%) !important;
+  color: #ffffff !important;
+  height: 44px;
+  border-radius: 12px !important;
+}
+
+.btn-login:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.auth-link {
+  font-size: 13px;
+  color: #4f7fbf;
+  text-align: center;
+}
+
+.auth-link a {
+  color: #4f7fbf;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+.form-error {
+  color: var(--color-red-600);
+  font-size: 13px;
+  padding: 8px 10px;
+  background: var(--color-red-100);
+  border: 1px solid var(--color-red-200);
+  border-radius: 10px;
+}
+
+/* Auth form helpers */
+.form-grid {
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+  max-height: calc(100vh - var(--header-height) - 200px); /* Giới hạn chiều cao form */
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-gray-600);
+  margin-bottom: 6px;
+}
+
+.section-head {
+  margin-bottom: 16px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Đảm bảo tất cả input và button không gây ra thanh cuộn */
+.input-icon,
+.input-icon input,
+.btn-login,
+.auth-link {
+  overflow: hidden;
+}
