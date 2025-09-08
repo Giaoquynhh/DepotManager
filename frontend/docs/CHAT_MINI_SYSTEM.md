@@ -29,12 +29,15 @@ components/chat/
 
 ### **Status Requirements**
 ```typescript
-const isChatAllowed = requestStatus === 'SCHEDULED' || 
-                     requestStatus === 'APPROVED' || 
-                     requestStatus === 'IN_PROGRESS' || 
-                     requestStatus === 'COMPLETED' || 
-                     requestStatus === 'EXPORTED';
+// Rule mới (2025-09): chỉ chặn PENDING và PICK_CONTAINER
+const isChatAllowed = !['PENDING', 'PICK_CONTAINER'].includes(requestStatus);
 ```
+
+### ✅ Cập nhật 2025-09
+- Luôn hiển thị nút Chat trong bảng; nút disabled khi trạng thái ∈ {`PENDING`,`PICK_CONTAINER`} với tooltip giải thích.
+- Khóa nhập tin nhắn khi `is_paid === true` (prop `isPaid`), giữ lịch sử để xem. Đồng thời nút mở chat trên bảng cũng bị disabled khi `is_paid` là true.
+- Bỏ auto-open chat: chat chỉ mở khi người dùng bấm nút.
+- Payload gửi tin tuân thủ backend: `POST /chat/:chat_room_id/messages` chỉ gửi `{ message, type }` (không gửi `requestId`).
 
 ### **API Endpoints Used**
 - `GET /chat/request/${requestId}` - Khởi tạo hoặc lấy chat room

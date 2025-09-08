@@ -268,24 +268,30 @@ export default function DepotRequestTable({
 							</td>
 							<td>
 								<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-									{/* Chat button - hiển thị cho các trạng thái được phép chat */}
-									{(demoItem.status === 'SCHEDULED' || 
-									  demoItem.status === 'APPROVED' || 
-									  demoItem.status === 'IN_PROGRESS' || 
-									  demoItem.status === 'COMPLETED' || 
-									  demoItem.status === 'EXPORTED' ||
-									  demoItem.status === 'PENDING_ACCEPT') && (
-										<button
-											onClick={() => onToggleChat?.(demoItem.id)}
-											className="btn btn-sm btn-outline depot-chat-mini-trigger"
-											title={activeChatRequests.has(demoItem.id) ? safeT('pages.requests.chat.close', 'Close chat') : safeT('pages.requests.chat.open', 'Open chat with customer')}
-										>
-											💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}
-										</button>
-									)}
-									
+									{/* Chat button - luôn hiển thị; disabled nếu chưa đến trạng thái cho phép */}
+									{(() => {
+										const isChatAllowedByStatus = !['PENDING', 'PICK_CONTAINER'].includes(demoItem.status);
+										const isPaid = !!demoItem.is_paid;
+										const canOpenChat = isChatAllowedByStatus && !isPaid;
+										const title = canOpenChat
+											? (activeChatRequests.has(demoItem.id) ? safeT('pages.requests.chat.close', 'Close chat') : safeT('pages.requests.chat.open', 'Open chat with customer'))
+											: isPaid
+												? safeT('pages.requests.payment.paid', 'Đã thanh toán')
+												: safeT('pages.requests.chat.availableWhenScheduled', 'Chat khả dụng từ trạng thái Scheduled');
+										return (
+											<button
+												onClick={() => canOpenChat && onToggleChat?.(demoItem.id)}
+												className="btn btn-sm btn-outline depot-chat-mini-trigger"
+												title={title}
+												disabled={!canOpenChat}
+											>
+												💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}
+											</button>
+										);
+									})()}
+
 									{/* Chat window - hiển thị khi chat được mở */}
-									{activeChatRequests.has(demoItem.id) && (
+									{activeChatRequests.has(demoItem.id) && !demoItem.is_paid && (
 										<DepotChatMini
 											requestId={demoItem.id}
 											containerNo={demoItem.container_no}
@@ -293,6 +299,7 @@ export default function DepotRequestTable({
 											requestStatus={demoItem.status}
 											hasSupplementDocuments={demoItem.has_supplement_documents}
 											lastSupplementUpdate={demoItem.last_supplement_update}
+											isPaid={!!demoItem.is_paid}
 											onClose={() => onCloseChat?.(demoItem.id)}
 										/>
 									)}

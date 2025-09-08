@@ -10,6 +10,8 @@ interface DepotChatMiniProps {
 	// Thêm props để theo dõi thay đổi thông tin
 	hasSupplementDocuments?: boolean;
 	lastSupplementUpdate?: string;
+	// Thanh toán
+	isPaid?: boolean;
 	// Chat control props
 	onClose?: () => void;
 }
@@ -21,6 +23,7 @@ export default function DepotChatMini({
 	requestStatus,
 	hasSupplementDocuments = false,
 	lastSupplementUpdate,
+	isPaid = false,
 	onClose
 }: DepotChatMiniProps) {
 	const [isOpen, setIsOpen] = useState(false); // Không tự động mở chat
@@ -36,12 +39,7 @@ export default function DepotChatMini({
 	}, []);
 
 	// Check if chat is allowed based on request status
-	const isChatAllowed = requestStatus === 'SCHEDULED' || 
-						 requestStatus === 'APPROVED' || 
-						 requestStatus === 'IN_PROGRESS' || 
-						 requestStatus === 'COMPLETED' || 
-						 requestStatus === 'EXPORTED' ||
-						 requestStatus === 'PENDING_ACCEPT'; // Thêm PENDING_ACCEPT
+	const isChatAllowed = !['PENDING', 'PICK_CONTAINER'].includes(requestStatus);
 
 	// Handle drag functionality
 	const handleMouseDown = (e: React.MouseEvent) => {
@@ -141,6 +139,7 @@ export default function DepotChatMini({
 						containerNo={containerNo}
 						requestType={requestType}
 						requestStatus={requestStatus}
+						isPaid={isPaid}
 						onClose={handleClose}
 						onMinimize={handleMinimize}
 						onMouseDown={handleMouseDown}

@@ -136,6 +136,7 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			sampleData: data.slice(0, 2) // Chỉ log 2 item đầu để tránh spam
 		});
 		setRequestsData(data);
+
 	};
 
 	const actLabel: Record<string, string> = {

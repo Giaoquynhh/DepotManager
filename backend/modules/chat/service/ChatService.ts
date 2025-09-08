@@ -59,10 +59,10 @@ export class ChatService {
 		const chatRoom = await repo.findChatRoomById(chat_room_id);
 		if (chatRoom && chatRoom.request) {
 			const requestStatus = chatRoom.request.status;
-			const allowedStatuses = ['SCHEDULED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'EXPORTED'];
-			
-			if (!allowedStatuses.includes(requestStatus)) {
-				throw new Error('Chỉ có thể chat khi đơn hàng đã được lên lịch (SCHEDULED) trở lên');
+			// Rule mới: chỉ chặn PENDING và PICK_CONTAINER; các trạng thái khác đều cho phép
+			const blockedStatuses = ['PENDING', 'PICK_CONTAINER'];
+			if (blockedStatuses.includes(requestStatus)) {
+				throw new Error('Chat chỉ bị khóa khi đơn hàng đang ở trạng thái PENDING hoặc PICK_CONTAINER');
 			}
 		}
 

@@ -52,6 +52,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
   const { t, currentLanguage } = useTranslation();
   const dateLocale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
 
+  // Không tự động mở chat: chỉ giữ state theo nút người dùng bấm
+
   // Format ETA giống như Depot
   const formatETA = (eta?: string) => {
     if (!eta) return '-';
@@ -282,13 +284,24 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   </div>
                 </td>
                 <td>
-                  <button
-                    onClick={() => toggleChat(item.id)}
-                    className={`btn btn-sm ${activeChatRequests.has(item.id) ? 'btn-primary' : 'btn-outline'}`}
-                    title={activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.chat.open')}
-                  >
-                    💬 {activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.tableHeaders.chat')}
-                  </button>
+                  {(() => {
+                    const isChatAllowedByStatus = !['PENDING', 'PICK_CONTAINER'].includes(item.status);
+                    const isPaid = !!item.is_paid;
+                    const canOpenChat = isChatAllowedByStatus && !isPaid;
+                    const title = canOpenChat
+                      ? (activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.chat.open'))
+                      : isPaid ? t('pages.requests.payment.paid') : t('pages.requests.chat.availableWhenScheduled');
+                    return (
+                      <button
+                        onClick={() => canOpenChat && toggleChat(item.id)}
+                        className={`btn btn-sm ${activeChatRequests.has(item.id) ? 'btn-primary' : 'btn-outline'}`}
+                        title={title}
+                        disabled={!canOpenChat}
+                      >
+                        💬 {activeChatRequests.has(item.id) ? t('pages.requests.chat.close') : t('pages.requests.tableHeaders.chat')}
+                      </button>
+                    );
+                  })()}
                 </td>
                 <td>
                   {item.actions && (
@@ -421,8 +434,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                             className="btn btn-sm btn-success"
                             disabled={item.actions.loadingId === item.id + 'ACCEPT'}
                             onClick={() => {
-                              if (item.actions?.handleAcceptWithModal) {
-                                item.actions.handleAcceptWithModal(item.id);
+                              if ((item.actions as any)?.handleAcceptWithModal) {
+                                (item.actions as any).handleAcceptWithModal(item.id);
                               } else if (item.actions?.handleAccept) {
                                 if (window.confirm(t('pages.requests.messages.confirmAcceptRepairInvoice'))) {
                                   item.actions.handleAccept(item.id);
@@ -458,14 +471,14 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                       )}
 
                       {/* Soft delete for REJECTED requests */}
-                      {item.status === 'REJECTED' && (item.actions.softDeleteRequest || item.actions.onDeleteWithModal) && (
+                      {item.status === 'REJECTED' && ((item.actions && item.actions.softDeleteRequest) || (item.actions && item.actions.onDeleteWithModal)) && (
                         <button
                           className="btn btn-sm btn-outline"
-                          disabled={item.actions.loadingId === item.id + 'DELETE'}
+                          disabled={item.actions && item.actions.loadingId === item.id + 'DELETE'}
                           onClick={() => {
-                            if (item.actions.onDeleteWithModal) {
+                            if (item.actions && item.actions.onDeleteWithModal) {
                               item.actions.onDeleteWithModal(item.id);
-                            } else if (item.actions.softDeleteRequest) {
+                            } else if (item.actions && item.actions.softDeleteRequest) {
                               if (window.confirm(t('pages.requests.messages.confirmSoftDeleteCustomer'))) {
                                 item.actions.softDeleteRequest(item.id, 'customer');
                               }
@@ -473,7 +486,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                           }}
                           title={t('pages.requests.actions.removeFromList')}
                         >
-                          {item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} {t('common.remove')}
+                          {item.actions && item.actions.loadingId === item.id + 'DELETE' ? '⏳' : '🗑️'} {t('common.remove')}
                         </button>
                       )}
 
@@ -608,6 +621,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
               console.log(`Request ${requestId} status changed to: ${newStatus}`);
             }}
             positionIndex={index}
+            isPaid={!!request.is_paid}
           />
         );
       })}

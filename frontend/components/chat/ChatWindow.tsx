@@ -29,6 +29,7 @@ interface ChatWindowProps {
   appointmentNote?: string;
   onClose: () => void;
   onStatusChange?: (status: string) => void;
+  isPaid?: boolean;
 }
 
 export default function ChatWindow({
@@ -41,7 +42,8 @@ export default function ChatWindow({
   appointmentLocation,
   appointmentNote,
   onClose,
-  onStatusChange
+  onStatusChange,
+  isPaid = false
 }: ChatWindowProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -52,13 +54,8 @@ export default function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if chat is allowed based on request status (match backend logic)
-  const isChatAllowed = currentRequestStatus === 'SCHEDULED' || 
-                       currentRequestStatus === 'APPROVED' || 
-                       currentRequestStatus === 'IN_PROGRESS' || 
-                       currentRequestStatus === 'COMPLETED' || 
-                       currentRequestStatus === 'EXPORTED' ||
-                       currentRequestStatus === 'PENDING_ACCEPT'; // Thêm PENDING_ACCEPT
+  // Check if chat is allowed based on request status (chỉ chặn PENDING, PICK_CONTAINER)
+  const isChatAllowed = !['PENDING', 'PICK_CONTAINER'].includes(currentRequestStatus);
   const isRejected = currentRequestStatus === 'REJECTED';
   const isReceived = currentRequestStatus === 'RECEIVED';
 
@@ -322,7 +319,7 @@ export default function ChatWindow({
   }, [requestStatus]);
 
   const sendMessage = async (message: string) => {
-    if (!message.trim() || !isChatAllowed) return;
+    if (!message.trim() || !isChatAllowed || isPaid) return;
 
     // Cho trạng thái PENDING_ACCEPT, luôn sử dụng local message (offline mode)
     if (currentRequestStatus === 'PENDING_ACCEPT') {
@@ -357,8 +354,7 @@ export default function ChatWindow({
       // Send message to backend
       const response = await api.post(`/chat/${chatRoomId}/messages`, {
         message: message.trim(),
-        type: 'text',
-        requestId: requestId
+        type: 'text'
       });
       
       // Add message to local state for immediate feedback
@@ -431,9 +427,11 @@ export default function ChatWindow({
 
       <ChatInput
         onSendMessage={sendMessage}
-        disabled={!isChatAllowed}
+        disabled={!isChatAllowed || isPaid}
         placeholder={
-          isRejected 
+          isPaid
+            ? "Chat đã khóa vì đơn hàng đã thanh toán"
+            : isRejected 
             ? "Chat không khả dụng cho đơn hàng bị từ chối" 
             : isReceived
               ? "Chat sẽ khả dụng khi đơn hàng được chấp nhận (APPROVED)"

@@ -19,6 +19,7 @@ interface DepotChatWindowProps {
 	containerNo: string;
 	requestType: string;
 	requestStatus: string;
+	isPaid?: boolean;
 	onClose: () => void;
 	onMinimize: () => void;
 	onMouseDown: (e: React.MouseEvent) => void;
@@ -32,6 +33,7 @@ export default function DepotChatWindow({
 	containerNo,
 	requestType,
 	requestStatus,
+	isPaid = false,
 	onClose,
 	onMinimize,
 	onMouseDown,
@@ -47,13 +49,8 @@ export default function DepotChatWindow({
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const [me, setMe] = useState<any>(null);
 
-	// Check if chat is allowed based on request status (allow SCHEDULED for demo)
-	const isChatAllowed = requestStatus === 'SCHEDULED' || 
-						 requestStatus === 'APPROVED' || 
-						 requestStatus === 'IN_PROGRESS' || 
-						 requestStatus === 'COMPLETED' || 
-						 requestStatus === 'EXPORTED' ||
-						 requestStatus === 'PENDING_ACCEPT'; // Thêm PENDING_ACCEPT
+	// Check if chat is allowed based on request status (chỉ chặn PENDING, PICK_CONTAINER)
+	const isChatAllowed = !['PENDING', 'PICK_CONTAINER'].includes(requestStatus);
 
 	// Load user info
 	useEffect(() => {
@@ -276,7 +273,7 @@ export default function DepotChatWindow({
 	}, [requestId, requestStatus, messages.length]);
 
 	const sendMessage = async () => {
-		if (!newMessage.trim() || !me) return;
+		if (!newMessage.trim() || !me || isPaid) return;
 
 		// Cho trạng thái PENDING_ACCEPT, luôn sử dụng local message
 		if (requestStatus === 'PENDING_ACCEPT') {
@@ -509,17 +506,17 @@ export default function DepotChatWindow({
 							<div className="chat-input-wrapper">
 								<textarea
 									className="chat-input"
-									placeholder={t('pages.requests.chat.enterMessage')}
+									placeholder={isPaid ? t('pages.requests.payment.paid') + ' - Chat đã khóa' : t('pages.requests.chat.enterMessage')}
 									value={newMessage}
 									onChange={(e) => setNewMessage(e.target.value)}
 									onKeyPress={handleKeyPress}
-									disabled={sending}
+									disabled={sending || isPaid}
 									rows={2}
 								/>
 								<button
 									className="chat-send-btn"
 									onClick={sendMessage}
-									disabled={!newMessage.trim() || sending}
+									disabled={!newMessage.trim() || sending || isPaid}
 								>
 									{sending ? '⏳' : '📤'}
 								</button>

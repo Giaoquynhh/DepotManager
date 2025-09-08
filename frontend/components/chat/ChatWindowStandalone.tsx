@@ -12,6 +12,7 @@ interface ChatWindowStandaloneProps {
   onClose: () => void;
   onStatusChange?: (status: string) => void;
   positionIndex?: number;
+  isPaid?: boolean;
 }
 
 export default function ChatWindowStandalone({
@@ -25,7 +26,8 @@ export default function ChatWindowStandalone({
   appointmentNote,
   onClose,
   onStatusChange,
-  positionIndex = 0
+  positionIndex = 0,
+  isPaid = false
 }: ChatWindowStandaloneProps) {
   // Kích thước cửa sổ chat và khoảng cách
   const CHAT_HEIGHT = 500; // đồng bộ với .chat-window trong CSS
@@ -48,6 +50,7 @@ export default function ChatWindowStandalone({
         appointmentNote={appointmentNote}
         onClose={onClose}
         onStatusChange={onStatusChange}
+        isPaid={isPaid}
       />
     </div>
   );

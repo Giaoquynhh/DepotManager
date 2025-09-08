@@ -88,6 +88,10 @@ modules/chat/
   "file_size": "number"          // Kích thước file (optional)
 }
 
+// Lưu ý (2025-09):
+// - Không hỗ trợ trường "requestId" trong body. Nếu gửi thêm field ngoài schema
+//   chuẩn, service có thể trả lỗi 400 (Bad Request) do validation.
+
 // Response
 {
   "id": "message_id",
@@ -176,20 +180,19 @@ const allowedRoles = [
 | SaleAdmin | ✅ | ✅ | ✅ | ✅ (Depot only) |
 | SystemAdmin | ✅ | ✅ | ✅ | ✅ (All) |
 
-### **Status-based Restrictions**
+### **Status-based Restrictions (Updated 2025-09)**
 
 #### **Chat Activation Rules**
 ```typescript
-const allowedStatuses = [
-  'SCHEDULED',        // Đơn hàng đã được lên lịch
-  'APPROVED',         // Đơn hàng đã được chấp nhận
-  'IN_PROGRESS',      // Đơn hàng đang được xử lý
-  'COMPLETED',        // Đơn hàng đã hoàn tất
-  'EXPORTED'          // Đơn hàng đã xuất kho
-];
+// Rule mới: chỉ chặn các trạng thái dưới đây
+const blockedStatuses = ['PENDING', 'PICK_CONTAINER'];
+
+// Bất kỳ trạng thái nào không thuộc blockedStatuses (ví dụ: SCHEDULED, RECEIVED,
+// IN_PROGRESS, COMPLETED, EXPORTED, GATE_OUT, ...) đều được phép chat.
 ```
 
-**Lưu ý:** Chat chỉ hoạt động khi request status nằm trong danh sách trên.
+**Lưu ý:** Nếu request đang ở `PENDING` hoặc `PICK_CONTAINER`, API `POST /chat/:chat_room_id/messages`
+sẽ trả 400 với message: "Chat chỉ bị khóa khi đơn hàng đang ở trạng thái PENDING hoặc PICK_CONTAINER".
 
 ## 🗄️ **Database Schema**
 
