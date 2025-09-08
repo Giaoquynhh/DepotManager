@@ -4,6 +4,7 @@ import GateRequestTable from './GateRequestTable';
 import GateSearchBar from './GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 
 interface GateRequest {
@@ -43,6 +44,10 @@ export default function GateDashboard() {
     total: 0,
     pages: 0
   });
+
+  // Debounce các tham số tìm kiếm để tránh gọi API liên tục
+  const debouncedContainerNo = useDebounce(searchParams.container_no, 500);
+  const debouncedLicensePlate = useDebounce(searchParams.license_plate, 500);
 
 
 
@@ -113,21 +118,57 @@ export default function GateDashboard() {
     try {
       setLoading(true);
 
-      
+      // Sử dụng debounced values cho tìm kiếm
+      const effectiveSearchParams = {
+        ...searchParams,
+        container_no: debouncedContainerNo,
+        license_plate: debouncedLicensePlate
+      };
 
+      // Kiểm tra xem có tham số tìm kiếm thực sự nào không (không bao gồm page/limit)
+      const hasSearchParams = (effectiveSearchParams.container_no && effectiveSearchParams.container_no.trim()) || 
+                             (effectiveSearchParams.license_plate && effectiveSearchParams.license_plate.trim()) || 
+                             (effectiveSearchParams.status && effectiveSearchParams.status.trim()) || 
+                             (effectiveSearchParams.type && effectiveSearchParams.type.trim());
+
+      // Nếu không có tham số tìm kiếm nào, hiển thị trạng thái rỗng
+      if (!hasSearchParams) {
+        setRequests([]);
+        setPagination({
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 0
+        });
+        return;
+      }
 
       const params = new URLSearchParams();
-      Object.entries(searchParams).forEach(([key, value]) => {
-        if (value) params.append(key, value.toString());
+      Object.entries(effectiveSearchParams).forEach(([key, value]) => {
+        // Chỉ thêm tham số tìm kiếm thực sự, không thêm page/limit khi không có search params
+        if (key === 'page' || key === 'limit') {
+          params.append(key, value.toString());
+        } else if (value && value.toString().trim()) {
+          params.append(key, value.toString().trim());
+        }
       });
 
-      // Không cần thêm filter đặc biệt khi chọn "Tất cả trạng thái"
-      // Backend sẽ tự động lấy các trạng thái phù hợp với Gate
-      const response = await api.get(`/gate/requests/search?${params.toString()}`);
-      console.log('✅ API response:', response.data);
-      
-      setRequests(response.data.data);
-      setPagination(response.data.pagination);
+      // Chỉ gửi request khi có tham số tìm kiếm thực sự
+      if (hasSearchParams) {
+        const response = await api.get(`/gate/requests/search?${params.toString()}`);
+        
+        setRequests(response.data.data);
+        setPagination(response.data.pagination);
+      } else {
+        // Nếu không có tham số nào sau khi filter, hiển thị trạng thái rỗng
+        setRequests([]);
+        setPagination({
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 0
+        });
+      }
     } catch (error: any) {
       console.error('Lỗi khi tải danh sách requests:', error);
       
@@ -154,9 +195,9 @@ export default function GateDashboard() {
   };
 
   useEffect(() => {
-    // Gọi API ngay khi component mount
+    // Gọi API khi debounced values thay đổi
     fetchRequests();
-  }, [searchParams]);
+  }, [debouncedContainerNo, debouncedLicensePlate, searchParams.status, searchParams.type, searchParams.page]);
 
   const handleSearch = (newParams: Partial<typeof searchParams>) => {
     setSearchParams(prev => ({ ...prev, ...newParams, page: 1 }));

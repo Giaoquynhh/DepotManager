@@ -204,7 +204,7 @@ export default function PermissionsPage(){
   const { data: users } = useSWR(isAllowed ? ['/users?role=&page=1&limit=100'] : null, ([u]) => fetcher(u));
 
   const roleOptions: AppRole[] = useMemo(()=>[
-    'SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin','CustomerUser','PartnerAdmin','Security','YardManager','MaintenanceManager','Accountant','Driver'
+    'SystemAdmin','BusinessAdmin','SaleAdmin','CustomerAdmin','CustomerUser','Accountant','Driver'
   ], []);
 
   // Group catalog by group for rendering
@@ -240,14 +240,9 @@ export default function PermissionsPage(){
     const roleTranslations: Record<string, Record<'vi' | 'en', string>> = {
       'SystemAdmin': { vi: 'Quản trị hệ thống', en: 'SystemAdmin' },
       'BusinessAdmin': { vi: 'Quản trị kinh doanh', en: 'BusinessAdmin' },
-      'HRManager': { vi: 'Quản lý nhân sự', en: 'HRManager' },
       'SaleAdmin': { vi: 'Quản trị bán hàng', en: 'SaleAdmin' },
       'CustomerAdmin': { vi: 'Quản trị khách hàng', en: 'CustomerAdmin' },
       'CustomerUser': { vi: 'Người dùng khách hàng', en: 'CustomerUser' },
-      'PartnerAdmin': { vi: 'Quản trị đối tác', en: 'PartnerAdmin' },
-      'Security': { vi: 'Bảo vệ', en: 'Security' },
-      'YardManager': { vi: 'Quản lý bãi', en: 'YardManager' },
-      'MaintenanceManager': { vi: 'Quản lý bảo trì', en: 'MaintenanceManager' },
       'Accountant': { vi: 'Kế toán', en: 'Accountant' },
       'Driver': { vi: 'Tài xế', en: 'Driver' }
     };
@@ -287,9 +282,6 @@ export default function PermissionsPage(){
         'requests.depot',
         'account.view',
       ],
-      HRManager: [
-        'account.view',
-      ],
       SaleAdmin: [
         'requests.depot',
         'yard.view',
@@ -307,24 +299,6 @@ export default function PermissionsPage(){
       ],
       CustomerUser: [
         'requests.customer',
-        'account.view',
-      ],
-      PartnerAdmin: [
-        'account.view',
-      ],
-      Security: [
-        'gate.use',
-        'account.view',
-      ],
-      YardManager: [
-        'yard.view',
-        'containers.manage',
-        'forklift.view',
-        'account.view',
-      ],
-      MaintenanceManager: [
-        'maintenance.repairs',
-        'maintenance.inventory',
         'account.view',
       ],
       Accountant: [
@@ -540,9 +514,9 @@ export default function PermissionsPage(){
          }
         .role-badge.system-admin { background: #dc2626; }
         .role-badge.business-admin { background: #7c3aed; }
-        .role-badge.hr-manager { background: #059669; }
         .role-badge.sale-admin { background: #ea580c; }
         .role-badge.customer-admin { background: #0891b2; }
+        .role-badge.accountant { background: #059669; }
         .role-badge.driver { background: #6b7280; }
         .role-badge.default { background: #6b7280; }
         
@@ -751,9 +725,9 @@ export default function PermissionsPage(){
                     switch(role) {
                       case 'SystemAdmin': return 'role-badge system-admin';
                       case 'BusinessAdmin': return 'role-badge business-admin';
-                      case 'HRManager': return 'role-badge hr-manager';
                       case 'SaleAdmin': return 'role-badge sale-admin';
                       case 'CustomerAdmin': return 'role-badge customer-admin';
+                      case 'Accountant': return 'role-badge accountant';
                       case 'Driver': return 'role-badge driver';
                       default: return 'role-badge default';
                     }
@@ -772,6 +746,8 @@ export default function PermissionsPage(){
                           {current === 'SystemAdmin' && '👑'}
                           {current === 'BusinessAdmin' && '💼'}
                           {current === 'SaleAdmin' && '💰'}
+                          {current === 'CustomerAdmin' && '👥'}
+                          {current === 'Accountant' && '📊'}
                           {current === 'Driver' && '🚗'}
                           {translateRoleName(current)}
                         </span>
@@ -811,7 +787,11 @@ export default function PermissionsPage(){
                              className="btn-control"
                              disabled={isSelf || loadingRow === id}
                              onClick={()=> {
-                               setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
+                               // Luôn lọc bỏ chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                               const allPermissions = PERMISSION_CATALOG.map(i=>i.key) as string[];
+                               const filteredPermissions = allPermissions.filter(key => key !== 'permissions.manage');
+                               
+                               setPermSelections(prev=>({ ...prev, [id]: filteredPermissions.slice(0,50) }));
                                showNotification('info', 
                                  language === 'vi' ? 
                                    `Đã chọn tất cả chức năng cho ${u.email}` :
@@ -842,7 +822,11 @@ export default function PermissionsPage(){
                                className="btn-control"
                                disabled={isSelf || loadingRow === id}
                                onClick={()=> {
-                                 setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
+                                 // Luôn lọc bỏ chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                                 const rolePermissions = rolePresets[sel] || [];
+                                 const filteredPermissions = rolePermissions.filter(key => key !== 'permissions.manage');
+                                 
+                                 setPermSelections(prev=>({ ...prev, [id]: filteredPermissions.slice(0,50) }));
                                  showNotification('info', 
                                    language === 'vi' ? 
                                      `Đã áp dụng chức năng mặc định của vai trò ${translateRoleName(sel)} cho ${u.email}` :
@@ -863,39 +847,64 @@ export default function PermissionsPage(){
                                <div style={{fontSize:13, fontWeight:600, color:'#374151', marginBottom:8, padding:'8px 12px', background:'#f1f5f9', borderRadius:6}}>
                                  📁 {translateGroup(group)}
                                </div>
-                                                             {items.map(({key, label}) => (
-                                 <label key={key} className="function-item" title={translatePermissionLabel(key)}>
-                                   <input
-                                     type="checkbox"
-                                     checked={checkedPerms.includes(key)}
-                                     disabled={isSelf || loadingRow === id}
-                                     onChange={(e)=>{
-                                       setPermSelections(prev=>{
-                                         const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
-                                         const has = base.includes(key);
-                                         let next = base;
-                                         if (e.target.checked) next = has ? base : [...base, key];
-                                         else next = base.filter(k=>k!==key);
-                                         if (next.length > 50) next = next.slice(0, 50);
-                                         
-                                         // Show notification when permission is changed
-                                         const action = e.target.checked ? 
-                                           (language === 'vi' ? 'đã bật' : 'enabled') : 
-                                           (language === 'vi' ? 'đã tắt' : 'disabled');
-                                         const permissionName = translatePermissionLabel(key);
-                                         showNotification('info', 
-                                           language === 'vi' ? 
-                                             `Chức năng "${permissionName}" ${action} cho ${u.email}` :
-                                             `Function "${permissionName}" ${action} for ${u.email}`
-                                         );
-                                         
-                                         return { ...prev, [id]: next };
-                                       });
-                                     }}
-                                   />
-                                   <span style={{color:'#4b5563'}}>{translatePermissionLabel(key)}</span>
-                                 </label>
-                               ))}
+                                                             {items.map(({key, label}) => {
+                                   // Khóa chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                                   const isPermissionsManage = key === 'permissions.manage';
+                                   const isLocked = isPermissionsManage; // Luôn khóa chức năng này
+                                   
+                                   return (
+                                     <label key={key} className="function-item" title={translatePermissionLabel(key)}>
+                                       <input
+                                         type="checkbox"
+                                         checked={checkedPerms.includes(key)}
+                                         disabled={isSelf || loadingRow === id || isLocked}
+                                         onChange={(e)=>{
+                                           if (isLocked) {
+                                             showNotification('warning', 
+                                               language === 'vi' ? 
+                                                 '⚠️ Chức năng "Phân quyền" đã bị khóa, không thể chỉnh sửa' :
+                                                 '⚠️ "Permissions" function is locked and cannot be modified'
+                                             );
+                                             return;
+                                           }
+                                           
+                                           setPermSelections(prev=>{
+                                             const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
+                                             const has = base.includes(key);
+                                             let next = base;
+                                             if (e.target.checked) next = has ? base : [...base, key];
+                                             else next = base.filter(k=>k!==key);
+                                             if (next.length > 50) next = next.slice(0, 50);
+                                             
+                                             // Show notification when permission is changed
+                                             const action = e.target.checked ? 
+                                               (language === 'vi' ? 'đã bật' : 'enabled') : 
+                                               (language === 'vi' ? 'đã tắt' : 'disabled');
+                                             const permissionName = translatePermissionLabel(key);
+                                             showNotification('info', 
+                                               language === 'vi' ? 
+                                                 `Chức năng "${permissionName}" ${action} cho ${u.email}` :
+                                                 `Function "${permissionName}" ${action} for ${u.email}`
+                                             );
+                                             
+                                             return { ...prev, [id]: next };
+                                           });
+                                         }}
+                                       />
+                                       <span style={{
+                                         color: isLocked ? '#9ca3af' : '#4b5563',
+                                         opacity: isLocked ? 0.6 : 1
+                                       }}>
+                                         {translatePermissionLabel(key)}
+                                         {isLocked && (
+                                           <span style={{marginLeft: '8px', fontSize: '11px', color: '#ef4444'}}>
+                                             🔒 {language === 'vi' ? 'Khóa' : 'Locked'}
+                                           </span>
+                                         )}
+                                       </span>
+                                     </label>
+                                   );
+                                 })}
                             </div>
                           ))}
                         </div>
@@ -960,9 +969,9 @@ export default function PermissionsPage(){
                 switch(role) {
                   case 'SystemAdmin': return 'role-badge system-admin';
                   case 'BusinessAdmin': return 'role-badge business-admin';
-                  case 'HRManager': return 'role-badge hr-manager';
                   case 'SaleAdmin': return 'role-badge sale-admin';
                   case 'CustomerAdmin': return 'role-badge customer-admin';
+                  case 'Accountant': return 'role-badge accountant';
                   case 'Driver': return 'role-badge driver';
                   default: return 'role-badge default';
                 }
@@ -979,6 +988,8 @@ export default function PermissionsPage(){
                       {current === 'SystemAdmin' && '👑'}
                       {current === 'BusinessAdmin' && '💼'}
                       {current === 'SaleAdmin' && '💰'}
+                      {current === 'CustomerAdmin' && '👥'}
+                      {current === 'Accountant' && '📊'}
                       {current === 'Driver' && '🚗'}
                       {translateRoleName(current)}
                     </span>
@@ -1026,7 +1037,11 @@ export default function PermissionsPage(){
                          className="btn-control"
                          disabled={isSelf || loadingRow === id}
                          onClick={()=> {
-                           setPermSelections(prev=>({ ...prev, [id]: (PERMISSION_CATALOG.map(i=>i.key) as string[]).slice(0,50) }));
+                           // Luôn lọc bỏ chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                           const allPermissions = PERMISSION_CATALOG.map(i=>i.key) as string[];
+                           const filteredPermissions = allPermissions.filter(key => key !== 'permissions.manage');
+                           
+                           setPermSelections(prev=>({ ...prev, [id]: filteredPermissions.slice(0,50) }));
                            showNotification('info', 
                              language === 'vi' ? 
                                `Đã chọn tất cả chức năng cho ${u.email}` :
@@ -1055,7 +1070,11 @@ export default function PermissionsPage(){
                            className="btn-control"
                            disabled={isSelf || loadingRow === id}
                            onClick={()=> {
-                             setPermSelections(prev=>({ ...prev, [id]: (rolePresets[sel] || []).slice(0,50) }));
+                             // Luôn lọc bỏ chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                             const rolePermissions = rolePresets[sel] || [];
+                             const filteredPermissions = rolePermissions.filter(key => key !== 'permissions.manage');
+                             
+                             setPermSelections(prev=>({ ...prev, [id]: filteredPermissions.slice(0,50) }));
                              showNotification('info', 
                                language === 'vi' ? 
                                  `Đã áp dụng chức năng mặc định của vai trò ${translateRoleName(sel)} cho ${u.email}` :
@@ -1075,39 +1094,65 @@ export default function PermissionsPage(){
                            <div style={{fontSize:12, fontWeight:600, color:'#374151', marginBottom:8, padding:'6px 10px', background:'#f1f5f9', borderRadius:6}}>
                              📁 {translateGroup(group)}
                            </div>
-                                                     {items.map(({key, label}) => (
-                             <label key={key} className="function-item" title={translatePermissionLabel(key)}>
-                               <input
-                                 type="checkbox"
-                                 checked={checkedPerms.includes(key)}
-                                 disabled={isSelf || loadingRow === id}
-                                 onChange={(e)=>{
-                                   setPermSelections(prev=>{
-                                     const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
-                                     const has = base.includes(key);
-                                     let next = base;
-                                     if (e.target.checked) next = has ? base : [...base, key];
-                                     else next = base.filter(k=>k!==key);
-                                     if (next.length > 50) next = next.slice(0, 50);
-                                     
-                                     // Show notification when permission is changed
-                                     const action = e.target.checked ? 
-                                       (language === 'vi' ? 'đã bật' : 'enabled') : 
-                                       (language === 'vi' ? 'đã tắt' : 'disabled');
-                                     const permissionName = translatePermissionLabel(key);
-                                     showNotification('info', 
-                                       language === 'vi' ? 
-                                         `Chức năng "${permissionName}" ${action} cho ${u.email}` :
-                                         `Function "${permissionName}" ${action} for ${u.email}`
-                                     );
-                                     
-                                     return { ...prev, [id]: next };
-                                   });
-                                 }}
-                               />
-                               <span style={{color:'#4b5563', fontSize:'11px'}}>{translatePermissionLabel(key)}</span>
-                             </label>
-                           ))}
+                                                     {items.map(({key, label}) => {
+                               // Khóa chức năng "Phân quyền" - không cho phép bất kỳ ai cấp quyền này
+                               const isPermissionsManage = key === 'permissions.manage';
+                               const isLocked = isPermissionsManage; // Luôn khóa chức năng này
+                               
+                               return (
+                                 <label key={key} className="function-item" title={translatePermissionLabel(key)}>
+                                   <input
+                                     type="checkbox"
+                                     checked={checkedPerms.includes(key)}
+                                     disabled={isSelf || loadingRow === id || isLocked}
+                                     onChange={(e)=>{
+                                       if (isLocked) {
+                                         showNotification('warning', 
+                                           language === 'vi' ? 
+                                             '⚠️ Chức năng "Phân quyền" đã bị khóa, không thể chỉnh sửa' :
+                                             '⚠️ "Permissions" function is locked and cannot be modified'
+                                         );
+                                         return;
+                                       }
+                                       
+                                       setPermSelections(prev=>{
+                                         const base = prev[id] ?? (currPerms.length ? currPerms : roleDefault);
+                                         const has = base.includes(key);
+                                         let next = base;
+                                         if (e.target.checked) next = has ? base : [...base, key];
+                                         else next = base.filter(k=>k!==key);
+                                         if (next.length > 50) next = next.slice(0, 50);
+                                         
+                                         // Show notification when permission is changed
+                                         const action = e.target.checked ? 
+                                           (language === 'vi' ? 'đã bật' : 'enabled') : 
+                                           (language === 'vi' ? 'đã tắt' : 'disabled');
+                                         const permissionName = translatePermissionLabel(key);
+                                         showNotification('info', 
+                                           language === 'vi' ? 
+                                             `Chức năng "${permissionName}" ${action} cho ${u.email}` :
+                                             `Function "${permissionName}" ${action} for ${u.email}`
+                                         );
+                                         
+                                         return { ...prev, [id]: next };
+                                       });
+                                     }}
+                                   />
+                                   <span style={{
+                                     color: isLocked ? '#9ca3af' : '#4b5563',
+                                     fontSize:'11px',
+                                     opacity: isLocked ? 0.6 : 1
+                                   }}>
+                                     {translatePermissionLabel(key)}
+                                     {isLocked && (
+                                       <span style={{marginLeft: '8px', fontSize: '10px', color: '#ef4444'}}>
+                                         🔒 {language === 'vi' ? 'Khóa' : 'Locked'}
+                                       </span>
+                                     )}
+                                   </span>
+                                 </label>
+                               );
+                             })}
                         </div>
                       ))}
                     </div>

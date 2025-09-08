@@ -152,11 +152,11 @@ export class GateController {
    */
   async searchRequests(req: AuthRequest, res: Response) {
     try {
-      const { error } = gateSearchSchema.validate(req.query);
+      const { error, value } = gateSearchSchema.validate(req.query);
       if (error) {
         return res.status(400).json({ 
           message: 'Tham số tìm kiếm không hợp lệ', 
-          error: error.details[0].message 
+          error: error.details[0].message
         });
       }
 
@@ -169,6 +169,7 @@ export class GateController {
         status: req.query.status as string,
         statuses: req.query.statuses as string,
         container_no: req.query.container_no as string,
+        license_plate: req.query.license_plate as string, // Thêm trường biển số xe
         type: req.query.type as string,
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20

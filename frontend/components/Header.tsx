@@ -18,7 +18,7 @@ export default function Header() {
   const router = useRouter();
   const [hasToken, setHasToken] = useState(false);
   const [me, setMe] = useState<User | null>(null);
-  const [navOpen, setNavOpen] = useState(true); // Luôn giữ sidebar mở
+  const [navOpen, setNavOpen] = useState(true); // Sidebar mở mặc định
   const [isLoading, setIsLoading] = useState(true);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const accountBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -84,14 +84,19 @@ export default function Header() {
         setIsLoading(false);
       }
 
-      // Restore sidebar state
+      // Restore sidebar state - chỉ trên mobile
       try {
         const savedNavState = localStorage.getItem('nav_open');
-        if (savedNavState !== null) {
+        if (savedNavState !== null && window.innerWidth < 1024) {
           setNavOpen(savedNavState === '1');
+        } else if (window.innerWidth >= 1024) {
+          setNavOpen(true); // Luôn mở trên desktop
         }
       } catch (error) {
         console.warn('Failed to restore nav state:', error);
+        if (window.innerWidth >= 1024) {
+          setNavOpen(true); // Luôn mở trên desktop
+        }
       }
 
                    // Restore language preference - default to Vietnamese
@@ -158,13 +163,31 @@ export default function Header() {
       
       document.body.classList.toggle('with-sidebar', shouldShowSidebar && navOpen);
       
-      try {
-        localStorage.setItem('nav_open', navOpen ? '1' : '0');
-      } catch (error) {
-        console.warn('Failed to save nav state:', error);
+      // Chỉ lưu trạng thái sidebar trên mobile
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        try {
+          localStorage.setItem('nav_open', navOpen ? '1' : '0');
+        } catch (error) {
+          console.warn('Failed to save nav state:', error);
+        }
       }
     }
   }, [navOpen, hasToken, router.pathname]);
+
+  // Đảm bảo sidebar luôn mở trên desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+        setNavOpen(true);
+      }
+    };
+
+    // Kiểm tra ngay khi component mount
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -200,9 +223,23 @@ export default function Header() {
     }
   };
 
-  // Sidebar luôn mở, không thể đóng
+  // Toggle sidebar - chỉ hoạt động trên mobile
   const toggleNavigation = () => {
-    // Không làm gì cả - sidebar luôn mở
+    setNavOpen(prev => !prev);
+  };
+
+  // Đóng sidebar khi click vào menu item trên mobile
+  const handleSidebarLinkClick = (e: React.MouseEvent) => {
+    // Chỉ đóng sidebar trên mobile (màn hình nhỏ hơn 1024px)
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setNavOpen(false);
+      // Lưu trạng thái đóng vào localStorage để tránh restore lại
+      try {
+        localStorage.setItem('nav_open', '0');
+      } catch (error) {
+        console.warn('Failed to save nav state:', error);
+      }
+    }
   };
 
   const toggleAccountDropdown = () => {
@@ -253,10 +290,10 @@ export default function Header() {
   return (
     <header className="header">
       <div className={`container header-inner${isAuthPage ? ' auth-center' : ''}`}>
-        {/* Navigation Toggle Button - Đã ẩn để sidebar luôn mở */}
-        {/* {showSidebar && (
+        {/* Navigation Toggle Button - Chỉ hiển thị trên mobile */}
+        {showSidebar && (
           <button 
-            className="nav-toggle" 
+            className="nav-toggle mobile-only" 
             onClick={toggleNavigation}
             title={navOpen ? t('header.closeMenu') : t('header.openMenu')}
             aria-label={navOpen ? t('header.closeMenu') : t('header.openMenu')}
@@ -277,7 +314,7 @@ export default function Header() {
               )}
             </span>
           </button>
-        )} */}
+        )}
 
         {/* Brand Section */}
         <div className="header-brand">
@@ -483,9 +520,18 @@ export default function Header() {
           </div>
         </div>
       </div>
-      {/* Sidebar Navigation - Luôn hiển thị khi có token */}
+      {/* Sidebar Navigation - Hiển thị khi có token và navOpen */}
       {showSidebar && (
-                 <nav className="sidebar" role="navigation" aria-label={t('sidebar.mainMenu')}>
+        <>
+          {/* Overlay cho mobile - chỉ hiển thị khi sidebar mở */}
+          {navOpen && (
+            <div 
+              className="sidebar-overlay mobile-only" 
+              onClick={toggleNavigation}
+              aria-label={t('header.closeMenu')}
+            />
+          )}
+          <nav className={`sidebar ${!navOpen ? 'closed' : ''}`} role="navigation" aria-label={t('sidebar.mainMenu')}>
           <div className="sidebar-content">
             
             {/* Helper: permission-aware gating */}
@@ -497,7 +543,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} href="/UsersPartners">
+              <Link className={`sidebar-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} href="/UsersPartners" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
@@ -516,7 +562,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Permissions' ? 'active' : ''}`} href="/Permissions">
+              <Link className={`sidebar-link ${router.pathname === '/Permissions' ? 'active' : ''}`} href="/Permissions" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
@@ -532,7 +578,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Requests/Depot' ? 'active' : ''}`} href="/Requests/Depot">
+              <Link className={`sidebar-link ${router.pathname === '/Requests/Depot' ? 'active' : ''}`} href="/Requests/Depot" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14,2 14,8 20,8"></polyline>
@@ -552,7 +598,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Requests/Customer' ? 'active' : ''}`} href="/Requests/Customer">
+              <Link className={`sidebar-link ${router.pathname === '/Requests/Customer' ? 'active' : ''}`} href="/Requests/Customer" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
@@ -569,7 +615,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Gate' ? 'active' : ''}`} href="/Gate">
+              <Link className={`sidebar-link ${router.pathname === '/Gate' ? 'active' : ''}`} href="/Gate" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -587,7 +633,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/Yard' ? 'active' : ''}`} href="/Yard">
+                <Link className={`sidebar-link ${router.pathname === '/Yard' ? 'active' : ''}`} href="/Yard" onMouseDown={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M3 3h18v18H3zM9 9h6v6H9z"></path>
                     <path d="M9 1v6M15 1v6M9 17v6M15 17v6M1 9h6M17 9h6M1 15h6M17 15h6"></path>
@@ -604,7 +650,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/ContainersPage' ? 'active' : ''}`} href="/ContainersPage">
+                <Link className={`sidebar-link ${router.pathname === '/ContainersPage' ? 'active' : ''}`} href="/ContainersPage" onMouseDown={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
@@ -625,7 +671,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Forklift' ? 'active' : ''}`} href="/Forklift">
+              <Link className={`sidebar-link ${router.pathname === '/Forklift' ? 'active' : ''}`} href="/Forklift" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
                 </svg>
@@ -641,7 +687,7 @@ export default function Header() {
                   : allow;
                 return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/DriverDashboard' ? 'active' : ''}`} href="/DriverDashboard">
+              <Link className={`sidebar-link ${router.pathname === '/DriverDashboard' ? 'active' : ''}`} href="/DriverDashboard" onMouseDown={handleSidebarLinkClick}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="9" y1="9" x2="9" y2="9.01"></line>
@@ -662,7 +708,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Repairs' ? 'active' : ''}`} href="/Maintenance/Repairs">
+                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Repairs' ? 'active' : ''}`} href="/Maintenance/Repairs" onMouseDown={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                   </svg>
@@ -678,7 +724,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Inventory' ? 'active' : ''}`} href="/Maintenance/Inventory">
+                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Inventory' ? 'active' : ''}`} href="/Maintenance/Inventory" onMouseDown={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                   <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
@@ -699,7 +745,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/finance/invoices' ? 'active' : ''}`} href="/finance/invoices">
+                <Link className={`sidebar-link ${router.pathname === '/finance/invoices' ? 'active' : ''}`} href="/finance/invoices" onMouseDown={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14,2 14,8 20,8"></polyline>
@@ -720,7 +766,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-            <Link className={`sidebar-link ${router.pathname === '/Account' ? 'active' : ''}`} href="/Account">
+            <Link className={`sidebar-link ${router.pathname === '/Account' ? 'active' : ''}`} href="/Account" onMouseDown={handleSidebarLinkClick}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -730,6 +776,7 @@ export default function Header() {
             )}
           </div>
         </nav>
+        </>
       )}
     </header>
   );

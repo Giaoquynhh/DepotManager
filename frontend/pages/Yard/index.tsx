@@ -1,10 +1,10 @@
 import Header from '@components/Header';
 import useSWR, { mutate } from 'swr';
 import { yardApi } from '@services/yard';
+import { authApi } from '@services/auth';
 import { useMemo, useState, useCallback } from 'react';
 
 import ModernYardMap from '@components/yard/ModernYardMap';
-import KeyboardShortcuts from '@components/yard/KeyboardShortcuts';
 import YardConfigurationModal from '@components/yard/YardConfigurationModal';
 import Toast from '@components/common/Toast';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -18,12 +18,17 @@ export default function YardPage() {
     revalidateOnFocus: false,
     dedupingInterval: 3000,
   });
+  
+  // Lấy thông tin user
+  const { data: user } = useSWR('user_info', () => authApi.me());
+  
   const [activeSlot, setActiveSlot] = useState<{ id: string; code: string } | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState('');
   const [locateSuccess, setLocateSuccess] = useState('');
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [permissionError, setPermissionError] = useState('');
 
   const { t } = useTranslation();
   
@@ -129,61 +134,20 @@ export default function YardPage() {
     }
   }, []);
 
-  // 🎯 Export handler
+  // 🎯 Export handler - Tạm thời khóa tính năng
   const handleExport = useCallback(() => {
-    if (!transformedMap || !transformedMap[0]) {
-      setLocateError('Không có dữ liệu để xuất báo cáo');
+    setPermissionError('Tính năng xuất báo cáo đang được bảo trì. Vui lòng thử lại sau.');
+  }, []);
+
+  // 🎯 Settings handler với kiểm tra quyền
+  const handleSettings = useCallback(() => {
+    // Kiểm tra quyền SystemAdmin
+    if (user?.role !== 'SystemAdmin') {
+      setPermissionError('Chỉ SystemAdmin mới có quyền cấu hình bãi container. Vui lòng liên hệ quản trị viên hệ thống.');
       return;
     }
-
-    try {
-      const yard = transformedMap[0];
-      const exportData = {
-        yardName: yard.name,
-        exportDate: new Date().toLocaleString('vi-VN'),
-        totalBlocks: stats.totalBlocks,
-        totalSlots: stats.totalSlots,
-        totalOccupied: stats.totalOcc,
-        totalHold: stats.totalHold,
-        blocks: yard.blocks.map(block => ({
-          blockCode: block.code,
-          totalSlots: block.slots.length,
-          occupiedSlots: block.slots.reduce((sum, slot) => sum + (slot.occupied_count || 0), 0),
-          holdSlots: block.slots.reduce((sum, slot) => sum + (slot.hold_count || 0), 0),
-          emptySlots: block.slots.length - block.slots.reduce((sum, slot) => sum + (slot.occupied_count || 0) + (slot.hold_count || 0), 0),
-          slots: block.slots.map(slot => ({
-            code: slot.code,
-            status: slot.status,
-            occupiedCount: slot.occupied_count || 0,
-            holdCount: slot.hold_count || 0
-          }))
-        }))
-      };
-
-      // Tạo file JSON để download
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `yard-report-${yard.name}-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      setLocateSuccess('Đã xuất báo cáo thành công!');
-    } catch (error) {
-      setLocateError('Lỗi khi xuất báo cáo');
-      console.error('Export error:', error);
-    }
-  }, [transformedMap, stats]);
-
-  // 🎯 Settings handler
-  const handleSettings = useCallback(() => {
     setShowConfigModal(true);
-  }, []);
+  }, [user?.role]);
 
   // 🎯 Handle configuration success
   const handleConfigSuccess = useCallback(() => {
@@ -247,24 +211,6 @@ export default function YardPage() {
         </div>
 
 
-        {/* ⌨️ Keyboard Shortcuts */}
-        <KeyboardShortcuts
-          onRefresh={handleRefresh}
-          onSearch={() => {
-            const searchInput = document.querySelector('.smart-search-input') as HTMLInputElement;
-            if (searchInput) {
-              searchInput.focus();
-            }
-          }}
-          onExport={handleExport}
-          onSettings={handleSettings}
-          onToggleHeatmap={() => {
-            // TODO: Implement heatmap toggle
-            console.log('Toggle heatmap');
-          }}
-          onToggleDesign={() => {}}
-          enabled={true}
-        />
 
         {/* ⚙️ Yard Configuration Modal */}
         <YardConfigurationModal
@@ -287,6 +233,13 @@ export default function YardPage() {
           visible={!!locateSuccess}
           onClose={() => setLocateSuccess('')}
           duration={4000}
+        />
+        <Toast
+          message={permissionError}
+          type="warning"
+          visible={!!permissionError}
+          onClose={() => setPermissionError('')}
+          duration={8000}
         />
       </main>
     </>

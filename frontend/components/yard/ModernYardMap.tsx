@@ -225,20 +225,15 @@ export default function ModernYardMap({
 
   return (
     <div className="modern-yard-container">
-      {/* 🎯 Floating Search Portal with Smart Search - Under Header */}
+      {/* 🎯 Simplified Search Portal */}
       <div className="yard-search-portal">
         <div className="yard-search-container">
-          <div className="search-header">
-            <h3 className="search-title">🔍 {t('pages.yard.smartSearch')}</h3>
-            <div className="search-input-wrapper">
-              <SmartSearch
-                onSearch={handleSearch}
-                placeholder={t('pages.yard.searchPlaceholder')}
-                className="modern-search"
-                disabled={isSearching}
-              />
-            </div>
-          </div>
+          <SmartSearch
+            onSearch={handleSearch}
+            placeholder="Tìm kiếm container..."
+            className="modern-search"
+            disabled={isSearching}
+          />
         </div>
       </div>
 

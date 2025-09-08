@@ -39,8 +39,8 @@ body.with-sidebar .header {
   left: 0;
 }
 
-/* Navigation Toggle Button - Đã ẩn */
-/* .nav-toggle {
+/* Navigation Toggle Button - Chỉ hiển thị trên mobile */
+.nav-toggle {
   position: relative;
   left: 0;
   top: 0;
@@ -53,7 +53,7 @@ body.with-sidebar .header {
   cursor: pointer;
   box-shadow: var(--shadow-md);
   transition: var(--transition-default);
-  display: flex;
+  display: none; /* Ẩn mặc định, chỉ hiển thị trên mobile */
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -76,7 +76,7 @@ body.with-sidebar .header {
   display: flex;
   align-items: center;
   justify-content: center;
-} */
+}
 
 /* Brand Section */
 .header-brand {
@@ -216,6 +216,7 @@ body.with-sidebar .header {
 .account-dropdown-container {
   position: relative;
   display: inline-block;
+  margin-right: var(--space-3); /* Thêm khoảng cách từ lề phải */
 }
 
 .header-account-btn {
