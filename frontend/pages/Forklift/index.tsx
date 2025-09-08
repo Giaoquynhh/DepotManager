@@ -406,18 +406,18 @@ export default function Forklift() {
                       type="checkbox"
                       checked={autoRefresh}
                       onChange={(e) => setAutoRefresh(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-cyan-400 bg-white border-cyan-300 rounded focus:ring-cyan-300 focus:ring-2"
                     />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-cyan-100 font-semibold">
                       {t('pages.forklift.autoRefresh')}
                     </span>
                   </label>
                 </div>
                 
                 {/* Last refresh time */}
-                <div className="text-xs text-gray-500 flex items-center gap-1">
+                <div className="text-xs text-cyan-50 flex items-center gap-1 bg-cyan-800/40 px-3 py-1 rounded-full border border-cyan-600/30">
                   {isRefreshing && (
-                    <svg className="w-3 h-3 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 animate-spin text-cyan-300" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -431,12 +431,13 @@ export default function Forklift() {
                     loadForkliftTasks();
                     setLastRefresh(new Date());
                   }}
-                  className="btn btn-outline btn-sm"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-white px-3 py-1 rounded-lg transition-all duration-200 flex items-center gap-1 text-sm font-semibold shadow-lg"
                   title={t('pages.forklift.refreshNow')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
+                  Làm mới
                 </button>
               </div>
             </div>

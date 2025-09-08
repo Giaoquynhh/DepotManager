@@ -16,6 +16,7 @@ interface CompanyUsersModalProps {
   translations: any;
   onModalUserAction: (id: string, action: UserAction) => void;
   getRoleDisplayName: (role: string) => string;
+  getStatusDisplayName: (status: string) => string;
 }
 
 export const CompanyUsersModal: React.FC<CompanyUsersModalProps> = ({
@@ -28,7 +29,8 @@ export const CompanyUsersModal: React.FC<CompanyUsersModalProps> = ({
   language,
   translations,
   onModalUserAction,
-  getRoleDisplayName
+  getRoleDisplayName,
+  getStatusDisplayName
 }) => {
   return (
     <Modal 
@@ -55,6 +57,7 @@ export const CompanyUsersModal: React.FC<CompanyUsersModalProps> = ({
             translations={translations}
             onUserAction={onModalUserAction}
             getRoleDisplayName={getRoleDisplayName}
+            getStatusDisplayName={getStatusDisplayName}
           />
         </table>
       </div>

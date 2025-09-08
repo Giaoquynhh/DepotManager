@@ -313,7 +313,7 @@ export class GateService {
    * Tìm kiếm requests ở Gate
    */
   async searchRequests(params: GateSearchParams, actorId: string): Promise<any> {
-    const { status, statuses, container_no, type, page = 1, limit = 20 } = params;
+    const { status, statuses, container_no, license_plate, type, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -331,12 +331,16 @@ export class GateService {
       where.status = { in: ['FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
     }
 
-    if (container_no) {
-      where.container_no = { contains: container_no, mode: 'insensitive' };
+    if (container_no && container_no.trim()) {
+      where.container_no = { contains: container_no.trim(), mode: 'insensitive' };
     }
 
-    if (type) {
-      where.type = type;
+    if (license_plate && license_plate.trim()) {
+      where.license_plate = { contains: license_plate.trim(), mode: 'insensitive' };
+    }
+
+    if (type && type.trim()) {
+      where.type = type.trim();
     }
 
     const [requests, total] = await Promise.all([

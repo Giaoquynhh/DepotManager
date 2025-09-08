@@ -21,7 +21,7 @@
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
+  z-index: 1001;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -179,8 +179,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Ẩn nút toggle và overlay trên desktop */
+.nav-toggle.mobile-only,
+.sidebar-overlay.mobile-only {
+  display: none;
+}
+
 /* Responsive Layout - Desktop first approach */
 @media (min-width: 1024px) {
+  /* Trên desktop, sidebar luôn hiển thị và không thể đóng */
+  .sidebar.closed {
+    transform: none !important;
+  }
+  
   body.with-sidebar .container {
     /* Main content có margin-left để tránh bị che bởi sidebar */
     margin-left: 260px; /* Độ rộng của sidebar mới */
@@ -214,13 +225,12 @@
   }
 }
 
-/* Sidebar luôn cố định - không thể đóng */
+/* Sidebar có thể đóng trên mobile */
 .sidebar.closed {
-  transform: none; /* Không thể ẩn */
-  transition: none;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar {
-  transition: none; /* Không có transition để sidebar luôn cố định */
-  transform: none !important; /* Luôn hiển thị */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

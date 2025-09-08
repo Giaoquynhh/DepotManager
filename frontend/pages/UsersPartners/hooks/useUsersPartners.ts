@@ -7,7 +7,7 @@ import { User, Partner, Company, UserAction, Language } from '../types';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
-export const useUsersPartners = (role: string, currentUser: any) => {
+export const useUsersPartners = (role: string, currentUser: any, language: Language, translations: any) => {
   // State
   const [showEmpForm, setShowEmpForm] = useState(false);
   const [showPartnerForm, setShowPartnerForm] = useState(false);
@@ -161,10 +161,10 @@ export const useUsersPartners = (role: string, currentUser: any) => {
       setShowEmpForm(false);
       setEmpFullName(''); 
       setEmpEmail('');
-      setMessage('Tạo nhân sự nội bộ thành công. Email mời đã được gửi!');
+      setMessage(translations[language].employeeCreated);
       mutate(['/users?role=&page=1&limit=50']);
     }catch(e:any){ 
-      setMessage(e?.response?.data?.message || 'Lỗi tạo nhân sự'); 
+      setMessage(e?.response?.data?.message || translations[language].createEmployeeError); 
     }
   };
 
@@ -217,7 +217,7 @@ export const useUsersPartners = (role: string, currentUser: any) => {
       setPartnerTenantId(''); 
       setPartnerCompanyName('');
       setShowCompanySearch(false);
-      setMessage('Tạo đối tác thành công. Email mời đã được gửi!');
+      setMessage(translations[language].partnerCreated);
       // Refresh users với URL chính xác
       if (role === 'CustomerAdmin' && currentUser?.tenant_id) {
         mutate([`/users?tenant_id=${currentUser.tenant_id}&page=1&limit=50`]);
@@ -229,7 +229,7 @@ export const useUsersPartners = (role: string, currentUser: any) => {
         mutate(['/customers/partners?page=1&limit=50']);
       }
     }catch(e:any){ 
-      setMessage(e?.response?.data?.message || 'Lỗi tạo đối tác'); 
+      setMessage(e?.response?.data?.message || translations[language].createPartnerError); 
     }
   };
 

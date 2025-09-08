@@ -47,12 +47,19 @@ export interface GateRejectData {
 
 // DTO cho việc tìm kiếm requests ở Gate
 export const gateSearchSchema = Joi.object({
-  status: Joi.string().valid('FORWARDED', 'GATE_IN', 'IN_YARD', 'IN_CAR').optional(),
-  statuses: Joi.string().optional(), // Cho phép nhiều statuses (comma-separated)
-  container_no: Joi.string().optional(),
-  type: Joi.string().valid('IMPORT', 'EXPORT').optional(),
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20)
+  status: Joi.string().valid('FORWARDED', 'GATE_IN', 'IN_YARD', 'IN_CAR').allow('').optional(),
+  statuses: Joi.string().allow('').optional(), // Cho phép nhiều statuses (comma-separated)
+  container_no: Joi.string().allow('').optional(),
+  license_plate: Joi.string().allow('').optional(), // Thêm trường biển số xe
+  type: Joi.string().valid('IMPORT', 'EXPORT').allow('').optional(),
+  page: Joi.alternatives().try(
+    Joi.number().integer().min(1),
+    Joi.string().pattern(/^\d+$/)
+  ).default(1),
+  limit: Joi.alternatives().try(
+    Joi.number().integer().min(1).max(100),
+    Joi.string().pattern(/^\d+$/)
+  ).default(20)
 });
 
 // Types
@@ -68,6 +75,7 @@ export interface GateSearchParams {
   status?: string;
   statuses?: string; // Cho phép nhiều statuses (comma-separated)
   container_no?: string;
+  license_plate?: string; // Thêm trường biển số xe
   type?: string;
   page?: number;
   limit?: number;

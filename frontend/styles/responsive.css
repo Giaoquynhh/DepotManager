@@ -4,6 +4,36 @@
     padding: var(--space-4);
   }
   
+  /* Hiển thị nút toggle trên mobile */
+  .nav-toggle.mobile-only {
+    display: flex !important;
+    order: 1;
+  }
+  
+  /* Điều chỉnh thứ tự các phần tử trong header */
+  .header-brand {
+    order: 2;
+    flex: 1;
+    margin-left: var(--space-2);
+  }
+  
+  .header-actions {
+    order: 3;
+  }
+  
+  /* Overlay cho sidebar trên mobile */
+  .sidebar-overlay.mobile-only {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    cursor: pointer;
+  }
+  
   .sidebar {
     position: fixed;
     top: calc(var(--header-clearance) + 10px); /* Thêm 10px để sidebar không đè lên header */
@@ -22,7 +52,7 @@
   }
   
   .sidebar.closed {
-    transform: none; /* Không thể ẩn trên mobile */
+    transform: translateX(-100%); /* Ẩn sidebar trên mobile */
   }
   
   body.with-sidebar .container {
@@ -50,7 +80,10 @@
   
   .header-inner {
     padding: 0 var(--space-4);
-    grid-template-columns: 36px 1fr auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
   }
   
   .nav-toggle {

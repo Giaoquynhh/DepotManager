@@ -11,6 +11,7 @@ interface UserTableProps {
   translations: any;
   onUserAction: (id: string, action: UserAction) => void;
   getRoleDisplayName: (role: string) => string;
+  getStatusDisplayName: (status: string) => string;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({
@@ -19,7 +20,8 @@ export const UserTable: React.FC<UserTableProps> = ({
   language,
   translations,
   onUserAction,
-  getRoleDisplayName
+  getRoleDisplayName,
+  getStatusDisplayName
 }) => {
   return (
     <tbody>
@@ -48,7 +50,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 borderRadius: '4px',
                 fontSize: '12px'
               }}>
-                {u.status}
+                {getStatusDisplayName(u.status)}
               </span>
             </td>
             <ActionButtons

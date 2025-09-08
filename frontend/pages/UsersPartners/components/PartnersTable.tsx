@@ -42,7 +42,7 @@ export const PartnersTable: React.FC<PartnersTableProps> = ({
               borderRadius: '4px',
               fontSize: '12px'
             }}>
-              {partner.account_count} tài khoản
+              {partner.account_count} {translations[language].accounts}
             </span>
           </td>
         </tr>

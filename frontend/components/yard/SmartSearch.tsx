@@ -242,37 +242,24 @@ export default function SmartSearch({
           spellCheck="false"
         />
         
-        {/* 🔍 Search Icon */}
-        <div className="search-icon">
-          {isSearching ? (
-            <div className="search-spinner"></div>
-          ) : null}
-        </div>
-
-        {/* 🎯 Search Button */}
+        {/* 🎯 Search Button - Simplified */}
         <button
           className="smart-search-button"
           onClick={() => handleSearch(query.trim())}
           disabled={disabled || !query.trim() || isSearching}
         >
-          {isSearching ? '⏳' : '🔍'}
+          {isSearching ? '⏳' : 'Tìm'}
         </button>
       </div>
 
-      {/* 🎭 Smart Suggestions Dropdown */}
+      {/* 🎭 Smart Suggestions Dropdown - Simplified */}
       {showSuggestions && (
         <div className="smart-suggestions">
-          <div className="suggestions-header">
-            <span className="suggestions-title">💡 {t('pages.yard.searchSuggestions')}</span>
-            <span className="suggestions-count">{suggestions.length} kết quả</span>
-          </div>
-          
           <div className="suggestions-list">
             {isSearching ? (
               <div className="suggestion-item loading">
-                <div className="suggestion-icon">⏳</div>
                 <div className="suggestion-content">
-                  <div className="suggestion-code">{t('pages.yard.searching')}</div>
+                  <div className="suggestion-code">Đang tìm kiếm...</div>
                 </div>
               </div>
             ) : suggestions.length > 0 ? (
@@ -283,36 +270,18 @@ export default function SmartSearch({
                   onClick={() => handleSuggestionSelect(suggestion)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
-                  <div className="suggestion-icon">
-                    {getSuggestionIcon(suggestion.type)}
-                  </div>
-                  
                   <div className="suggestion-content">
                     <div className="suggestion-code">{suggestion.code}</div>
-                    <div className="suggestion-details">
-                      <span 
-                        className="suggestion-status"
-                        style={{ color: getStatusColor(suggestion.status) }}
-                      >
-                        {suggestion.status || 'Unknown'}
-                      </span>
-                      {suggestion.location && (
-                        <span className="suggestion-location">• {suggestion.location}</span>
-                      )}
-                    </div>
+                    {suggestion.location && (
+                      <div className="suggestion-location">{suggestion.location}</div>
+                    )}
                   </div>
-                  
-                  <div className="suggestion-arrow">→</div>
                 </div>
               ))
             ) : (
               <div className="suggestion-item no-results">
-                <div className="suggestion-icon">🔍</div>
                 <div className="suggestion-content">
                   <div className="suggestion-code">Không tìm thấy kết quả</div>
-                  <div className="suggestion-details">
-                    <span className="suggestion-location">• Thử tìm kiếm với từ khóa khác</span>
-                  </div>
                 </div>
               </div>
             )}
@@ -320,19 +289,9 @@ export default function SmartSearch({
         </div>
       )}
 
-      {/* 🎯 Search History */}
+      {/* 🎯 Search History - Simplified */}
       {showSuggestions && suggestions.length === 0 && searchHistory.length > 0 && query.length === 0 && (
         <div className="search-history">
-          <div className="history-header">
-            <span className="history-title">🕒 {t('pages.yard.searchHistory')}</span>
-            <button 
-              className="clear-history-btn"
-              onClick={() => setSearchHistory([])}
-            >
-              🗑️
-            </button>
-          </div>
-          
           <div className="history-list">
             {searchHistory.slice(0, 5).map((item, index) => (
               <div
@@ -343,7 +302,6 @@ export default function SmartSearch({
                   handleSearch(item);
                 }}
               >
-                <span className="history-icon">🕒</span>
                 <span className="history-text">{item}</span>
               </div>
             ))}
