@@ -35,7 +35,7 @@ export class EmailService {
 	async sendEmail(to: string, subject: string, html: string, text?: string): Promise<boolean> {
 		try {
 			const info = await this.transporter.sendMail({
-				from: `"Smartlog Container Manager" <${process.env.SMTP_USER}>`,
+				from: `"Smartlog Depot Management" <${process.env.SMTP_USER}>`,
 				to,
 				subject,
 				html,
@@ -75,13 +75,13 @@ export class EmailService {
 		
 		if (language === 'vi') {
 			return {
-				subject: 'Lời mời tham gia Smartlog Container Manager',
+				subject: 'Lời mời tham gia Smartlog Depot Management',
 				html: `
 					<!DOCTYPE html>
 					<html>
 					<head>
 						<meta charset="utf-8">
-						<title>Lời mời tham gia Smartlog Container Manager</title>
+						<title>Lời mời tham gia Smartlog Depot Management</title>
 						<style>
 							body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
 							.container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -95,11 +95,11 @@ export class EmailService {
 					<body>
 						<div class="container">
 							<div class="header">
-								<h1>Smartlog Container Manager</h1>
+								<h1>Smartlog Depot Management</h1>
 							</div>
 							<div class="content">
 								<h2>Xin chào ${fullName}!</h2>
-								<p>Bạn đã được mời tham gia hệ thống <strong>Smartlog Container Manager</strong> với vai trò <strong>${role}</strong>.</p>
+								<p>Bạn đã được mời tham gia hệ thống <strong>Smartlog Depot Management</strong> với vai trò <strong>${role}</strong>.</p>
 								
 								<p>Để kích hoạt tài khoản của bạn, vui lòng nhấn vào nút bên dưới:</p>
 								
@@ -123,7 +123,7 @@ export class EmailService {
 								<p>Nếu bạn gặp vấn đề, vui lòng liên hệ với quản trị viên hệ thống.</p>
 							</div>
 							<div class="footer">
-								<p>Email này được gửi tự động từ hệ thống Smartlog Container Manager</p>
+								<p>Email này được gửi tự động từ hệ thống Smartlog Depot Management</p>
 								<p>Vui lòng không trả lời email này</p>
 							</div>
 						</div>
@@ -131,11 +131,11 @@ export class EmailService {
 					</html>
 				`,
 				text: `
-					Smartlog Container Manager - Lời mời tham gia
+					Smartlog Depot Management - Lời mời tham gia
 					
 					Xin chào ${fullName}!
 					
-					Bạn đã được mời tham gia hệ thống Smartlog Container Manager với vai trò ${role}.
+					Bạn đã được mời tham gia hệ thống Smartlog Depot Management với vai trò ${role}.
 					
 					Để kích hoạt tài khoản của bạn, vui lòng truy cập link sau:
 					${registerUrl}
@@ -148,18 +148,18 @@ export class EmailService {
 					Nếu bạn không yêu cầu tài khoản này, vui lòng bỏ qua email này.
 					
 					---
-					Email này được gửi tự động từ hệ thống Smartlog Container Manager
+					Email này được gửi tự động từ hệ thống Smartlog Depot Management
 				`
 			};
 		} else {
 			return {
-				subject: 'Invitation to join Smartlog Container Manager',
+				subject: 'Invitation to join Smartlog Depot Management',
 				html: `
 					<!DOCTYPE html>
 					<html>
 					<head>
 						<meta charset="utf-8">
-						<title>Invitation to join Smartlog Container Manager</title>
+						<title>Invitation to join Smartlog Depot Management</title>
 						<style>
 							body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
 							.container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -173,11 +173,11 @@ export class EmailService {
 					<body>
 						<div class="container">
 							<div class="header">
-								<h1>Smartlog Container Manager</h1>
+								<h1>Smartlog Depot Management</h1>
 							</div>
 							<div class="content">
 								<h2>Hello ${fullName}!</h2>
-								<p>You have been invited to join <strong>Smartlog Container Manager</strong> with the role of <strong>${role}</strong>.</p>
+								<p>You have been invited to join <strong>Smartlog Depot Management</strong> with the role of <strong>${role}</strong>.</p>
 								
 								<p>To activate your account, please click the button below:</p>
 								
@@ -201,7 +201,7 @@ export class EmailService {
 								<p>If you encounter any issues, please contact the system administrator.</p>
 							</div>
 							<div class="footer">
-								<p>This email was sent automatically from Smartlog Container Manager system</p>
+								<p>This email was sent automatically from Smartlog Depot Management system</p>
 								<p>Please do not reply to this email</p>
 							</div>
 						</div>
@@ -209,11 +209,11 @@ export class EmailService {
 					</html>
 				`,
 				text: `
-					Smartlog Container Manager - Invitation to join
+					Smartlog Depot Management - Invitation to join
 					
 					Hello ${fullName}!
 					
-					You have been invited to join Smartlog Container Manager with the role of ${role}.
+					You have been invited to join Smartlog Depot Management with the role of ${role}.
 					
 					To activate your account, please visit the following link:
 					${registerUrl}
@@ -226,7 +226,7 @@ export class EmailService {
 					If you did not request this account, please ignore this email.
 					
 					---
-					This email was sent automatically from Smartlog Container Manager system
+					This email was sent automatically from Smartlog Depot Management system
 				`
 			};
 		}

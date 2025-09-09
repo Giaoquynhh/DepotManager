@@ -4,6 +4,7 @@ import Card from '@components/Card';
 import { driverDashboardApi } from '@services/driverDashboard';
 import { useTranslation } from '@hooks/useTranslation';
 import { useToast } from '@hooks/useToastHook';
+import { API_BASE } from '@services/api';
 
 interface DashboardData {
   summary: {
@@ -25,8 +26,8 @@ interface ForkliftTask {
   assigned_driver_id?: string;
   created_by: string;
   report_image?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   actual_location?: {
     id: string;
     tier: number;
@@ -578,7 +579,7 @@ export default function DriverDashboard() {
                                        href={(() => {
                                          const url = task.report_image.startsWith('http') 
                                            ? task.report_image 
-                                           : `http://localhost:1000${task.report_image}`;
+                                           : `${API_BASE}${task.report_image}`;
                                          console.log('Generated image URL:', url);
                                          return url;
                                        })()} 
@@ -767,7 +768,7 @@ export default function DriverDashboard() {
                             </span>
                           </td>
                           <td>
-                            {new Date(task.updated_at).toLocaleString(locale)}
+                            {task.updatedAt ? new Date(task.updatedAt).toLocaleString(locale) : '-'}
                           </td>
                         </tr>
                       ))}

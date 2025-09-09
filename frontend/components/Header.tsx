@@ -321,7 +321,7 @@ export default function Header() {
           <Link href="/" className="header-logo-link">
             <Image 
               src="/sml_logo.png" 
-              alt="Smartlog Container Manager" 
+              alt="Smartlog Depot Management" 
               width={120} 
               height={32} 
               className="logo"

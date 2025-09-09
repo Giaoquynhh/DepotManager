@@ -10,7 +10,7 @@ import fs from 'fs';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Sử dụng đường dẫn tuyệt đối cố định
-    const uploadPath = 'D:\\container35\\manageContainer\\backend\\uploads\\reports';
+    const uploadPath = path.resolve(__dirname, '../../../uploads/reports');
     
     console.log('=== MULTER DEBUG ===');
     console.log('Multer upload destination:', uploadPath);
@@ -75,8 +75,8 @@ router.post('/tasks/:taskId/report', upload.single('report_image'), (req, res) =
 // Serve ảnh báo cáo (public access)
 router.get('/reports/:filename', (req, res) => {
   const { filename } = req.params;
-  // Sử dụng đường dẫn tuyệt đối cố định
-  const filePath = path.join('D:\\container35\\manageContainer\\backend\\uploads\\reports', filename);
+  // Sử dụng đường dẫn động
+  const filePath = path.resolve(__dirname, '../../../uploads/reports', filename);
   
   console.log('=== SERVING FILE DEBUG ===');
   console.log('Filename:', filename);

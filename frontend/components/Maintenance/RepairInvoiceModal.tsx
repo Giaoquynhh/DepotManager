@@ -131,7 +131,7 @@ export default function RepairInvoiceModal({ isOpen, onClose, repairTicket, onSu
       // Thông tin công ty
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text('Smartlog Container Manager', 105, 30, { align: 'center' });
+      doc.text('Smartlog Depot Management', 105, 30, { align: 'center' });
       doc.text('Dia chi: 123 Duong ABC, Quan XYZ, TP.HCM', 105, 37, { align: 'center' });
       doc.text('Dien thoai: 028-1234-5678 | Email: info@smartlog.com', 105, 44, { align: 'center' });
       
@@ -385,7 +385,7 @@ export default function RepairInvoiceModal({ isOpen, onClose, repairTicket, onSu
       // Thông tin công ty
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text('Smartlog Container Manager', 105, 30, { align: 'center' });
+      doc.text('Smartlog Depot Management', 105, 30, { align: 'center' });
       doc.text('Dia chi: 123 Duong ABC, Quan XYZ, TP.HCM', 105, 37, { align: 'center' });
       doc.text('Dien thoai: 028-1234-5678 | Email: info@smartlog.com', 105, 44, { align: 'center' });
       

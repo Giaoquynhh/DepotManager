@@ -37,7 +37,7 @@
     "remove": "Gỡ bỏ"
   },
   "header": {
-    "brand": "Smartlog Container Manager",
+    "brand": "Smartlog Depot Management",
     "account": "Tài khoản",
     "accountInfo": "Thông tin tài khoản",
     "userManagement": "Quản lý người dùng",
@@ -58,7 +58,7 @@
     "containerManagement": "Quản lý container",
     "forkliftManagement": "Quản lý xe nâng",
     "dashboard": "Bảng điều khiển",
-    "repairTickets": "Phiếu sửa chữa",
+    "repairTickets": "Khu vực kiểm tra",
     "inventory": "Tồn kho",
     "invoices": "Hóa đơn",
     "createInvoice": "Tạo hóa đơn",
@@ -506,7 +506,7 @@
     },
     "maintenance": {
       "repairs": {
-        "title": "Danh sách phiếu sửa chữa",
+        "title": "Danh sách phiếu kiểm tra",
         "welcome": "Chào mừng đến với hệ thống quản lý phiếu sửa chữa",
         "searchPlaceholder": "Tìm kiếm theo mã phiếu...",
         "searchButton": "Tìm kiếm",

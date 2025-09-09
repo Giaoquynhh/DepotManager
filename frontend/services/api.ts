@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '/backend';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '/backend';
 export const api = axios.create({ baseURL: API_BASE });
 
 export async function feLog(message: string, meta?: any){
