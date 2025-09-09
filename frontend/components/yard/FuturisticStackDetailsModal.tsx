@@ -467,22 +467,20 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                              }}
                              onFocus={() => setFocusedTier(tier)}
                            />
-                          {!isSystemAdmin && (
-                            <button 
-                              className="futuristic-fab"
-                              style={{ padding: '8px 12px', fontSize: '12px' }}
-                              onClick={() => {
-                                setFocusedTier(tier);
-                                setShowContainerFilter(!showContainerFilter);
-                                if (!showContainerFilter) {
-                                  fetchAvailableContainers();
-                                }
-                              }}
-                              title={t('pages.yard.stackDetails.filterContainers')}
-                            >
-                              🔍
-                            </button>
-                          )}
+                          <button 
+                            className="futuristic-fab"
+                            style={{ padding: '8px 12px', fontSize: '12px' }}
+                            onClick={() => {
+                              setFocusedTier(tier);
+                              setShowContainerFilter(!showContainerFilter);
+                              if (!showContainerFilter) {
+                                fetchAvailableContainers();
+                              }
+                            }}
+                            title={t('pages.yard.stackDetails.filterContainers')}
+                          >
+                            🔍
+                          </button>
                         </div>
                         
                         {/* Validation Message */}
@@ -501,7 +499,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                         )}
                         
                         {/* Container Filter */}
-                        {!isSystemAdmin && showContainerFilter && focusedTier === tier && (
+                        {showContainerFilter && focusedTier === tier && (
                           <div style={{ 
                             border: '1px solid rgba(255, 255, 255, 0.2)', 
                             borderRadius: '12px', 

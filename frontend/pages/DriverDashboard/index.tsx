@@ -332,8 +332,8 @@ export default function DriverDashboard() {
         {activeTab === 'tasks' && (
           <div className="space-y-16">
             <Card title={t('pages.driverDashboard.assignedTasks.title')} padding="lg">
-                <div className="table-container">
-                  <table className="table-modern">
+                <div className="table-container" style={{ height: '55vh', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' as any }}>
+                  <table className="table-modern sticky-header">
                     <thead>
                       <tr>
                         <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
@@ -358,27 +358,115 @@ export default function DriverDashboard() {
                               gap: '4px',
                               padding: '4px'
                             }}>
-                              {task.container_info?.driver_name && task.container_info?.license_plate ? (
-                                <>
+                              {/* Từ vị trí: theo quy tắc Forklift - EXPORT = bãi, IMPORT = xe */}
+                              {task.container_info?.type === 'EXPORT' ? (
+                                task.actual_location ? (
+                                  <span style={{
+                                    color: '#1f2937',
+                                    fontWeight: '600',
+                                    fontSize: '12px',
+                                    fontFamily: 'monospace',
+                                    backgroundColor: '#f3f4f6',
+                                    padding: '6px 8px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #d1d5db'
+                                  }}>
+                                    {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                  </span>
+                                ) : (
+                                  <span className="location-text">
+                                    {task.from_slot?.code || t('pages.forklift.location.outside')}
+                                  </span>
+                                )
+                              ) : task.container_info?.type === 'IMPORT' ? (
+                                task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                  <>
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      fontSize: '12px'
+                                    }}>
+                                      <span style={{ 
+                                        color: '#64748b', 
+                                        fontWeight: '600',
+                                        minWidth: '50px'
+                                      }}>{t('pages.forklift.driver.driverName')}</span>
+                                      <span style={{ 
+                                        color: '#1e293b', 
+                                        fontWeight: '500',
+                                        backgroundColor: '#dbeafe',
+                                        padding: '2px 6px',
+                                        borderRadius: '3px',
+                                        fontSize: '11px'
+                                      }}>
+                                        {task.container_info.driver_name}
+                                      </span>
+                                    </div>
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      fontSize: '12px'
+                                    }}>
+                                      <span style={{ 
+                                        color: '#64748b', 
+                                        fontWeight: '600',
+                                        minWidth: '50px'
+                                      }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                      <span style={{ 
+                                        color: '#1e293b', 
+                                        fontWeight: '500',
+                                        backgroundColor: '#fef3c7',
+                                        padding: '2px 6px',
+                                        borderRadius: '3px',
+                                        fontFamily: 'monospace',
+                                        fontSize: '11px'
+                                      }}>
+                                        {task.container_info.license_plate}
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span style={{ 
+                                    color: '#94a3b8', 
+                                    fontSize: '12px',
+                                    fontStyle: 'italic'
+                                  }}>
+                                    {t('pages.forklift.driver.noInfo')}
+                                  </span>
+                                )
+                              ) : (
+                                // Fallback giữ nguyên như Forklift
+                                task.from_slot ? (
+                                  <span className="location-text">
+                                    {`${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`}
+                                  </span>
+                                ) : (
+                                  <span className="location-text">{t('pages.forklift.location.outside')}</span>
+                                )
+                              )}
+                            </div>
+                          </td>
+                          
+                          <td>
+                            {/* Đến vị trí: theo quy tắc Forklift - EXPORT = xe, IMPORT = bãi */}
+                            {task.container_info?.type === 'EXPORT' ? (
+                              task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <div style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '4px',
+                                  padding: '4px'
+                                }}>
                                   <div style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
                                     fontSize: '12px'
                                   }}>
-                                    <span style={{ 
-                                      color: '#64748b', 
-                                      fontWeight: '600',
-                                      minWidth: '50px'
-                                    }}>{t('pages.forklift.driver.driverName')}</span>
-                                    <span style={{ 
-                                      color: '#1e293b', 
-                                      fontWeight: '500',
-                                      backgroundColor: '#dbeafe',
-                                      padding: '2px 6px',
-                                      borderRadius: '3px',
-                                      fontSize: '11px'
-                                    }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.driverName')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#dbeafe', padding: '2px 6px', borderRadius: '3px', fontSize: '11px' }}>
                                       {task.container_info.driver_name}
                                     </span>
                                   </div>
@@ -388,45 +476,39 @@ export default function DriverDashboard() {
                                     gap: '6px',
                                     fontSize: '12px'
                                   }}>
-                                    <span style={{ 
-                                      color: '#64748b', 
-                                      fontWeight: '600',
-                                      minWidth: '50px'
-                                    }}>{t('pages.forklift.driver.licensePlate')}</span>
-                                    <span style={{ 
-                                      color: '#1e293b', 
-                                      fontWeight: '500',
-                                      backgroundColor: '#fef3c7',
-                                      padding: '2px 6px',
-                                      borderRadius: '3px',
-                                      fontFamily: 'monospace',
-                                      fontSize: '11px'
-                                    }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#fef3c7', padding: '2px 6px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '11px' }}>
                                       {task.container_info.license_plate}
                                     </span>
                                   </div>
-                                </>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '12px', fontStyle: 'italic' }}>{t('pages.forklift.driver.noInfo')}</span>
+                              )
+                            ) : task.container_info?.type === 'IMPORT' ? (
+                              task.actual_location ? (
+                                <span className="location-text">
+                                  {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                </span>
                               ) : (
                                 <span className="location-text">
-                                  {task.from_slot 
-                                    ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                    : t('pages.forklift.location.outside')
-                                  }
+                                  {task.to_slot 
+                                    ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                    : t('pages.requests.location.unknown')}
                                 </span>
-                              )}
-                            </div>
-                          </td>
-                          
-                          <td>
-                            <span className="location-text">
-                              {task.actual_location 
-                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
-                                : (task.to_slot 
-                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                  : t('pages.requests.location.unknown')
-                                )
-                              }
-                            </span>
+                              )
+                            ) : (
+                              // Fallback giữ nguyên
+                              <span className="location-text">
+                                {task.actual_location 
+                                  ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                  : (task.to_slot 
+                                    ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                    : t('pages.requests.location.unknown')
+                                  )
+                                }
+                              </span>
+                            )}
                           </td>
                           
                            <td>
@@ -515,7 +597,7 @@ export default function DriverDashboard() {
                                        {t('pages.driverDashboard.report.none')}
                                      </span>
                                    )}
-                                   {task.status !== 'PENDING_APPROVAL' && (
+                                   {task.status === 'IN_PROGRESS' && (
                                     <button
                                       className="btn btn-sm btn-outline"
                                       style={{
@@ -527,6 +609,15 @@ export default function DriverDashboard() {
                                     >
                                       {task.report_image ? t('common.edit') : t('common.add')}
                                     </button>
+                                   )}
+                                   {task.status === 'PENDING' && (
+                                    <span style={{ 
+                                      color: '#94a3b8', 
+                                      fontSize: '10px',
+                                      fontStyle: 'italic'
+                                    }}>
+                                      {t('pages.driverDashboard.messages.startTaskFirst')}
+                                    </span>
                                    )}
                                  </div>
                                )}
@@ -597,23 +688,78 @@ export default function DriverDashboard() {
                             <span className="container-id">{task.container_info?.container_no}</span>
                           </td>
                           <td>
-                            <span className="location-text">
-                              {task.from_slot 
-                                ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
-                                : t('pages.forklift.location.outside')
-                              }
-                            </span>
+                            {/* Lịch sử: Từ vị trí theo quy tắc như Forklift */}
+                            {task.container_info?.type === 'EXPORT' ? (
+                              task.actual_location ? (
+                                <span className="location-text">
+                                  {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                </span>
+                              ) : (
+                                <span className="location-text">{task.from_slot?.code || t('pages.forklift.location.outside')}</span>
+                              )
+                            ) : task.container_info?.type === 'IMPORT' ? (
+                              task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '4px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.driverName')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#dbeafe', padding: '2px 6px', borderRadius: '3px', fontSize: '11px' }}>{task.container_info.driver_name}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#fef3c7', padding: '2px 6px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '11px' }}>{task.container_info.license_plate}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '12px', fontStyle: 'italic' }}>{t('pages.forklift.driver.noInfo')}</span>
+                              )
+                            ) : (
+                              <span className="location-text">
+                                {task.from_slot 
+                                  ? `${task.from_slot.block.yard.name} - ${task.from_slot.block.code} - ${task.from_slot.code}`
+                                  : t('pages.forklift.location.outside')}
+                              </span>
+                            )}
                           </td>
                           <td>
-                            <span className="location-text">
-                              {task.actual_location 
-                                ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
-                                : (task.to_slot 
-                                  ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
-                                  : 'Chưa xác định'
-                                )
-                              }
-                            </span>
+                            {/* Lịch sử: Đến vị trí theo quy tắc như Forklift */}
+                            {task.container_info?.type === 'EXPORT' ? (
+                              task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '4px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.driverName')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#dbeafe', padding: '2px 6px', borderRadius: '3px', fontSize: '11px' }}>{task.container_info.driver_name}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: '600', minWidth: '50px' }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                    <span style={{ color: '#1e293b', fontWeight: '500', backgroundColor: '#fef3c7', padding: '2px 6px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '11px' }}>{task.container_info.license_plate}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '12px', fontStyle: 'italic' }}>{t('pages.forklift.driver.noInfo')}</span>
+                              )
+                            ) : task.container_info?.type === 'IMPORT' ? (
+                              task.actual_location ? (
+                                <span className="location-text">
+                                  {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                </span>
+                              ) : (
+                                <span className="location-text">
+                                  {task.to_slot 
+                                    ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                    : t('pages.requests.location.unknown')}
+                                </span>
+                              )
+                            ) : (
+                              <span className="location-text">
+                                {task.actual_location 
+                                  ? `${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`
+                                  : (task.to_slot 
+                                    ? `${task.to_slot.block.yard.name} - ${task.to_slot.block.code} - ${task.to_slot.code}`
+                                    : 'Chưa xác định'
+                                  )
+                                }
+                              </span>
+                            )}
                           </td>
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>

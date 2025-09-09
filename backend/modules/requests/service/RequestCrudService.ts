@@ -88,6 +88,7 @@ export class RequestCrudService {
 
 	/**
 	 * Lấy danh sách container available cho EXPORT request
+	 * Chỉ lấy container có trạng thái "Container rỗng có trong bãi" (EMPTY_IN_YARD)
 	 */
 	async getAvailableContainersForExport(actor: any, searchQuery?: string) {
 		// Kiểm tra quyền
@@ -123,7 +124,7 @@ export class RequestCrudService {
 			}
 		});
 
-		// Lọc bỏ container đã được sử dụng bởi request khác
+		// Lọc bỏ container đã được sử dụng bởi request khác và chỉ lấy container rỗng
 		const availableContainers = [];
 		for (const placement of containers) {
 			if (!placement.container_no) continue;
@@ -137,7 +138,17 @@ export class RequestCrudService {
 				}
 			});
 
-			if (!existingRequest) {
+			// Kiểm tra container có trong RepairTicket không
+			const existingRepairTicket = await prisma.repairTicket.findFirst({
+				where: {
+					container_no: placement.container_no,
+					status: 'CHECKED'
+				}
+			});
+
+			// Chỉ lấy container KHÔNG có trong ServiceRequest và RepairTicket
+			// => Đây là container được SystemAdmin nhập trực tiếp vào bãi
+			if (!existingRequest && !existingRepairTicket) {
 				availableContainers.push({
 					container_no: placement.container_no,
 					location: `${placement.slot.block.yard.name} / ${placement.slot.block.code} / ${placement.slot.code}`,

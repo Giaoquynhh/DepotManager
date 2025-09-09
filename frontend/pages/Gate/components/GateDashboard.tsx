@@ -125,27 +125,12 @@ export default function GateDashboard() {
         license_plate: debouncedLicensePlate
       };
 
-      // Kiểm tra xem có tham số tìm kiếm thực sự nào không (không bao gồm page/limit)
-      const hasSearchParams = (effectiveSearchParams.container_no && effectiveSearchParams.container_no.trim()) || 
-                             (effectiveSearchParams.license_plate && effectiveSearchParams.license_plate.trim()) || 
-                             (effectiveSearchParams.status && effectiveSearchParams.status.trim()) || 
-                             (effectiveSearchParams.type && effectiveSearchParams.type.trim());
-
-      // Nếu không có tham số tìm kiếm nào, hiển thị trạng thái rỗng
-      if (!hasSearchParams) {
-        setRequests([]);
-        setPagination({
-          page: 1,
-          limit: 20,
-          total: 0,
-          pages: 0
-        });
-        return;
-      }
+      // Luôn gọi API để lấy dữ liệu, backend sẽ xử lý logic mặc định
+      // Backend sẽ hiển thị FORWARDED, GATE_IN, IN_YARD, IN_CAR khi không có filter
 
       const params = new URLSearchParams();
       Object.entries(effectiveSearchParams).forEach(([key, value]) => {
-        // Chỉ thêm tham số tìm kiếm thực sự, không thêm page/limit khi không có search params
+        // Thêm tất cả tham số, backend sẽ xử lý logic mặc định
         if (key === 'page' || key === 'limit') {
           params.append(key, value.toString());
         } else if (value && value.toString().trim()) {
@@ -153,22 +138,11 @@ export default function GateDashboard() {
         }
       });
 
-      // Chỉ gửi request khi có tham số tìm kiếm thực sự
-      if (hasSearchParams) {
-        const response = await api.get(`/gate/requests/search?${params.toString()}`);
-        
-        setRequests(response.data.data);
-        setPagination(response.data.pagination);
-      } else {
-        // Nếu không có tham số nào sau khi filter, hiển thị trạng thái rỗng
-        setRequests([]);
-        setPagination({
-          page: 1,
-          limit: 20,
-          total: 0,
-          pages: 0
-        });
-      }
+      // Luôn gọi API, backend sẽ hiển thị dữ liệu mặc định khi không có filter
+      const response = await api.get(`/gate/requests/search?${params.toString()}`);
+      
+      setRequests(response.data.data);
+      setPagination(response.data.pagination);
     } catch (error: any) {
       console.error('Lỗi khi tải danh sách requests:', error);
       

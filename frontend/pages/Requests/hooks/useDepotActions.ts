@@ -190,7 +190,11 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			} else {
 				await api.patch(`/requests/${id}/status`, payload);
 			}
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: `${(actLabel[status] || safeT('common.update', 'Update'))} ${safeT('pages.requests.messages.requestSuccess', 'request successful')}`, ok: true });
 		} catch (e: any) {
 			setMsg({ text: `${safeT('common.cannot', 'Cannot')} ${(actLabel[status] || safeT('common.update', 'Update')).toLowerCase()}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
@@ -200,7 +204,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 	};
 
 	const handleAppointmentSuccess = () => {
+		// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 		mutate('/requests?page=1&limit=20');
+		mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 		setMsg({ text: safeT('pages.requests.messages.receivedAndAppointmentCreated', 'Request received and appointment created successfully!'), ok: true });
 	};
 
@@ -259,7 +265,11 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setLoadingId(requestId + 'REJECTED');
 		try {
 			await api.patch(`/requests/${requestId}/reject`, { reason });
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: safeT('pages.requests.messages.rejectSuccess', 'Request rejected successfully!'), ok: true });
 		} catch (e: any) {
 			setMsg({ text: `${safeT('common.cannot', 'Cannot')} ${safeT('pages.requests.actions.rejected', 'rejected').toLowerCase()}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
@@ -283,7 +293,10 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		
 		try {
 			await api.patch(`/requests/${rejectRequestId}/status`, { status: 'REJECTED', reason });
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 			
 			// Hiển thị thông báo thành công
 			setMsg({ 
@@ -329,7 +342,10 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		
 		try {
 			await api.delete(`/requests/${deleteRequestId}?scope=depot`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 			
 			// Hiển thị thông báo thành công
 			setMsg({ 
@@ -378,7 +394,11 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setLoadingId(id + 'DELETE');
 		try {
 			await api.delete(`/requests/${id}?scope=${scope}`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: `${safeT('pages.requests.messages.removedFromList', 'Removed from')} ${(scope === 'depot' ? safeT('common.depot', 'Depot') : safeT('common.customer', 'Customer'))} ${safeT('common.list', 'list')}`, ok: true });
 		} catch (e: any) {
 			setMsg({ text: `${safeT('common.deleteFailed', 'Delete failed')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
@@ -392,7 +412,11 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setLoadingId(id + 'RESTORE');
 		try {
 			await api.post(`/requests/${id}/restore?scope=${scope}`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: `${safeT('pages.requests.messages.restoredInList', 'Restored in')} ${(scope === 'depot' ? safeT('common.depot', 'Depot') : safeT('common.customer', 'Customer'))} ${safeT('common.list', 'list')}`, ok: true });
 		} catch (e: any) {
 			setMsg({ text: `${safeT('common.restoreFailed', 'Restore failed')}: ${e?.response?.data?.message || safeT('common.error', 'Error')}`, ok: false });
@@ -575,8 +599,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 			setSelectedRequestForContainer(null);
 			
 			console.log('🔍 Refreshing SWR data');
-			// Refresh data
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 			setMsg({ text: formatT('pages.requests.messages.containerSelectedForExport', 'Selected container {{containerNo}} for EXPORT request. Please create an appointment.', { containerNo }), ok: true });
 			console.log('🔍 handleContainerSelection completed successfully');
 		} catch (e: any) {
@@ -646,8 +671,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 						ok: true 
 					});
 					
-					// Refresh data để cập nhật trạng thái
+					// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 					mutate('/requests?page=1&limit=20');
+					mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 					
 				} catch (error: any) {
 					console.error('❌ Error uploading document:', error);
@@ -742,8 +768,9 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 						ok: true 
 					});
 					
-					// Refresh data để cập nhật trạng thái
+					// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 					mutate('/requests?page=1&limit=20');
+					mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 					
 				} catch (error: any) {
 					console.error('❌ Error uploading export documents:', error);

@@ -899,7 +899,8 @@
         "invalidNumber": "Vui lòng nhập số hợp lệ",
         "loadingData": "Đang tải dữ liệu...",
         "requireReportBeforeComplete": "Vui lòng thêm tài liệu báo cáo trước khi hoàn thành công việc",
-        "requireReportTooltip": "Cần có tài liệu báo cáo để hoàn thành"
+        "requireReportTooltip": "Cần có tài liệu báo cáo để hoàn thành",
+        "startTaskFirst": "Vui lòng bắt đầu công việc trước"
       },
       "currentTask": {
         "title": "Công việc hiện tại",

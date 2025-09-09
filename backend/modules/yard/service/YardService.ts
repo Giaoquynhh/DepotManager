@@ -271,8 +271,82 @@ export class YardService {
 			
 
 			
-			// Tạo ForkliftTask để di chuyển container vào vị trí (chỉ cho non-SystemAdmin)
-			if (!isSystemAdmin) {
+			if (isSystemAdmin) {
+				// SystemAdmin: Logic mới - chỉ tạo ForkliftTask khi container có trạng thái "Đang chờ sắp xếp"
+				console.log(`🔍 [SystemAdmin] Processing container ${container_no} for forklift task creation`);
+				
+				const latestRequest = await tx.serviceRequest.findFirst({
+					where: { container_no },
+					orderBy: { createdAt: 'desc' }
+				});
+
+				console.log(`🔍 [SystemAdmin] Latest request for ${container_no}:`, latestRequest ? {
+					id: latestRequest.id,
+					status: latestRequest.status,
+					container_no: latestRequest.container_no,
+					createdAt: latestRequest.createdAt
+				} : 'No request found');
+
+				// Kiểm tra xem container có trạng thái "Đang chờ sắp xếp" không
+				// Container đang chờ sắp xếp nếu có ServiceRequest với status = 'CHECKED'
+				const isWaitingForPlacement = latestRequest && latestRequest.status === 'CHECKED';
+				console.log(`🔍 [SystemAdmin] Is waiting for placement (ServiceRequest): ${isWaitingForPlacement}`);
+				
+				// Nếu không có ServiceRequest CHECKED, kiểm tra RepairTicket
+				let isWaitingFromRepair = false;
+				if (!isWaitingForPlacement) {
+					const repairTicket = await tx.repairTicket.findFirst({
+						where: { 
+							container_no,
+							status: 'CHECKED'
+						},
+						orderBy: { updatedAt: 'desc' }
+					});
+					isWaitingFromRepair = !!repairTicket;
+					console.log(`🔍 [SystemAdmin] Is waiting for placement (RepairTicket): ${isWaitingFromRepair}`);
+				}
+				
+				const shouldCreateForkliftTask = isWaitingForPlacement || isWaitingFromRepair;
+				console.log(`🔍 [SystemAdmin] Should create forklift task: ${shouldCreateForkliftTask}`);
+
+				if (shouldCreateForkliftTask) {
+					// Container có trạng thái "Đang chờ sắp xếp" - tạo ForkliftTask
+					console.log(`✅ [SystemAdmin] Creating forklift task for ${container_no}`);
+					await tx.forkliftTask.create({
+						data: {
+							container_no,
+							to_slot_id: slot_id,
+							status: 'PENDING',
+							created_by: actor._id
+						}
+					});
+
+					// Cập nhật request status từ CHECKED sang POSITIONED (nếu có ServiceRequest)
+					if (isWaitingForPlacement && latestRequest) {
+						await tx.serviceRequest.update({
+							where: { id: latestRequest.id },
+							data: { 
+								status: 'POSITIONED',
+								updatedAt: now
+							}
+						});
+						console.log(`✅ [SystemAdmin] Updated request status to POSITIONED for ${container_no}`);
+					}
+				} else {
+					// Container không có trạng thái "Đang chờ sắp xếp" - không tạo ForkliftTask
+					console.log(`❌ [SystemAdmin] NOT creating forklift task for ${container_no} - not waiting for placement`);
+					// Chỉ tạo ContainerMeta nếu chưa tồn tại
+					await tx.containerMeta.upsert({
+						where: { container_no },
+						update: { updatedAt: now },
+						create: { 
+							container_no,
+							updatedAt: now
+						}
+					});
+				}
+			} else {
+				// Non-SystemAdmin: Giữ nguyên logic cũ - luôn tạo ForkliftTask
 				await tx.forkliftTask.create({
 					data: {
 						container_no,
@@ -298,19 +372,6 @@ export class YardService {
 						}
 					});
 				}
-			} else {
-				// SystemAdmin: Container sẽ có trạng thái "Container rỗng có trong bãi"
-				// Không cần tạo ForkliftTask, container sẽ được đặt trực tiếp vào bãi
-				
-				// Tạo ContainerMeta nếu chưa tồn tại
-				await tx.containerMeta.upsert({
-					where: { container_no },
-					update: { updatedAt: now },
-					create: { 
-						container_no,
-						updatedAt: now
-					}
-				});
 			}
 			
 			return updatedPlacement;

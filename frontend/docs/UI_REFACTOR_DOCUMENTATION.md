@@ -15,6 +15,7 @@ Tài liệu này mô tả chi tiết các thay đổi UI/UX được thực hi�
 ✅ Component modularity (không có file > 400 dòng)  
 ✅ **MỚI v2025-01-27**: Maintenance workflow hoàn chỉnh với các action buttons  
 ✅ **MỚI v2025-01-27**: ContainersPage logic hoàn thiện với derived_status filtering  
+✅ **MỚI v2025-09-09**: Request ID Unique Logic - Mỗi request có ID duy nhất, có thể tạo request mới cho container đã bị reject  
 
 ---
 

@@ -96,6 +96,7 @@ export class DriverDashboardService {
 						prisma.serviceRequest.findFirst({
 							where: { container_no: task.container_no },
 							select: {
+								container_no: true,
 								driver_name: true,
 								license_plate: true,
 								status: true,
@@ -344,6 +345,7 @@ export class DriverDashboardService {
 						prisma.serviceRequest.findFirst({
 							where: { container_no: task.container_no },
 							select: {
+								container_no: true,
 								driver_name: true,
 								license_plate: true,
 								status: true,

@@ -41,7 +41,9 @@ export default function CustomerRequests() {
 
 	const handleCreateSuccess = () => {
 		setShowCreateModal(false);
+		// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 		mutate('/requests?page=1&limit=20');
+		mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 	};
 
 	const handleCreateCancel = () => {

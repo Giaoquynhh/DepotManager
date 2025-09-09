@@ -4,6 +4,7 @@ import useSWR, { mutate } from 'swr';
 import { maintenanceApi } from '@services/maintenance';
 import { useState } from 'react';
 import { useTranslation } from '@hooks/useTranslation';
+import { usePendingContainersCount } from '@hooks/usePendingContainersCount';
 import {
   PendingContainersModal,
   RepairTable,
@@ -18,6 +19,9 @@ export default function RepairsPage() {
   const [isPendingContainersModalOpen, setIsPendingContainersModalOpen] = useState(false);
   const [isRepairInvoiceModalOpen, setIsRepairInvoiceModalOpen] = useState(false);
   const [selectedRepairTicket, setSelectedRepairTicket] = useState<any>(null);
+  
+  // Hook để lấy số container đang chờ real time
+  const { count: pendingContainersCount, isLoading: isPendingCountLoading } = usePendingContainersCount(5000);
   const key = ['repairs', filter].join(':');
   const { data: repairs } = useSWR(key, async () => {
     const repairsList = await maintenanceApi.listRepairs(filter || undefined);
@@ -256,7 +260,7 @@ export default function RepairsPage() {
               <option value="REJECTED">{t('pages.maintenance.repairs.statusRejected')}</option>
             </select>
           </div>
-          <div style={{marginLeft: 'auto'}}>
+          <div style={{marginLeft: 'auto', position: 'relative'}}>
             <button 
               onClick={() => setIsPendingContainersModalOpen(true)}
               className="btn btn-outline pending-containers-btn"
@@ -271,10 +275,25 @@ export default function RepairsPage() {
                 fontSize: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                position: 'relative'
               }}
             >
               📋 {t('pages.maintenance.repairs.pendingContainersList')}
+              
+              {/* Badge hiển thị số container đang chờ */}
+              {pendingContainersCount > 0 && (
+                <span className="notification-badge">
+                  {pendingContainersCount > 99 ? '99+' : pendingContainersCount}
+                </span>
+              )}
+              
+              {/* Loading indicator */}
+              {isPendingCountLoading && (
+                <span className="loading-badge">
+                  ⟳
+                </span>
+              )}
             </button>
           </div>
         </div>

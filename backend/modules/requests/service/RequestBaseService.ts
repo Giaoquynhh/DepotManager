@@ -142,7 +142,8 @@ export class RequestBaseService {
 					sr.container_no,
 					sr.status as service_status,
 					sr.gate_checked_at as gate_checked_at,
-					sr.type as request_type
+					sr.type as request_type,
+					sr.id as request_id
 				FROM "ServiceRequest" sr
 				WHERE sr.container_no IS NOT NULL
 				ORDER BY sr.container_no, sr."createdAt" DESC
@@ -172,6 +173,7 @@ export class RequestBaseService {
 				sr.service_status,
 				sr.gate_checked_at,
 				sr.request_type,
+				sr.request_id,
 				COALESCE(rt.repair_checked, FALSE) as repair_checked,
 				yp.placement_status,
 				yp.placed_at,
@@ -197,10 +199,16 @@ export class RequestBaseService {
 
 		// Kiểm tra từng nguồn và đưa ra thông báo lỗi phù hợp
 		if (container.source === 'SERVICE_REQUEST') {
-			// Kiểm tra status của ServiceRequest
+			// Kiểm tra status của ServiceRequest - cho phép tạo request mới nếu status là REJECTED hoặc GATE_REJECTED
 			const isCompleted = ['COMPLETED', 'REJECTED', 'GATE_REJECTED'].includes(container.service_status);
 			if (!isCompleted) {
-				throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống.`);
+				throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã bị từ chối.`);
+			}
+			
+			// Nếu status là REJECTED hoặc GATE_REJECTED, cho phép tạo request mới với ID khác
+			if (['REJECTED', 'GATE_REJECTED'].includes(container.service_status)) {
+				console.log(`Cho phép tạo request mới cho container ${container_no} (request cũ ID: ${container.request_id} đã bị ${container.service_status})`);
+				return; // Cho phép tạo request mới
 			}
 		}
 
@@ -221,7 +229,7 @@ export class RequestBaseService {
 		const hasYardPlacement = container.source === 'YARD_PLACEMENT';
 
 		if (hasActiveServiceRequest) {
-			throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống.`);
+			throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã bị từ chối.`);
 		}
 
 		if (hasRepairTicket) {
@@ -232,6 +240,7 @@ export class RequestBaseService {
 			throw new Error(`Container ${container_no} đã được đặt vào yard và chưa được xuất. Không thể tạo request import mới.`);
 		}
 	}
+
 }
 
 export default new RequestBaseService();

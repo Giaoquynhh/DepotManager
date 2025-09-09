@@ -94,9 +94,6 @@ export default function Forklift() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ForkliftTask | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [costModalOpen, setCostModalOpen] = useState(false);
 
   // Modal styles
@@ -201,20 +198,6 @@ export default function Forklift() {
       });
   }, []);
 
-  // Auto-refresh effect
-  useEffect(() => {
-    if (!autoRefresh || !userRole) return;
-
-    const interval = setInterval(() => {
-      // Chỉ refresh khi trang đang focus
-      if (document.hasFocus()) {
-        loadForkliftTasks(false); // Không hiển thị loading spinner cho auto-refresh
-        setLastRefresh(new Date());
-      }
-    }, 5000); // Refresh mỗi 5 giây
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, userRole]);
 
   // Cleanup khi component unmount
   useEffect(() => {
@@ -227,8 +210,6 @@ export default function Forklift() {
     try {
       if (showLoading) {
         setLoading(true);
-      } else {
-        setIsRefreshing(true);
       }
       
       const response = await api.get('/forklift/jobs');
@@ -248,8 +229,6 @@ export default function Forklift() {
     } finally {
       if (showLoading) {
         setLoading(false);
-      } else {
-        setIsRefreshing(false);
       }
     }
   };
@@ -397,50 +376,6 @@ export default function Forklift() {
               <h1 className="page-title gradient gradient-ultimate">{t('pages.forklift.title')}</h1>
             </div>
 
-            <div className="header-actions">
-              <div className="flex items-center gap-4">
-                {/* Auto-refresh toggle */}
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoRefresh}
-                      onChange={(e) => setAutoRefresh(e.target.checked)}
-                      className="w-4 h-4 text-cyan-400 bg-white border-cyan-300 rounded focus:ring-cyan-300 focus:ring-2"
-                    />
-                    <span className="text-sm text-cyan-100 font-semibold">
-                      {t('pages.forklift.autoRefresh')}
-                    </span>
-                  </label>
-                </div>
-                
-                {/* Last refresh time */}
-                <div className="text-xs text-cyan-50 flex items-center gap-1 bg-cyan-800/40 px-3 py-1 rounded-full border border-cyan-600/30">
-                  {isRefreshing && (
-                    <svg className="w-3 h-3 animate-spin text-cyan-300" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  {t('pages.forklift.lastUpdate')}: {lastRefresh.toLocaleTimeString('vi-VN')}
-                </div>
-                
-                {/* Manual refresh button */}
-                <button
-                  onClick={() => {
-                    loadForkliftTasks();
-                    setLastRefresh(new Date());
-                  }}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-white px-3 py-1 rounded-lg transition-all duration-200 flex items-center gap-1 text-sm font-semibold shadow-lg"
-                  title={t('pages.forklift.refreshNow')}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Làm mới
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -595,73 +530,175 @@ export default function Forklift() {
                                                  <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
                            <div style={{
                              display: 'flex',
-                             flexDirection: 'column',
-                             gap: '6px',
-                             padding: '8px',
-                             backgroundColor: '#f8fafc',
-                             borderRadius: '6px',
-                             border: '1px solid #e2e8f0'
+                             alignItems: 'center',
+                             justifyContent: 'center'
                            }}>
-                             {/* Thông tin tài xế */}
-                             {task.container_info?.driver_name && task.container_info?.license_plate ? (
-                               <>
+                             {/* Vị trí nhận: Export = yardslot, Import = xe */}
+                             {task.container_info?.type === 'EXPORT' ? (
+                               // Export: Vị trí nhận = yardslot
+                               task.actual_location ? (
+                                 <span style={{
+                                   color: '#1f2937',
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontFamily: 'monospace',
+                                   backgroundColor: '#f3f4f6',
+                                   padding: '8px 12px',
+                                   borderRadius: '6px',
+                                   border: '1px solid #d1d5db'
+                                 }}>
+                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                 </span>
+                               ) : (
+                                 <span style={{ 
+                                   color: '#64748b', 
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontStyle: 'italic'
+                                 }}>
+                                   {task.from_slot?.code || t('pages.forklift.location.outside')}
+                                 </span>
+                               )
+                             ) : task.container_info?.type === 'IMPORT' ? (
+                               // Import: Vị trí nhận = xe (thông tin tài xế)
+                               task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#f8fafc',
+                                   borderRadius: '6px',
+                                   border: '1px solid #e2e8f0'
+                                 }}>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.driverName')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#dbeafe',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px'
+                                     }}>
+                                       {task.container_info.driver_name}
+                                     </span>
+                                   </div>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#fef3c7',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px',
+                                       fontFamily: 'monospace',
+                                       fontSize: '12px'
+                                     }}>
+                                       {task.container_info.license_plate}
+                                     </span>
+                                   </div>
+                                 </div>
+                               ) : (
                                  <div style={{
                                    display: 'flex',
                                    alignItems: 'center',
-                                   gap: '8px',
-                                   fontSize: '13px'
+                                   justifyContent: 'center',
+                                   padding: '8px',
+                                   color: '#94a3b8',
+                                   fontSize: '12px',
+                                   fontStyle: 'italic'
                                  }}>
-                                   <span style={{ 
-                                     color: '#64748b', 
-                                     fontWeight: '600',
-                                     minWidth: '60px'
-                                   }}>{t('pages.forklift.driver.driverName')}</span>
-                                   <span style={{ 
-                                     color: '#1e293b', 
-                                     fontWeight: '500',
-                                     backgroundColor: '#dbeafe',
-                                     padding: '2px 8px',
-                                     borderRadius: '4px'
-                                   }}>
-                                     {task.container_info.driver_name}
-                                   </span>
+                                   {t('pages.forklift.driver.noInfo')}
                                  </div>
-                                 <div style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   gap: '8px',
-                                   fontSize: '13px'
-                                 }}>
-                                   <span style={{ 
-                                     color: '#64748b', 
-                                     fontWeight: '600',
-                                     minWidth: '60px'
-                                   }}>{t('pages.forklift.driver.licensePlate')}</span>
-                                   <span style={{ 
-                                     color: '#1e293b', 
-                                     fontWeight: '500',
-                                     backgroundColor: '#fef3c7',
-                                     padding: '2px 8px',
-                                     borderRadius: '4px',
-                                     fontFamily: 'monospace',
-                                     fontSize: '12px'
-                                   }}>
-                                     {task.container_info.license_plate}
-                                   </span>
-                                 </div>
-                               </>
+                               )
                              ) : (
-                               <div style={{
-                                 display: 'flex',
-                                 alignItems: 'center',
-                                 justifyContent: 'center',
-                                 padding: '8px',
-                                 color: '#94a3b8',
-                                 fontSize: '12px',
-                                 fontStyle: 'italic'
-                               }}>
-{t('pages.forklift.driver.noInfo')}
-                               </div>
+                               // Fallback: Hiển thị thông tin tài xế nếu không xác định được type
+                               task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#f8fafc',
+                                   borderRadius: '6px',
+                                   border: '1px solid #e2e8f0'
+                                 }}>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.driverName')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#dbeafe',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px'
+                                     }}>
+                                       {task.container_info.driver_name}
+                                     </span>
+                                   </div>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#fef3c7',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px',
+                                       fontFamily: 'monospace',
+                                       fontSize: '12px'
+                                     }}>
+                                       {task.container_info.license_plate}
+                                     </span>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   justifyContent: 'center',
+                                   padding: '8px',
+                                   color: '#94a3b8',
+                                   fontSize: '12px',
+                                   fontStyle: 'italic'
+                                 }}>
+                                   {t('pages.forklift.driver.noInfo')}
+                                 </div>
+                               )
                              )}
                            </div>
                         </td>
@@ -671,28 +708,127 @@ export default function Forklift() {
                              alignItems: 'center',
                              justifyContent: 'center'
                            }}>
-                             {task.actual_location ? (
-                               <span style={{
-                                 color: '#1f2937',
-                                 fontWeight: '600',
-                                 fontSize: '14px',
-                                 fontFamily: 'monospace',
-                                 backgroundColor: '#f3f4f6',
-                                 padding: '8px 12px',
-                                 borderRadius: '6px',
-                                 border: '1px solid #d1d5db'
-                               }}>
-                                 {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                               </span>
+                             {/* Vị trí đến: Export = xe, Import = yardslot */}
+                             {task.container_info?.type === 'EXPORT' ? (
+                               // Export: Vị trí đến = xe (thông tin tài xế)
+                               task.container_info?.driver_name && task.container_info?.license_plate ? (
+                                 <div style={{
+                                   display: 'flex',
+                                   flexDirection: 'column',
+                                   gap: '6px',
+                                   padding: '8px',
+                                   backgroundColor: '#f8fafc',
+                                   borderRadius: '6px',
+                                   border: '1px solid #e2e8f0'
+                                 }}>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.driverName')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#dbeafe',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px'
+                                     }}>
+                                       {task.container_info.driver_name}
+                                     </span>
+                                   </div>
+                                   <div style={{
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '8px',
+                                     fontSize: '13px'
+                                   }}>
+                                     <span style={{ 
+                                       color: '#64748b', 
+                                       fontWeight: '600',
+                                       minWidth: '60px'
+                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
+                                     <span style={{ 
+                                       color: '#1e293b', 
+                                       fontWeight: '500',
+                                       backgroundColor: '#fef3c7',
+                                       padding: '2px 8px',
+                                       borderRadius: '4px',
+                                       fontFamily: 'monospace',
+                                       fontSize: '12px'
+                                     }}>
+                                       {task.container_info.license_plate}
+                                     </span>
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <div style={{
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   justifyContent: 'center',
+                                   padding: '8px',
+                                   color: '#94a3b8',
+                                   fontSize: '12px',
+                                   fontStyle: 'italic'
+                                 }}>
+                                   {t('pages.forklift.driver.noInfo')}
+                                 </div>
+                               )
+                             ) : task.container_info?.type === 'IMPORT' ? (
+                               // Import: Vị trí đến = yardslot
+                               task.actual_location ? (
+                                 <span style={{
+                                   color: '#1f2937',
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontFamily: 'monospace',
+                                   backgroundColor: '#f3f4f6',
+                                   padding: '8px 12px',
+                                   borderRadius: '6px',
+                                   border: '1px solid #d1d5db'
+                                 }}>
+                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                 </span>
+                               ) : (
+                                 <span style={{ 
+                                   color: '#64748b', 
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontStyle: 'italic'
+                                 }}>
+                                   {task.to_slot?.code || t('pages.forklift.location.outside')}
+                                 </span>
+                               )
                              ) : (
-                               <span style={{ 
-                                 color: '#64748b', 
-                                 fontWeight: '600',
-                                 fontSize: '14px',
-                                 fontStyle: 'italic'
-                               }}>
-{task.to_slot?.code || t('pages.forklift.location.outside')}
-                               </span>
+                               // Fallback: Hiển thị yardslot nếu không xác định được type
+                               task.actual_location ? (
+                                 <span style={{
+                                   color: '#1f2937',
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontFamily: 'monospace',
+                                   backgroundColor: '#f3f4f6',
+                                   padding: '8px 12px',
+                                   borderRadius: '6px',
+                                   border: '1px solid #d1d5db'
+                                 }}>
+                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                                 </span>
+                               ) : (
+                                 <span style={{ 
+                                   color: '#64748b', 
+                                   fontWeight: '600',
+                                   fontSize: '14px',
+                                   fontStyle: 'italic'
+                                 }}>
+                                   {task.to_slot?.code || t('pages.forklift.location.outside')}
+                                 </span>
+                               )
                              )}
                            </div>
                         </td>

@@ -10,7 +10,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
   border: 1px solid var(--color-gray-200);
   overflow-x: auto; /* Cho phép scroll ngang khi cần */
-  overflow-y: hidden;
+  overflow-y: auto; /* Bật cuộn dọc khi nội dung dài */
   max-width: 100%; /* Đảm bảo không vượt quá container */
   margin: 0 auto; /* Căn giữa */
   position: relative; /* Để xử lý overflow tốt hơn */

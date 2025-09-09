@@ -893,8 +893,16 @@
         "fileTooLarge5MB": "File too large. Please choose a file smaller than 5MB",
         "fileNameTooLong": "File name too long. Please use a shorter name",
         "errorSelectingFile": "An error occurred while selecting file",
+        "fileSelectedSuccessfully": "File selected successfully",
+        "uploadCancelled": "Upload cancelled",
+        "dataLoadedSuccessfully": "Data loaded successfully",
+        "imageUploadedSuccessfully": "Image uploaded successfully",
+        "statusUpdatedSuccessfully": "Status updated successfully",
         "invalidNumber": "Please enter a valid number",
-        "loadingData": "Loading data..."
+        "loadingData": "Loading data...",
+        "requireReportBeforeComplete": "Please add a report document before completing the task",
+        "requireReportTooltip": "Report document required to complete",
+        "startTaskFirst": "Please start the task first"
       },
       "currentTask": {
         "title": "Current Task",

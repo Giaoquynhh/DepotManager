@@ -3,6 +3,30 @@
 ## Tổng quan
 Module này quản lý toàn bộ lifecycle của các yêu cầu dịch vụ container, từ khi tạo request đến khi hoàn thành. Hệ thống đã được cập nhật với **Request State Machine** để quản lý workflow trạng thái một cách nhất quán và có kiểm soát.
 
+## 🔑 Tính năng mới: Request ID Unique Logic (2025-09-09)
+
+### **Vấn đề đã giải quyết:**
+- Mỗi request có ID duy nhất để phân biệt
+- Có thể tạo request mới cho container đã bị reject
+- Tránh conflict khi request status tự động chuyển từ REJECTED → CHECKING
+- Request cũ và mới hoạt động độc lập
+
+### **Logic hoạt động:**
+1. **Tạo request mới:** Mỗi request được tạo với ID duy nhất (cuid())
+2. **Container validation:** Cho phép tạo request mới cho container đã bị REJECTED
+3. **Status management:** Request REJECTED không bị "sống lại" khi có repair invoice
+4. **Independent operation:** Mỗi request hoạt động độc lập với ID riêng
+
+### **Files đã cập nhật:**
+- `modules/requests/service/RequestBaseService.ts` - Logic validation container
+- `modules/maintenance/service/MaintenanceService.ts` - Fix logic cập nhật status
+- `docs/REQUEST_ID_UNIQUE_LOGIC.md` - Documentation chi tiết
+
+### **Test cases:**
+- ✅ Test tạo request mới cho container đã bị reject
+- ✅ Test request REJECTED không bị "sống lại"
+- ✅ Test ID duy nhất cho mỗi request
+
 ## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR
 
 ### **Workflow mới với trạng thái IN_CAR**

@@ -177,7 +177,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setLoadingId(id + 'ACCEPT');
 		try {
 			await api.patch(`/requests/${id}/accept`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: 'Đã chấp nhận hóa đơn sửa chữa thành công', ok: true });
 		} catch (e: any) {
 			setMsg({ text: `Không thể chấp nhận: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
@@ -192,7 +196,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setLoadingId(id + 'ACCEPT_SCHEDULED');
 		try {
 			await api.patch(`/requests/${id}/accept-scheduled`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: 'Đã chấp nhận yêu cầu và chuyển sang trạng thái Forwarded thành công', ok: true });
 		} catch (e: any) {
 			setMsg({ text: `Không thể chấp nhận yêu cầu: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
@@ -207,7 +215,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setLoadingId(id + 'REJECT');
 		try {
 			await api.patch(`/requests/${id}/reject-by-customer`, { reason });
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: 'Đã từ chối hóa đơn sửa chữa thành công', ok: true });
 		} catch (e: any) {
 			setMsg({ text: `Không thể từ chối: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
@@ -228,7 +240,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setRejectLoading(true);
 		try {
 			await api.patch(`/requests/${rejectRequestId}/reject-by-customer`, { reason });
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: 'Đã từ chối hóa đơn sửa chữa thành công', ok: true });
 			
 			// Đóng modal sau 1 giây
@@ -260,7 +276,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setAcceptLoading(true);
 		try {
 			await api.patch(`/requests/${acceptRequestId}/accept`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({ text: 'Đã chấp nhận hóa đơn sửa chữa thành công', ok: true });
 			
 			// Đóng modal sau 1 giây
@@ -293,7 +313,11 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 		setMsg(null);
 		try {
 			await api.delete(`/requests/${deleteRequestId}?scope=customer`);
+			
+			// Invalidate tất cả SWR cache liên quan đến requests để đảm bảo tất cả trang đều cập nhật
 			mutate('/requests?page=1&limit=20');
+			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
+			
 			setMsg({
 				text: 'Yêu cầu đã được gỡ bỏ khỏi danh sách khách hàng!',
 				ok: true

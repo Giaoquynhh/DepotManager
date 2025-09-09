@@ -8,6 +8,7 @@ Tài liệu này mô tả chi tiết các tính năng mới được thêm vào 
 2. **3 Action buttons mới** trong RepairTable component
 3. **Đồng bộ trạng thái** giữa ServiceRequest và RepairTicket
 4. **Workflow hoàn chỉnh** từ kiểm tra đến hoàn thành sửa chữa
+5. **Real-time notification badge** hiển thị số container đang chờ (v2025-01-27)
 
 ---
 
@@ -19,6 +20,7 @@ Tài liệu này mô tả chi tiết các tính năng mới được thêm vào 
 ✅ **Action buttons**: 3 buttons mới với logic xử lý đầy đủ  
 ✅ **Audit logging**: Ghi lại tất cả các thay đổi trạng thái  
 ✅ **Error handling**: Xử lý lỗi gracefully không ảnh hưởng flow chính  
+✅ **Real-time notifications**: Badge hiển thị số container đang chờ với auto-refresh  
 
 ---
 
@@ -422,6 +424,76 @@ try {
 - [x] Cập nhật MODULE_6_MAINTENANCE.md
 - [x] Cập nhật UI_REFACTOR_DOCUMENTATION.md
 - [x] Tạo MAINTENANCE_WORKFLOW_ENHANCEMENT.md
+- [x] Tạo REAL_TIME_NOTIFICATION_BADGE.md
+
+### ✅ Real-time Notification Badge (v2025-01-27)
+- [x] Hook usePendingContainersCount với SWR auto-refresh
+- [x] Badge notification với animation pulse giống Facebook
+- [x] CSS animations và responsive design
+- [x] Error handling và loading states
+- [x] Integration vào trang Maintenance/Repairs
+
+---
+
+## 🔔 Real-time Notification Badge System (v2025-01-27)
+
+### Tổng quan
+Hệ thống notification badge real-time được tích hợp vào trang Maintenance/Repairs để hiển thị số container đang chờ kiểm tra, tương tự như thông báo Facebook.
+
+### Tính năng chính
+- **Auto-refresh**: Cập nhật số lượng container mỗi 5 giây
+- **Live data**: Lấy dữ liệu trực tiếp từ API `/backend/gate/requests/search?status=GATE_IN`
+- **Smart filtering**: Chỉ đếm container có type = 'IMPORT'
+- **Visual badge**: Badge đỏ với animation pulse giống Facebook
+- **Loading indicator**: Hiển thị spinner khi đang tải dữ liệu
+- **Responsive**: Tự động điều chỉnh kích thước trên mobile
+
+### Cấu trúc Implementation
+
+#### Hook: `usePendingContainersCount`
+```typescript
+// File: hooks/usePendingContainersCount.ts
+export const usePendingContainersCount = (refreshInterval: number = 5000) => {
+  // SWR configuration với auto-refresh
+  // Error handling và loading states
+  // Return: { count, isLoading, error, refresh }
+}
+```
+
+#### Component Integration
+```typescript
+// File: pages/Maintenance/Repairs.tsx
+const { count: pendingContainersCount, isLoading } = usePendingContainersCount(5000);
+
+// Badge hiển thị
+{pendingContainersCount > 0 && (
+  <span className="notification-badge">
+    {pendingContainersCount > 99 ? '99+' : pendingContainersCount}
+  </span>
+)}
+```
+
+#### CSS Animations
+```css
+/* File: styles/notification-badge.css */
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+```
+
+### Performance & Optimization
+- **SWR caching**: Tránh gọi API không cần thiết
+- **Debounced updates**: Chỉ cập nhật khi có thay đổi
+- **Memory efficient**: Cleanup khi component unmount
+- **Error boundaries**: Xử lý lỗi gracefully
+
+### Future Enhancements
+- **Sound notifications**: Âm thanh khi có container mới
+- **Push notifications**: Browser notifications
+- **Custom intervals**: User có thể set refresh time
+- **Multiple counters**: Hiển thị nhiều loại notification
 
 ---
 
@@ -433,7 +505,8 @@ try {
 2. **Status synchronization**: Kiểm tra đồng bộ giữa ServiceRequest và RepairTicket
 3. **Audit trail**: Duy trì log đầy đủ cho compliance
 4. **Performance monitoring**: Theo dõi performance của các API calls mới
-5. **User training**: Hướng dẫn user sử dụng workflow mới
+5. **Real-time notifications**: Kiểm tra hoạt động của notification badge và auto-refresh
+6. **User training**: Hướng dẫn user sử dụng workflow mới và tính năng notification
 
 ### Liên hệ:
 - **Developer team**: Để hỗ trợ khi cần thêm features mới hoặc fix bugs
