@@ -516,10 +516,8 @@ export function useDepotActions(): [DepotActionsState, DepotActions] {
 		setMsg(null);
 		setLoadingId(id + 'CONFIRM');
 		try {
-			// TODO: Implement gửi xác nhận cho khách hàng
-			// Có thể gửi email, SMS hoặc cập nhật trạng thái
-			await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-			setMsg({ text: safeT('pages.requests.messages.customerConfirmationSent', 'Customer confirmation sent successfully'), ok: true });
+			const response = await api.post(`/requests/${id}/send-customer-confirmation`);
+			setMsg({ text: response.data.message || safeT('pages.requests.messages.customerConfirmationSent', 'Customer confirmation sent successfully'), ok: true });
 			
 			// Không tự động mở chat với khách hàng sau khi gửi xác nhận
 			// setActiveChatRequests(prev => new Set(prev).add(id));

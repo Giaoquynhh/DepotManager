@@ -633,6 +633,12 @@ export class MaintenanceService {
         throw new Error('Chỉ có thể gửi yêu cầu xác nhận khi phiếu ở trạng thái "Chờ chấp nhận"');
       }
 
+      // Cập nhật viewquote = 1 để Depot có thể xem hóa đơn
+      await prisma.repairTicket.update({
+        where: { id: repairTicketId },
+        data: { viewquote: 1 }
+      });
+
       // Tìm ServiceRequest tương ứng với container_no
       let serviceRequest = null;
       if (repairTicket.container_no) {

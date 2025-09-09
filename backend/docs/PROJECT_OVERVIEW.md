@@ -30,6 +30,29 @@ Hệ thống quản lý container toàn diện với các module chính: Auth, R
   - `http://localhost:5002/Yard` - Không hiển thị trong bản đồ bãi
   - `http://localhost:5002/ContainersPage` - Không hiển thị trong danh sách container
 
+## 🔐 Tính năng mới: ViewQuote cho RepairTicket (v2025-09-09)
+
+### **Mô tả**
+Tính năng `viewquote` kiểm soát quyền xem hóa đơn sửa chữa ở các trang khác nhau trong hệ thống.
+
+### **Luồng hoạt động**
+```
+1. Maintenance/Repairs (viewquote = 0)
+   ↓ Click "Gửi yêu cầu xác nhận"
+2. Depot có thể xem hóa đơn (viewquote = 1)
+   ↓ Click "Gửi xác nhận"
+3. Customer có thể xem hóa đơn và quyết định (viewquote = 2)
+```
+
+### **Các giá trị viewquote**
+- **`viewquote = 0`**: Chỉ Maintenance/Repairs xem được hóa đơn
+- **`viewquote = 1`**: Depot có thể xem hóa đơn và gửi xác nhận
+- **`viewquote = 2`**: Customer có thể xem hóa đơn và quyết định (chấp nhận/từ chối)
+
+### **API Endpoints mới**
+- `POST /maintenance/repairs/:id/confirmation-request` - Gửi yêu cầu xác nhận
+- `POST /requests/:id/send-customer-confirmation` - Gửi xác nhận cho khách hàng
+
 ## 🏗️ Kiến trúc hệ thống
 
 ### **Backend Architecture:**

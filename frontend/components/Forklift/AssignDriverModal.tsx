@@ -34,12 +34,9 @@ export default function AssignDriverModal({ isOpen, onClose, onAssign, jobData, 
   useEffect(() => {
     if (isOpen) {
       fetchDrivers();
-      // Set tài xế hiện tại làm giá trị mặc định
-      if (currentDriverId) {
-        setSelectedDriver(currentDriverId);
-      } else {
-        setSelectedDriver('');
-      }
+      // Luôn yêu cầu người dùng chọn và bấm nút để gán
+      // Không tự động chọn tài xế ngay cả khi chỉ có 1 tài xế hoặc đã có currentDriverId
+      setSelectedDriver('');
     }
   }, [isOpen, currentDriverId]);
 

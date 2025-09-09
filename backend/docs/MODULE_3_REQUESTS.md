@@ -256,6 +256,15 @@ Mỗi request lưu history array với:
 - `modules/requests/controller/RequestRoutes.ts` - Route definitions
 - `modules/requests/dto/RequestDtos.ts` - Validation schemas với trạng thái mới
 
+### **API Endpoints mới (v2025-09-09):**
+
+#### `POST /requests/:id/send-customer-confirmation`
+- **Mô tả**: Depot gửi xác nhận cho khách hàng (cập nhật viewquote = 2)
+- **Authorization**: SaleAdmin, SystemAdmin
+- **Body**: None
+- **Response**: `{ success: true, message: "Đã gửi xác nhận cho khách hàng thành công" }`
+- **Side effect**: Cập nhật viewquote = 2 cho RepairTicket tương ứng
+
 ### **Database:**
 - `prisma/schema.prisma` - Updated schema với trạng thái mới
 - `prisma/migrations/` - Migration cho status enum updates

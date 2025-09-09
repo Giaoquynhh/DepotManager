@@ -132,6 +132,41 @@ export class RequestCustomerService {
 		await audit(actor._id, 'REQUEST.REJECTED_BY_CUSTOMER', 'ServiceRequest', id, { reason });
 		return updated;
 	}
+
+	/**
+	 * Depot gửi xác nhận cho khách hàng - cập nhật viewquote = 2
+	 */
+	async sendCustomerConfirmation(actor: any, id: string) {
+		const req = await repo.findById(id);
+		if (!req) throw new Error('Yêu cầu không tồn tại');
+
+		if (req.status !== 'PENDING_ACCEPT') {
+			throw new Error('Chỉ có thể gửi xác nhận cho yêu cầu ở trạng thái PENDING_ACCEPT');
+		}
+
+		// Cập nhật viewquote = 2 cho RepairTicket tương ứng
+		if (req.container_no) {
+			try {
+				const { prisma } = await import('../../../shared/config/database');
+				await prisma.repairTicket.updateMany({
+					where: { 
+						container_no: req.container_no,
+						viewquote: 1 // Chỉ cập nhật những phiếu đã được gửi yêu cầu xác nhận
+					},
+					data: { viewquote: 2 }
+				});
+				console.log('✅ Successfully updated viewquote to 2 for container:', req.container_no);
+			} catch (error) {
+				console.error('❌ Error updating viewquote:', error);
+				// Không throw error để không ảnh hưởng đến việc gửi xác nhận
+			}
+		}
+
+		// Ghi log audit
+		await audit(actor._id, 'REQUEST.SEND_CUSTOMER_CONFIRMATION', 'ServiceRequest', id);
+		
+		return { success: true, message: 'Đã gửi xác nhận cho khách hàng thành công' };
+	}
 }
 
 export default new RequestCustomerService();

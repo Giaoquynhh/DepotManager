@@ -106,17 +106,23 @@ export class RequestBaseService {
 			repo.count(filter, actorType, includeHidden)
 		]);
 		
-		// Gắn thông tin payment mới nhất và documents để FE hiển thị
+		// Gắn thông tin payment mới nhất, documents và viewquote để FE hiển thị
 		const withPaymentAndDocs = await Promise.all(
 			data.map(async (r: any) => {
-				const [pay, docs] = await Promise.all([
+				const [pay, docs, repairTicket] = await Promise.all([
 					repo.getLatestPayment(r.id),
-					repo.listDocs(r.id)
+					repo.listDocs(r.id),
+					// Lấy thông tin viewquote từ RepairTicket nếu có container_no
+					r.container_no ? prisma.repairTicket.findFirst({
+						where: { container_no: r.container_no },
+						select: { viewquote: true }
+					}) : Promise.resolve(null)
 				]);
 				return { 
 					...r, 
 					latest_payment: pay || null,
-					documents: docs || []
+					documents: docs || [],
+					viewquote: repairTicket?.viewquote || 0
 				};
 			})
 		);

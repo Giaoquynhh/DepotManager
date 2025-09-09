@@ -48,7 +48,12 @@ modules/maintenance/
 #### `PATCH /maintenance/repairs/:id/details`
 - **Mô tả**: Cập nhật thông tin chi tiết sửa chữa
 - **Body**: `updateRepairDetailsSchema`
-- **Response**: Phiếu sửa chữa đã cập nhật
+
+#### `POST /maintenance/repairs/:id/confirmation-request`
+- **Mô tả**: Gửi yêu cầu xác nhận cho Depot (cập nhật viewquote = 1)
+- **Authorization**: SaleAdmin, SystemAdmin
+- **Body**: None
+- **Response**: `{ success: true, message: "..." }`
 
 #### `POST /maintenance/repairs/:id/complete-check`
 - **Mô tả**: Hoàn thành kiểm tra container
@@ -102,6 +107,7 @@ model RepairTicket {
   selected_parts        String?
   technician_notes      String?
   repair_notes          String?
+  viewquote             Int         @default(0)  // 0: Chỉ Maintenance xem, 1: Depot xem, 2: Customer xem
   created_at            DateTime    @default(now())
   updated_at            DateTime    @updatedAt
   created_by            String
@@ -355,6 +361,41 @@ npx prisma studio
 # Reset database
 npx prisma migrate reset
 ```
+
+## 🔐 Tính năng ViewQuote (v2025-09-09)
+
+### Mô tả
+Tính năng `viewquote` kiểm soát quyền xem hóa đơn sửa chữa ở các trang khác nhau trong hệ thống.
+
+### Các giá trị viewquote
+
+#### `viewquote = 0` (Mặc định)
+- **Ý nghĩa**: Chỉ page Maintenance/Repairs mới có thể xem hóa đơn sửa chữa
+- **Trạng thái**: Đây là trạng thái ban đầu khi tạo phiếu sửa chữa
+
+#### `viewquote = 1`
+- **Kích hoạt**: Khi click button "Gửi yêu cầu xác nhận" với `repairtick status = PENDING_ACCEPT`
+- **Hiệu ứng**: Page Requests/Depot sẽ hiển thị button "Xem hóa đơn/Gửi xác nhận"
+- **API**: `POST /maintenance/repairs/:id/confirmation-request`
+
+#### `viewquote = 2`
+- **Kích hoạt**: Khi ở Depot page click button "Gửi xác nhận"
+- **Hiệu ứng**: Page Requests/Customer sẽ hiển thị action "Xem hóa đơn/Chấp nhận/Từ chối"
+- **API**: `POST /requests/:id/send-customer-confirmation`
+
+### Luồng hoạt động
+```
+1. Maintenance/Repairs (viewquote = 0)
+   ↓ Click "Gửi yêu cầu xác nhận"
+2. Depot có thể xem hóa đơn (viewquote = 1)
+   ↓ Click "Gửi xác nhận"
+3. Customer có thể xem hóa đơn và quyết định (viewquote = 2)
+```
+
+### Cập nhật Database
+- **Migration**: `20250909010849_add_viewquote_to_repair_ticket`
+- **Field**: `viewquote Int @default(0)`
+- **Index**: Không cần index riêng vì field này được query cùng với container_no
 
 ## 📚 Tài liệu tham khảo
 

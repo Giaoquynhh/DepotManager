@@ -430,8 +430,8 @@ export default function DepotRequestTable({
 										</div>
 									)}
 
-									{/* PENDING_ACCEPT Status Actions */}
-									{item.status === 'PENDING_ACCEPT' && (
+									{/* PENDING_ACCEPT Status Actions - chỉ hiển thị khi viewquote = 1 */}
+									{item.status === 'PENDING_ACCEPT' && item.viewquote === 1 && (
 										<div className="action-group">
 											<button
 												className="btn btn-sm btn-info"
