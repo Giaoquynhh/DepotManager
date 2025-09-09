@@ -1,5 +1,43 @@
 # Container Management System
 
+## 🔐 Tính năng mới: ViewQuote cho RepairTicket (v2025-09-09)
+
+### **Kiểm soát quyền xem hóa đơn sửa chữa**
+
+Hệ thống đã được cập nhật với tính năng `viewquote` để kiểm soát quyền xem hóa đơn sửa chữa ở các trang khác nhau trong hệ thống.
+
+#### **Tính năng chính:**
+- ✅ **Phân cấp quyền xem**: 3 mức độ quyền xem hóa đơn (0, 1, 2)
+- ✅ **Workflow tự động**: Luồng chuyển đổi quyền tự động theo hành động
+- ✅ **Bảo mật cao**: Chỉ role phù hợp mới có thể thực hiện actions
+- ✅ **UI thông minh**: Chỉ hiển thị buttons khi có quyền
+
+#### **Luồng hoạt động:**
+```
+1. Maintenance/Repairs (viewquote = 0)
+   ↓ Click "Gửi yêu cầu xác nhận"
+2. Depot có thể xem hóa đơn (viewquote = 1)
+   ↓ Click "Gửi xác nhận"
+3. Customer có thể xem hóa đơn và quyết định (viewquote = 2)
+```
+
+#### **Các giá trị viewquote:**
+- **`viewquote = 0`**: Chỉ Maintenance/Repairs xem được hóa đơn
+- **`viewquote = 1`**: Depot có thể xem hóa đơn và gửi xác nhận
+- **`viewquote = 2`**: Customer có thể xem hóa đơn và quyết định (chấp nhận/từ chối)
+
+#### **Tài liệu chi tiết:**
+- [VIEWQUOTE_FEATURE_SUMMARY.md](./VIEWQUOTE_FEATURE_SUMMARY.md) - Tổng quan tính năng
+- [Backend: MAINTENANCE_MODULE.md](./backend/docs/MAINTENANCE_MODULE.md) - API và database
+- [Frontend: VIEWQUOTE_FEATURE_FRONTEND.md](./frontend/docs/VIEWQUOTE_FEATURE_FRONTEND.md) - UI implementation
+
+#### **Files Modified:**
+- `backend/prisma/schema.prisma` - Database schema với field viewquote
+- `backend/modules/maintenance/service/MaintenanceService.ts` - Logic viewquote = 1
+- `backend/modules/requests/service/RequestCustomerService.ts` - Logic viewquote = 2
+- `frontend/pages/Requests/components/DepotRequestTable.tsx` - UI Depot
+- `frontend/components/RequestTable.tsx` - UI Customer
+
 ## 🚀 Tính năng mới: Gate Time Auto Fill System
 
 ### **Hệ thống tự động điền thời gian Gate**

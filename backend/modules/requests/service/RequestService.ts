@@ -155,6 +155,10 @@ export class RequestService {
 	async rejectByCustomer(actor: any, id: string, reason: string) {
 		return await RequestCustomerService.rejectByCustomer(actor, id, reason);
 	}
+
+	async sendCustomerConfirmation(actor: any, id: string) {
+		return await RequestCustomerService.sendCustomerConfirmation(actor, id);
+	}
 }
 
 export default new RequestService();

@@ -88,6 +88,9 @@ router.patch('/:id/complete', requireRoles('SaleAdmin','SystemAdmin'), (req, res
 router.patch('/:id/accept', requireRoles('CustomerAdmin','CustomerUser'), (req, res) => controller.acceptRequest(req as any, res));
 router.patch('/:id/reject-by-customer', requireRoles('CustomerAdmin','CustomerUser'), (req, res) => controller.rejectByCustomer(req as any, res));
 
+// Depot gửi xác nhận cho khách hàng
+router.post('/:id/send-customer-confirmation', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.sendCustomerConfirmation(req as any, res));
+
 // Helper routes
 router.get('/:id/transitions', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','SystemAdmin'), (req, res) => controller.getValidTransitions(req as any, res));
 router.get('/state/:state/info', requireRoles('CustomerAdmin','CustomerUser','SaleAdmin','SystemAdmin'), (req, res) => controller.getStateInfo(req as any, res));

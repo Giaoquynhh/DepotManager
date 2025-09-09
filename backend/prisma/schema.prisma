@@ -377,6 +377,7 @@ model RepairTicket {
   estimated_cost      Float?             @default(0)
   manager_comment     String?
   labor_cost          Float?             @default(0)  // Chi phí công sửa chữa
+  viewquote           Int                @default(0)  // 0: Chỉ Maintenance/Repairs xem hóa đơn, 1: Depot có thể xem, 2: Customer có thể xem
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 

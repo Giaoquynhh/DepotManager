@@ -191,6 +191,15 @@ export class RequestController {
 		if (error) return res.status(400).json({ message: error.message });
 		try { return res.json(await service.rejectByCustomer(req.user!, req.params.id, value.reason)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
+
+	// Depot gửi xác nhận cho khách hàng
+	async sendCustomerConfirmation(req: AuthRequest, res: Response) {
+		try { 
+			return res.json(await service.sendCustomerConfirmation(req.user!, req.params.id)); 
+		} catch (e: any) { 
+			return res.status(400).json({ message: e.message }); 
+		}
+	}
 }
 
 export default new RequestController();

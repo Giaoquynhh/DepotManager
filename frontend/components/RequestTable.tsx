@@ -19,6 +19,7 @@ interface Request {
   appointment_location_type?: string;
   appointment_location_id?: string;
   appointment_note?: string;
+  viewquote?: number;
 }
 
 interface RequestTableProps {
@@ -413,8 +414,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                         </button>
                       )}
 
-                      {/* Actions for PENDING_ACCEPT requests (Customer only) */}
-                      {item.status === 'PENDING_ACCEPT' && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
+                      {/* Actions for PENDING_ACCEPT requests (Customer only) - chỉ hiển thị khi viewquote = 2 */}
+                      {item.status === 'PENDING_ACCEPT' && item.viewquote === 2 && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
                         <>
                                                      <button
                              className="btn btn-sm btn-info"
