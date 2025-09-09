@@ -1,4 +1,4 @@
-/* Responsive Design */
+/* Responsive Design - Chỉ điều chỉnh kích thước */
 @media (max-width: 1024px) {
   .yard-layout {
     grid-template-columns: 1fr;
@@ -7,6 +7,16 @@
   
   .yard-left {
     min-height: 400px;
+  }
+  
+  /* Điều chỉnh kích thước slot tiles */
+  .yard-slot-tile {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .slot-code {
+    font-size: 9px;
   }
 }
 
@@ -26,6 +36,35 @@
   .yard-slot {
     width: 28px;
     height: 28px;
+  }
+  
+  /* Điều chỉnh kích thước slot tiles cho tablet */
+  .yard-slot-tile {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .slot-code {
+    font-size: 8px;
+  }
+  
+  /* Điều chỉnh kích thước stats bar */
+  .yard-stats-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .yard-stat-card {
+    min-width: 120px;
+    padding: 0.75rem;
+  }
+  
+  .yard-stat-value {
+    font-size: 1.2rem;
+  }
+  
+  .yard-stat-label {
+    font-size: 0.75rem;
   }
   
   .action-buttons {
@@ -76,5 +115,81 @@
   
   .container-info-display {
     padding: var(--space-3);
+  }
+  
+  /* Điều chỉnh kích thước slot tiles cho mobile */
+  .yard-slot-tile {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .slot-code {
+    font-size: 7px;
+  }
+  
+  /* Điều chỉnh kích thước stats bar cho mobile */
+  .yard-stats-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .yard-stat-card {
+    width: 100%;
+    padding: 0.5rem;
+  }
+  
+  .yard-stat-value {
+    font-size: 1rem;
+  }
+  
+  .yard-stat-label {
+    font-size: 0.7rem;
+  }
+  
+  /* Điều chỉnh kích thước action buttons */
+  .yard-action-bubble {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  /* Điều chỉnh kích thước legend */
+  .legend-color {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .legend-item {
+    font-size: 0.75rem;
+  }
+}
+
+/* Điều chỉnh cho màn hình rất nhỏ */
+@media (max-width: 320px) {
+  .yard-slot-tile {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .slot-code {
+    font-size: 6px;
+  }
+  
+  .yard-stat-card {
+    padding: 0.25rem;
+  }
+  
+  .yard-stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .yard-stat-label {
+    font-size: 0.65rem;
+  }
+  
+  .yard-action-bubble {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
   }
 }

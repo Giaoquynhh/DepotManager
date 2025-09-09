@@ -30,7 +30,7 @@ body.with-sidebar .header {
   max-width: none;
   width: 100%;
   margin: 0;
-  padding: 0 var(--space-4); /* Thêm padding bên trái và phải để logo không quá sát lề */
+  padding: 0 var(--space-2) 0 0; /* Chỉ padding bên phải, logo sát lề trái */
   /* Tổng chiều cao header = padding-top/bottom của .header (4px + 4px) + min-height này = 52px */
   min-height: 44px;
   /* Đảm bảo header inner chiếm toàn bộ chiều rộng màn hình */
@@ -72,6 +72,13 @@ body.with-sidebar .header {
   transform: scale(0.98);
 }
 
+/* Ẩn nút toggle trên desktop */
+@media (min-width: 1024px) {
+  .nav-toggle {
+    display: none !important;
+  }
+}
+
 .nav-toggle-icon {
   display: flex;
   align-items: center;
@@ -86,14 +93,14 @@ body.with-sidebar .header {
   margin-left: 0;
   min-width: 0;
   flex-shrink: 0;
-  /* Đảm bảo logo có khoảng cách hợp lý với lề trái */
+  /* Logo sát lề trái như mong muốn */
   justify-content: flex-start;
-  padding-left: var(--space-2); /* Thêm padding nhỏ để logo không quá sát lề */
+  padding-left: 0; /* Logo sát lề trái */
   position: relative;
   left: 0; /* Đảm bảo sát bên trái */
-  /* Logo có khoảng cách hợp lý với lề trái */
+  /* Logo sát lề trái */
   margin-left: 0 !important;
-  padding-left: var(--space-2) !important;
+  padding-left: 0 !important;
 }
 
 .header-logo-link {

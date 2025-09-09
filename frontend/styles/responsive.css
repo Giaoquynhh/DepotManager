@@ -1,7 +1,7 @@
 /* Mobile & Tablet Responsive */
 @media (max-width: 1023px) {
   .container {
-    padding: var(--space-4);
+    padding: var(--space-3); /* Giảm padding cho mobile/tablet */
   }
   
   /* Hiển thị nút toggle trên mobile */
@@ -75,7 +75,7 @@
 /* Small Mobile */
 @media (max-width: 640px) {
   .container {
-    padding: var(--space-3);
+    padding: var(--space-2); /* Giảm padding cho mobile nhỏ */
   }
   
   .header-inner {

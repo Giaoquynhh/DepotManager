@@ -157,9 +157,7 @@ export default function Header() {
   // Handle sidebar state changes
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      const shouldShowSidebar = hasToken && 
-        router.pathname !== '/Login' && 
-        router.pathname !== '/Register';
+      const shouldShowSidebar = router.pathname !== '/Login' && router.pathname !== '/Register';
       
       document.body.classList.toggle('with-sidebar', shouldShowSidebar && navOpen);
       
@@ -172,7 +170,7 @@ export default function Header() {
         }
       }
     }
-  }, [navOpen, hasToken, router.pathname]);
+  }, [navOpen, router.pathname]);
 
   // Đảm bảo sidebar luôn mở trên desktop
   useEffect(() => {
@@ -225,7 +223,10 @@ export default function Header() {
 
   // Toggle sidebar - chỉ hoạt động trên mobile
   const toggleNavigation = () => {
-    setNavOpen(prev => !prev);
+    // Chỉ cho phép toggle trên mobile (màn hình nhỏ hơn 1024px)
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setNavOpen(prev => !prev);
+    }
   };
 
   // Đóng sidebar khi click vào menu item trên mobile
@@ -271,7 +272,7 @@ export default function Header() {
 
   // Component state calculations
   const showLogout = hasToken && router.pathname !== '/Login';
-  const showSidebar = hasToken && router.pathname !== '/Login' && router.pathname !== '/Register';
+  const showSidebar = router.pathname !== '/Login' && router.pathname !== '/Register'; // Luôn hiển thị sidebar trừ trang Login/Register
   const isAuthPage = router.pathname === '/Login' || router.pathname === '/Register';
 
   // Debug logging
@@ -534,8 +535,12 @@ export default function Header() {
           <nav className={`sidebar ${!navOpen ? 'closed' : ''}`} role="navigation" aria-label={t('sidebar.mainMenu')}>
           <div className="sidebar-content">
             
-            {/* Helper: permission-aware gating */}
-            {/* Users & Partners Module */}
+            {/* Sidebar trống khi chưa đăng nhập - không hiển thị menu gì */}
+            
+            {/* Helper: permission-aware gating - chỉ hiển thị khi đã đăng nhập */}
+            {hasToken && (
+              <>
+                {/* Users & Partners Module */}
             {(() => {
               const allow = canViewUsersPartners(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
@@ -774,6 +779,8 @@ export default function Header() {
               <span>{t('sidebar.account')}</span>
             </Link>
             )}
+              </>
+            )}
           </div>
         </nav>
         </>
@@ -781,3 +788,4 @@ export default function Header() {
     </header>
   );
 }
+

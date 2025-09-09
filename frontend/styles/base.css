@@ -29,12 +29,20 @@ a, a:visited {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1600px; /* Tăng max-width để sử dụng không gian màn hình tốt hơn */
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-8) var(--space-8) var(--space-8); /* Tăng padding trái/phải để thoáng hơn */
+  padding: var(--space-4) var(--space-4) var(--space-6) var(--space-4); /* Giảm padding trái/phải từ var(--space-8) xuống var(--space-4) */
   /* Cho phép container mở rộng về bên phải */
   overflow-x: visible;
+}
+
+/* Full-bleed layout cho desktop - sẽ được override bởi page-specific.css */
+@media (min-width: 1024px) {
+  .container {
+    /* Mặc định vẫn giữ padding cho mobile/tablet */
+    /* Desktop sẽ được override bởi page-specific.css */
+  }
 }
 
 /* Typography Hierarchy - Theo guidelines */

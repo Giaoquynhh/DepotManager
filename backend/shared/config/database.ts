@@ -7,7 +7,7 @@ export const appConfig = {
 	jwtSecret: process.env.JWT_SECRET || 'dev-secret',
 	jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
 	env: process.env.NODE_ENV || 'development',
-	port: Number(process.env.PORT || 3001),
+	port: Number(process.env.PORT || 1000),
 	reserveTtlMinutes: Number(process.env.RESERVE_TTL_MINUTES || 15)
 };
 

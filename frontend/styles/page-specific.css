@@ -3,6 +3,83 @@
  * Styles for specific pages and components
  */
 
+/* ===== FULL-BLEED LAYOUT SYSTEM (Based on Gate/Yard) ===== */
+/* Áp dụng full-bleed layout cho tất cả trang trên desktop */
+@media (min-width: 1024px) {
+  /* Khi KHÔNG có sidebar - full bleed */
+  body:not(.with-sidebar) .main-content .container,
+  body:not(.with-sidebar) .depot-requests.container,
+  body:not(.with-sidebar) .gate-page.container,
+  body:not(.with-sidebar) .yard-page.container,
+  body:not(.with-sidebar) main.container,
+  body:not(.with-sidebar) .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  /* Khi CÓ sidebar - tương thích với sidebar width 260px */
+  body.with-sidebar .main-content .container,
+  body.with-sidebar .depot-requests.container,
+  body.with-sidebar .gate-page.container,
+  body.with-sidebar .yard-page.container,
+  body.with-sidebar main.container,
+  body.with-sidebar .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: none !important;
+    margin-left: 260px !important; /* Độ rộng của sidebar */
+    margin-right: 0 !important;
+    width: calc(100% - 260px) !important; /* Chiều rộng còn lại sau khi trừ sidebar */
+  }
+  
+  /* Xử lý khi sidebar đóng trên desktop (nếu có) */
+  body.with-sidebar .sidebar.closed + .main-content .container,
+  body.with-sidebar .sidebar.closed ~ .main-content .container {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Đảm bảo main-content luôn có đủ không gian */
+  .main-content {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+/* Tablet và Mobile - giữ padding bình thường */
+@media (max-width: 1023px) {
+  .main-content .container,
+  .depot-requests.container,
+  .gate-page.container,
+  .yard-page.container,
+  main.container,
+  .container {
+    padding-left: var(--space-3) !important; /* Giảm padding cho tablet */
+    padding-right: var(--space-3) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 1600px !important;
+    width: 100% !important;
+  }
+}
+
+/* Mobile nhỏ */
+@media (max-width: 640px) {
+  .main-content .container,
+  .depot-requests.container,
+  .gate-page.container,
+  .yard-page.container,
+  main.container,
+  .container {
+    padding-left: var(--space-2) !important; /* Giảm padding cho mobile */
+    padding-right: var(--space-2) !important;
+  }
+}
+
 /* ===== PERMISSIONS PAGE STYLES ===== */
 .permissions-page .container {
   /* Căn chỉnh đặc biệt cho trang permissions để bố cục cân bằng hoàn hảo */
@@ -66,7 +143,7 @@
 
 /* Gate Page Styling */
 .gate-page {
-  padding: 2rem;
+  padding: 1.5rem 1rem; /* Giảm padding để tối ưu không gian như Depot */
   background: var(--color-background);
 }
 
@@ -74,6 +151,8 @@
   background: linear-gradient(135deg, #1e40af, #3b82f6);
   border: 2px solid #60a5fa;
   box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+  padding: 0.5rem; /* Giảm padding cho header */
+  margin-bottom: 0.5rem; /* Giảm khoảng cách dưới header */
 }
 
 /* Repair Page Styling */

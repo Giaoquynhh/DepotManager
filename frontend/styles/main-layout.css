@@ -5,7 +5,6 @@
   right: 0;
   left: 0;
   padding: 0; /* Tránh double padding với .container, đồng bộ với Depot */
-  transition: left 0.3s ease-in-out;
   overflow-y: auto; /* Cho phép cuộn nội dung */
   scrollbar-gutter: stable; /* Cố định khoảng trống thanh cuộn để lề phải nhất quán */
   height: calc(100% - var(--header-clearance));
