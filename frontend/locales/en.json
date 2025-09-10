@@ -33,7 +33,9 @@
     "customer": "Customer",
     "list": "list",
     "view": "View",
-    "remove": "Remove"
+    "remove": "Remove",
+    "optional": "optional",
+    "characters": "characters"
   },
   "header": {
     "brand": "Smartlog Depot Management",
@@ -79,6 +81,12 @@
       "customerTitle": "Service Request Management (Customer)",
       "createRequest": "Create request",
       "createRequestTitle": "Create new request",
+      "createAppointment": "Create Appointment",
+      "appointmentDate": "Appointment Date",
+      "appointmentTime": "Appointment Time",
+      "notes": "Notes",
+      "appointmentNotesPlaceholder": "Enter notes for the appointment...",
+      "updateAppointment": "Update Appointment",
       "searchPlaceholder": "🔍 Search by container code",
       "searchByLicensePlate": "🔍 Search by license plate",
       "allTypes": "All Types",
@@ -292,6 +300,9 @@
         "cannotAddDocument": "Cannot add document",
         "uploadDocumentSuccess": "File uploaded successfully!",
         "supplementUploadSuccessForwarded": "Supplement documents uploaded successfully. Request has been auto-forwarded.",
+        "acceptScheduledSuccess": "Request accepted and successfully moved to Forwarded status",
+        "viewDocuments": "View documents",
+        "viewDetail": "View details",
         "removedFromDepotList": "Removed from Depot list",
         "removedFromCustomerList": "Removed from Customer list",
         "restoredInDepotList": "Restored in Depot list",

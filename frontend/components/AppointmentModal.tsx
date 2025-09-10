@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface AppointmentModalProps {
     requestId: string;
     visible: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    requestData?: {
+        id: string;
+        container_no: string;
+        type: string;
+        status: string;
+        created_by: string;
+    };
 }
 
 interface AppointmentData {
     appointment_time: string;
-    location_type: 'gate' | 'yard';
     note?: string;
 }
 
-interface Location {
-    id: string;
-    name: string;
-    type: 'gate' | 'yard';
-}
 
-export default function AppointmentModal({ requestId, visible, onClose, onSuccess }: AppointmentModalProps) {
+export default function AppointmentModal({ requestId, visible, onClose, onSuccess, requestData }: AppointmentModalProps) {
+    const { t } = useTranslation();
     // Tạo giá trị mặc định cho thời gian hiện tại + 1 giờ
     const getDefaultAppointmentTime = () => {
         const now = new Date();
@@ -38,37 +41,10 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
 
     const [formData, setFormData] = useState<AppointmentData>({
         appointment_time: getDefaultAppointmentTime(),
-        location_type: 'gate',
         note: ''
     });
-    const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-    // Load danh sách locations
-    useEffect(() => {
-        if (visible) {
-            loadLocations();
-        }
-    }, [visible]);
-
-    const loadLocations = async () => {
-        try {
-            // Demo data - trong thực tế sẽ gọi API
-            const demoLocations: Location[] = [
-                { id: 'gate-1', name: 'Cổng 1', type: 'gate' },
-                { id: 'gate-2', name: 'Cổng 2', type: 'gate' },
-                { id: 'gate-3', name: 'Cổng 3', type: 'gate' },
-                { id: 'gate-4', name: 'Cổng 4', type: 'gate' },
-                { id: 'gate-5', name: 'Cổng 5', type: 'gate' },
-                { id: 'yard-a', name: 'Bãi A', type: 'yard' },
-                { id: 'yard-b', name: 'Bãi B', type: 'yard' }
-            ];
-            setLocations(demoLocations);
-        } catch (error) {
-            console.error('Error loading locations:', error);
-        }
-    };
 
     const handleInputChange = (field: keyof AppointmentData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -108,7 +84,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                          // Convert datetime-local to ISO8601 format and map fields to match backend DTO
              const appointmentData = {
                  appointment_time: new Date(formData.appointment_time), // Backend expects Date object, not string
-                 appointment_location_type: formData.location_type,
                  appointment_note: formData.note || undefined
              };
                          console.log('Sending appointment data:', appointmentData);
@@ -118,7 +93,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
             // Reset form
             setFormData({
                 appointment_time: getDefaultAppointmentTime(),
-                location_type: 'gate',
                 note: ''
             });
             setErrors({});
@@ -141,7 +115,6 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
         }
     };
 
-    const filteredLocations = locations.filter(loc => loc.type === formData.location_type);
 
     if (!visible) return null;
 
@@ -152,7 +125,22 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
             <div className="bg-white rounded-lg w-full max-w-md max-h-[60vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-bold">Tạo lịch hẹn</h2>
+                        <div>
+                            <h2 className="text-xl font-bold">{t('pages.requests.createAppointment')}</h2>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Container: {requestData?.container_no || requestId}
+                                {requestData?.type && (
+                                    <span className="ml-2">
+                                        ({requestData.type === 'IMPORT' 
+                                            ? t('pages.requests.filterOptions.import')
+                                            : requestData.type === 'EXPORT' 
+                                            ? t('pages.requests.filterOptions.export')
+                                            : requestData.type
+                                        })
+                                    </span>
+                                )}
+                            </p>
+                        </div>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-xl"
@@ -169,7 +157,7 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                     {/* Ngày lịch hẹn */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ngày lịch hẹn *
+                            {t('pages.requests.appointmentDate')} *
                         </label>
                         <input
                             type="date"
@@ -200,7 +188,7 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                     {/* Giờ lịch hẹn */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Giờ lịch hẹn *
+                            {t('pages.requests.appointmentTime')} *
                         </label>
                         <input
                             type="time"
@@ -229,208 +217,26 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                         )}
                     </div>
 
-                    {/* Loại địa điểm */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Loại địa điểm *
-                        </label>
-                        <select
-                            value={formData.location_type}
-                            onChange={(e) => {
-                                handleInputChange('location_type', e.target.value as 'gate' | 'yard');
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                        >
-                            <option value="gate">Cổng</option>
-                            <option value="yard">Bãi</option>
-                        </select>
-                    </div>
 
 
                     {/* Ghi chú */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ghi chú <span className="text-gray-500 text-sm">(tùy chọn)</span>
+                            {t('pages.requests.notes')} <span className="text-gray-500 text-sm">({t('common.optional')})</span>
                         </label>
                         <textarea
                             value={formData.note}
                             onChange={(e) => handleInputChange('note', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Ghi chú về lịch hẹn"
+                            placeholder={t('pages.requests.appointmentNotesPlaceholder')}
                             rows={3}
                             maxLength={500}
                         />
                         <div className="text-xs text-gray-500 mt-1">
-                            {formData.note?.length || 0}/500 ký tự
+                            {formData.note?.length || 0}/500 {t('common.characters')}
                         </div>
                     </div>
 
-                    {/* Thông tin bổ sung */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Loại container
-                        </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                            <option value="">Chọn loại container</option>
-                            <option value="20ft">20ft Standard</option>
-                            <option value="40ft">40ft Standard</option>
-                            <option value="40hc">40ft High Cube</option>
-                            <option value="45ft">45ft High Cube</option>
-                        </select>
-                    </div>
-
-                    {/* Trọng lượng */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Trọng lượng (kg)
-                        </label>
-                        <input
-                            type="number"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Nhập trọng lượng container"
-                            min="0"
-                            max="30000"
-                        />
-                    </div>
-
-                    {/* Số lượng */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Số lượng container
-                        </label>
-                        <input
-                            type="number"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Nhập số lượng"
-                            min="1"
-                            max="10"
-                        />
-                    </div>
-
-                    {/* Yêu cầu đặc biệt */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Yêu cầu đặc biệt
-                        </label>
-                        <div className="space-y-2">
-                            <label className="flex items-center">
-                                <input type="checkbox" className="mr-2" />
-                                <span className="text-sm">Cần xe nâng</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input type="checkbox" className="mr-2" />
-                                <span className="text-sm">Cần kiểm tra hải quan</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input type="checkbox" className="mr-2" />
-                                <span className="text-sm">Cần bảo hiểm</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Thông tin liên hệ */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Người liên hệ
-                        </label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Tên người liên hệ"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Số điện thoại
-                        </label>
-                        <input
-                            type="tel"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Số điện thoại liên hệ"
-                        />
-                    </div>
-
-                    {/* Thông tin bổ sung */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Mô tả hàng hóa
-                        </label>
-                        <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Mô tả chi tiết hàng hóa trong container"
-                            rows={3}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ghi chú đặc biệt
-                        </label>
-                        <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Ghi chú đặc biệt cho việc xử lý"
-                            rows={2}
-                        />
-                    </div>
-
-                    {/* Thông tin vận chuyển */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Phương thức vận chuyển
-                        </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                            <option value="">Chọn phương thức</option>
-                            <option value="truck">Xe tải</option>
-                            <option value="train">Tàu hỏa</option>
-                            <option value="ship">Tàu biển</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Điểm đến
-                        </label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Địa chỉ điểm đến"
-                        />
-                    </div>
-
-                    {/* Thông tin bổ sung */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Mô tả chi tiết
-                        </label>
-                        <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Mô tả chi tiết về yêu cầu"
-                            rows={4}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Yêu cầu đặc biệt khác
-                        </label>
-                        <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Các yêu cầu đặc biệt khác"
-                            rows={3}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ghi chú nội bộ
-                        </label>
-                        <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            placeholder="Ghi chú nội bộ cho nhân viên"
-                            rows={2}
-                        />
-                    </div>
 
                     {/* Error message */}
                     {errors.general && (
@@ -450,7 +256,7 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                             disabled={loading}
                         >
-                            Hủy
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -458,7 +264,7 @@ export default function AppointmentModal({ requestId, visible, onClose, onSucces
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
                             disabled={loading}
                         >
-                            {loading ? 'Đang xử lý...' : 'Tạo lịch hẹn'}
+                            {loading ? t('common.processing') : t('pages.requests.createAppointment')}
                         </button>
                     </div>
                 </div>

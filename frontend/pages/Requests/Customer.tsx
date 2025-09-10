@@ -166,29 +166,6 @@ export default function CustomerRequests() {
 					<div className="header-content">
 						<div className="header-left">
 							<h1 className="page-title gradient gradient-ultimate">{t('pages.requests.customerTitle')}</h1>
-							{isValidating && !isLoading && (
-								<div className="auto-refresh-indicator" style={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									marginLeft: '12px',
-									fontSize: '12px',
-									color: '#666',
-									background: '#f0f8ff',
-									padding: '4px 8px',
-									borderRadius: '4px',
-									border: '1px solid #e0e0e0'
-								}}>
-									<div style={{
-										width: '8px',
-										height: '8px',
-										borderRadius: '50%',
-										background: '#4CAF50',
-										marginRight: '6px',
-										animation: 'pulse 1.5s infinite'
-									}}></div>
-									Đang cập nhật...
-								</div>
-							)}
 						</div>
 					</div>
 				</div>

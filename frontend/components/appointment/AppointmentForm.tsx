@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface AppointmentFormData {
   appointment_time: string;
-  location_type: 'gate' | 'yard';
   note?: string;
 }
 
-interface Location {
-  id: string;
-  name: string;
-  type: 'gate' | 'yard';
-}
 
 interface AppointmentFormProps {
   requestId: string;
@@ -36,6 +31,7 @@ export default function AppointmentForm({
   onSuccess,
   mode = 'create'
 }: AppointmentFormProps) {
+  const { t } = useTranslation();
   // Tạo giá trị mặc định cho thời gian hiện tại + 1 giờ
   const getDefaultAppointmentTime = () => {
     const now = new Date();
@@ -53,35 +49,10 @@ export default function AppointmentForm({
 
   const [formData, setFormData] = useState<AppointmentFormData>({
     appointment_time: getDefaultAppointmentTime(),
-    location_type: 'gate',
     note: ''
   });
-  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Load locations
-  useEffect(() => {
-    loadLocations();
-  }, []);
-
-  const loadLocations = async () => {
-    try {
-      // Demo data - trong thực tế sẽ gọi API
-      const demoLocations: Location[] = [
-        { id: 'gate-1', name: 'Cổng 1', type: 'gate' },
-        { id: 'gate-2', name: 'Cổng 2', type: 'gate' },
-        { id: 'gate-3', name: 'Cổng 3', type: 'gate' },
-        { id: 'gate-4', name: 'Cổng 4', type: 'gate' },
-        { id: 'gate-5', name: 'Cổng 5', type: 'gate' },
-        { id: 'yard-a', name: 'Bãi A', type: 'yard' },
-        { id: 'yard-b', name: 'Bãi B', type: 'yard' }
-      ];
-      setLocations(demoLocations);
-    } catch (error) {
-      console.error('Error loading locations:', error);
-    }
-  };
 
   const handleInputChange = (field: keyof AppointmentFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -98,9 +69,6 @@ export default function AppointmentForm({
          newErrors.appointment_time = 'Thời gian lịch hẹn là bắt buộc';
        }
 
-       if (!formData.location_type) {
-         newErrors.location_type = 'Vui lòng chọn loại địa điểm';
-       }
 
 
        // Validate appointment_time is in the future
@@ -133,7 +101,6 @@ export default function AppointmentForm({
        // Convert datetime-local to Date object and map fields to match backend DTO
        const appointmentData = {
          appointment_time: new Date(formData.appointment_time), // Backend expects Date object, not string
-         appointment_location_type: formData.location_type,
          appointment_note: formData.note?.trim() || undefined
        };
        
@@ -143,11 +110,6 @@ export default function AppointmentForm({
          return;
        }
        
-       // Additional validation
-       if (!appointmentData.appointment_location_type) {
-         onError('Loại địa điểm là bắt buộc');
-         return;
-       }
        
        
        // Debug logging
@@ -201,7 +163,6 @@ export default function AppointmentForm({
     }
   };
 
-  const filteredLocations = locations.filter(loc => loc.type === 'gate');
 
   // Get minimum datetime (current time + 1 hour)
   const getMinDateTime = () => {
@@ -222,15 +183,22 @@ export default function AppointmentForm({
             <span className="appointment-info-value">{requestData?.container_no || requestId}</span>
           </div>
           <div className="appointment-info-item">
-            <span className="appointment-info-label">Loại:</span>
-            <span className="appointment-info-value">{requestData?.type || 'N/A'}</span>
+            <span className="appointment-info-label">{t('pages.requests.typeLabel')}:</span>
+            <span className="appointment-info-value">
+              {requestData?.type === 'IMPORT' 
+                ? t('pages.requests.filterOptions.import')
+                : requestData?.type === 'EXPORT' 
+                ? t('pages.requests.filterOptions.export')
+                : requestData?.type || 'N/A'
+              }
+            </span>
           </div>
         </div>
 
         {/* Appointment Date */}
         <div className="appointment-form-group">
           <label className="appointment-form-label" htmlFor="appointment_date">
-            Ngày lịch hẹn *
+            {t('pages.requests.appointmentDate')} *
           </label>
           <input
             type="date"
@@ -261,7 +229,7 @@ export default function AppointmentForm({
         {/* Appointment Time */}
         <div className="appointment-form-group">
           <label className="appointment-form-label" htmlFor="appointment_time">
-            Giờ lịch hẹn *
+            {t('pages.requests.appointmentTime')} *
           </label>
           <input
             type="time"
@@ -290,23 +258,6 @@ export default function AppointmentForm({
           )}
         </div>
 
-        {/* Location Type - Chỉ hiển thị Cổng */}
-        <div className="appointment-form-group">
-          <label className="appointment-form-label">Loại địa điểm *</label>
-          <div className="appointment-radio-group">
-            <label className="appointment-radio-item">
-              <input
-                type="radio"
-                name="location_type"
-                value="gate"
-                checked={formData.location_type === 'gate'}
-                onChange={(e) => handleInputChange('location_type', e.target.value)}
-                disabled={loading}
-              />
-              <span className="appointment-radio-text">Cổng (Gate)</span>
-            </label>
-          </div>
-        </div>
 
 
 
@@ -315,20 +266,20 @@ export default function AppointmentForm({
         {/* Note */}
         <div className="appointment-form-group">
           <label className="appointment-form-label" htmlFor="note">
-            Ghi chú <span className="text-gray-500 text-sm">(tùy chọn)</span>
+            {t('pages.requests.notes')} <span className="text-gray-500 text-sm">({t('common.optional')})</span>
           </label>
           <textarea
             id="note"
             className="appointment-form-textarea"
             value={formData.note}
             onChange={(e) => handleInputChange('note', e.target.value)}
-            placeholder="Nhập ghi chú cho lịch hẹn..."
+            placeholder={t('pages.requests.appointmentNotesPlaceholder')}
             maxLength={500}
             rows={3}
             disabled={loading}
           />
           <div className="appointment-form-counter">
-            {formData.note?.length || 0}/500
+            {formData.note?.length || 0}/500 {t('common.characters')}
           </div>
         </div>
       </div>
@@ -343,7 +294,7 @@ export default function AppointmentForm({
           {loading ? (
             <>
               <div className="appointment-loading-spinner"></div>
-              <span>Đang xử lý...</span>
+              <span>{t('common.processing')}</span>
             </>
           ) : (
             <>
@@ -351,7 +302,7 @@ export default function AppointmentForm({
                 <path d="M9 11l3 3L22 4"></path>
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
               </svg>
-              <span>{mode === 'change' ? 'Cập nhật lịch hẹn' : 'Tạo lịch hẹn'}</span>
+              <span>{mode === 'change' ? t('pages.requests.updateAppointment') : t('pages.requests.createAppointment')}</span>
             </>
           )}
         </button>

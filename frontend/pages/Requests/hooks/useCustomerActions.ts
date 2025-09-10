@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { mutate } from 'swr';
 import { api } from '@services/api';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export interface CustomerActionsState {
 	msg: { text: string; ok: boolean } | null;
@@ -42,6 +43,7 @@ export interface CustomerActions {
 }
 
 export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
+	const { t } = useTranslation();
 	const [msg, setMsg] = useState<{ text: string; ok: boolean }|null>(null);
 	const [loadingId, setLoadingId] = useState<string>('');
 	const [me, setMe] = useState<any>(null);
@@ -201,7 +203,7 @@ export function useCustomerActions(): [CustomerActionsState, CustomerActions] {
 			mutate('/requests?page=1&limit=20');
 			mutate((key) => typeof key === 'string' && key.startsWith('/requests'));
 			
-			setMsg({ text: 'Đã chấp nhận yêu cầu và chuyển sang trạng thái Forwarded thành công', ok: true });
+			setMsg({ text: t('pages.requests.messages.acceptScheduledSuccess'), ok: true });
 		} catch (e: any) {
 			setMsg({ text: `Không thể chấp nhận yêu cầu: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
 		} finally {

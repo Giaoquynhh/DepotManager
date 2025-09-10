@@ -48,9 +48,7 @@
   text-align: center;
   min-width: 70px;
   white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Removed max-width, overflow, and text-overflow to allow full text display */
 }
 
 /* Gate status badges */
@@ -592,9 +590,7 @@
 
 .depot-requests .status-badge {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100px;
+  /* Removed overflow, text-overflow, and max-width to allow full text display */
 }
 
 .depot-requests .table-modern .document-badge {

@@ -82,7 +82,7 @@ export default function DepotRequestTable({
 			EXPORTED: { label: safeT('pages.requests.filterOptions.exported', 'Exported'), className: 'status-exported' },
 			REJECTED: { label: safeT('pages.requests.filterOptions.rejected', 'Rejected'), className: 'status-rejected' },
 			SCHEDULED: { label: safeT('pages.requests.filterOptions.scheduled', 'Đã lên lịch'), className: 'status-scheduled' },
-			FORWARDED: { label: safeT('pages.gate.statusOptions.forwarded', 'Đã chuyển tiếp'), className: 'status-forwarded' },
+			FORWARDED: { label: safeT('pages.gate.statusOptions.forwarded', 'Đã chuyển tới cổng'), className: 'status-forwarded' },
 			IN_YARD: { label: safeT('pages.requests.filterOptions.inYard', 'In yard'), className: 'status-in-yard' },
 			IN_CAR: { label: safeT('pages.requests.filterOptions.inCar', 'In car'), className: 'status-in-car' },
 			LEFT_YARD: { label: safeT('pages.requests.filterOptions.leftYard', 'Left yard'), className: 'status-left-yard' },
@@ -148,26 +148,26 @@ export default function DepotRequestTable({
 				<table className="table table-modern">
 					<thead>
 						<tr>
-							<th data-column="type">📦 {safeT('pages.requests.tableHeaders.type', 'Loại')}</th>
-							<th data-column="container">📦 {safeT('pages.requests.tableHeaders.container', 'Container')}</th>
-							<th data-column="eta">
+							<th data-column="type" style={{ width: '100px', minWidth: '100px' }}>📦 {safeT('pages.requests.tableHeaders.type', 'Loại')}</th>
+							<th data-column="container" style={{ width: '120px', minWidth: '120px' }}>📦 {safeT('pages.requests.tableHeaders.container', 'Container')}</th>
+							<th data-column="eta" style={{ width: '120px', minWidth: '120px' }}>
 							<button
 								onClick={onRequestSort}
 								className="th-sort-btn"
 								title={safeT('common.sortBy', 'Sort by')}
-								style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+								style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', width: '100%', textAlign: 'left' }}
 							>
 								🕒 {safeT('pages.requests.tableHeaders.eta', 'ETA')}
 								{sortKey === 'eta' && (
-									<span style={{ marginLeft: 6 }}>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+									<span style={{ marginLeft: 4 }}>{sortOrder === 'asc' ? '▲' : '▼'}</span>
 								)}
 							</button>
 						</th>
-						<th data-column="status" style={{ whiteSpace: 'nowrap' }}>🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
-						<th data-column="documents">📄 {safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
-						<th data-column="payment">🔥 {safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
-						<th data-column="chat">💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
-						<th data-column="actions">🛠️ {safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
+						<th data-column="status" style={{ whiteSpace: 'nowrap', width: '180px', minWidth: '180px' }}>🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
+						<th data-column="documents" style={{ width: '160px', minWidth: '160px' }}>📄 {safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
+						<th data-column="payment" style={{ width: '140px', minWidth: '140px' }}>🔥 {safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
+						<th data-column="chat" style={{ width: '100px', minWidth: '100px' }}>💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
+						<th data-column="actions" style={{ width: '150px', minWidth: '150px' }}>🛠️ {safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -215,22 +215,51 @@ export default function DepotRequestTable({
 								{getStatusBadge(item.status)}
 							</td>
 							<td>
-								{otherDocs && otherDocs.length > 0 ? (
-									<div className="document-badges">
-										{otherDocs.map((doc: any) => (
+								<div className="documents-cell">
+									{otherDocs && otherDocs.length > 0 ? (
+										<>
+											<div className="document-count-badge">
+												<div className="document-count-icon">
+													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+														<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+														<polyline points="14,2 14,8 20,8"></polyline>
+														<line x1="16" y1="13" x2="8" y2="13"></line>
+														<line x1="16" y1="17" x2="8" y2="17"></line>
+														<polyline points="10,9 9,9 8,9"></polyline>
+													</svg>
+												</div>
+												<div className="document-count-content">
+													<span className="document-count-number">{otherDocs.length}</span>
+													<span className="document-count-label">{safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</span>
+												</div>
+											</div>
 											<button
-												key={doc.id}
-												className="document-badge clickable"
-												onClick={() => onDocumentClick?.(doc)}
-												title={`${safeT('common.view', 'View')} ${doc.name}`}
+												className="view-documents-btn"
+												onClick={() => onDocumentClick?.(otherDocs[0])}
+												title={safeT('pages.requests.viewDocuments', 'View documents')}
 											>
-												📎 {doc.name}
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+													<circle cx="12" cy="12" r="3"></circle>
+												</svg>
+												{safeT('pages.requests.viewDetail', 'Xem chi tiết')}
 											</button>
-										))}
-									</div>
-								) : (
-									<span className="no-document">📄 {safeT('pages.requests.noDocuments', 'Chưa có chứng từ')}</span>
-								)}
+										</>
+									) : (
+										<div className="no-documents">
+											<div className="no-documents-icon">
+												<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+													<polyline points="14,2 14,8 20,8"></polyline>
+													<line x1="16" y1="13" x2="8" y2="13"></line>
+													<line x1="16" y1="17" x2="8" y2="17"></line>
+													<polyline points="10,9 9,9 8,9"></polyline>
+												</svg>
+											</div>
+											<span className="no-documents-text">{safeT('pages.requests.noDocuments', 'Chưa có chứng từ')}</span>
+										</div>
+									)}
+								</div>
 							</td>
 							<td>
 								<div className="payment-status-info">

@@ -407,7 +407,12 @@
 }
 
 /* Đảm bảo các badge hiển thị đúng */
-.table-modern .status-badge,
+.table-modern .status-badge {
+  white-space: nowrap;
+  display: inline-block;
+  /* Removed overflow, text-overflow, and max-width to allow full text display */
+}
+
 .table-modern .type-label,
 .table-modern .payment-badge,
 .table-modern .document-badge {

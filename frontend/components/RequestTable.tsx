@@ -204,14 +204,14 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
         <table className="table table-modern">
           <thead>
             <tr>
-              <th data-column="type">{t('pages.requests.typeLabel')}</th>
-              <th data-column="container">{t('pages.requests.tableHeaders.container')}</th>
-              <th data-column="eta">{t('pages.requests.tableHeaders.eta')}</th>
-              <th data-column="status">{t('pages.requests.tableHeaders.status')}</th>
-              <th data-column="documents">{t('pages.requests.tableHeaders.documents')}</th>
-              <th data-column="payment">{t('pages.requests.actions.payment')}</th>
-              <th data-column="chat">{t('pages.requests.tableHeaders.chat')}</th>
-              <th data-column="actions">{t('pages.requests.tableHeaders.actions')}</th>
+              <th data-column="type" style={{ width: '100px', minWidth: '100px' }}>{t('pages.requests.typeLabel')}</th>
+              <th data-column="container" style={{ width: '120px', minWidth: '120px' }}>{t('pages.requests.tableHeaders.container')}</th>
+              <th data-column="eta" style={{ width: '120px', minWidth: '120px' }}>{t('pages.requests.tableHeaders.eta')}</th>
+              <th data-column="status" style={{ whiteSpace: 'nowrap', width: '180px', minWidth: '180px' }}>{t('pages.requests.tableHeaders.status')}</th>
+              <th data-column="documents" style={{ width: '160px', minWidth: '160px' }}>{t('pages.requests.tableHeaders.documents')}</th>
+              <th data-column="payment" style={{ width: '140px', minWidth: '140px' }}>{t('pages.requests.actions.payment')}</th>
+              <th data-column="chat" style={{ width: '100px', minWidth: '100px' }}>{t('pages.requests.tableHeaders.chat')}</th>
+              <th data-column="actions" style={{ width: '150px', minWidth: '150px' }}>{t('pages.requests.tableHeaders.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -240,22 +240,51 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   {getStatusBadge(item.status)}
                 </td>
                 <td>
-                  {hasDocuments(item) ? (
-                    <div className="document-badges">
-                      {item.documents?.map((doc: any, index: number) => (
+                  <div className="documents-cell">
+                    {hasDocuments(item) ? (
+                      <>
+                        <div className="document-count-badge">
+                          <div className="document-count-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14,2 14,8 20,8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10,9 9,9 8,9"></polyline>
+                            </svg>
+                          </div>
+                          <div className="document-count-content">
+                            <span className="document-count-number">{item.documents?.length || 0}</span>
+                            <span className="document-count-label">{t('pages.requests.tableHeaders.documents')}</span>
+                          </div>
+                        </div>
                         <button
-                          key={doc.id}
-                          className="document-badge clickable"
-                          onClick={() => handleDocumentClick(doc)}
-                          title={`Xem ${doc.name}`}
+                          className="view-documents-btn"
+                          onClick={() => handleDocumentClick(item.documents?.[0])}
+                          title={t('pages.requests.viewDocuments')}
                         >
-                          📎 {doc.name}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                          {t('pages.requests.viewDetail')}
                         </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="no-document">-</span>
-                  )}
+                      </>
+                    ) : (
+                      <div className="no-documents">
+                        <div className="no-documents-icon">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                          </svg>
+                        </div>
+                        <span className="no-documents-text">{t('pages.requests.noDocuments')}</span>
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <div className="payment-status-info">

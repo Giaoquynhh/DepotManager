@@ -2,61 +2,85 @@
 .table-container {
   overflow-x: auto;
   margin: 0 0 var(--space-4) 0; /* thêm khoảng cách dưới bảng */
-  padding: var(--space-6); /* tăng padding để thoáng hơn */
+  /* Loại bỏ padding để không có khoảng trắng bao quanh */
 }
 
 .table-modern {
   width: 100%;
+  min-width: 1400px; /* Tăng chiều rộng tối thiểu giống gate */
   border-collapse: collapse;
-  background: white;
+  background: rgb(248, 248, 248); /* Background giống gate */
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* Loại bỏ box-shadow để không có border bao quanh */
+  position: relative;
 }
 
+/* Sticky header cho bảng giống gate */
 .table-modern thead {
-  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-gray-50);
 }
 
 .table-modern th {
-  padding: 14px 20px; /* nới padding header */
+  background: var(--color-gray-50);
+  padding: var(--space-4);
   text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+  border-bottom: 2px solid var(--color-gray-200);
+  font-size: 12px; /* Giảm từ 14px xuống 12px giống gate */
 }
 
 .table-modern th[data-column="status"] {
-  min-width: 100px;
+  min-width: 180px;
   white-space: nowrap;
 }
 
 .table-modern td {
-  padding: 14px 20px; /* nới padding ô dữ liệu */
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-100);
+  color: var(--color-gray-700);
+  font-size: 11px; /* Thêm font-size 11px giống gate */
 }
 
 .table-modern td[data-column="status"] {
-  min-width: 100px;
+  min-width: 180px;
   white-space: nowrap;
 }
 
-.table-modern tbody tr:hover {
-  background: #f9fafb;
+.table-modern tr:hover {
+  background: var(--color-gray-50);
 }
 
-/* Request Type Column */
-.request-type {
-  display: inline-block;
-  padding: 4px 8px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+/* Type Badges - Style giống gate */
+.type-badge {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+}
+
+.type-import {
+  background: var(--color-blue-100);
+  color: var(--color-blue-800);
+}
+
+.type-export {
+  background: var(--color-green-100);
+  color: var(--color-green-800);
+}
+
+.type-empty {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
 }
 
 /* Container Info Column */
@@ -147,7 +171,7 @@
   gap: 4px;
   padding: 4px 8px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 10px; /* Giảm từ 11px xuống 10px giống gate */
   font-weight: 500;
   white-space: nowrap;
 }
@@ -193,59 +217,60 @@
   border-color: #9ca3af;
 }
 
-/* Status Badge */
+/* Status Badge - Style giống gate */
 .status-badge {
-  display: inline-block;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  min-width: 80px;
   text-align: center;
-  min-width: 70px;
-  white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .status-pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-yellow-100);
+  color: var(--color-yellow-800);
 }
 
 .status-pick-container {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--color-blue-100);
+  color: var(--color-blue-800);
 }
 
 .status-received {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--color-green-100);
+  color: var(--color-green-800);
 }
 
 .status-completed {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--color-emerald-100);
+  color: var(--color-emerald-800);
 }
 
 .status-exported {
-  background: #f3e8ff;
-  color: #7c3aed;
+  background: var(--color-purple-100);
+  color: var(--color-purple-800);
 }
 
 .status-rejected {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-red-100);
+  color: var(--color-red-800);
 }
 
 .status-scheduled {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: var(--color-blue-100);
+  color: var(--color-blue-800);
 }
 
 .status-forwarded {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-yellow-100);
+  color: var(--color-yellow-800);
 }
 
 .status-forklifting {
@@ -315,7 +340,7 @@
   color: #374151;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 10px; /* Giảm từ 12px xuống 10px giống gate */
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -334,11 +359,24 @@
   font-style: italic;
 }
 
-/* Action Buttons */
+/* Action Buttons - Style giống gate */
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* nới khoảng giữa các nút hành động */
+  gap: 10px;
+}
+
+.action-btn {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: var(--space-2);
+  text-decoration: none;
+  display: inline-block;
 }
 
 .btn {
@@ -348,7 +386,7 @@
   padding: 6px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -362,63 +400,93 @@
 
 .btn-sm {
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 10px;
+}
+
+.action-btn-primary {
+  background: var(--color-success);
+  color: white;
+}
+
+.action-btn-primary:hover {
+  background: var(--color-success-dark);
+  transform: translateY(-1px);
+}
+
+.action-btn-secondary {
+  background: var(--color-danger);
+  color: white;
+}
+
+.action-btn-secondary:hover {
+  background: var(--color-danger-dark);
+  transform: translateY(-1px);
+}
+
+.action-btn-danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+.action-btn-danger:hover {
+  background: var(--color-danger-dark);
+  transform: translateY(-1px);
 }
 
 .btn-primary {
-  background: #3b82f6;
+  background: var(--color-blue-500);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--color-blue-600);
 }
 
 .btn-success {
-  background: #10b981;
+  background: var(--color-green-500);
   color: white;
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #059669;
+  background: var(--color-green-600);
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: var(--color-red-500);
   color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--color-red-600);
 }
 
 .btn-warning {
-  background: #f59e0b;
+  background: var(--color-yellow-500);
   color: white;
 }
 
 .btn-warning:hover:not(:disabled) {
-  background: #d97706;
+  background: var(--color-yellow-600);
 }
 
 .btn-info {
-  background: #06b6d4;
+  background: var(--color-cyan-500);
   color: white;
 }
 
 .btn-info:hover:not(:disabled) {
-  background: #0891b2;
+  background: var(--color-cyan-600);
 }
 
 .btn-outline {
   background: transparent;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-300);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-400);
 }
 
 /* Chat Section */
