@@ -443,8 +443,8 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                         </button>
                       )}
 
-                      {/* Actions for PENDING_ACCEPT requests (Customer only) - chỉ hiển thị khi viewquote = 2 */}
-                      {item.status === 'PENDING_ACCEPT' && item.viewquote === 2 && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
+                      {/* Actions for PENDING_ACCEPT requests (Customer only) - hiển thị cho tất cả trường hợp PENDING_ACCEPT */}
+                      {item.status === 'PENDING_ACCEPT' && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
                         <>
                                                      <button
                              className="btn btn-sm btn-info"

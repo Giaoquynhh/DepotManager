@@ -1,57 +1,186 @@
-/* DepotRequestTable Styles */
-.table-container {
-  overflow-x: auto;
-  margin: 0 0 var(--space-4) 0; /* thêm khoảng cách dưới bảng */
-  /* Loại bỏ padding để không có khoảng trắng bao quanh */
-}
+/* DepotRequestTable Styles - Using Gate table structure */
 
-.table-modern {
-  width: 100%;
-  min-width: 1400px; /* Tăng chiều rộng tối thiểu giống gate */
-  border-collapse: collapse;
-  background: rgb(248, 248, 248); /* Background giống gate */
-  border-radius: 8px;
+/* Sử dụng gate-table-container từ gate.css */
+.depot-requests .depot-requests .gate-table-container {
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  /* Loại bỏ box-shadow để không có border bao quanh */
+  border: 1px solid var(--color-gray-100);
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: auto;
   position: relative;
 }
 
+/* Tùy chỉnh thanh trượt cho bảng */
+.depot-requests .depot-requests .gate-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.depot-requests .depot-requests .gate-table-container::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+  border-radius: 4px;
+}
+
+.depot-requests .depot-requests .gate-table-container::-webkit-scrollbar-thumb {
+  background: var(--color-gray-400);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.depot-requests .depot-requests .gate-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-500);
+}
+
+/* Firefox scrollbar */
+.depot-requests .depot-requests .gate-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-400) var(--color-gray-100);
+}
+
+.depot-requests .depot-requests .gate-table {
+  width: 100%;
+  min-width: 1400px;
+  border-collapse: collapse;
+  background: rgb(248, 248, 248);
+  position: relative;
+}
+
+/* Header icons for Depot Request table - Higher specificity */
+.depot-requests .gate-table th[data-column]::before {
+  display: inline-block !important;
+  margin-right: var(--space-2);
+  font-size: 0.95em;
+  opacity: 0.85;
+  transform: translateY(1px);
+}
+
+.depot-requests .gate-table th[data-column="type"]::before { content: "📦" !important; }
+.depot-requests .gate-table th[data-column="container"]::before { content: "📦" !important; }
+.depot-requests .gate-table th[data-column="eta"]::before { content: "⏰" !important; }
+.depot-requests .gate-table th[data-column="status"]::before { content: "🔄" !important; }
+.depot-requests .gate-table th[data-column="documents"]::before { content: "📄" !important; }
+.depot-requests .gate-table th[data-column="payment"]::before { content: "💰" !important; }
+.depot-requests .gate-table th[data-column="chat"]::before { content: "💬" !important; }
+.depot-requests .gate-table th[data-column="actions"]::before { content: "⚙️" !important; }
+
 /* Sticky header cho bảng giống gate */
-.table-modern thead {
+.depot-requests .gate-table thead {
   position: sticky;
   top: 0;
   z-index: 10;
   background: var(--color-gray-50);
 }
 
-.table-modern th {
+.depot-requests .gate-table th {
   background: var(--color-gray-50);
   padding: var(--space-4);
   text-align: left;
   font-weight: var(--font-weight-semibold);
   color: var(--color-gray-700);
   border-bottom: 2px solid var(--color-gray-200);
-  font-size: 12px; /* Giảm từ 14px xuống 12px giống gate */
+  font-size: 13px; /* Tăng từ 12px lên 13px */
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.table-modern th[data-column="status"] {
-  min-width: 180px;
+/* Định nghĩa độ rộng cố định cho các cột để tránh đè lên nhau */
+.depot-requests .gate-table th[data-column="type"] {
+  width: 100px;
+  min-width: 100px;
+}
+
+.depot-requests .gate-table th[data-column="container"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+.depot-requests .gate-table th[data-column="eta"] {
+  width: 120px;
+  min-width: 120px;
   white-space: nowrap;
 }
 
-.table-modern td {
+.depot-requests .gate-table th[data-column="status"] {
+  width: 180px;
+  min-width: 180px;
+}
+
+.depot-requests .gate-table th[data-column="documents"] {
+  width: 150px;
+  min-width: 150px;
+}
+
+.depot-requests .gate-table th[data-column="payment"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+.depot-requests .gate-table th[data-column="chat"] {
+  width: 100px;
+  min-width: 100px;
+}
+
+.depot-requests .gate-table th[data-column="actions"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+
+.depot-requests .gate-table td {
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-gray-100);
   color: var(--color-gray-700);
-  font-size: 11px; /* Thêm font-size 11px giống gate */
+  font-size: 13px; /* Tăng từ 12px lên 13px */ /* Tăng từ 11px lên 12px */
+  vertical-align: top;
 }
 
-.table-modern td[data-column="status"] {
-  min-width: 180px;
+/* Định nghĩa độ rộng cố định cho các cột td để tránh đè lên nhau */
+.depot-requests .gate-table td[data-column="type"] {
+  width: 100px;
+  min-width: 100px;
+}
+
+.depot-requests .gate-table td[data-column="container"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+.depot-requests .gate-table td[data-column="eta"] {
+  width: 120px;
+  min-width: 120px;
   white-space: nowrap;
 }
 
-.table-modern tr:hover {
+.depot-requests .gate-table td[data-column="status"] {
+  width: 180px;
+  min-width: 180px;
+}
+
+.depot-requests .gate-table td[data-column="documents"] {
+  width: 150px;
+  min-width: 150px;
+}
+
+.depot-requests .gate-table td[data-column="payment"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+.depot-requests .gate-table td[data-column="chat"] {
+  width: 100px;
+  min-width: 100px;
+}
+
+.depot-requests .gate-table td[data-column="actions"] {
+  width: 120px;
+  min-width: 120px;
+}
+
+
+.depot-requests .gate-table tr:hover {
   background: var(--color-gray-50);
 }
 
@@ -59,7 +188,7 @@
 .type-badge {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-full);
-  font-size: 10px;
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -99,7 +228,7 @@
 	background: #10b981;
 	color: white;
 	border-radius: 4px;
-	font-size: 11px;
+	font-size: 12px; /* Tăng từ 11px lên 12px */
 	font-weight: 500;
 	cursor: pointer;
 	transition: background-color 0.2s;
@@ -131,7 +260,7 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px; /* Tăng từ 12px lên 13px */
   white-space: nowrap;
   min-width: 120px;
   text-align: center;
@@ -145,7 +274,7 @@
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px; /* Tăng từ 12px lên 13px */
   white-space: nowrap;
   min-width: 120px;
   text-align: center;
@@ -171,7 +300,7 @@
   gap: 4px;
   padding: 4px 8px;
   border-radius: 12px;
-  font-size: 10px; /* Giảm từ 11px xuống 10px giống gate */
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   font-weight: 500;
   white-space: nowrap;
 }
@@ -221,7 +350,7 @@
 .status-badge {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-full);
-  font-size: 10px;
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -340,7 +469,7 @@
   color: #374151;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  font-size: 10px; /* Giảm từ 12px xuống 10px giống gate */
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -370,7 +499,7 @@
   padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-md);
-  font-size: 10px;
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -386,7 +515,7 @@
   padding: 6px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 11px; /* Tăng từ 10px lên 11px */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -400,7 +529,7 @@
 
 .btn-sm {
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: 11px; /* Tăng từ 10px lên 11px */
 }
 
 .action-btn-primary {
@@ -496,7 +625,6 @@
 
 .depot-chat-mini-trigger:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Loading States */
@@ -534,14 +662,14 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .table-container {
+  .depot-requests .gate-table {
     margin: 10px 0;
   }
   
-  .table-modern th,
-  .table-modern td {
+  .depot-requests .gate-table th,
+  .depot-requests .gate-table td {
     padding: 12px 8px;
-    font-size: 13px;
+    font-size: 14px; /* Tăng từ 13px lên 14px */
   }
   
   .action-buttons {
@@ -550,6 +678,6 @@
   
   .btn-sm {
     padding: 3px 6px;
-    font-size: 10px;
+    font-size: 11px; /* Tăng từ 10px lên 11px */
   }
 }

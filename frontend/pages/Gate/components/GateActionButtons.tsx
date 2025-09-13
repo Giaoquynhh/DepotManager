@@ -81,15 +81,24 @@ export default function GateActionButtons({
       const newStatusLabel = statusLabel(newStatus);
       
       showSuccess(
-        `✅ ${newStatusLabel}`,
-        `${t('pages.gate.tableHeaders.driverName')}: ${normalizedDriver}\n${t('pages.gate.tableHeaders.licensePlate')}: ${normalizedPlate}\nThời gian sẽ được tự động điền khi chuyển trạng thái`,
-        6000
+        `🎉 ${newStatusLabel} thành công!`,
+        `📋 Container: ${requestId}\n👤 Tài xế: ${normalizedDriver}\n🚗 Biển số: ${normalizedPlate}\n⏰ Thời gian: Tự động điền khi chuyển trạng thái`,
+        10000
       );
       
       setIsApproveModalOpen(false);
       setPlateNo('');
       setDriverName('');
       onActionSuccess();
+      
+      // Thông báo bổ sung sau 1 giây
+      setTimeout(() => {
+        showSuccess(
+          '✅ Cập nhật thành công!',
+          'Dữ liệu đã được cập nhật trong bảng điều khiển',
+          3000
+        );
+      }, 1000);
     } catch (error: any) {
       showError(
         t('pages.gate.messages.approveErrorPrefix'),
@@ -295,18 +304,32 @@ export default function GateActionButtons({
               padding: 'var(--space-3)',
               backgroundColor: 'var(--color-blue-50)',
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-blue-200)'
+              border: '1px solid var(--color-blue-200)',
+              maxWidth: '100%'
             }}>
               <div style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 'var(--space-2)',
                 color: 'var(--color-blue-700)',
                 fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)'
+                fontWeight: 'var(--font-weight-medium)',
+                lineHeight: '1.4',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                hyphens: 'auto',
+                maxWidth: '100%'
               }}>
-                <span>ℹ️</span>
-                <span>Thời gian vào và ra sẽ được tự động điền khi chuyển trạng thái</span>
+                <span style={{ flexShrink: 0, marginTop: '2px' }}>ℹ️</span>
+                <span style={{ 
+                  flex: 1, 
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'normal'
+                }}>
+                  {t('pages.gate.modals.approve.autoTimeInfo')}
+                </span>
               </div>
             </div>
 

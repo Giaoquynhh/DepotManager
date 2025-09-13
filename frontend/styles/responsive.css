@@ -95,8 +95,12 @@
     margin-left: 0;
   }
   
+  .logo {
+    height: 24px; /* Giảm kích thước logo trên mobile */
+  }
+  
   .header-title {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     display: none; /* Hide title on very small screens */
   }
   
@@ -125,8 +129,23 @@
   }
 }
 
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .logo {
+    height: 26px; /* Kích thước logo trên tablet */
+  }
+  
+  .header-title {
+    font-size: var(--font-size-lg);
+  }
+}
+
 /* Medium Mobile */
 @media (min-width: 641px) and (max-width: 768px) {
+  .logo {
+    height: 25px; /* Kích thước logo trên medium mobile */
+  }
+  
   .header-title {
     font-size: var(--font-size-xl);
   }

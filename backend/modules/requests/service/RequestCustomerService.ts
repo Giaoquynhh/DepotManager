@@ -33,6 +33,23 @@ export class RequestCustomerService {
 		const updated = await repo.update(id, updateData);
 		await audit(actor._id, 'REQUEST.ACCEPTED_BY_CUSTOMER', 'ServiceRequest', id);
 		
+		// Khi khách hàng ACCEPT, đồng bộ RepairTicket về trạng thái ACCEPT nếu đang chờ xác nhận
+		if (req.container_no) {
+			try {
+				const { prisma } = await import('../../../shared/config/database');
+				await prisma.repairTicket.updateMany({
+					where: {
+						container_no: req.container_no,
+						status: { in: ['PENDING_ACCEPT'] as any }
+					},
+					data: { status: 'ACCEPT' as any, updatedAt: new Date() }
+				});
+				console.log('✅ Synced RepairTicket to ACCEPT for container:', req.container_no);
+			} catch (error) {
+				console.error('❌ Error syncing RepairTicket to ACCEPT:', error);
+			}
+		}
+
 		// Đồng bộ trạng thái RepairTicket nếu có container_no
 		if (req.container_no) {
 			try {
@@ -159,7 +176,7 @@ export class RequestCustomerService {
 			} catch (error) {
 				console.error('❌ Error updating viewquote:', error);
 				// Không throw error để không ảnh hưởng đến việc gửi xác nhận
-			}
+			}																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																						
 		}
 
 		// Ghi log audit

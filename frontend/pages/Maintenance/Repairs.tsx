@@ -15,7 +15,7 @@ import {
 
 export default function RepairsPage() {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<string>('CHECKING');
+  const [filter, setFilter] = useState<string>('');
   const [isPendingContainersModalOpen, setIsPendingContainersModalOpen] = useState(false);
   const [isRepairInvoiceModalOpen, setIsRepairInvoiceModalOpen] = useState(false);
   const [selectedRepairTicket, setSelectedRepairTicket] = useState<any>(null);

@@ -60,6 +60,7 @@
     "containerManagement": "Quản lý container",
     "forkliftManagement": "Quản lý xe nâng",
     "dashboard": "Bảng điều khiển",
+    "statistics": "Thống kê",
     "repairTickets": "Khu vực kiểm tra",
     "inventory": "Tồn kho",
     "invoices": "Hóa đơn",
@@ -378,7 +379,10 @@
         "exportError": "Không thể xuất báo cáo. Vui lòng thử lại."
       },
       "modals": {
-        "approve": { "title": "Nhập thông tin tài xế và biển số xe" },
+        "approve": { 
+          "title": "Nhập thông tin tài xế và biển số xe",
+          "autoTimeInfo": "Thời gian vào/ra sẽ được tự động điền khi chuyển trạng thái"
+        },
         "reject": { "title": "Lý do từ chối" }
       },
       "placeholders": {
@@ -854,7 +858,19 @@
         "cannotAssignDriver": "Không thể gán tài xế",
         "assignSuccess": "Gán tài xế thành công!",
         "assignSuccessMessage": "Đã gán tài xế {driverName} cho container {containerNo}",
-        "assignError": "Lỗi gán tài xế"
+        "assignError": "Lỗi gán tài xế",
+        "cancelJobTitle": "Hủy công việc xe nâng",
+        "cancelJobWarning": "Cảnh báo: Hành động này không thể hoàn tác!",
+        "containerNo": "Số container",
+        "status": "Trạng thái",
+        "createdAt": "Thời gian tạo",
+        "cancelReasonLabel": "Lý do hủy",
+        "cancelReasonPlaceholder": "Vui lòng nhập lý do hủy công việc (tối đa 500 ký tự)...",
+        "cancelReasonTips": "Gợi ý lý do hủy",
+        "cancelReasonTip1": "Thiếu thông tin container",
+        "cancelReasonTip2": "Container không phù hợp",
+        "cancelReasonTip3": "Lý do khác (vui lòng mô tả chi tiết)",
+        "confirmCancel": "Xác nhận hủy"
       },
       "messages": {
         "cancelJobPrompt": "Lý do hủy công việc:",
@@ -870,7 +886,9 @@
         "costMustBeNumber": "Chi phí phải là số",
         "costMustBeInteger": "Chi phí phải là số nguyên",
         "costCannotBeNegative": "Chi phí không thể là số âm",
-        "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại"
+        "costTooHigh": "Chi phí quá cao. Vui lòng kiểm tra lại",
+        "pleaseEnterReason": "Vui lòng nhập lý do hủy",
+        "cancelSuccess": "Hủy công việc thành công!"
       },
       "autoRefresh": "Tự động cập nhật",
       "lastUpdate": "Cập nhật lần cuối",

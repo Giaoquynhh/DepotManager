@@ -13,7 +13,9 @@ export default function GateHistoryPage() {
     <>
       <Header />
       <main className="container gate-page">
-        <GateHistory onBack={handleBack} />
+        <div className="gate-history-wrapper">
+          <GateHistory onBack={handleBack} />
+        </div>
       </main>
     </>
   );

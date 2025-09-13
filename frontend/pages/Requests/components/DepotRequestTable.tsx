@@ -143,13 +143,12 @@ export default function DepotRequestTable({
 	}
 
 	return (
-		<div className="depot-requests-table-wrapper">
-			<div className="table-container">
-				<table className="table table-modern">
+		<div className="gate-table-container">
+			<table className="gate-table">
 					<thead>
 						<tr>
-							<th data-column="type" style={{ width: '100px', minWidth: '100px' }}>📦 {safeT('pages.requests.tableHeaders.type', 'Loại')}</th>
-							<th data-column="container" style={{ width: '120px', minWidth: '120px' }}>📦 {safeT('pages.requests.tableHeaders.container', 'Container')}</th>
+							<th data-column="type" style={{ width: '100px', minWidth: '100px' }}>{safeT('pages.requests.tableHeaders.type', 'Loại')}</th>
+							<th data-column="container" style={{ width: '120px', minWidth: '120px' }}>{safeT('pages.requests.tableHeaders.container', 'Container')}</th>
 							<th data-column="eta" style={{ width: '120px', minWidth: '120px' }}>
 							<button
 								onClick={onRequestSort}
@@ -157,17 +156,17 @@ export default function DepotRequestTable({
 								title={safeT('common.sortBy', 'Sort by')}
 								style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', width: '100%', textAlign: 'left' }}
 							>
-								🕒 {safeT('pages.requests.tableHeaders.eta', 'ETA')}
+								{safeT('pages.requests.tableHeaders.eta', 'ETA')}
 								{sortKey === 'eta' && (
 									<span style={{ marginLeft: 4 }}>{sortOrder === 'asc' ? '▲' : '▼'}</span>
 								)}
 							</button>
 						</th>
-						<th data-column="status" style={{ whiteSpace: 'nowrap', width: '180px', minWidth: '180px' }}>🧩 {safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
-						<th data-column="documents" style={{ width: '160px', minWidth: '160px' }}>📄 {safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
-						<th data-column="payment" style={{ width: '140px', minWidth: '140px' }}>🔥 {safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
-						<th data-column="chat" style={{ width: '100px', minWidth: '100px' }}>💬 {safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
-						<th data-column="actions" style={{ width: '150px', minWidth: '150px' }}>🛠️ {safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
+						<th data-column="status" style={{ whiteSpace: 'nowrap', width: '180px', minWidth: '180px' }}>{safeT('pages.requests.tableHeaders.status', 'Trạng thái')}</th>
+						<th data-column="documents" style={{ width: '160px', minWidth: '160px' }}>{safeT('pages.requests.tableHeaders.documents', 'Chứng từ')}</th>
+						<th data-column="payment" style={{ width: '140px', minWidth: '140px' }}>{safeT('pages.requests.tableHeaders.payment', 'Thanh toán')}</th>
+						<th data-column="chat" style={{ width: '100px', minWidth: '100px' }}>{safeT('pages.requests.tableHeaders.chat', 'Chat')}</th>
+						<th data-column="actions" style={{ width: '150px', minWidth: '150px' }}>{safeT('pages.requests.tableHeaders.actions', 'Hành động')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -190,10 +189,10 @@ export default function DepotRequestTable({
 
 						return (
 						<tr key={item.id} className="table-row">
-							<td>
+							<td data-column="type">
 								{getTypeBadge(item.type)}
 							</td>
-							<td>
+							<td data-column="container">
 								<button
 									onClick={() => onContainerClick?.(item)}
 									className="container-link"
@@ -202,7 +201,7 @@ export default function DepotRequestTable({
 									<span className="container-text">{item.container_no}</span>
 								</button>
 							</td>
-							<td>
+							<td data-column="eta">
 								{item.eta ? (
 									<div className="eta-date">
 										{formatETA(item.eta)}
@@ -214,7 +213,7 @@ export default function DepotRequestTable({
 							<td data-column="status">
 								{getStatusBadge(item.status)}
 							</td>
-							<td>
+							<td data-column="documents">
 								<div className="documents-cell">
 									{otherDocs && otherDocs.length > 0 ? (
 										<>
@@ -261,7 +260,7 @@ export default function DepotRequestTable({
 									)}
 								</div>
 							</td>
-							<td>
+							<td data-column="payment">
 								<div className="payment-status-info">
 									{/* Hiển thị trạng thái thanh toán chính */}
 									<div className="payment-status">
@@ -295,7 +294,7 @@ export default function DepotRequestTable({
 									)}
 								</div>
 							</td>
-							<td>
+							<td data-column="chat">
 								<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
 									{/* Chat button - luôn hiển thị; disabled nếu chưa đến trạng thái cho phép */}
 									{(() => {
@@ -348,7 +347,7 @@ export default function DepotRequestTable({
 									)}
 								</div>
 							</td>
-							<td>
+							<td data-column="actions">
 								<div className="action-buttons">
 									{/* PENDING Status Actions */}
 									{item.status === 'PENDING' && (
@@ -459,8 +458,8 @@ export default function DepotRequestTable({
 										</div>
 									)}
 
-									{/* PENDING_ACCEPT Status Actions - chỉ hiển thị khi viewquote = 1 */}
-									{item.status === 'PENDING_ACCEPT' && item.viewquote === 1 && (
+									{/* PENDING_ACCEPT Status Actions - hiển thị cho tất cả trường hợp PENDING_ACCEPT */}
+									{item.status === 'PENDING_ACCEPT' && (
 										<div className="action-group">
 											<button
 												className="btn btn-sm btn-info"
@@ -500,8 +499,7 @@ export default function DepotRequestTable({
 						);
 					})}
 				</tbody>
-				</table>
-			</div>
+			</table>
 		</div>
 	);
 }

@@ -4,40 +4,9 @@
  */
 
 /* ===== MODERN TABLE STYLES ===== */
-.table-container {
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-xl); /* Cùng border-radius với search-filter-section */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  border: 1px solid var(--color-gray-200);
-  overflow-x: auto; /* Cho phép scroll ngang khi cần */
-  overflow-y: auto; /* Bật cuộn dọc khi nội dung dài */
-  max-width: 100%; /* Đảm bảo không vượt quá container */
-  margin: 0 auto; /* Căn giữa */
-  position: relative; /* Để xử lý overflow tốt hơn */
-  /* Tăng kích thước để cân đối với giao diện */
-  width: 100%;
-  min-width: 100%;
-  padding: var(--space-6); /* Cùng padding với search-filter-section */
-}
+/* Table container styles removed - using direct table styling */
 
-/* Tùy chỉnh scrollbar cho table container */
-.table-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-container::-webkit-scrollbar-track {
-  background: var(--color-gray-100);
-  border-radius: 4px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: var(--color-gray-300);
-  border-radius: 4px;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-400);
-}
+/* Scrollbar styles removed - using direct table styling */
 
 /* Icons minh họa cho các cột bảng - Removed to prevent duplication */
 
@@ -197,7 +166,6 @@
 .table-modern tbody tr:hover {
   background: var(--color-bg-secondary);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 .table-modern td {
@@ -211,7 +179,6 @@
   padding: 4rem 2rem;
   background: white;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
 }
 
 .loading-spinner {
@@ -235,7 +202,6 @@
   padding: 4rem 2rem;
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   border-radius: var(--radius-xl);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   border: 3px dashed #cbd5e1;
 }
 
@@ -268,7 +234,6 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border: 1px solid transparent;
 }
 
@@ -393,7 +358,6 @@
   font-size: var(--font-size-base) !important;
   cursor: pointer !important;
   transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
 }
@@ -426,12 +390,10 @@
 .btn-create-request:hover {
   background: var(--color-blue-800) !important; /* #1E40AF - xanh dương đậm hơn */
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.4) !important;
 }
 
 .btn-create-request:active {
   transform: translateY(0) !important;
-  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3) !important;
 }
 
 .document-badge {
@@ -451,7 +413,6 @@
   color: white;
   border-color: #3b82f6;
   transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
 }
 
 .document-badge.clickable {
@@ -471,7 +432,6 @@
 
 .depot-chat-mini-trigger:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 /* Container Info Improvements */
@@ -560,7 +520,6 @@
   padding: var(--space-4);
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
 }
 
 .pagination-info {
@@ -624,8 +583,7 @@
 .sort-select:focus {
   outline: none;
   border-color: var(--color-blue-700);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
-}
+  }
 
 .sort-label {
   color: var(--color-gray-700);

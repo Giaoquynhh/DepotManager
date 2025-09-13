@@ -95,6 +95,8 @@ export default function Forklift() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ForkliftTask | null>(null);
   const [costModalOpen, setCostModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   // Modal styles
   const modalStyles = {
@@ -309,14 +311,26 @@ export default function Forklift() {
   };
 
   const handleCancelJob = async (taskId: string) => {
-    const reason = prompt(t('pages.forklift.messages.cancelJobPrompt'));
-    if (!reason) return;
+    setSelectedTask(tasks.find(task => task.id === taskId) || null);
+    setCancelReason('');
+    setCancelModalOpen(true);
+  };
+
+  const confirmCancelJob = async () => {
+    if (!selectedTask || !cancelReason.trim()) {
+      showError(t('pages.forklift.messages.pleaseEnterReason'));
+      return;
+    }
 
     try {
-      await api.patch(`/forklift/jobs/${taskId}/cancel`, { reason });
+      await api.patch(`/forklift/jobs/${selectedTask.id}/cancel`, { reason: cancelReason.trim() });
       loadForkliftTasks();
+      setCancelModalOpen(false);
+      setSelectedTask(null);
+      setCancelReason('');
+      showSuccess(t('pages.forklift.messages.cancelSuccess'));
     } catch (err: any) {
-      alert(err?.response?.data?.message || t('pages.forklift.messages.cancelJobError'));
+      showError(t('pages.forklift.messages.cancelJobError'), err?.response?.data?.message || t('pages.forklift.messages.cancelJobError'));
     }
   };
 
@@ -393,716 +407,222 @@ export default function Forklift() {
           </div>
         )}
 
-        <div className="card card-padding-lg">
-          <div className="card-header">
-            <h2 className="card-title">{t('pages.forklift.jobList')}</h2>
-            <div className="card-actions">
-              <span className="badge badge-primary">
-                {t('pages.forklift.totalJobs').replace('{count}', tasks.length.toString())}
-              </span>
-            </div>
+        <div className="gate-table-header">
+          <h2>{t('pages.forklift.jobList')}</h2>
+          <div className="header-actions">
+            <span className="badge badge-primary">
+              {t('pages.forklift.totalJobs').replace('{count}', tasks.length.toString())}
+            </span>
           </div>
+        </div>
 
-          <div className="card-content">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="loading-spinner spinner-lg spinner-primary"></div>
-                <p className="mt-4">{t('pages.forklift.loadingJobs')}</p>
-              </div>
-            ) : tasks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>{t('pages.forklift.noJobs')}</p>
-              </div>
-            ) : (
-              <div className="table-container">
-                <table className="table-modern">
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="loading-spinner spinner-lg spinner-primary"></div>
+            <p className="mt-4">{t('pages.forklift.loadingJobs')}</p>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>{t('pages.forklift.noJobs')}</p>
+          </div>
+        ) : (
+          <div className="gate-table-container">
+            <table className="gate-table">
                   <thead>
-                                           <tr style={{
-                        backgroundColor: '#ffffff',
-                        borderBottom: '2px solid #e5e7eb',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                      }}>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.containerNo')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.pickupLocation')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.dropoffLocation')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.status')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.forklift')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.createdAt')}
-                        </th>
-                                                                     <th style={{
-                          padding: '16px 12px',
-                          textAlign: 'center' as const,
-                          fontWeight: '700',
-                          color: '#374151',
-                          fontSize: '12px'
-                        }}>
-{t('pages.forklift.tableHeaders.actions')}
-                        </th>
+                    <tr>
+                      <th data-column="container">{t('pages.forklift.tableHeaders.containerNo')}</th>
+                      <th data-column="pickup">{t('pages.forklift.tableHeaders.pickupLocation')}</th>
+                      <th data-column="dropoff">{t('pages.forklift.tableHeaders.dropoffLocation')}</th>
+                      <th data-column="status">{t('pages.forklift.tableHeaders.status')}</th>
+                      <th data-column="forklift">{t('pages.forklift.tableHeaders.forklift')}</th>
+                      <th data-column="created">{t('pages.forklift.tableHeaders.createdAt')}</th>
+                      <th data-column="actions">{t('pages.forklift.tableHeaders.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                                         {tasks.map((task, index) => (
-                       <tr key={task.id} style={{
-                         borderBottom: '1px solid #e5e7eb',
-                         backgroundColor: index % 2 === 0 ? '#ffffff' : '#fafbfc',
-                         transition: 'all 0.2s ease-in-out',
-                         cursor: 'default'
-                       }}
-                       onMouseEnter={(e) => {
-                         e.currentTarget.style.backgroundColor = '#f0f9ff';
-                         e.currentTarget.style.transform = 'scale(1.01)';
-                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                       }}
-                       onMouseLeave={(e) => {
-                         e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#fafbfc';
-                         e.currentTarget.style.transform = 'scale(1)';
-                         e.currentTarget.style.boxShadow = 'none';
-                       }}
-                       >
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center'
-                           }}>
-                             <span style={{ 
-                               color: '#1e293b', 
-                               fontWeight: '800',
-                               fontSize: '16px',
-                               fontFamily: 'monospace',
-                               backgroundColor: '#f1f5f9',
-                               padding: '8px 12px',
-                               borderRadius: '6px',
-                               border: '2px solid #475569',
-                               letterSpacing: '1px'
-                             }}>
-                               {task.container_no}
-                             </span>
-                           </div>
+                    {tasks.map((task, index) => (
+                      <tr key={task.id}>
+                        <td data-column="container">
+                          <strong>{task.container_no}</strong>
                         </td>
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center'
-                           }}>
-                             {/* Vị trí nhận: Export = yardslot, Import = xe */}
-                             {task.container_info?.type === 'EXPORT' ? (
-                               // Export: Vị trí nhận = yardslot
-                               task.actual_location ? (
-                                 <span style={{
-                                   color: '#1f2937',
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontFamily: 'monospace',
-                                   backgroundColor: '#f3f4f6',
-                                   padding: '8px 12px',
-                                   borderRadius: '6px',
-                                   border: '1px solid #d1d5db'
-                                 }}>
-                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                                 </span>
-                               ) : (
-                                 <span style={{ 
-                                   color: '#64748b', 
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {task.from_slot?.code || t('pages.forklift.location.outside')}
-                                 </span>
-                               )
-                             ) : task.container_info?.type === 'IMPORT' ? (
-                               // Import: Vị trí nhận = xe (thông tin tài xế)
-                               task.container_info?.driver_name && task.container_info?.license_plate ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#f8fafc',
-                                   borderRadius: '6px',
-                                   border: '1px solid #e2e8f0'
-                                 }}>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.driverName')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#dbeafe',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px'
-                                     }}>
-                                       {task.container_info.driver_name}
-                                     </span>
-                                   </div>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#fef3c7',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px',
-                                       fontFamily: 'monospace',
-                                       fontSize: '12px'
-                                     }}>
-                                       {task.container_info.license_plate}
-                                     </span>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   justifyContent: 'center',
-                                   padding: '8px',
-                                   color: '#94a3b8',
-                                   fontSize: '12px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {t('pages.forklift.driver.noInfo')}
-                                 </div>
-                               )
-                             ) : (
-                               // Fallback: Hiển thị thông tin tài xế nếu không xác định được type
-                               task.container_info?.driver_name && task.container_info?.license_plate ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#f8fafc',
-                                   borderRadius: '6px',
-                                   border: '1px solid #e2e8f0'
-                                 }}>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.driverName')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#dbeafe',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px'
-                                     }}>
-                                       {task.container_info.driver_name}
-                                     </span>
-                                   </div>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#fef3c7',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px',
-                                       fontFamily: 'monospace',
-                                       fontSize: '12px'
-                                     }}>
-                                       {task.container_info.license_plate}
-                                     </span>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   justifyContent: 'center',
-                                   padding: '8px',
-                                   color: '#94a3b8',
-                                   fontSize: '12px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {t('pages.forklift.driver.noInfo')}
-                                 </div>
-                               )
-                             )}
-                           </div>
-                        </td>
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center'
-                           }}>
-                             {/* Vị trí đến: Export = xe, Import = yardslot */}
-                             {task.container_info?.type === 'EXPORT' ? (
-                               // Export: Vị trí đến = xe (thông tin tài xế)
-                               task.container_info?.driver_name && task.container_info?.license_plate ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#f8fafc',
-                                   borderRadius: '6px',
-                                   border: '1px solid #e2e8f0'
-                                 }}>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.driverName')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#dbeafe',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px'
-                                     }}>
-                                       {task.container_info.driver_name}
-                                     </span>
-                                   </div>
-                                   <div style={{
-                                     display: 'flex',
-                                     alignItems: 'center',
-                                     gap: '8px',
-                                     fontSize: '13px'
-                                   }}>
-                                     <span style={{ 
-                                       color: '#64748b', 
-                                       fontWeight: '600',
-                                       minWidth: '60px'
-                                     }}>{t('pages.forklift.driver.licensePlate')}</span>
-                                     <span style={{ 
-                                       color: '#1e293b', 
-                                       fontWeight: '500',
-                                       backgroundColor: '#fef3c7',
-                                       padding: '2px 8px',
-                                       borderRadius: '4px',
-                                       fontFamily: 'monospace',
-                                       fontSize: '12px'
-                                     }}>
-                                       {task.container_info.license_plate}
-                                     </span>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   justifyContent: 'center',
-                                   padding: '8px',
-                                   color: '#94a3b8',
-                                   fontSize: '12px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {t('pages.forklift.driver.noInfo')}
-                                 </div>
-                               )
-                             ) : task.container_info?.type === 'IMPORT' ? (
-                               // Import: Vị trí đến = yardslot
-                               task.actual_location ? (
-                                 <span style={{
-                                   color: '#1f2937',
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontFamily: 'monospace',
-                                   backgroundColor: '#f3f4f6',
-                                   padding: '8px 12px',
-                                   borderRadius: '6px',
-                                   border: '1px solid #d1d5db'
-                                 }}>
-                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                                 </span>
-                               ) : (
-                                 <span style={{ 
-                                   color: '#64748b', 
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {task.to_slot?.code || t('pages.forklift.location.outside')}
-                                 </span>
-                               )
-                             ) : (
-                               // Fallback: Hiển thị yardslot nếu không xác định được type
-                               task.actual_location ? (
-                                 <span style={{
-                                   color: '#1f2937',
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontFamily: 'monospace',
-                                   backgroundColor: '#f3f4f6',
-                                   padding: '8px 12px',
-                                   borderRadius: '6px',
-                                   border: '1px solid #d1d5db'
-                                 }}>
-                                   {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                                 </span>
-                               ) : (
-                                 <span style={{ 
-                                   color: '#64748b', 
-                                   fontWeight: '600',
-                                   fontSize: '14px',
-                                   fontStyle: 'italic'
-                                 }}>
-                                   {task.to_slot?.code || t('pages.forklift.location.outside')}
-                                 </span>
-                               )
-                             )}
-                           </div>
-                        </td>
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center'
-                           }}>
-                             <span style={{
-                               padding: '8px 16px',
-                               borderRadius: '20px',
-                               fontSize: '12px',
-                               fontWeight: '700',
-                               textTransform: 'uppercase' as const,
-                               letterSpacing: '0.5px',
-                               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                               border: '2px solid',
-                                                            ...(task.status === 'PENDING' && {
-                               backgroundColor: '#fef3c7',
-                               color: '#92400e',
-                               borderColor: '#f59e0b'
-                             }),
-                             ...(task.status === 'ASSIGNED' && {
-                               backgroundColor: '#fed7aa',
-                               color: '#ea580c',
-                               borderColor: '#f97316'
-                             }),
-                             ...(task.status === 'IN_PROGRESS' && {
-                               backgroundColor: '#dbeafe',
-                               color: '#1e40af',
-                               borderColor: '#3b82f6'
-                             }),
-                             ...(task.status === 'PENDING_APPROVAL' && {
-                               backgroundColor: '#fed7aa',
-                               color: '#ea580c',
-                               borderColor: '#f97316'
-                             }),
-                             ...(task.status === 'COMPLETED' && {
-                               backgroundColor: '#d1fae5',
-                               color: '#065f46',
-                               borderColor: '#10b981'
-                             }),
-                             ...(task.status === 'CANCELLED' && {
-                               backgroundColor: '#fee2e2',
-                               color: '#991b1b',
-                               borderColor: '#ef4444'
-                             })
-                             }}>
-                            {getStatusText(task.status)}
-                          </span>
-                           </div>
-                        </td>
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center'
-                           }}>
-                          {task.driver ? (
-                               <div style={{
-                                 display: 'flex',
-                                 flexDirection: 'column',
-                                 alignItems: 'center',
-                                 gap: '4px',
-                                 padding: '8px',
-                                 backgroundColor: '#f0fdf4',
-                                 borderRadius: '6px',
-                                 border: '1px solid #bbf7d0'
-                               }}>
-                                 <span style={{ 
-                                   color: '#059669', 
-                                   fontWeight: '700',
-                                   fontSize: '14px'
-                                 }}>
-                                   {task.driver.full_name}
-                                 </span>
-                                 <span style={{
-                                   fontSize: '10px',
-                                   color: '#16a34a',
-                                   backgroundColor: '#dcfce7',
-                                   padding: '2px 6px',
-                                   borderRadius: '3px',
-                                   fontWeight: '600'
-                                 }}>
-{t('pages.forklift.driver.assigned')}
-                                 </span>
-                               </div>
-                             ) : (
-                               <div style={{
-                                 display: 'flex',
-                                 alignItems: 'center',
-                                 justifyContent: 'center',
-                                 padding: '8px',
-                                 backgroundColor: '#f8fafc',
-                                 borderRadius: '6px',
-                                 border: '1px solid #e2e8f0'
-                               }}>
-                                 <span style={{ 
-                                   color: '#94a3b8', 
-                                   fontSize: '13px',
-                                   fontStyle: 'italic',
-                                   fontWeight: '500'
-                                 }}>
-{t('pages.forklift.driver.notAssigned')}
-                                 </span>
-                               </div>
-                             )}
-                           </div>
-                         </td>
-
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             flexDirection: 'column',
-                             alignItems: 'center',
-                             gap: '4px',
-                             padding: '8px',
-                             backgroundColor: '#f8fafc',
-                             borderRadius: '6px',
-                             border: '1px solid #e2e8f0'
-                           }}>
-                             <span style={{ 
-                               color: '#475569', 
-                               fontSize: '14px',
-                               fontFamily: 'monospace',
-                               fontWeight: '600'
-                             }}>
-                               {formatDate(task.createdAt).split(',')[0]}
-                             </span>
-                             <span style={{ 
-                               color: '#64748b', 
-                               fontSize: '12px',
-                               fontFamily: 'monospace',
-                               fontWeight: '500'
-                             }}>
-                               {formatDate(task.createdAt).split(',')[1]}
-                          </span>
-                           </div>
-                        </td>
-                                                 <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>
-                           <div style={{
-                             display: 'flex',
-                             flexDirection: 'column',
-                             gap: '6px',
-                             padding: '8px',
-                             backgroundColor: '#f8fafc',
-                             borderRadius: '6px',
-                             border: '1px solid #e2e8f0'
-                           }}>
-                            {/* Không hiển thị action nào khi task đang trong quá trình thực hiện */}
-                            {task.status === 'IN_PROGRESS' ? (
-                              <div style={{ 
-                                color: '#6b7280', 
-                                fontSize: '11px',
-                                textAlign: 'center',
-                                padding: '8px',
-                                backgroundColor: '#f3f4f6',
-                                borderRadius: '4px',
-                                border: '1px solid #d1d5db',
-                                fontStyle: 'italic'
-                              }}>
-                                {t('pages.forklift.actions.inProgress')}
+                        <td data-column="pickup">
+                          {task.container_info?.type === 'EXPORT' ? (
+                            task.actual_location ? (
+                              <span className="location-badge">
+                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                              </span>
+                            ) : (
+                              <span className="location-placeholder">
+                                {task.from_slot?.code || t('pages.forklift.location.outside')}
+                              </span>
+                            )
+                          ) : task.container_info?.type === 'IMPORT' ? (
+                            task.container_info?.driver_name && task.container_info?.license_plate ? (
+                              <div className="driver-info">
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
+                                  <span className="driver-value">{task.container_info.driver_name}</span>
+                                </div>
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
+                                  <span className="license-plate">{task.container_info.license_plate}</span>
+                                </div>
                               </div>
                             ) : (
-                              <>
-                                {task.status === 'PENDING' && !task.assigned_driver_id && (
-                                  <button
-                                    className="btn btn-sm btn-outline"
-                                    style={{
-                                      width: '100%',
-                                      margin: '0',
-                                      padding: '6px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}
-                                    onClick={() => handleCancelJob(task.id)}
-                                  >
-                                    {t('pages.forklift.actions.cancel')}
-                                  </button>
-                                )}
-                                
-                                {task.status === 'ASSIGNED' && (
-                                  <div style={{ 
-                                    color: '#6b7280', 
-                                    fontSize: '11px',
-                                    textAlign: 'center',
-                                    padding: '8px',
-                                    backgroundColor: '#f3f4f6',
-                                    borderRadius: '4px',
-                                    border: '1px solid #d1d5db'
-                                  }}>
-                                    {t('pages.forklift.actions.driverAssigned')}
-                                  </div>
-                                )}
-                                
-                                {task.status === 'ASSIGNED' && (
-                                  <button
-                                    className="btn btn-sm btn-primary"
-                                    style={{
-                                      width: '100%',
-                                      margin: '0',
-                                      padding: '6px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}
-                                    onClick={() => handleBeginWork(task.id)}
-                                  >
-                                    {t('pages.forklift.actions.startWork')}
-                                  </button>
-                                )}
-                                
-                                {task.status === 'PENDING_APPROVAL' && (
-                                  <button
-                                    className="btn btn-sm btn-success"
-                                    style={{
-                                      width: '100%',
-                                      margin: '0',
-                                      padding: '6px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}
-                                    onClick={() => handleApproveJob(task.id)}
-                                    title={t('pages.forklift.actions.approveTitle')}
-                                  >
-                                    {t('pages.forklift.actions.approve')}
-                                  </button>
-                                )}
-                                
-                                {/* Gán tài xế lần đầu */}
-                                {task.status === 'PENDING' && !task.assigned_driver_id && (
-                                  <button
-                                    className="btn btn-sm btn-info"
-                                    style={{
-                                      width: '100%',
-                                      margin: '0',
-                                      padding: '6px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}
-                                    onClick={() => handleAssignDriver(task)}
-                                  >
-                                    {t('pages.forklift.actions.assignDriver')}
-                                  </button>
-                                )}
-                                
-                                {/* Gán lại tài xế khác */}
-                                {task.status === 'PENDING' && task.assigned_driver_id && (
-                                  <button
-                                    className="btn btn-sm btn-warning"
-                                    style={{
-                                      width: '100%',
-                                      margin: '0',
-                                      padding: '6px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: '600'
-                                    }}
-                                    onClick={() => handleAssignDriver(task)}
-                                  >
-                                    {t('pages.forklift.actions.reassignDriver')}
-                                  </button>
-                                )}
-                              </>
-                            )}
+                              <div className="no-info">
+                                {t('pages.forklift.driver.noInfo')}
+                              </div>
+                            )
+                          ) : (
+                            task.container_info?.driver_name && task.container_info?.license_plate ? (
+                              <div className="driver-info">
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
+                                  <span className="driver-value">{task.container_info.driver_name}</span>
+                                </div>
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
+                                  <span className="license-plate">{task.container_info.license_plate}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="no-info">
+                                {t('pages.forklift.driver.noInfo')}
+                              </div>
+                            )
+                          )}
+                        </td>
+                        <td data-column="dropoff">
+                          {task.container_info?.type === 'EXPORT' ? (
+                            task.container_info?.driver_name && task.container_info?.license_plate ? (
+                              <div className="driver-info">
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
+                                  <span className="driver-value">{task.container_info.driver_name}</span>
+                                </div>
+                                <div className="driver-row">
+                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
+                                  <span className="license-plate">{task.container_info.license_plate}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="no-info">
+                                {t('pages.forklift.driver.noInfo')}
+                              </div>
+                            )
+                          ) : task.container_info?.type === 'IMPORT' ? (
+                            task.actual_location ? (
+                              <span className="location-badge">
+                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                              </span>
+                            ) : (
+                              <span className="location-placeholder">
+                                {task.to_slot?.code || t('pages.forklift.location.outside')}
+                              </span>
+                            )
+                          ) : (
+                            task.actual_location ? (
+                              <span className="location-badge">
+                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                              </span>
+                            ) : (
+                              <span className="location-placeholder">
+                                {task.to_slot?.code || t('pages.forklift.location.outside')}
+                              </span>
+                            )
+                          )}
+                        </td>
+                        <td data-column="status">
+                          <span className={`status-badge status-${task.status.toLowerCase().replace(/_/g, '-')}`}>
+                            {getStatusText(task.status)}
+                          </span>
+                        </td>
+                        <td data-column="forklift">
+                          {task.driver ? (
+                            <div className="driver-assigned">
+                              <span className="driver-name">{task.driver.full_name}</span>
+                              <span className="assigned-badge">{t('pages.forklift.driver.assigned')}</span>
+                            </div>
+                          ) : (
+                            <div className="driver-not-assigned">
+                              {t('pages.forklift.driver.notAssigned')}
+                            </div>
+                          )}
+                        </td>
+
+                        <td data-column="created">
+                          <div className="time-info">
+                            <span className="time-date">{formatDate(task.createdAt).split(',')[0]}</span>
+                            <span className="time-time">{formatDate(task.createdAt).split(',')[1]}</span>
                           </div>
+                        </td>
+                        <td data-column="actions">
+                          {task.status === 'IN_PROGRESS' ? (
+                            <div className="action-in-progress">
+                              {t('pages.forklift.actions.inProgress')}
+                            </div>
+                          ) : (
+                            <div className="action-buttons">
+                              {task.status === 'PENDING' && !task.assigned_driver_id && (
+                                <button
+                                  className="btn btn-sm btn-outline"
+                                  onClick={() => handleCancelJob(task.id)}
+                                >
+                                  {t('pages.forklift.actions.cancel')}
+                                </button>
+                              )}
+                              
+                              {task.status === 'ASSIGNED' && (
+                                <div className="action-info">
+                                  {t('pages.forklift.actions.driverAssigned')}
+                                </div>
+                              )}
+                              
+                              {task.status === 'ASSIGNED' && (
+                                <button
+                                  className="btn btn-sm btn-primary"
+                                  onClick={() => handleBeginWork(task.id)}
+                                >
+                                  {t('pages.forklift.actions.startWork')}
+                                </button>
+                              )}
+                              
+                              {task.status === 'PENDING_APPROVAL' && (
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleApproveJob(task.id)}
+                                  title={t('pages.forklift.actions.approveTitle')}
+                                >
+                                  {t('pages.forklift.actions.approve')}
+                                </button>
+                              )}
+                              
+                              {task.status === 'PENDING' && !task.assigned_driver_id && (
+                                <button
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => handleAssignDriver(task)}
+                                >
+                                  {t('pages.forklift.actions.assignDriver')}
+                                </button>
+                              )}
+                              
+                              {task.status === 'PENDING' && task.assigned_driver_id && (
+                                <button
+                                  className="btn btn-sm btn-warning"
+                                  onClick={() => handleAssignDriver(task)}
+                                >
+                                  {t('pages.forklift.actions.reassignDriver')}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
-            )}
+            </table>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Assign Driver Modal */}
@@ -1252,6 +772,143 @@ export default function Forklift() {
           </div>
         </div>
       )}
+
+      {/* Cancel Job Modal */}
+      {selectedTask && cancelModalOpen && (
+        <div style={modalStyles.modal}>
+          <div style={modalStyles.modalContent}>
+            <div style={modalStyles.modalHeader}>
+              <h3 style={modalStyles.modalTitle}>
+                <span style={{ color: '#dc2626', marginRight: '8px' }}>⚠️</span>
+                {t('pages.forklift.modal.cancelJobTitle')}
+              </h3>
+              <button
+                style={modalStyles.modalClose}
+                onClick={() => {
+                  setCancelModalOpen(false);
+                  setSelectedTask(null);
+                  setCancelReason('');
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={modalStyles.modalBody}>
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                borderLeft: '4px solid #dc2626'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <span style={{ 
+                    color: '#dc2626', 
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}>
+                    {t('pages.forklift.modal.cancelJobWarning')}
+                  </span>
+                </div>
+                <div style={{
+                  color: '#7f1d1d',
+                  fontSize: '13px',
+                  lineHeight: '1.5'
+                }}>
+                  <div style={{ marginBottom: '4px' }}>
+                    <strong>{t('pages.forklift.modal.containerNo')}:</strong> {selectedTask.container_no}
+                  </div>
+                  <div style={{ marginBottom: '4px' }}>
+                    <strong>{t('pages.forklift.modal.status')}:</strong> {getStatusText(selectedTask.status)}
+                  </div>
+                  <div>
+                    <strong>{t('pages.forklift.modal.createdAt')}:</strong> {formatDate(selectedTask.createdAt)}
+                  </div>
+                </div>
+              </div>
+
+              <div style={modalStyles.formGroup}>
+                <label htmlFor="cancelReason" style={modalStyles.formLabel}>
+                  <span style={{ color: '#dc2626', marginRight: '4px' }}>*</span>
+                  {t('pages.forklift.modal.cancelReasonLabel')}
+                </label>
+                <textarea
+                  id="cancelReason"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  style={{
+                    ...modalStyles.formInput,
+                    minHeight: '100px',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                  placeholder={t('pages.forklift.modal.cancelReasonPlaceholder')}
+                  maxLength={500}
+                />
+                <div style={{
+                  marginTop: '4px',
+                  fontSize: '12px',
+                  color: '#6b7280',
+                  textAlign: 'right'
+                }}>
+                  {cancelReason.length}/500 {t('common.characters')}
+                </div>
+              </div>
+
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                fontSize: '12px',
+                color: '#64748b'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 {t('pages.forklift.modal.cancelReasonTips')}:</div>
+                <div style={{ marginBottom: '2px' }}>• {t('pages.forklift.modal.cancelReasonTip1')}</div>
+                <div style={{ marginBottom: '2px' }}>• {t('pages.forklift.modal.cancelReasonTip2')}</div>
+                <div>• {t('pages.forklift.modal.cancelReasonTip3')}</div>
+              </div>
+            </div>
+            <div style={modalStyles.modalFooter}>
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setCancelModalOpen(false);
+                  setSelectedTask(null);
+                  setCancelReason('');
+                }}
+                style={{
+                  backgroundColor: '#f3f4f6',
+                  borderColor: '#d1d5db',
+                  color: '#374151'
+                }}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                className="btn"
+                onClick={confirmCancelJob}
+                style={{
+                  backgroundColor: '#dc2626',
+                  borderColor: '#dc2626',
+                  color: 'white',
+                  fontWeight: '600'
+                }}
+                disabled={!cancelReason.trim()}
+              >
+                <span style={{ marginRight: '6px' }}>🗑️</span>
+                {t('pages.forklift.modal.confirmCancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </>
   );

@@ -1,0 +1,234 @@
+/* Forklift Table Styles - Sử dụng gate-table làm base */
+
+/* Header icons for Forklift table */
+.gate-table th[data-column="container"]::before { content: "📦"; }
+.gate-table th[data-column="pickup"]::before { content: "📍"; }
+.gate-table th[data-column="dropoff"]::before { content: "🎯"; }
+.gate-table th[data-column="status"]::before { content: "🔄"; }
+.gate-table th[data-column="forklift"]::before { content: "🚛"; }
+.gate-table th[data-column="created"]::before { content: "⏰"; }
+.gate-table th[data-column="actions"]::before { content: "⚙️"; }
+
+/* Forklift specific styles */
+.location-badge {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: monospace;
+  background-color: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  display: inline-block;
+}
+
+.location-placeholder {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.driver-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.driver-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.driver-label {
+  color: #64748b;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.driver-value {
+  color: #1e293b;
+  font-weight: 500;
+  background-color: #dbeafe;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.license-plate {
+  color: #1e293b;
+  font-weight: 500;
+  background-color: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.no-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.driver-assigned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background-color: #f0fdf4;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+}
+
+.driver-name {
+  color: #059669;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.assigned-badge {
+  font-size: 10px;
+  color: #16a34a;
+  background-color: #dcfce7;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.driver-not-assigned {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.time-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.time-date {
+  color: #475569;
+  font-size: 14px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.time-time {
+  color: #64748b;
+  font-size: 12px;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.action-buttons .btn {
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.action-in-progress {
+  color: #6b7280;
+  font-size: 11px;
+  text-align: center;
+  padding: 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  font-style: italic;
+}
+
+.action-info {
+  color: #6b7280;
+  font-size: 11px;
+  text-align: center;
+  padding: 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 2px solid;
+  display: inline-block;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.status-assigned {
+  background-color: #fed7aa;
+  color: #ea580c;
+  border-color: #f97316;
+}
+
+.status-in-progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.status-pending-approval {
+  background-color: #fed7aa;
+  color: #ea580c;
+  border-color: #f97316;
+}
+
+.status-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #ef4444;
+}

@@ -3,6 +3,7 @@ import { yardApi } from '@services/yard';
 import { containersApi } from '@services/containers';
 import { authApi } from '@services/auth';
 import { useTranslation } from '../../hooks/useTranslation';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface FuturisticStackDetailsModalProps {
   visible: boolean;
@@ -65,6 +66,13 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
   // State cho SystemAdmin
   const [isSystemAdmin, setIsSystemAdmin] = useState(false);
   const [containerValidation, setContainerValidation] = useState<Record<number, {isValid: boolean, message: string}>>({});
+  
+  // State cho Confirmation Modal
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'remove';
+    containerNo: string;
+  } | null>(null);
 
   // Kiểm tra role của user hiện tại
   useEffect(() => {
@@ -269,22 +277,35 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
     }
   };
 
-  const handleRemove = async (containerNo: string) => {
+  const handleRemove = (containerNo: string) => {
+    setConfirmAction({
+      type: 'remove',
+      containerNo: containerNo
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!confirmAction) return;
+    
     try {
       setLoading(true);
       setError('');
-      if (typeof window !== 'undefined') {
-        const ok = window.confirm(`Xác nhận REMOVE container ${containerNo}?`);
-        if (!ok) { setLoading(false); return; }
-      }
-      await yardApi.removeByContainer(containerNo);
+      await yardApi.removeByContainer(confirmAction.containerNo);
       await load();
       onActionDone?.();
+      setShowConfirmModal(false);
+      setConfirmAction(null);
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Lỗi REMOVE');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirmModal(false);
+    setConfirmAction(null);
   };
 
   // Select container từ filter
@@ -799,6 +820,19 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={showConfirmModal}
+        title="Xác nhận xóa container"
+        message={`Bạn có chắc chắn muốn xóa container ${confirmAction?.containerNo} khỏi ngăn xếp này không?`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancelConfirm}
+        loading={loading}
+        type="danger"
+      />
     </div>
   );
 };

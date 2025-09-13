@@ -11,7 +11,8 @@ export type PermissionKey =
   | 'maintenance.inventory'
   | 'finance.invoices'
   | 'account.view'
-  | 'driver.dashboard';
+  | 'driver.dashboard'
+  | 'statistics.view';
 
 export interface PermissionItem {
   key: PermissionKey;
@@ -34,6 +35,7 @@ export const PERMISSION_CATALOG: PermissionItem[] = [
   { key: 'maintenance.inventory', label: 'Bảo trì - Tồn kho', group: 'Bảo trì' },
   { key: 'finance.invoices', label: 'Tài chính - Hóa đơn', group: 'Tài chính' },
   { key: 'driver.dashboard', label: 'Bảng điều khiển tài xế', group: 'Vận hành' },
+  { key: 'statistics.view', label: 'Thống kê tổng quan', group: 'Báo cáo' },
 ];
 
 export function hasPermission(perms: string[] | undefined | null, key: PermissionKey): boolean {

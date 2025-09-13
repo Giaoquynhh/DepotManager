@@ -12,6 +12,8 @@ import '../styles/yard/futuristic-modal.css';
 import '../styles/yard-configuration.css';
 import '../styles/register.css';
 import '../styles/notification-badge.css';
+import '../styles/statistics.css';
+import '../styles/forklift.css';
 import DriverNotification from '@components/DriverNotification';
 import { Toaster } from 'sonner';
 

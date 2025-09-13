@@ -59,6 +59,7 @@
     "containerManagement": "Container Management",
     "forkliftManagement": "Forklift Management",
     "dashboard": "Dashboard",
+    "statistics": "Statistics",
     "repairTickets": "Repair Tickets",
     "inventory": "Inventory",
     "invoices": "Invoices",
@@ -375,7 +376,10 @@
         "exportError": "Could not export report. Please try again."
       },
       "modals": {
-        "approve": { "title": "Enter driver information and license plate" },
+        "approve": { 
+          "title": "Enter driver information and license plate",
+          "autoTimeInfo": "Entry/exit times will be automatically filled when changing status"
+        },
         "reject": { "title": "Rejection reason" }
       },
       "placeholders": {
@@ -856,7 +860,19 @@
         "cannotAssignDriver": "Unable to assign driver",
         "assignSuccess": "Driver assigned successfully!",
         "assignSuccessMessage": "Driver {driverName} has been assigned to container {containerNo}",
-        "assignError": "Driver assignment error"
+        "assignError": "Driver assignment error",
+        "cancelJobTitle": "Cancel Forklift Job",
+        "cancelJobWarning": "Warning: This action cannot be undone!",
+        "containerNo": "Container No",
+        "status": "Status",
+        "createdAt": "Created At",
+        "cancelReasonLabel": "Cancellation Reason",
+        "cancelReasonPlaceholder": "Please enter the reason for cancelling this job (max 500 characters)...",
+        "cancelReasonTips": "Cancellation reason suggestions",
+        "cancelReasonTip1": "Missing container information",
+        "cancelReasonTip2": "Container not suitable",
+        "cancelReasonTip3": "Other reason (please describe in detail)",
+        "confirmCancel": "Confirm Cancel"
       },
       "messages": {
         "cancelJobPrompt": "Reason for cancelling job:",
@@ -872,7 +888,9 @@
         "costMustBeNumber": "Cost must be a number",
         "costMustBeInteger": "Cost must be an integer",
         "costCannotBeNegative": "Cost cannot be negative",
-        "costTooHigh": "Cost too high. Please check again"
+        "costTooHigh": "Cost too high. Please check again",
+        "pleaseEnterReason": "Please enter cancellation reason",
+        "cancelSuccess": "Job cancelled successfully!"
       },
       "autoRefresh": "Auto refresh",
       "lastUpdate": "Last update",

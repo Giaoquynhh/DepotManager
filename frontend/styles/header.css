@@ -114,14 +114,14 @@ body.with-sidebar .header {
 }
 
 .logo {
-  height: 36px; /* Giảm từ 48px xuống 36px */
+  height: 28px; /* Giảm từ 36px xuống 28px */
   width: auto;
   transition: var(--transition-default);
 }
 
 .header-title {
   font-weight: var(--font-weight-extrabold);
-  font-size: var(--font-size-xl); /* Giảm từ 2xl (24px) xuống xl (20px) */
+  font-size: var(--font-size-lg); /* Giảm từ xl (20px) xuống lg (18px) */
   color: var(--color-text-inverse);
   margin: 0;
   white-space: nowrap;

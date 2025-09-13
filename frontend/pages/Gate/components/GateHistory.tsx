@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 interface GateHistoryItem {
   id: string;
@@ -22,6 +23,7 @@ interface GateHistoryProps {
 export default function GateHistory({ onBack }: GateHistoryProps) {
   const [history, setHistory] = useState<GateHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [searchParams, setSearchParams] = useState({
     container_no: '',
     driver_name: '',
@@ -37,17 +39,26 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
   const { t, currentLanguage } = useTranslation();
   const { showError } = useToast();
 
-  const fetchHistory = async () => {
+  // Debounce các tham số tìm kiếm để giảm số lần gọi API
+  const debouncedContainerNo = useDebounce(searchParams.container_no, 800);
+  const debouncedDriverName = useDebounce(searchParams.driver_name, 800);
+  const debouncedLicensePlate = useDebounce(searchParams.license_plate, 800);
+
+  const fetchHistory = async (useDebouncedValues = false) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       
-      if (searchParams.container_no) params.append('container_no', searchParams.container_no);
-      if (searchParams.driver_name) params.append('driver_name', searchParams.driver_name);
-      if (searchParams.license_plate) params.append('license_plate', searchParams.license_plate);
+      // Sử dụng debounced values nếu được yêu cầu, ngược lại dùng giá trị hiện tại
+      const containerNo = useDebouncedValues ? debouncedContainerNo : searchParams.container_no;
+      const driverName = useDebouncedValues ? debouncedDriverName : searchParams.driver_name;
+      const licensePlate = useDebouncedValues ? debouncedLicensePlate : searchParams.license_plate;
+      
+      if (containerNo) params.append('container_no', containerNo);
+      if (driverName) params.append('driver_name', driverName);
+      if (licensePlate) params.append('license_plate', licensePlate);
       params.append('page', searchParams.page.toString());
       params.append('limit', searchParams.limit.toString());
-      // Không ép status=GATE_OUT nữa; trang lịch sử cần tất cả xe đã có time_in
 
       console.log('🔍 Frontend: Calling API with params:', params.toString());
       const response = await api.get(`/gate/history?${params.toString()}`);
@@ -63,13 +74,22 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
       );
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   };
 
+  // Effect cho debounced search - chỉ gọi API sau khi user ngừng gõ 800ms
   useEffect(() => {
-    console.log('🔄 Frontend: useEffect triggered, searchParams:', searchParams);
-    fetchHistory();
-  }, [searchParams.page, searchParams.container_no, searchParams.driver_name, searchParams.license_plate]);
+    console.log('🔄 Frontend: Debounced search triggered');
+    setSearching(true);
+    fetchHistory(true); // Sử dụng debounced values
+  }, [debouncedContainerNo, debouncedDriverName, debouncedLicensePlate]);
+
+  // Effect cho pagination - gọi API ngay lập tức khi chuyển trang
+  useEffect(() => {
+    console.log('🔄 Frontend: Page change triggered');
+    fetchHistory(false); // Sử dụng giá trị hiện tại
+  }, [searchParams.page]);
 
   const handleSearch = () => {
     console.log('🔍 Frontend: handleSearch called');
@@ -105,11 +125,14 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
   console.log('🔍 Frontend: Current state - history:', history.length, 'loading:', loading, 'pagination:', pagination);
 
   return (
-    <div className="gate-history-container">
+    <div className="gate-dashboard">
       {/* Header */}
       <div className="page-header modern-header">
         <div className="header-content">
           <div className="header-left">
+            <h1 className="page-title gradient gradient-ultimate">Lịch sử ra vào cổng</h1>
+          </div>
+          <div className="header-right">
             <button
               onClick={onBack}
               className="back-button"
@@ -124,7 +147,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                 borderRadius: 'var(--radius-lg)',
                 cursor: 'pointer',
                 fontSize: 'var(--font-size-sm)',
-                marginRight: 'var(--space-4)'
+                transition: 'all 0.2s ease'
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -132,7 +155,6 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
               </svg>
               Quay lại
             </button>
-            <h1 className="page-title gradient gradient-ultimate">Lịch sử ra vào cổng</h1>
           </div>
         </div>
       </div>
@@ -164,7 +186,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             <input
               type="text"
               value={searchParams.container_no}
-              onChange={(e) => setSearchParams(prev => ({ ...prev, container_no: e.target.value }))}
+              onChange={(e) => setSearchParams(prev => ({ ...prev, container_no: e.target.value, page: 1 }))}
               placeholder="Nhập mã container..."
               style={{
                 width: '100%',
@@ -188,7 +210,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             <input
               type="text"
               value={searchParams.driver_name}
-              onChange={(e) => setSearchParams(prev => ({ ...prev, driver_name: e.target.value }))}
+              onChange={(e) => setSearchParams(prev => ({ ...prev, driver_name: e.target.value, page: 1 }))}
               placeholder="Nhập tên tài xế..."
               style={{
                 width: '100%',
@@ -212,7 +234,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             <input
               type="text"
               value={searchParams.license_plate}
-              onChange={(e) => setSearchParams(prev => ({ ...prev, license_plate: e.target.value }))}
+              onChange={(e) => setSearchParams(prev => ({ ...prev, license_plate: e.target.value, page: 1 }))}
               placeholder="Nhập biển số xe..."
               style={{
                 width: '100%',
@@ -224,17 +246,33 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          {searching && (
+            <div style={{
+              fontSize: 'var(--font-size-xs)',
+              color: 'var(--color-blue-600)',
+              fontStyle: 'italic',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-1)'
+            }}>
+              <div className="loading-spinner" style={{ width: '12px', height: '12px' }}></div>
+              Đang tìm kiếm tự động...
+            </div>
+          )}
           <button
             onClick={handleSearch}
+            disabled={searching}
             className="action-btn action-btn-primary"
             style={{
               padding: 'var(--space-3) var(--space-6)',
               fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)'
+              fontWeight: 'var(--font-weight-medium)',
+              opacity: searching ? 0.7 : 1,
+              cursor: searching ? 'not-allowed' : 'pointer'
             }}
           >
-            🔍 Tìm kiếm
+            {searching ? '⏳ Đang tìm...' : '🔍 Tìm kiếm'}
           </button>
           <button
             onClick={() => {

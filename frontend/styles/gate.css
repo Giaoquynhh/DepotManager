@@ -527,11 +527,20 @@
   font-size: 11px; /* Giảm từ var(--font-size-sm) xuống 11px */
 }
 
-/* Gate History Styling */
-.gate-history-container {
-  padding: var(--space-6);
-  max-width: 1400px;
-  margin: 0 auto;
+/* Gate History Styling - Sử dụng layout chuẩn như các trang khác */
+.gate-history-wrapper {
+  width: 100%;
+}
+
+.gate-dashboard {
+  width: 100%;
+  padding: 0;
+}
+
+.gate-dashboard .header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .history-table-container {
