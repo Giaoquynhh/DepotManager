@@ -248,11 +248,18 @@
 /* ⚡ Floating Search Portal - Glassmorphic Design */
 .yard-search-portal {
   position: relative;
-  margin-top: -3.5rem;
+  margin-top: 0;
   margin-bottom: 1.5rem;
   z-index: 10;
   display: flex;
   justify-content: flex-start;
+}
+
+/* Đảm bảo không có border nào cho search */
+.yard-search-portal * {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .yard-search-container {
@@ -283,7 +290,7 @@
 .yard-search-input {
   width: 100%;
   padding: 1rem 1.5rem;
-  border: 2px solid transparent;
+  border: none !important;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
   font-size: 1.1rem;
@@ -295,9 +302,9 @@
 }
 
 .yard-search-input:focus {
-  outline: none;
-  border-color: var(--ocean-cyan);
-  box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.2);
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
   background: rgba(255, 255, 255, 1);
 }
 
@@ -441,7 +448,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-normal);
   box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
   position: relative;
   overflow: hidden;
@@ -457,16 +463,6 @@
   bottom: 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
   opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.yard-action-bubble:hover {
-  transform: translateY(-4px) scale(1.1);
-  box-shadow: 0 15px 35px rgba(0, 212, 255, 0.4);
-}
-
-.yard-action-bubble:hover::before {
-  opacity: 1;
 }
 
 .yard-action-bubble svg {

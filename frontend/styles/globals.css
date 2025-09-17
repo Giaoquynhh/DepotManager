@@ -412,6 +412,34 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* Scrollbar tổng cho toàn bộ trang trên mobile */
+  body {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100);
+  }
+  
+  body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 4px;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 4px;
+    border: 1px solid var(--color-gray-200);
+  }
+  
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+  }
+  
   .profile-container {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -423,6 +451,48 @@
   
   .futuristic-profile {
     padding: 1rem;
+  }
+}
+
+/* Mobile Landscape (xoay ngang) - Scrollbar tổng */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Scrollbar tổng cho landscape */
+  body {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+  }
+  
+  /* Scrollbar mỏng hơn cho landscape */
+  body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  /* Main content scrollbar */
+  .main-content {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 100vh;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Container scrollbar */
+  .container {
+    overflow-x: auto;
+    overflow-y: visible;
+    min-width: 100%;
+  }
+  
+  /* Table containers scrollbar */
+  .table-container,
+  .gate-table-container,
+  .gate-history-scroll {
+    max-height: 50vh !important;
+    overflow-y: scroll !important;
+    overflow-x: auto !important;
   }
 }
 

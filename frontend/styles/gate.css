@@ -125,24 +125,24 @@
   border: 2px solid var(--color-green-200);
 }
 
-/* Search and Filter Section - Cải thiện layout */
+/* Search and Filter Section - Compact layout */
 .gate-search-section {
   background: white;
-  padding: var(--space-6);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-4);
   border: 1px solid var(--color-gray-100);
   transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 
-/* Cải thiện layout search row để responsive */
+/* Compact layout search row */
 .search-row {
   display: flex;
   flex-wrap: wrap;
-  column-gap: var(--space-6);
-  row-gap: var(--space-4);
+  column-gap: var(--space-4);
+  row-gap: var(--space-3);
   align-items: center;
 }
 
@@ -153,14 +153,14 @@
 /* Responsive grid cho mobile */
 @media (max-width: 1200px) {
   .search-row {
-    column-gap: var(--space-4);
-    row-gap: var(--space-4);
+    column-gap: var(--space-3);
+    row-gap: var(--space-3);
   }
   
   .filter-group {
     grid-column: 1 / -1;
     justify-self: start;
-    margin-top: var(--space-2);
+    margin-top: var(--space-1);
   }
   
   /* Loại bỏ các rule nth-child vì không còn dùng grid cố định cột */
@@ -168,8 +168,8 @@
 
 @media (max-width: 768px) {
   .search-row {
-    column-gap: var(--space-3);
-    row-gap: var(--space-3);
+    column-gap: var(--space-2);
+    row-gap: var(--space-2);
   }
   
   .search-section {
@@ -201,10 +201,10 @@
 
 .search-input {
   width: 100%;
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 2px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-base);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   transition: all 0.3s ease;
   background: var(--color-gray-50);
   box-sizing: border-box;
@@ -264,15 +264,15 @@
 }
 
 .filter-select {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   border: 2px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: white;
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: border-color 0.3s ease;
-  min-width: 160px;
-  max-width: 200px;
+  min-width: 140px;
+  max-width: 180px;
   box-sizing: border-box;
 }
 
@@ -386,6 +386,10 @@
 .gate-table th[data-column="time-out"]::before { content: "⏰"; }
 .gate-table th[data-column="documents"]::before { content: "📄"; }
 .gate-table th[data-column="actions"]::before { content: "⚙️"; }
+.gate-table th[data-column="yard"]::before { content: "🏭"; }
+.gate-table th[data-column="block"]::before { content: "🏗️"; }
+.gate-table th[data-column="slot"]::before { content: "📍"; }
+.gate-table th[data-column="checkInfo"]::before { content: "✅"; }
 
 .gate-table th {
   background: var(--color-gray-50);
@@ -547,6 +551,166 @@
   overflow: hidden;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+/* Gate History Scrollbar Styling */
+.gate-history-scroll {
+  /* Webkit scrollbar (Chrome, Safari, Edge) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-300) var(--color-gray-100);
+  /* Mobile touch scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Đảm bảo scroll hoạt động trên mobile */
+  position: relative;
+  z-index: 1;
+}
+
+.gate-history-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.gate-history-scroll::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+  border-radius: 4px;
+}
+
+.gate-history-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 4px;
+  border: 1px solid var(--color-gray-200);
+}
+
+.gate-history-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+.gate-history-scroll::-webkit-scrollbar-corner {
+  background: var(--color-gray-100);
+}
+
+/* Mobile responsive cho Gate History */
+@media (max-width: 768px) {
+  /* Scrollbar tổng cho trang Gate History */
+  .gate-page {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100) !important;
+  }
+  
+  .gate-page::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .gate-page::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 4px;
+  }
+  
+  .gate-page::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 4px;
+    border: 1px solid var(--color-gray-200);
+  }
+  
+  .gate-page::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+  }
+  
+  .gate-history-wrapper {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .gate-history-scroll {
+    max-height: 50vh !important; /* Giảm chiều cao cho mobile */
+    overflow-y: scroll !important; /* Luôn hiển thị scrollbar */
+    -webkit-overflow-scrolling: touch; /* Touch scrolling cho iOS */
+    /* Đảm bảo scroll hoạt động trên mobile */
+    touch-action: pan-y; /* Cho phép scroll dọc */
+    overscroll-behavior: contain; /* Ngăn scroll lan ra ngoài */
+  }
+  
+  .gate-history-scroll::-webkit-scrollbar {
+    width: 6px; /* Thanh scrollbar mỏng hơn trên mobile */
+    height: 6px;
+  }
+  
+  /* Đảm bảo table có thể scroll */
+  .gate-history-scroll .history-table {
+    min-width: 100%;
+    display: block;
+  }
+  
+  .gate-history-scroll tbody {
+    display: block;
+  }
+  
+  .gate-history-scroll tr {
+    display: block;
+    margin-bottom: 8px;
+  }
+  
+  .gate-history-scroll td {
+    display: block;
+    text-align: left;
+    border: none;
+    padding: 4px 0;
+  }
+  
+  .gate-history-scroll td:before {
+    content: attr(data-label) ": ";
+    font-weight: bold;
+    display: inline-block;
+    width: 120px;
+  }
+}
+
+/* Mobile Landscape cho Gate History */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Scrollbar tổng cho trang Gate History landscape */
+  body {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: contain !important;
+  }
+  
+  body::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  
+  .gate-page {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: contain !important;
+    max-height: 100vh !important;
+  }
+  
+  .gate-page::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  
+  .gate-history-wrapper {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-height: 100vh !important;
+  }
+  
+  .gate-history-scroll {
+    max-height: 40vh !important; /* Giảm thêm cho landscape */
+    overflow-y: scroll !important;
+    overflow-x: auto !important;
+  }
 }
 
 .history-table {
@@ -1354,6 +1518,7 @@
   .main-content {
     transform: translateX(0) !important;
     padding: 0; /* Container kiểm soát khoảng cách ngang trên mobile */
+    padding-top: var(--space-1) !important; /* Thêm padding-top nhỏ cho mobile */
   }
   
   .main-content.sidebar-visible {

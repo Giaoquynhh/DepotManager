@@ -31,8 +31,8 @@
   .modern-header {
     background: linear-gradient(135deg, #1e3a8a, #1e40af);
     border-radius: var(--radius-xl);
-    padding: 0.5rem; /* Giảm padding cho header từ 0.75rem xuống 0.5rem */
-    margin-bottom: 0.5rem; /* Giảm khoảng cách dưới header từ 1rem xuống 0.5rem */
+    padding: 0.375rem; /* Giảm padding cho header từ 0.5rem xuống 0.375rem */
+    margin-bottom: 0.375rem; /* Giảm khoảng cách dưới header từ 0.5rem xuống 0.375rem */
     position: relative;
     overflow: hidden;
     border: 2px solid #3b82f6;
@@ -75,7 +75,7 @@
   /* Bảo đảm tiêu đề trong modern header luôn hiển thị màu trắng trên nền gradient */
   .modern-header .page-title {
     color: #ffffff !important;
-    font-size: 1.8rem !important;
+    font-size: 1.5rem !important; /* Giảm từ 1.8rem xuống 1.5rem */
     font-weight: 700 !important;
     text-align: left !important;
     margin-bottom: 0 !important;
@@ -492,13 +492,13 @@
   
   .yard-page .modern-header {
     background: linear-gradient(135deg, #1e40af, #3b82f6);
-    margin-bottom: 0.5rem; /* Giảm margin-bottom từ 1rem xuống 0.5rem */
-    padding: 0.5rem; /* Giảm padding từ 0.75rem xuống 0.5rem */
+    margin-bottom: 0.375rem; /* Giảm margin-bottom từ 0.5rem xuống 0.375rem */
+    padding: 0.375rem; /* Giảm padding từ 0.5rem xuống 0.375rem */
   }
   
   .yard-page .modern-header .yard-title {
     color: #ffffff !important;
-    font-size: 1.8rem !important;
+    font-size: 1.5rem !important; /* Giảm từ 1.8rem xuống 1.5rem */
     font-weight: 700 !important;
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     letter-spacing: -0.5px;
@@ -609,11 +609,16 @@
     .depot-requests .modern-header,
     .gate-page .modern-header,
     .yard-page .modern-header {
-      padding: 0.5rem; /* Giảm từ 1rem xuống 0.5rem để tối ưu mobile */
+      padding: 0.125rem; /* Giảm từ 0.25rem xuống 0.125rem để tối ưu mobile */
+      margin-bottom: 0.125rem; /* Giảm margin-bottom cho mobile */
     }
     
     .page-title {
-      font-size: 1.75rem; /* Giảm từ 2rem xuống 1.75rem */
+      font-size: 1.125rem; /* Giảm từ 1.25rem xuống 1.125rem */
+    }
+    
+    .modern-header .page-title {
+      font-size: 1.25rem !important; /* Giảm font-size cho mobile */
     }
     
     .header-content {
@@ -662,11 +667,16 @@
     .depot-requests .modern-header,
     .gate-page .modern-header,
     .yard-page .modern-header {
-      padding: 0.5rem; /* Giảm từ 0.75rem xuống 0.5rem cho mobile nhỏ */
+      padding: 0.2rem; /* Giảm từ 0.5rem xuống 0.2rem cho mobile nhỏ */
+      margin-bottom: 0.2rem; /* Giảm margin-bottom cho mobile nhỏ */
     }
     
     .page-title {
-      font-size: 1.5rem; /* Giảm từ 1.75rem xuống 1.5rem */
+      font-size: 1.1rem; /* Giảm từ 1.5rem xuống 1.1rem */
+    }
+    
+    .modern-header .page-title {
+      font-size: 1.1rem !important; /* Giảm font-size cho mobile nhỏ */
     }
     
     .page-subtitle {

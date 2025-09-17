@@ -362,10 +362,18 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                 Danh sách xe đã ra khỏi cổng ({pagination.total} xe)
               </h3>
             </div>
-            <div className="table-responsive" style={{
-              maxHeight: '60vh',
-              overflowY: 'auto',
-              overflowX: 'auto'
+            <div className="table-responsive gate-history-scroll" style={{
+              maxHeight: '50vh', /* Giảm chiều cao cho mobile */
+              overflowY: 'scroll', /* Thay đổi từ 'auto' thành 'scroll' để luôn hiển thị scrollbar */
+              overflowX: 'auto',
+              /* Custom scrollbar styling */
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'var(--color-gray-300) var(--color-gray-100)',
+              /* Mobile touch scrolling */
+              WebkitOverflowScrolling: 'touch',
+              /* Đảm bảo scroll hoạt động trên mobile */
+              position: 'relative',
+              zIndex: 1
             }}>
               <table className="history-table" style={{
                 width: '100%',
@@ -447,7 +455,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}>
-                      <td style={{
+                      <td data-label="Mã Container" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)',
                         fontWeight: 'var(--font-weight-semibold)',
@@ -455,7 +463,7 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                       }}>
                         {item.container_no}
                       </td>
-                      <td style={{
+                      <td data-label="Loại yêu cầu" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)'
                       }}>
@@ -471,14 +479,14 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                           {typeLabel(item.type)}
                         </span>
                       </td>
-                      <td style={{
+                      <td data-label="Tên tài xế" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)',
                         color: 'var(--color-gray-700)'
                       }}>
                         {item.driver_name || t('common.na')}
                       </td>
-                      <td style={{
+                      <td data-label="Biển số xe" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)',
                         color: 'var(--color-gray-700)',
@@ -486,14 +494,14 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
                       }}>
                         {item.license_plate || t('common.na')}
                       </td>
-                      <td style={{
+                      <td data-label="Thời gian vào" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)',
                         color: item.time_in ? 'var(--color-green-600)' : 'var(--color-gray-500)'
                       }}>
                         {formatDateTime(item.time_in)}
                       </td>
-                      <td style={{
+                      <td data-label="Thời gian ra" style={{
                         padding: 'var(--space-4)',
                         fontSize: 'var(--font-size-sm)',
                         color: item.time_out ? 'var(--color-red-600)' : 'var(--color-gray-500)'
