@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
-import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isBusinessAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance } from '@utils/rbac';
+import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance } from '@utils/rbac';
 import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -575,7 +575,7 @@ export default function Header() {
 
             {/* Role Permissions Module */}
             {(() => {
-              const allow = isSystemAdmin(me?.role) || isBusinessAdmin(me?.role);
+              const allow = isSystemAdmin(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'permissions.manage')
                 : allow;
@@ -591,7 +591,7 @@ export default function Header() {
 
             {/* Requests Depot Module */}
             {(() => {
-              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role) || isBusinessAdmin(me?.role);
+              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'requests.depot')
                 : allow;

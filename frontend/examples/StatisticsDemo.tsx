@@ -60,10 +60,6 @@ export const StatisticsDemo: React.FC = () => {
       role: 'CustomerUser',
       permissions: ['containers']
     },
-    PartnerAdmin: {
-      role: 'PartnerAdmin',
-      permissions: []
-    },
     Driver: {
       role: 'Driver',
       permissions: []

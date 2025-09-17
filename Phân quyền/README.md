@@ -42,7 +42,7 @@ Tài liệu mô tả toàn bộ logic BE/FE đã triển khai cho chức năng P
 ### 3.3. DTO Validation
 - File: `backend/modules/users/dto/UserDtos.ts`
   - `updateUserSchema`:
-    - `role`: cho phép các role: `SystemAdmin`, `BusinessAdmin`, `HRManager`, `SaleAdmin`, `CustomerAdmin`, `CustomerUser`, `PartnerAdmin`, `Security`, `YardManager`, `MaintenanceManager`, `Accountant`.
+    - `role`: cho phép các role: `SystemAdmin`, `BusinessAdmin`, `HRManager`, `SaleAdmin`, `CustomerAdmin`, `CustomerUser`, `Security`, `YardManager`, `MaintenanceManager`, `Accountant`.
     - `permissions`: mảng chuỗi, tối đa 50, regex an toàn (chỉ chữ, số, dấu gạch ngang/ghạch dưới/chấm, không khoảng trắng), cho phép rỗng.
 
 ### 3.4. Routes

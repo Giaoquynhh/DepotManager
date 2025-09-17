@@ -30,7 +30,6 @@ export const translations = {
     enable: 'Bật lại',
     lock: 'Khóa',
     unlock: 'Mở khóa',
-    emailSent: 'Email mời đã được gửi!',
     delete: 'Xóa',
     // Button tooltips
     disableTooltip: 'Chặn không cho đăng nhập',
@@ -68,7 +67,7 @@ export const translations = {
     pleaseEnterTenantId: 'Vui lòng nhập mã công ty',
     pleaseEnterCompanyName: 'Vui lòng nhập tên công ty',
     employeeCreated: 'Tạo nhân sự nội bộ thành công.',
-    partnerCreated: 'Tạo đối tác thành công. Email mời đã được gửi!',
+    partnerCreated: 'Tạo đối tác thành công.',
     userActionSuccess: 'Đã {action} user',
     createEmployeeError: 'Lỗi tạo nhân sự',
     createPartnerError: 'Lỗi tạo đối tác',
@@ -109,7 +108,6 @@ export const translations = {
     enable: 'Enable',
     lock: 'Lock',
     unlock: 'Unlock',
-    emailSent: 'Invitation email sent!',
     delete: 'Delete',
     // Button tooltips
     disableTooltip: 'Block login access',
@@ -147,7 +145,7 @@ export const translations = {
     pleaseEnterTenantId: 'Please enter company code',
     pleaseEnterCompanyName: 'Please enter company name',
     employeeCreated: 'Internal staff created successfully.',
-    partnerCreated: 'Partner created successfully. Invitation email sent!',
+    partnerCreated: 'Partner created successfully.',
     userActionSuccess: 'User {action} successfully',
     createEmployeeError: 'Error creating staff',
     createPartnerError: 'Error creating partner',

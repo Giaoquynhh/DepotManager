@@ -8,17 +8,11 @@ export const createEmployeeSchema = Joi.object({
 	role: Joi.string().valid('SystemAdmin','SaleAdmin','Driver','Security','Dispatcher').required()
 });
 
-export const createCustomerUserSchema = Joi.object({
-	full_name: Joi.string().required(),
-	email: Joi.string().email().required(),
-	role: Joi.string().valid('CustomerAdmin','CustomerUser').required(),
-	tenant_id: Joi.string().optional(),
-	company_name: Joi.string().optional()
-});
+// createCustomerUserSchema: đã loại bỏ
 
 export const updateUserSchema = Joi.object({
 	full_name: Joi.string().optional(),
-	role: Joi.string().valid('SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin','CustomerUser','PartnerAdmin','Security','YardManager','MaintenanceManager','Accountant').optional(),
+	role: Joi.string().valid('SystemAdmin','SaleAdmin','Security','YardManager','MaintenanceManager','Accountant').optional(),
 	permissions: Joi.array()
 		.items(Joi.string().trim().min(1).max(64).pattern(/^[A-Za-z0-9:_\-\.]+$/))
 		.max(50)

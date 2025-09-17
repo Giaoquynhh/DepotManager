@@ -88,15 +88,6 @@ const rolePermissions: Record<string, StatisticsPermissions> = {
     canViewOperational: false,
     canExport: false,
   },
-  PartnerAdmin: {
-    canViewOverview: false,
-    canViewContainers: false,
-    canViewCustomers: false,
-    canViewMaintenance: false,
-    canViewFinancial: false,
-    canViewOperational: false,
-    canExport: false,
-  },
   Driver: {
     canViewOverview: false,
     canViewContainers: false,

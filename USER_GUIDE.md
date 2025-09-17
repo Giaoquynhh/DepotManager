@@ -80,7 +80,7 @@ Mỗi mục dưới đây mô tả chức năng, tác vụ chính và quyền tr
      - Vai trò (chọn 1+ vai trò phù hợp)
      - Đối tác/Khách hàng (nếu tài khoản thuộc một tổ chức cụ thể)
   4) Bấm `Lưu` để tạo tài khoản.
-  5) (Tùy chọn) Gửi email mời kích hoạt: Người dùng nhận link để đặt mật khẩu và đăng nhập lần đầu.
+  5) Tài khoản được tạo với trạng thái ACTIVE và có thể đăng nhập ngay.
 - Phân quyền sau khi tạo
   - Vào mục `Phân quyền` → gán hoặc điều chỉnh quyền chi tiết nếu cần (xem/tạo/sửa/xóa theo từng module).
   - Nguyên tắc: cấp quyền tối thiểu cần thiết (least privilege).
@@ -109,8 +109,8 @@ Gợi ý chụp và đặt ảnh vào thư mục `images/user_guide/` rồi cậ
 4) Gán vai trò và lưu
 ![Gán vai trò](images/user_guide/create-user-04-roles.png)
 
-5) Gửi email kích hoạt (nếu có)
-![Gửi email kích hoạt](images/user_guide/create-user-05-invite.png)
+5) Tài khoản được tạo thành công
+![Tạo tài khoản thành công](images/user_guide/create-user-05-success.png)
 
 ### 4.2. Phân quyền
 - Chức năng: Gán vai trò và quyền truy cập theo module.

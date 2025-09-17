@@ -148,7 +148,7 @@ manageContainer/frontend/
 | **Accountant** | ✅ Tất cả thống kê | Xem toàn bộ + Export |
 | **MaintenanceManager** | ✅ Container + Maintenance + Operational | Chuyên về bảo trì |
 | **CustomerAdmin, CustomerUser** | ⚠️ Chỉ thống kê công ty mình | Hạn chế theo company |
-| **PartnerAdmin, Driver, Security** | ❌ Không cần | Không cần dashboard |
+| **Driver, Security** | ❌ Không cần | Không cần dashboard |
 
 ## 🎯 **Tính năng chính**
 

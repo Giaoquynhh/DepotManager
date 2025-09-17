@@ -134,7 +134,7 @@ Hệ thống là một ứng dụng web độc lập, cung cấp giao diện cho
 
 - **FUNC-CHAT-01**: Hệ thống phải cung cấp một cửa sổ chat riêng cho mỗi yêu cầu dịch vụ, cho phép khách hàng và nhân viên depot trao đổi.
 - **FUNC-DOC-01**: Người dùng (khách hàng và nhân viên) phải có khả năng tải lên và đính kèm các tệp chứng từ (PDF, JPG, PNG) vào yêu cầu.
-- **FUNC-NOTIF-01**: Hệ thống phải gửi thông báo (trong ứng dụng hoặc qua email) cho người dùng khi có các sự kiện quan trọng (ví dụ: yêu cầu được chấp nhận, có tin nhắn mới).
+- **FUNC-NOTIF-01**: Hệ thống phải gửi thông báo trong ứng dụng cho người dùng khi có các sự kiện quan trọng (ví dụ: yêu cầu được chấp nhận, có tin nhắn mới).
 
 ---
 

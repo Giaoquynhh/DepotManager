@@ -25,10 +25,3 @@ export const enforceTenantScope = (req: AuthRequest, res: Response, next: NextFu
 	next();
 };
 
-export const enforcePartnerScope = (req: AuthRequest, res: Response, next: NextFunction) => {
-	if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
-  if (['PartnerAdmin'].includes(String(req.user.role))) {
-    req.query.partner_id = (req.user.partner_id || undefined) as any;
-  }
-	next();
-};

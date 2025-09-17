@@ -73,7 +73,6 @@ export default function UsersPartners() {
       enable: 'Bật lại',
       lock: 'Khóa',
       unlock: 'Mở khóa',
-      emailSent: 'Email mời đã được gửi!',
       delete: 'Xóa',
       // Button tooltips
       disableTooltip: 'Chặn không cho đăng nhập',
@@ -93,8 +92,6 @@ export default function UsersPartners() {
       driverLabel: 'Tài xế',
       // Role labels
       systemAdminLabel: 'Quản trị hệ thống',
-      businessAdminLabel: 'Quản trị kinh doanh',
-      hrManagerLabel: 'Quản lý nhân sự',
       saleAdminLabel: 'Quản lý bán hàng',
       customerAdminLabel: 'Quản lý khách hàng',
       customerUserLabel: 'Người dùng khách hàng',
@@ -107,8 +104,8 @@ export default function UsersPartners() {
       pleaseEnterValidEmail: 'Vui lòng nhập email hợp lệ',
       pleaseEnterTenantId: 'Vui lòng nhập mã công ty',
       pleaseEnterCompanyName: 'Vui lòng nhập tên công ty',
-      employeeCreated: 'Tạo nhân sự nội bộ thành công. Email mời đã được gửi!',
-      partnerCreated: 'Tạo đối tác thành công. Email mời đã được gửi!',
+      employeeCreated: 'Tạo nhân sự nội bộ thành công.',
+      partnerCreated: 'Tạo đối tác thành công.',
       userActionSuccess: 'Đã {action} user',
       createEmployeeError: 'Lỗi tạo nhân sự',
       createPartnerError: 'Lỗi tạo đối tác',
@@ -151,7 +148,6 @@ export default function UsersPartners() {
       enable: 'Enable',
       lock: 'Lock',
       unlock: 'Unlock',
-      emailSent: 'Invitation email sent!',
       delete: 'Delete',
       // Button tooltips
       disableTooltip: 'Block login access',
@@ -171,8 +167,6 @@ export default function UsersPartners() {
       driverLabel: 'Driver',
       // Role labels
       systemAdminLabel: 'System Administrator',
-      businessAdminLabel: 'Business Administrator',
-      hrManagerLabel: 'HR Manager',
       saleAdminLabel: 'Sales Administrator',
       customerAdminLabel: 'Customer Administrator',
       customerUserLabel: 'Customer User',
@@ -185,8 +179,8 @@ export default function UsersPartners() {
       pleaseEnterValidEmail: 'Please enter a valid email',
       pleaseEnterTenantId: 'Please enter company code',
       pleaseEnterCompanyName: 'Please enter company name',
-      employeeCreated: 'Internal staff created successfully. Invitation email sent!',
-      partnerCreated: 'Partner created successfully. Invitation email sent!',
+      employeeCreated: 'Internal staff created successfully.',
+      partnerCreated: 'Partner created successfully.',
       userActionSuccess: 'User {action} successfully',
       createEmployeeError: 'Error creating staff',
       createPartnerError: 'Error creating partner',
@@ -312,26 +306,12 @@ export default function UsersPartners() {
                             
                             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
                                 <h3 style={{margin:0, fontSize:18, fontWeight:700, color:'#0b2b6d'}}>
-                  {role === 'CustomerAdmin' 
-                    ? t[language].companyUsersList
-                    : (['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) 
-                        ? (activeTab === 'users' ? t[language].usersList : t[language].partnersList)
-                        : t[language].usersList)
-                  }
+                    {(['SystemAdmin', 'admin'].includes(role) 
+                    ? (activeTab === 'users' ? t[language].usersList : t[language].partnersList)
+                    : t[language].usersList)}
                                 </h3>
                                 <div style={{display:'flex', gap:8}}>
-                  {/* Nút tạo user cho CustomerAdmin */}
-                  {role === 'CustomerAdmin' && (
-                    <div style={{position:'relative'}}>
-                      <button
-                        className="btn"
-                        onClick={() => { alert('Tính năng sẽ được triển khai lại sau.'); }}
-                        style={{background:'#7c3aed', color:'#fff'}}
-                      >
-                        {t[language].createUser}
-                      </button>
-                    </div>
-                  )}
+                  {/* Đã gỡ nút tạo user cho role khách hàng */}
                   
                   {/* Button tạo nhân sự nội bộ */}
                   {showInternalForm(role) && activeTab === 'users' && (
@@ -365,7 +345,7 @@ export default function UsersPartners() {
                                                     )}
                   
                   {/* Button tạo đối tác */}
-                  {activeTab === 'partners' && role !== 'CustomerAdmin' && (role === 'SystemAdmin' || role === 'BusinessAdmin' || role === 'admin') && (
+                  {activeTab === 'partners' && (role === 'SystemAdmin' || role === 'admin') && (
                     <div style={{position:'relative'}}>
                       <button
                         className="btn"
@@ -395,7 +375,7 @@ export default function UsersPartners() {
                                 <table className="table">
                                                                          <thead style={{background: '#f8fafc'}}>
                                          <tr>
-                      {(role === 'CustomerAdmin' || !['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
+                      {(!['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                         <>
                           <th>{translations[language].email}</th>
                           <th>{translations[language].fullName}</th>
@@ -413,7 +393,7 @@ export default function UsersPartners() {
                                          </tr>
                                      </thead>
                   
-                  {(role === 'CustomerAdmin' || !['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
+                  {(role === 'CustomerAdmin' || !['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                     <UserTable
                       users={filteredUsers}
                       role={role}

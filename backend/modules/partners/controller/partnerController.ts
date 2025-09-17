@@ -17,7 +17,7 @@ export class PartnerController {
 	}
 	async activate(req: AuthRequest, res: Response) { try { await service.activate(req.user!._id, req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
 	async deactivate(req: AuthRequest, res: Response) { try { await service.deactivate(req.user!._id, req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
-	async primaryAdmin(req: AuthRequest, res: Response) { try { return res.status(201).json(await service.createPrimaryAdmin(req.user!._id, req.params.id, req.body)); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
+	// primaryAdmin: đã vô hiệu hoá
 }
 
 export default new PartnerController();

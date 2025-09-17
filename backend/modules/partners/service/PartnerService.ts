@@ -43,20 +43,7 @@ export class PartnerService {
 		return true;
 	}
 
-	async createPrimaryAdmin(actorId: string, id: string, payload: { email: string; full_name: string }) {
-		const token = Math.random().toString(36).slice(2);
-		const user = await prisma.user.create({ data: {
-			email: payload.email,
-			full_name: payload.full_name,
-			role: 'CustomerAdmin',
-			partner_id: id,
-			status: 'INVITED',
-			invite_token: token,
-			invite_expires_at: new Date(Date.now() + 1000*60*60*24*7)
-		}});
-		await audit(actorId, 'USER.INVITED', 'PARTNER', id, { email: payload.email });
-		return user;
-	}
+	// createPrimaryAdmin: đã vô hiệu hoá
 }
 
 export default new PartnerService();

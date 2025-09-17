@@ -1,14 +1,15 @@
 ## Module Quản lý Người dùng & Đối tác
 
-Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machine tài khoản, audit, và hợp đồng API cho các module: Auth & Account, Users (nhân sự & user khách), Customers, Partners, Audit.
+Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machine tài khoản, audit, và hợp đồng API cho các module: Auth & Account, Users (nhân sự nội bộ), Customers, Partners, Audit.
 
 ### 0) Nguyên tắc kiến trúc & phạm vi
-- RBAC theo vai: SystemAdmin, BusinessAdmin, HRManager, SaleAdmin, CustomerAdmin, CustomerUser, Security, Dispatcher, Driver, YardManager, MaintenanceManager, Accountant, PartnerAdmin.
+- RBAC theo vai: SystemAdmin, SaleAdmin, Security, Dispatcher, Driver, YardManager, MaintenanceManager, Accountant.
 - Scope dữ liệu:
-  - tenant_id: Customer Admin/User chỉ thấy và thao tác dữ liệu trong tenant của mình.
-  - partner_id: user gắn partner chỉ thấy dữ liệu của partner đó.
-- State machine tài khoản: INVITED → ACTIVE → DISABLED; ACTIVE → LOCKED (unlock về ACTIVE).
-- Audit: mọi thao tác create/update/disable/role-change/login đều ghi log và có thể export CSV.
+  - SystemAdmin: Toàn quyền truy cập tất cả dữ liệu
+  - SaleAdmin: Chỉ quản lý users nội bộ
+  - Các role khác: Không có quyền truy cập module này
+- State machine tài khoản: ACTIVE ↔ DISABLED; ACTIVE ↔ LOCKED (unlock về ACTIVE).
+- Audit: mọi thao tác create/update/disable/enable/lock/unlock/delete đều ghi log.
 
 ### 1) Auth & Account (US 2.1–2.3)
 - Login chặn DISABLED/LOCKED; cấp JWT; cập nhật last_login_at; audit LOGIN_SUCCESS.
@@ -17,8 +18,8 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
 - Đăng ký/khởi tạo tài khoản:
   - Không cho đăng ký trực tiếp (POST /auth/register trả 403)
   - Cho phép kích hoạt qua link mời: POST `/auth/accept-invite { token, password, confirm }`
-  - Các role có thể được mời và tự kích hoạt: `CustomerAdmin`, `CustomerUser`, Partner Admin (user gắn `partner_id`), và nhân sự nội bộ khi HR/Sys mời.
-  - Các role chỉ có thể tạo qua hệ thống (không tự kích hoạt nếu chưa được mời): `SystemAdmin`, `BusinessAdmin`, `HRManager`, `SaleAdmin`.
+  - Các role có thể được mời và tự kích hoạt: Partner Admin (user gắn `partner_id`), và nhân sự nội bộ khi Sys mời.
+  - Các role chỉ có thể tạo qua hệ thống (không tự kích hoạt nếu chưa được mời): `SystemAdmin`, `SaleAdmin`.
 
 #### Endpoints
 - POST /auth/login
@@ -35,55 +36,45 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
   - 200: { success: true }
 
 ### 2) Users (US 1.1, 1.3)
-- HRManager: CRUD nhân sự nội bộ; disable; gán role nội bộ.
-- SaleAdmin: bootstrap user khách (Customer*).
-- CustomerAdmin: CRUD user trong tenant của mình; chỉ role Customer*.
-- Scope: Customer Admin/User chỉ thấy user cùng tenant. HR không thấy user thuộc khách/đối tác.
-- State: INVITED/ACTIVE/DISABLED/LOCKED; invite tạo token và hạn 7 ngày.
+- SystemAdmin: CRUD tất cả user; có toàn quyền.
+- SaleAdmin: CRUD user nội bộ; có quyền disable/enable.
+- State: ACTIVE/DISABLED/LOCKED; tạo user trực tiếp với trạng thái ACTIVE.
 
 #### Endpoints
-- GET /users?role=&tenant_id=&partner_id=&page=&limit= (JWT + RBAC)
-  - Quy tắc scope:
-    - Customer Admin/User: hệ thống auto filter theo tenant_id của họ, bỏ qua giá trị khác.
-    - HRManager: chỉ thấy user nội bộ (tenant_id null, partner_id null).
-- POST /users (JWT + RBAC)
-  - Tạo nhân sự nội bộ (role ∈ {SystemAdmin, SaleAdmin, Driver}) với mật khẩu bắt buộc.
+- GET /users?role=&tenant_id=&partner_id=&page=&limit= (JWT + RBAC: SystemAdmin, SaleAdmin)
+  - Quy tắc scope: SystemAdmin xem tất cả, SaleAdmin chỉ xem users nội bộ
+- POST /users (JWT + RBAC: SystemAdmin, SaleAdmin)
+  - Tạo nhân sự nội bộ (role ∈ {SystemAdmin, SaleAdmin, Driver, Security, Dispatcher}) với mật khẩu bắt buộc.
     - Body: { full_name, email, password, role }
     - Kết quả: user trạng thái ACTIVE + audit USER.CREATED
-  - SaleAdmin: tạo user khách (role ∈ {CustomerAdmin,CustomerUser}).
-    - Body: { full_name, email, role, tenant_id }
-  - CustomerAdmin: tạo user cùng tenant (role ∈ {CustomerAdmin,CustomerUser})
-    - Body: { full_name, email, role, tenant_id? } (tenant_id bị ép về tenant của người tạo)
-  - Đối với user khách: trạng thái INVITED + audit USER.INVITED (không gửi email tự động)
   
   Code mapping (Users API):
   - Routes: `backend/modules/users/controller/userRoutes.ts`
-  - Controller: `backend/modules/users/controller/userController.ts` (method `create`, `update`, `disable`, `enable`, `lock`, `unlock`)
-  - DTO: `backend/modules/users/dto/UserDtos.ts` (`createEmployeeSchema`, `createCustomerUserSchema`, `updateUserSchema`)
-  - Service: `backend/modules/users/service/UserService.ts` (`createByHR` tạo user ACTIVE với `password_hash`, `createCustomerUser`, `disable/enable/lock/unlock`)
+  - Controller: `backend/modules/users/controller/userController.ts` (method `create`, `update`, `disable`, `enable`, `lock`, `unlock`, `delete`)
+  - DTO: `backend/modules/users/dto/UserDtos.ts` (`createEmployeeSchema`, `updateUserSchema`)
+  - Service: `backend/modules/users/service/UserService.ts` (`createByHR` tạo user ACTIVE với `password_hash`, `disable/enable/lock/unlock/delete`)
   - Auth types: `backend/shared/middlewares/auth.ts` (kiểu `AppRole` — gồm `Security`, `Dispatcher`)
-- PATCH /users/:id (JWT + RBAC)
-  - Cập nhật: { full_name?, role? } (đổi role chỉ cho SystemAdmin/BusinessAdmin)
-  - Không cho đổi tenant_id/partner_id nếu không phải SystemAdmin/BusinessAdmin
-- PATCH /users/:id/disable | /enable (JWT + RBAC)
+- PATCH /users/:id (JWT + RBAC: SystemAdmin)
+  - Cập nhật: { full_name?, role? } (đổi role chỉ cho SystemAdmin)
+  - Không cho đổi tenant_id/partner_id nếu không phải SystemAdmin
+- PATCH /users/:id/disable | /enable (JWT + RBAC: SystemAdmin, SaleAdmin)
   - Chuyển DISABLED hoặc ACTIVE; audit USER.DISABLED/USER.ENABLED
-- PATCH /users/:id/lock | /unlock (JWT + RBAC cao)
+- PATCH /users/:id/lock | /unlock (JWT + RBAC: SystemAdmin)
   - Chuyển LOCKED hoặc ACTIVE; audit USER.LOCKED/USER.UNLOCKED
-- Lưu ý về invite token
-  - Hệ thống tạo `invite_token` khi tạo user (trạng thái `INVITED`) và ghi audit `USER.INVITED`.
-  - Không hỗ trợ API gửi (hoặc gửi lại) lời mời qua email. Quản trị viên chủ động cung cấp token cho người dùng nếu cần.
+- DELETE /users/:id (JWT + RBAC: SystemAdmin)
+  - Xóa user (chỉ user đã DISABLED); audit USER.DELETED
 
 ### 3) Customers (US 1.2)
+- SystemAdmin: tạo/sửa/disable khách hàng.
 - SaleAdmin: tạo/sửa/disable khách hàng.
 - Unique: tax_code không trùng.
-- Auto-provision: khi tạo customer có contact_email → tạo CustomerAdmin ở trạng thái INVITED.
 - Disable: chuyển INACTIVE, không xóa (giữ lịch sử).
 
 #### Endpoints
-- GET /customers?status=&page=&limit= (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
-- POST /customers (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
+- GET /customers?status=&page=&limit= (JWT + RBAC: SystemAdmin/SaleAdmin)
+- POST /customers (JWT + RBAC: SystemAdmin/SaleAdmin)
   - Body: { name, tax_code, address?, contact_email? }
-  - 201: customer; audit CUSTOMER.CREATED (+ USER.INVITED nếu auto-provision)
+  - 201: customer; audit CUSTOMER.CREATED
 - PATCH /customers/:id (JWT + RBAC)
   - Body: { name?, address?, contact_email? }
   - audit CUSTOMER.UPDATED
@@ -98,34 +89,28 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
 ### 4) Partners (US 9.2)
 - Lifecycle: DRAFT → ACTIVE → INACTIVE
 - Unique: name không trùng.
-- Primary admin: tạo user INVITED gắn partner_id.
+- **LƯU Ý**: Tính năng tạo primary admin đã bị vô hiệu hóa.
 
 #### Endpoints
-Hiện tại mục "Đối tác" trên FE đang ở trạng thái UI-only (không dùng API partners). Endpoint liệt kê đối tác cũ theo customers đã được TẠM GỠ để làm lại.
-
-Tạm thời:
-- ĐÃ GỠ `GET /customers/partners` (mapping cũ). Xem code:
-  - `backend/modules/customers/controller/customerRoutes.ts` (đã comment route)
-  - `backend/modules/customers/controller/customerController.ts` (đã comment `listPartners`)
-  - `backend/modules/customers/service/CustomerService.ts` (đã comment `listPartners`)
-
-Định hướng (sau khi làm lại partners API chuẩn):
-- GET /partners?type=&status=&page=&limit= (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
-- POST /partners (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
+- GET /partners?type=&status=&page=&limit= (JWT + RBAC: SystemAdmin/SaleAdmin)
+- POST /partners (JWT + RBAC: SystemAdmin/SaleAdmin)
   - Body: { type, name, tax_code?, contact_email? }
   - 201: partner DRAFT; audit PARTNER.CREATED
-- PATCH /partners/:id (JWT + RBAC: SystemAdmin/BusinessAdmin)
+- PATCH /partners/:id (JWT + RBAC: SystemAdmin)
   - audit PARTNER.UPDATED
-- POST /partners/:id/activate (JWT + RBAC: SystemAdmin/BusinessAdmin)
+- POST /partners/:id/activate (JWT + RBAC: SystemAdmin)
   - audit PARTNER.ACTIVATED
-- POST /partners/:id/deactivate (JWT + RBAC: SystemAdmin/BusinessAdmin)
+- POST /partners/:id/deactivate (JWT + RBAC: SystemAdmin)
   - audit PARTNER.DEACTIVATED
-- POST /partners/:id/primary-admin (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
-  - Body: { email, full_name }
-  - 201: user CustomerAdmin (partner) ở trạng thái INVITED; audit USER.INVITED
+  
+  Code mapping (Partners API):
+  - Routes: `backend/modules/partners/controller/partnerRoutes.ts`
+  - Controller: `backend/modules/partners/controller/partnerController.ts`
+  - Service: `backend/modules/partners/service/PartnerService.ts`
+  - DTO: `backend/modules/partners/dto/PartnerDtos.ts`
 
 ### 5) Audit (US 8.5)
-- Ghi log cho: USER.INVITED|ACTIVATED|DISABLED|LOCKED|ROLE_CHANGED|ENABLED|UNLOCKED, CUSTOMER.CREATED|UPDATED|DISABLED, PARTNER.CREATED|ACTIVATED|DEACTIVATED, LOGIN_SUCCESS.
+- Ghi log cho: USER.CREATED|DISABLED|ENABLED|LOCKED|UNLOCKED|ROLE_CHANGED|DELETED, CUSTOMER.CREATED|UPDATED|DISABLED, PARTNER.CREATED|ACTIVATED|DEACTIVATED, LOGIN_SUCCESS.
 - Export CSV theo bộ lọc.
 
 #### Endpoint
@@ -135,26 +120,25 @@ Tạm thời:
 ### 6) Validation & Rule chặn
 - email unique; customers.tax_code unique; partners.name unique.
 - Không cho chọn role ngoài nhóm hợp lệ theo người tạo.
-- Không đổi tenant_id/partner_id nếu không có quyền Business/System Admin.
+- Không đổi tenant_id/partner_id nếu không có quyền System Admin.
 - DISABLED/LOCKED không login.
 - Disable customer: chuyển INACTIVE, không xóa.
+- Chỉ có thể xóa user đã bị DISABLED.
 
 ### 7) Ví dụ payload
+- POST /users (tạo nhân sự nội bộ)
+```json
+{ "full_name": "Nguyễn Văn A", "email": "nguyenvana@company.com", "password": "password123", "role": "Driver" }
+```
+
 - POST /customers
 ```json
 { "name": "ACME Logistics", "tax_code": "0312345678", "address": "Q1, HCMC", "contact_email": "ops@acme.com" }
 ```
-- POST /users (Customer Admin tạo user cùng tenant)
-```json
-{ "email": "user@acme.com", "full_name": "Nguyen Van A", "role": "CustomerUser" }
-```
+ 
 - POST /partners
 ```json
 { "type": "TRUCKING", "name": "XYZ Transport", "tax_code": "0400123456", "contact_email": "hello@xyz.com" }
-```
-- POST /partners/{id}/primary-admin
-```json
-{ "email": "admin@xyz.com", "full_name": "Pham B" }
 ```
 
 ### 8) Mapping code
@@ -162,15 +146,11 @@ Tạm thời:
 - Middlewares: `shared/middlewares/auth.ts`, `rbac.ts`, `audit.ts`
 - Server: `backend/main.ts` mount routes: `/auth`, `/users`, `/customers`, `/partners`, `/audit`.
 
-Tình trạng hiện tại mục ĐỐI TÁC (được gỡ tạm):
-- `backend/modules/customers/controller/customerRoutes.ts`: đã comment route `GET /customers/partners`.
-- `backend/modules/customers/controller/customerController.ts`: đã bỏ hàm `listPartners`.
-- `backend/modules/customers/service/CustomerService.ts`: đã bỏ logic `listPartners`.
 
 ### 9) Checklist QA
-- HRManager: tạo/sửa/disable nhân sự nội bộ; không thấy dữ liệu khách/đối tác.
-- SaleAdmin: tạo khách (MST không trùng) + auto-provision CustomerAdmin INVITED; disable khách giữ lịch sử.
-- CustomerAdmin: CRUD user trong tenant; list filter đúng tenant.
+- SystemAdmin: CRUD tất cả user và partners; có toàn quyền.
+- SaleAdmin: tạo khách (MST không trùng); disable khách giữ lịch sử; tạo partners; disable/enable users.
 - Auth: login/change password đúng policy và chặn DISABLED/LOCKED.
-- Partners: lifecycle & primary admin invite.
+- Partners: lifecycle (không có primary admin invite).
 - Audit: có log và export CSV.
+- User management: tạo user với trạng thái ACTIVE, disable/enable/lock/unlock/delete.

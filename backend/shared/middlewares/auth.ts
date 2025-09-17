@@ -9,7 +9,6 @@ export type AppRole =
   | 'SaleAdmin'
   | 'CustomerAdmin'
   | 'CustomerUser'
-  | 'PartnerAdmin'
   | 'Security'
   | 'YardManager'
   | 'MaintenanceManager'

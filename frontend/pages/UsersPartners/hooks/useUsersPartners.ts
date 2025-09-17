@@ -33,9 +33,7 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
   const [userCompanyMap, setUserCompanyMap] = useState<{[key: string]: string}>({});
 
   // API URLs
-  const usersUrl = role === 'CustomerAdmin' && currentUser?.tenant_id 
-    ? `/users?tenant_id=${currentUser.tenant_id}&page=1&limit=50`
-    : '/users?role=&page=1&limit=50';
+  const usersUrl = '/users?role=&page=1&limit=50';
   
   const { data: users } = useSWR(canViewUsersPartners(role) ? [usersUrl] : null, ([u]) => fetcher(u));
   // Đã tạm gỡ tính năng Đối tác: không gọi API partners
@@ -43,10 +41,7 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
 
   // Filter users
   const filteredUsers = (users?.data || []).filter((u: User) => {
-    if (role === 'CustomerAdmin') {
-      return u.tenant_id === currentUser?.tenant_id;
-    }
-    return !['CustomerAdmin', 'PartnerAdmin', 'CustomerUser'].includes(u.role);
+    return true; // Không lọc theo role khách hàng nữa vì không hỗ trợ
   });
 
   // Functions
@@ -84,18 +79,8 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
         setTimeout(() => setMessage(''), 3000);
       }
       
-      // Refresh danh sách trong modal
-      if (selectedCompany) {
-        const response = await api.get(`/users?tenant_id=${selectedCompany.id}&page=1&limit=100`);
-        setCompanyUsers(response.data?.data || []);
-      }
-      
-      // Refresh bảng chính với URL chính xác
-      if (role === 'CustomerAdmin' && currentUser?.tenant_id) {
-        mutate([`/users?tenant_id=${currentUser.tenant_id}&page=1&limit=50`]);
-      } else {
-        mutate(['/users?role=&page=1&limit=50']);
-      }
+      // Refresh bảng chính
+      mutate(['/users?role=&page=1&limit=50']);
       // partners đã tạm gỡ
     }catch(e:any){ 
       setMessage(e?.response?.data?.message || `Lỗi ${action}`); 
@@ -113,12 +98,8 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
         await api.patch(`/users/${id}/${action}`);
         setMessage(`Đã ${action} user`);
       }
-      // Refresh users với URL chính xác
-      if (role === 'CustomerAdmin' && currentUser?.tenant_id) {
-        mutate([`/users?tenant_id=${currentUser.tenant_id}&page=1&limit=50`]);
-      } else {
-        mutate(['/users?role=&page=1&limit=50']);
-      }
+      // Refresh users
+      mutate(['/users?role=&page=1&limit=50']);
       // partners đã tạm gỡ
     }catch(e:any){ 
       setMessage(e?.response?.data?.message || `Lỗi ${action}`); 

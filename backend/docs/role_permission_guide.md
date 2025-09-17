@@ -38,27 +38,22 @@
 - Tạo yêu cầu dịch vụ cho công ty mình.
 - Xem trạng thái yêu cầu, hóa đơn, chứng từ liên quan.
 
-### 1.7. **PartnerAdmin**
-
-- Quản lý user thuộc đối tác (partner\_id).
-- Xem dữ liệu thuộc đối tác mình.
-
-### 1.8. **Bảo vệ (Security)**
+### 1.7. **Bảo vệ (Security)**
 
 - Đối chiếu chứng từ với lịch hẹn.
 - Thực hiện Check-in/Check-out, in phiếu Gate IN/OUT.
 
-### 1.9. **Quản lý bãi (Yard Manager)**
+### 1.8. **Quản lý bãi (Yard Manager)**
 
 - Quản lý sơ đồ bãi, block, vị trí container.
 - Thiết lập quy tắc nhập/xuất bãi.
 
-### 1.10. **Quản lý bảo trì (Maintenance Manager)**
+### 1.9. **Quản lý bảo trì (Maintenance Manager)**
 
 - Quản lý danh mục vật tư, lập kế hoạch sửa chữa.
 - Nhận yêu cầu kiểm cont khi Check-in.
 
-### 1.11. **Kế toán (Accountant)**
+### 1.10. **Kế toán (Accountant)**
 
 - Xem và xử lý báo cáo doanh thu, công nợ.
 - Xác nhận thanh toán.
@@ -67,24 +62,23 @@
 
 ## 2. Phân quyền thao tác theo module
 
-| Module                        | SystemAdmin | BusinessAdmin | HRManager  | SaleAdmin | CustomerAdmin | CustomerUser | PartnerAdmin | Security | Yard Manager | Maintenance Manager | Accountant |
-| ----------------------------- | ----------- | ------------- | ---------- | --------- | ------------- | ------------ | ------------ | -------- | ------------ | ------------------- | ---------- |
-| Quản lý người dùng            | ✅           | ✅             | ✅ (nội bộ) | ✅ (khách) | ✅ (tenant)    | ❌            | ✅ (partner)  | ❌        | ❌            | ❌                   | ❌          |
-| Quản lý khách hàng            | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌            | ❌        | ❌            | ❌                   | ❌          |
-| Quản lý đối tác               | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ✅            | ❌        | ❌            | ❌                   | ❌          |
-| Yêu cầu dịch vụ (tạo/quản lý) | ✅           | ✅             | ❌          | ✅         | ✅             | ✅            | ✅            | ❌        | ❌            | ❌                   | ❌          |
-| Quản lý hãng tàu, hãng xe     | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌            | ❌        | ❌            | ❌                   | ❌          |
-| Quản lý vật tư bảo trì        | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ❌            | ❌        | ❌            | ✅                   | ❌          |
-| Quản lý sơ đồ bãi             | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ❌            | ❌        | ✅            | ❌                   | ❌          |
-| Check-in/Check-out            | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ❌            | ✅        | ❌            | ❌                   | ❌          |
-| Xuất báo cáo                  | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌            | ❌        | ❌            | ❌                   | ✅          |
+| Module                        | SystemAdmin | BusinessAdmin | HRManager  | SaleAdmin | CustomerAdmin | CustomerUser | Security | Yard Manager | Maintenance Manager | Accountant |
+| ----------------------------- | ----------- | ------------- | ---------- | --------- | ------------- | ------------ | -------- | ------------ | ------------------- | ---------- |
+| Quản lý người dùng            | ✅           | ✅             | ✅ (nội bộ) | ✅ (khách) | ✅ (tenant)    | ❌            | ❌        | ❌            | ❌                   | ❌          |
+| Quản lý khách hàng            | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌        | ❌            | ❌                   | ❌          |
+| Quản lý đối tác               | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌        | ❌            | ❌                   | ❌          |
+| Yêu cầu dịch vụ (tạo/quản lý) | ✅           | ✅             | ❌          | ✅         | ✅             | ✅            | ❌        | ❌            | ❌                   | ❌          |
+| Quản lý hãng tàu, hãng xe     | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌        | ❌            | ❌                   | ❌          |
+| Quản lý vật tư bảo trì        | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ❌        | ❌            | ✅                   | ❌          |
+| Quản lý sơ đồ bãi             | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ❌        | ✅            | ❌                   | ❌          |
+| Check-in/Check-out            | ✅           | ✅             | ❌          | ❌         | ❌             | ❌            | ✅        | ❌            | ❌                   | ❌          |
+| Xuất báo cáo                  | ✅           | ✅             | ❌          | ✅         | ❌             | ❌            | ❌        | ❌            | ❌                   | ✅          |
 
 ---
 
 ## 3. Quy tắc Scope dữ liệu
 
 - **tenant\_id**: Customer Admin/User chỉ thao tác trong tenant của mình.
-- **partner\_id**: PartnerAdmin và user thuộc đối tác chỉ thao tác trong partner\_id của mình.
 - **Internal (nội bộ)**: HRManager, SystemAdmin, BusinessAdmin, SaleAdmin có thể truy cập dữ liệu chung.
 
 ---

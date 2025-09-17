@@ -57,10 +57,9 @@ components/
 
 ### 5. User Management Components 🆕
 
-**Mục đích:** User và partner management với email integration
+**Mục đích:** User và partner management
 
-- `UsersPartners` - Main user management page với email invitation
-- Email notification system integration
+- `UsersPartners` - Main user management page
 - RBAC-based form visibility
 
 ## 🎨 Design Principles

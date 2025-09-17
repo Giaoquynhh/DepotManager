@@ -21,7 +21,6 @@ backend/
 │  │  ├─ rbac.ts                # Phân quyền theo vai (RBAC)
 │  │  └─ audit.ts               # Ghi nhật ký (Audit)
 │  ├─ services/
-│  │  └─ EmailService.ts        # Email service (SMTP, templates, user invitation)
 │  └─ utils/
 │     ├─ passwordPolicy.ts      # Chính sách mật khẩu
 │     ├─ pagination.ts          # Tiện ích phân trang
@@ -132,13 +131,6 @@ backend/
   - `JWT_SECRET=dev-secret`
   - `JWT_EXPIRES_IN=24h`
   - `MONGODB_URI=mongodb://localhost:27017/container_manager` (di sản, không còn dùng)
-  - **Email Configuration:**
-    - `SMTP_HOST=smtp.gmail.com`
-    - `SMTP_PORT=587`
-    - `SMTP_SECURE=false`
-    - `SMTP_USER=your-email@gmail.com`
-    - `SMTP_PASS=your-app-password`
-    - `FRONTEND_URL=http://localhost:5002`
 - Lưu ý: Backend hiện dùng Prisma/PostgreSQL.
 
 ### Quy ước đặt tên
@@ -283,7 +275,6 @@ Client → Route → `authenticate` (nếu cần) → `requireRoles` (nếu cầ
   - `shared/middlewares/rbac.ts` (RBAC/Scope)
   - `shared/middlewares/audit.ts` (Audit helper)
 - Services:
-  - `shared/services/EmailService.ts` (SMTP, email templates, user invitation)
 - Utils:
   - `shared/utils/passwordPolicy.ts`
   - `shared/utils/pagination.ts`

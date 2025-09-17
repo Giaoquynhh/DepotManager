@@ -296,7 +296,7 @@ db.documents.find({request_id: "request_id", type: "EXPORT_DOC"})
 7. **Batch Processing**: Xử lý files theo batch để tối ưu performance
 
 ### Integration Opportunities
-1. **Email Notifications**: Gửi email khi status thay đổi
+1. **In-App Notifications**: Thông báo trong ứng dụng khi status thay đổi
 2. **SMS Alerts**: Gửi SMS cho khách hàng
 3. **Webhook**: Trigger external systems
 4. **Analytics**: Track user behavior patterns
