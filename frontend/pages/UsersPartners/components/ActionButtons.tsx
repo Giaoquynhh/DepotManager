@@ -62,19 +62,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         </button>
       )}
       
-      <button 
-        className="btn btn-sm" 
-        style={{
-          background: '#0891b2',
-          color: 'white',
-          fontSize: '12px',
-          padding: '4px 8px'
-        }}
-        title={translations[language].resendTooltip} 
-        onClick={() => handleAction('invite')}
-      >
-        {translations[language].resendInvite}
-      </button>
       
       {user.status === 'DISABLED' && canDeleteUsers(role) && (
         <button 

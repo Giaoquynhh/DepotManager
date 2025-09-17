@@ -12,6 +12,8 @@ export const getRoleDisplayName = (role: string, language: 'vi' | 'en' = 'vi') =
       CustomerAdmin: translations.vi.customerAdminLabel,
       CustomerUser: translations.vi.customerUserLabel,
       PartnerAdmin: translations.vi.partnerAdminLabel,
+      Security: 'Nhân viên bảo vệ',
+      Dispatcher: 'Nhân viên điều độ',
     },
     en: {
       SystemAdmin: translations.en.systemAdminLabel,
@@ -22,6 +24,8 @@ export const getRoleDisplayName = (role: string, language: 'vi' | 'en' = 'vi') =
       CustomerAdmin: translations.en.customerAdminLabel,
       CustomerUser: translations.en.customerUserLabel,
       PartnerAdmin: translations.en.partnerAdminLabel,
+      Security: 'Security',
+      Dispatcher: 'Dispatcher',
     }
   };
   return roleMap[language][role as keyof typeof roleMap.vi] || role;

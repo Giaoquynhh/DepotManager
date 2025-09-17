@@ -12,6 +12,8 @@ interface CreateEmployeeModalProps {
   setEmpFullName: (value: string) => void;
   empEmail: string;
   setEmpEmail: (value: string) => void;
+  empPassword: string;
+  setEmpPassword: (value: string) => void;
   empRole: string;
   setEmpRole: (value: string) => void;
   onCreateEmployee: () => void;
@@ -27,6 +29,8 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   setEmpFullName,
   empEmail,
   setEmpEmail,
+  empPassword,
+  setEmpPassword,
   empRole,
   setEmpRole,
   onCreateEmployee,
@@ -52,12 +56,18 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           value={empEmail} 
           onChange={e => setEmpEmail(e.target.value)} 
         />
+        <input 
+          type="password" 
+          placeholder={translations[language].passwordPlaceholder} 
+          value={empPassword} 
+          onChange={e => setEmpPassword(e.target.value)} 
+        />
         <select value={empRole} onChange={e => setEmpRole(e.target.value)}>
           <option value="SystemAdmin">{getRoleDisplayName('SystemAdmin')}</option>
-          <option value="BusinessAdmin">{getRoleDisplayName('BusinessAdmin')}</option>
-          <option value="HRManager">{getRoleDisplayName('HRManager')}</option>
           <option value="SaleAdmin">{getRoleDisplayName('SaleAdmin')}</option>
           <option value="Driver">{getRoleDisplayName('Driver')}</option>
+          <option value="Security">{getRoleDisplayName('Security')}</option>
+          <option value="Dispatcher">{getRoleDisplayName('Dispatcher')}</option>
         </select>
         <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
           <button className="btn btn-outline" onClick={onCancel}>

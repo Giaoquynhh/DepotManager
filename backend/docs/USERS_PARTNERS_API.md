@@ -3,7 +3,7 @@
 Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machine tài khoản, audit, và hợp đồng API cho các module: Auth & Account, Users (nhân sự & user khách), Customers, Partners, Audit.
 
 ### 0) Nguyên tắc kiến trúc & phạm vi
-- RBAC theo vai: SystemAdmin, BusinessAdmin, HRManager, SaleAdmin, CustomerAdmin, CustomerUser.
+- RBAC theo vai: SystemAdmin, BusinessAdmin, HRManager, SaleAdmin, CustomerAdmin, CustomerUser, Security, Dispatcher, Driver, YardManager, MaintenanceManager, Accountant, PartnerAdmin.
 - Scope dữ liệu:
   - tenant_id: Customer Admin/User chỉ thấy và thao tác dữ liệu trong tenant của mình.
   - partner_id: user gắn partner chỉ thấy dữ liệu của partner đó.
@@ -47,13 +47,21 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
     - Customer Admin/User: hệ thống auto filter theo tenant_id của họ, bỏ qua giá trị khác.
     - HRManager: chỉ thấy user nội bộ (tenant_id null, partner_id null).
 - POST /users (JWT + RBAC)
-  - HRManager: tạo nhân sự nội bộ (role ∈ {SystemAdmin,BusinessAdmin,HRManager,SaleAdmin}).
-    - Body: { full_name, email, role }
+  - Tạo nhân sự nội bộ (role ∈ {SystemAdmin, SaleAdmin, Driver}) với mật khẩu bắt buộc.
+    - Body: { full_name, email, password, role }
+    - Kết quả: user trạng thái ACTIVE + audit USER.CREATED
   - SaleAdmin: tạo user khách (role ∈ {CustomerAdmin,CustomerUser}).
     - Body: { full_name, email, role, tenant_id }
   - CustomerAdmin: tạo user cùng tenant (role ∈ {CustomerAdmin,CustomerUser})
     - Body: { full_name, email, role, tenant_id? } (tenant_id bị ép về tenant của người tạo)
-  - Kết quả: user trạng thái INVITED + audit USER.INVITED
+  - Đối với user khách: trạng thái INVITED + audit USER.INVITED (không gửi email tự động)
+  
+  Code mapping (Users API):
+  - Routes: `backend/modules/users/controller/userRoutes.ts`
+  - Controller: `backend/modules/users/controller/userController.ts` (method `create`, `update`, `disable`, `enable`, `lock`, `unlock`)
+  - DTO: `backend/modules/users/dto/UserDtos.ts` (`createEmployeeSchema`, `createCustomerUserSchema`, `updateUserSchema`)
+  - Service: `backend/modules/users/service/UserService.ts` (`createByHR` tạo user ACTIVE với `password_hash`, `createCustomerUser`, `disable/enable/lock/unlock`)
+  - Auth types: `backend/shared/middlewares/auth.ts` (kiểu `AppRole` — gồm `Security`, `Dispatcher`)
 - PATCH /users/:id (JWT + RBAC)
   - Cập nhật: { full_name?, role? } (đổi role chỉ cho SystemAdmin/BusinessAdmin)
   - Không cho đổi tenant_id/partner_id nếu không phải SystemAdmin/BusinessAdmin
@@ -61,8 +69,9 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
   - Chuyển DISABLED hoặc ACTIVE; audit USER.DISABLED/USER.ENABLED
 - PATCH /users/:id/lock | /unlock (JWT + RBAC cao)
   - Chuyển LOCKED hoặc ACTIVE; audit USER.LOCKED/USER.UNLOCKED
-- POST /users/:id/send-invite (JWT + RBAC)
-  - Tạo lại token invite; audit USER.INVITED
+- Lưu ý về invite token
+  - Hệ thống tạo `invite_token` khi tạo user (trạng thái `INVITED`) và ghi audit `USER.INVITED`.
+  - Không hỗ trợ API gửi (hoặc gửi lại) lời mời qua email. Quản trị viên chủ động cung cấp token cho người dùng nếu cần.
 
 ### 3) Customers (US 1.2)
 - SaleAdmin: tạo/sửa/disable khách hàng.
@@ -80,6 +89,11 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
   - audit CUSTOMER.UPDATED
 - PATCH /customers/:id/disable (JWT + RBAC)
   - audit CUSTOMER.DISABLED
+  
+  Code mapping (Customers):
+  - Routes: `backend/modules/customers/controller/customerRoutes.ts`
+  - Controller: `backend/modules/customers/controller/customerController.ts`
+  - Service: `backend/modules/customers/service/CustomerService.ts`
 
 ### 4) Partners (US 9.2)
 - Lifecycle: DRAFT → ACTIVE → INACTIVE
@@ -87,6 +101,15 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
 - Primary admin: tạo user INVITED gắn partner_id.
 
 #### Endpoints
+Hiện tại mục "Đối tác" trên FE đang ở trạng thái UI-only (không dùng API partners). Endpoint liệt kê đối tác cũ theo customers đã được TẠM GỠ để làm lại.
+
+Tạm thời:
+- ĐÃ GỠ `GET /customers/partners` (mapping cũ). Xem code:
+  - `backend/modules/customers/controller/customerRoutes.ts` (đã comment route)
+  - `backend/modules/customers/controller/customerController.ts` (đã comment `listPartners`)
+  - `backend/modules/customers/service/CustomerService.ts` (đã comment `listPartners`)
+
+Định hướng (sau khi làm lại partners API chuẩn):
 - GET /partners?type=&status=&page=&limit= (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
 - POST /partners (JWT + RBAC: SystemAdmin/BusinessAdmin/SaleAdmin)
   - Body: { type, name, tax_code?, contact_email? }
@@ -138,6 +161,11 @@ Tài liệu này mô tả rõ kiến trúc, RBAC, scope dữ liệu, state machi
 - Cấu trúc thư mục: `backend/modules/{auth,users,customers,partners,audit}/...`
 - Middlewares: `shared/middlewares/auth.ts`, `rbac.ts`, `audit.ts`
 - Server: `backend/main.ts` mount routes: `/auth`, `/users`, `/customers`, `/partners`, `/audit`.
+
+Tình trạng hiện tại mục ĐỐI TÁC (được gỡ tạm):
+- `backend/modules/customers/controller/customerRoutes.ts`: đã comment route `GET /customers/partners`.
+- `backend/modules/customers/controller/customerController.ts`: đã bỏ hàm `listPartners`.
+- `backend/modules/customers/service/CustomerService.ts`: đã bỏ logic `listPartners`.
 
 ### 9) Checklist QA
 - HRManager: tạo/sửa/disable nhân sự nội bộ; không thấy dữ liệu khách/đối tác.

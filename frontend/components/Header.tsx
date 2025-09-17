@@ -718,8 +718,6 @@ export default function Header() {
                                  <span>{t('sidebar.dashboard')}</span>
               </Link>
             )}
-
-
             {/* Maintenance - Repairs */}
             {(() => {
               const allow = canManageMaintenance(me?.role);

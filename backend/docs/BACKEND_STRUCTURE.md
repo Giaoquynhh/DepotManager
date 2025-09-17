@@ -117,7 +117,6 @@ backend/
 - `INVITED → ACTIVE → DISABLED`
 - `ACTIVE → LOCKED → ACTIVE` (unlock)
 - Invite có `invite_token`, `invite_expires_at` (7 ngày), audit `USER.INVITED`.
-- **Email Integration**: Tự động gửi email mời khi tạo user mới hoặc gửi lại lời mời.
 
 ### Audit & Logging
 - Audit: `modules/audit` ghi các sự kiện:
@@ -315,4 +314,3 @@ Client → Route → `authenticate` (nếu cần) → `requireRoles` (nếu cầ
 - Module 5: `docs/MODULE_5_YARD.md`
 - Module 7: `docs/MODULE_7_FINANCE.md`
 - Module 6: `docs/MODULE_6_MAINTENANCE.md`
-- Email Integration: `docs/EMAIL_INTEGRATION.md`

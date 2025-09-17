@@ -8,10 +8,8 @@ import { canViewUsersPartners, showInternalForm } from '@utils/rbac';
 // Import components
 import { TabNavigation } from './components/TabNavigation';
 import { UserTable } from './components/UserTable';
-import { PartnersTable } from './components/PartnersTable';
 import { CreateEmployeeModal } from './components/CreateEmployeeModal';
-import { CreatePartnerModal } from './components/CreatePartnerModal';
-import { CompanyUsersModal } from './components/CompanyUsersModal';
+import CreatePartnerModal from './components/CreatePartnerModal';
 
 // Import hooks and utilities
 import { useUsersPartners } from './hooks/useUsersPartners';
@@ -75,7 +73,6 @@ export default function UsersPartners() {
       enable: 'Bật lại',
       lock: 'Khóa',
       unlock: 'Mở khóa',
-      resendInvite: 'Gửi lại lời mời',
       emailSent: 'Email mời đã được gửi!',
       delete: 'Xóa',
       // Button tooltips
@@ -83,7 +80,6 @@ export default function UsersPartners() {
       enableTooltip: 'Mở lại quyền đăng nhập',
       lockTooltip: 'Khóa tạm thời',
       unlockTooltip: 'Cho phép đăng nhập trở lại',
-      resendTooltip: 'Gửi lại thư mời kích hoạt (tạo token mới)',
       deleteTooltip: 'Xóa vĩnh viễn tài khoản đã vô hiệu hóa',
       // Modal titles
       createEmployeeTitle: 'Tạo nhân sự nội bộ',
@@ -155,7 +151,6 @@ export default function UsersPartners() {
       enable: 'Enable',
       lock: 'Lock',
       unlock: 'Unlock',
-      resendInvite: 'Resend Invitation',
       emailSent: 'Invitation email sent!',
       delete: 'Delete',
       // Button tooltips
@@ -163,7 +158,6 @@ export default function UsersPartners() {
       enableTooltip: 'Restore login access',
       lockTooltip: 'Temporarily lock',
       unlockTooltip: 'Allow login again',
-      resendTooltip: 'Resend activation invitation (create new token)',
       deleteTooltip: 'Permanently delete disabled account',
       // Modal titles
       createEmployeeTitle: 'Create Internal Staff',
@@ -216,19 +210,6 @@ export default function UsersPartners() {
     // State
     showEmpForm,
     setShowEmpForm,
-    showPartnerForm,
-    setShowPartnerForm,
-    showCompanyUsersModal,
-    setShowCompanyUsersModal,
-    selectedCompany,
-    setSelectedCompany,
-    companyUsers,
-    setCompanyUsers,
-    modalInviteToken,
-    setModalInviteToken,
-    showCompanySearch,
-    setShowCompanySearch,
-    availableCompanies,
     message,
     lastInviteToken,
     // Form states
@@ -236,31 +217,54 @@ export default function UsersPartners() {
     setEmpFullName,
     empEmail,
     setEmpEmail,
+    empPassword,
+    setEmpPassword,
     empRole,
     setEmpRole,
-    partnerFullName,
-    setPartnerFullName,
-    partnerEmail,
-    setPartnerEmail,
-    partnerRole,
-    setPartnerRole,
-    partnerTenantId,
-    setPartnerTenantId,
-    partnerCompanyName,
-    setPartnerCompanyName,
     // Data
     users,
-    partners,
     filteredUsers,
     // Functions
-    loadAvailableCompanies,
-    selectCompany,
-    showCompanyUsers,
-    modalUserAction,
     userAction,
-    createEmployee,
-    createPartner
+    createEmployee
   } = useUsersPartners(role, currentUser, language, t);
+
+  // Local state for new partner modal (UI only)
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [customerCode, setCustomerCode] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [address, setAddress] = useState('');
+  const [taxCode, setTaxCode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [note, setNote] = useState('');
+  const [errorText, setErrorText] = useState('');
+
+  // Local partners list to display rows immediately after creating (no backend yet)
+  const [partnersLocal, setPartnersLocal] = useState<Array<{ code: string; name: string; address?: string; taxCode?: string; phone?: string; note?: string }>>([]);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  const validateAndCreate = () => {
+    if (!customerCode.trim() || !customerName.trim()) {
+      setErrorText('Vui lòng nhập Mã đối tác và Tên đối tác.');
+      return;
+    }
+    setErrorText('');
+    // Thêm ngay vào bảng hiển thị cục bộ
+    if (editIndex !== null) {
+      setPartnersLocal(prev => prev.map((p, i) => i === editIndex ? { code: customerCode.trim(), name: customerName.trim(), address, taxCode, phone, note } : p));
+    } else {
+      setPartnersLocal(prev => [{ code: customerCode.trim(), name: customerName.trim(), address, taxCode, phone, note }, ...prev]);
+    }
+    // Đóng modal và reset form
+    setShowPartnerModal(false);
+    setEditIndex(null);
+    setCustomerCode('');
+    setCustomerName('');
+    setAddress('');
+    setTaxCode('');
+    setPhone('');
+    setNote('');
+  };
 
 	useEffect(()=>{
 		if (typeof window !== 'undefined'){
@@ -275,22 +279,7 @@ export default function UsersPartners() {
 		}
 	}, []);
 
-  // Đóng dropdown khi click bên ngoài
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showCompanySearch) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('[data-company-search]')) {
-          setShowCompanySearch(false);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showCompanySearch]);
+  // Đã gỡ dropdown công ty, không còn hiệu ứng lắng nghe click ngoài
 
 	if (!canViewUsersPartners(role)) {
 		return (
@@ -333,43 +322,16 @@ export default function UsersPartners() {
                                 <div style={{display:'flex', gap:8}}>
                   {/* Nút tạo user cho CustomerAdmin */}
                   {role === 'CustomerAdmin' && (
-                                        <div style={{position:'relative'}}>
-                      <button 
-                        className="btn" 
-                        onClick={() => { 
-                          setShowPartnerForm(v => !v); 
-                          setShowEmpForm(false); 
-                        }} 
+                    <div style={{position:'relative'}}>
+                      <button
+                        className="btn"
+                        onClick={() => { alert('Tính năng sẽ được triển khai lại sau.'); }}
                         style={{background:'#7c3aed', color:'#fff'}}
                       >
                         {t[language].createUser}
                       </button>
-                      <CreatePartnerModal
-                        visible={showPartnerForm}
-                        onCancel={() => setShowPartnerForm(false)}
-                        language={language}
-                        translations={translations}
-                        partnerFullName={partnerFullName}
-                        setPartnerFullName={setPartnerFullName}
-                        partnerEmail={partnerEmail}
-                        setPartnerEmail={setPartnerEmail}
-                        partnerRole={partnerRole}
-                        setPartnerRole={setPartnerRole}
-                        partnerTenantId={partnerTenantId}
-                        setPartnerTenantId={setPartnerTenantId}
-                        partnerCompanyName={partnerCompanyName}
-                        setPartnerCompanyName={setPartnerCompanyName}
-                        showCompanySearch={showCompanySearch}
-                        setShowCompanySearch={setShowCompanySearch}
-                        availableCompanies={availableCompanies}
-                        onLoadAvailableCompanies={loadAvailableCompanies}
-                        onSelectCompany={selectCompany}
-                        onCreatePartner={createPartner}
-                        getRoleDisplayName={(role) => getRoleDisplayName(role, language)}
-                        role={role}
-                      />
-                                        </div>
-                                    )}
+                    </div>
+                  )}
                   
                   {/* Button tạo nhân sự nội bộ */}
                   {showInternalForm(role) && activeTab === 'users' && (
@@ -378,7 +340,6 @@ export default function UsersPartners() {
                         className="btn" 
                         onClick={() => { 
                           setShowEmpForm(v => !v); 
-                          setShowPartnerForm(false); 
                         }} 
                         style={{background:'#059669', color:'#fff'}}
                       >
@@ -393,6 +354,8 @@ export default function UsersPartners() {
                         setEmpFullName={setEmpFullName}
                         empEmail={empEmail}
                         setEmpEmail={setEmpEmail}
+                        empPassword={empPassword}
+                        setEmpPassword={setEmpPassword}
                         empRole={empRole}
                         setEmpRole={setEmpRole}
                         onCreateEmployee={createEmployee}
@@ -404,42 +367,26 @@ export default function UsersPartners() {
                   {/* Button tạo đối tác */}
                   {activeTab === 'partners' && role !== 'CustomerAdmin' && (role === 'SystemAdmin' || role === 'BusinessAdmin' || role === 'admin') && (
                     <div style={{position:'relative'}}>
-                      <button 
-                        className="btn" 
-                        onClick={() => { 
-                          setShowPartnerForm(v => !v); 
-                          setShowEmpForm(false); 
-                        }} 
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          // open create modal
+                          setEditIndex(null);
+                          setCustomerCode('');
+                          setCustomerName('');
+                          setAddress('');
+                          setTaxCode('');
+                          setPhone('');
+                          setNote('');
+                          setErrorText('');
+                          setShowPartnerModal(true);
+                        }}
                         style={{background:'#7c3aed', color:'#fff'}}
                       >
                         {translations[language].createPartner}
                       </button>
-                      <CreatePartnerModal
-                        visible={showPartnerForm}
-                        onCancel={() => setShowPartnerForm(false)}
-                        language={language}
-                        translations={translations}
-                        partnerFullName={partnerFullName}
-                        setPartnerFullName={setPartnerFullName}
-                        partnerEmail={partnerEmail}
-                        setPartnerEmail={setPartnerEmail}
-                        partnerRole={partnerRole}
-                        setPartnerRole={setPartnerRole}
-                        partnerTenantId={partnerTenantId}
-                        setPartnerTenantId={setPartnerTenantId}
-                        partnerCompanyName={partnerCompanyName}
-                        setPartnerCompanyName={setPartnerCompanyName}
-                        showCompanySearch={showCompanySearch}
-                        setShowCompanySearch={setShowCompanySearch}
-                        availableCompanies={availableCompanies}
-                        onLoadAvailableCompanies={loadAvailableCompanies}
-                        onSelectCompany={selectCompany}
-                        onCreatePartner={createPartner}
-                        getRoleDisplayName={(role) => getRoleDisplayName(role, language)}
-                        role={role}
-                      />
-                                        </div>
-                                    )}
+                    </div>
+                  )}
                                 </div>
                             </div>
               
@@ -458,9 +405,9 @@ export default function UsersPartners() {
                         </>
                       ) : (
                         <>
-                          <th>{translations[language].companyName}</th>
-                          <th>{translations[language].companyCode}</th>
-                          <th>{translations[language].accountCount}</th>
+                          <th>{translations[language].partnerCode}</th>
+                          <th>{translations[language].partnerName}</th>
+                          <th>{translations[language].actions}</th>
                         </>
                       )}
                                          </tr>
@@ -477,12 +424,31 @@ export default function UsersPartners() {
                       getStatusDisplayName={getStatusDisplayName}
                     />
                   ) : (
-                    <PartnersTable
-                      partners={partners?.data || []}
-                      language={language}
-                      translations={t}
-                      onCompanyClick={showCompanyUsers}
-                    />
+                    <tbody>
+                      {partnersLocal.map((p, idx) => (
+                        <tr key={p.code + idx}>
+                          <td style={{fontFamily:'monospace'}}>{p.code}</td>
+                          <td style={{fontWeight:600}}>{p.name}</td>
+                          <td>
+                            <div style={{display:'flex', gap:8}}>
+                              <button className="btn btn-xs" onClick={() => {
+                                // open edit modal with existing values
+                                setCustomerCode(p.code);
+                                setCustomerName(p.name);
+                                setAddress(p.address || '');
+                                setTaxCode(p.taxCode || '');
+                                setPhone(p.phone || '');
+                                setNote(p.note || '');
+                                setErrorText('');
+                                setEditIndex(idx);
+                                setShowPartnerModal(true);
+                              }}>Cập nhật</button>
+                              <button className="btn btn-xs btn-outline" onClick={() => setPartnersLocal(list => list.filter((x,i)=>i!==idx))}>Xóa</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   )}
 							</table>
                             </div>
@@ -520,24 +486,25 @@ export default function UsersPartners() {
                                 </div>
                             )}
               
-              {/* Company Users Modal */}
-              <CompanyUsersModal
-                visible={showCompanyUsersModal}
-                onCancel={() => {
-                  setShowCompanyUsersModal(false);
-                  setSelectedCompany(null);
-                  setCompanyUsers([]);
-                  setModalInviteToken('');
-                }}
-                selectedCompany={selectedCompany}
-                companyUsers={companyUsers}
-                modalInviteToken={modalInviteToken}
-                role={role}
-                language={language}
-                translations={t}
-                onModalUserAction={modalUserAction}
-                getRoleDisplayName={(role) => getRoleDisplayName(role, language)}
-                getStatusDisplayName={getStatusDisplayName}
+              {/* Modal & chức năng đối tác đã tạm gỡ bỏ */}
+              <CreatePartnerModal
+                visible={showPartnerModal}
+                onCancel={() => { setShowPartnerModal(false); setEditIndex(null); }}
+                onSubmit={validateAndCreate}
+                title={editIndex !== null ? 'Cập nhật đối tác' : 'Tạo đối tác'}
+                customerCode={customerCode}
+                setCustomerCode={setCustomerCode}
+                customerName={customerName}
+                setCustomerName={setCustomerName}
+                address={address}
+                setAddress={setAddress}
+                taxCode={taxCode}
+                setTaxCode={setTaxCode}
+                phone={phone}
+                setPhone={setPhone}
+                note={note}
+                setNote={setNote}
+                errorText={errorText}
               />
 						</Card>
 					</div>

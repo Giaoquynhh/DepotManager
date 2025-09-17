@@ -35,14 +35,6 @@ export class UserController {
 	async enable(req: AuthRequest, res: Response) { try { await service.enable((req as any).userDoc || (req.user as any), req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
 	async lock(req: AuthRequest, res: Response) { try { await service.lock((req as any).userDoc || (req.user as any), req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
 	async unlock(req: AuthRequest, res: Response) { try { await service.unlock((req as any).userDoc || (req.user as any), req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
-	async sendInvite(req: AuthRequest, res: Response) { 
-		try { 
-			const result = await service.sendInvite((req as any).userDoc || (req.user as any), req.params.id); 
-			return res.json({ success: true, ...result }); 
-		} catch (e: any) { 
-			return res.status(400).json({ message: e.message }); 
-		} 
-	}
 
 	async delete(req: AuthRequest, res: Response) {
 		try {

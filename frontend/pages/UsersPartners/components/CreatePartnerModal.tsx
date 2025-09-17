@@ -1,139 +1,103 @@
-// Create Partner Modal component
+// Simple Create Partner Modal (UI only)
 import React from 'react';
 import Modal from '@components/Modal';
-import { Language } from '../types';
-import { CompanySearch } from './CompanySearch';
 
 interface CreatePartnerModalProps {
   visible: boolean;
   onCancel: () => void;
-  language: Language;
-  translations: any;
-  partnerFullName: string;
-  setPartnerFullName: (value: string) => void;
-  partnerEmail: string;
-  setPartnerEmail: (value: string) => void;
-  partnerRole: string;
-  setPartnerRole: (value: string) => void;
-  partnerTenantId: string;
-  setPartnerTenantId: (value: string) => void;
-  partnerCompanyName: string;
-  setPartnerCompanyName: (value: string) => void;
-  showCompanySearch: boolean;
-  setShowCompanySearch: (value: boolean) => void;
-  availableCompanies: any[];
-  onLoadAvailableCompanies: () => void;
-  onSelectCompany: (company: any) => void;
-  onCreatePartner: () => void;
-  getRoleDisplayName: (role: string) => string;
-  role: string;
+  onSubmit: () => void;
+  title?: string;
+  // form fields
+  customerCode: string;
+  setCustomerCode: (v: string) => void;
+  customerName: string;
+  setCustomerName: (v: string) => void;
+  address: string;
+  setAddress: (v: string) => void;
+  taxCode: string;
+  setTaxCode: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+  note: string;
+  setNote: (v: string) => void;
+  errorText: string;
 }
 
 export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
   visible,
   onCancel,
-  language,
-  translations,
-  partnerFullName,
-  setPartnerFullName,
-  partnerEmail,
-  setPartnerEmail,
-  partnerRole,
-  setPartnerRole,
-  partnerTenantId,
-  setPartnerTenantId,
-  partnerCompanyName,
-  setPartnerCompanyName,
-  showCompanySearch,
-  setShowCompanySearch,
-  availableCompanies,
-  onLoadAvailableCompanies,
-  onSelectCompany,
-  onCreatePartner,
-  getRoleDisplayName,
-  role
+  onSubmit,
+  title,
+  customerCode,
+  setCustomerCode,
+  customerName,
+  setCustomerName,
+  address,
+  setAddress,
+  taxCode,
+  setTaxCode,
+  phone,
+  setPhone,
+  note,
+  setNote,
+  errorText
 }) => {
+  const Label: React.FC<{ text: string; required?: boolean }> = ({ text, required }) => (
+    <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+      {text}
+      {required && <span style={{ color: '#dc2626' }}> *</span>}
+    </label>
+  );
   return (
-    <Modal 
-      title={translations[language].createPartnerTitle} 
-      visible={visible} 
-      onCancel={onCancel} 
-      size="sm"
-    >
-      <div className="grid" style={{gap:12}}>
-        <input 
-          type="text" 
-          placeholder={translations[language].fullNamePlaceholder} 
-          value={partnerFullName} 
-          onChange={e => setPartnerFullName(e.target.value)} 
-        />
-        <input 
-          type="email" 
-          placeholder={translations[language].emailPlaceholder} 
-          value={partnerEmail} 
-          onChange={e => setPartnerEmail(e.target.value)} 
-        />
-        
-        {/* Chỉ hiển thị CompanySearch cho SystemAdmin/BusinessAdmin */}
-        {role !== 'CustomerAdmin' && (
-          <CompanySearch
-            value={partnerCompanyName}
-            onChange={setPartnerCompanyName}
-            showDropdown={showCompanySearch}
-            availableCompanies={availableCompanies}
-            onSelectCompany={onSelectCompany}
-            onToggleDropdown={() => {
-              onLoadAvailableCompanies();
-              setShowCompanySearch(!showCompanySearch);
-            }}
-            language={language}
-            translations={translations}
-          />
-        )}
-        
-        <select value={partnerRole} onChange={e => setPartnerRole(e.target.value)}>
-          <option value="CustomerUser">{getRoleDisplayName('CustomerUser')}</option>
-          <option value="CustomerAdmin">{getRoleDisplayName('CustomerAdmin')}</option>
-        </select>
-        
-        {role !== 'CustomerAdmin' && (
-          <>
-            <input 
-              type="text" 
-              placeholder={translations[language].tenantIdPlaceholder} 
-              value={partnerTenantId} 
-              onChange={e => setPartnerTenantId(e.target.value)} 
-            />
-            <div className="muted">{translations[language].tenantIdInfo}</div>
-          </>
-        )}
-        
-        {role === 'CustomerAdmin' && (
-          <div className="muted" style={{
-            padding: '8px 12px',
-            background: '#f0f9ff',
-            border: '1px solid #0ea5e9',
-            borderRadius: '6px',
-            color: '#0c4a6e',
-            fontSize: '14px'
-          }}>
-            Mã công ty và tên công ty sẽ tự động được gán từ tài khoản của bạn.
+    <Modal title={title || 'Tạo đối tác'} visible={visible} onCancel={onCancel} size="sm">
+      <div className="grid" style={{ gap: 12 }}>
+        <div>
+          <Label text="Mã đối tác" required />
+          <input type="text" value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="VD: CUS001" />
+        </div>
+        <div>
+          <Label text="Tên đối tác" required />
+          <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Tên khách hàng" />
+        </div>
+        <div>
+          <Label text="Địa chỉ" />
+          <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Địa chỉ" />
+        </div>
+        <div className="grid grid-cols-2" style={{ gap: 12 }}>
+          <div>
+            <Label text="MST" />
+            <input type="text" value={taxCode} onChange={e => setTaxCode(e.target.value)} placeholder="Mã số thuế" />
           </div>
+          <div>
+            <Label text="SDT" />
+            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Số điện thoại" />
+          </div>
+        </div>
+        <div>
+          <Label text="Ghi chú" />
+          <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú thêm" rows={3} />
+        </div>
+
+        {errorText && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#991b1b',
+            borderRadius: 6,
+            padding: '8px 12px',
+            fontSize: 13
+          }}>{errorText}</div>
         )}
-        
-        <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-          <button className="btn btn-outline" onClick={onCancel}>
-            {translations[language].close}
-          </button>
-          <button 
-            className="btn" 
-            onClick={onCreatePartner} 
-            style={{background:'#7c3aed', color:'#fff'}}
-          >
-            {translations[language].create}
-          </button>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button className="btn btn-outline" onClick={onCancel}>Hủy</button>
+          <button className="btn" style={{ background: '#7c3aed', color: '#fff' }} onClick={onSubmit}>Tạo</button>
         </div>
       </div>
     </Modal>
   );
 };
+
+export default CreatePartnerModal;
+
+
