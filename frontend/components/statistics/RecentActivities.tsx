@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface Activity {
   id: string;
@@ -27,41 +28,42 @@ const statusConfig = {
 };
 
 export const RecentActivities: React.FC<RecentActivitiesProps> = ({ activities }) => {
+  const { t } = useTranslation();
   // Mock data for demonstration
   const mockActivities: Activity[] = [
     {
       id: '1',
       type: 'container',
-      description: 'Container CTN001 đã hoàn thành xử lý',
-      timestamp: '2 phút trước',
+      description: t('pages.statistics.mockData.containerCompleted'),
+      timestamp: `2 ${t('pages.statistics.mockData.minutesAgo')}`,
       status: 'success',
     },
     {
       id: '2',
       type: 'customer',
-      description: 'Khách hàng ABC Corp đã tạo request mới',
-      timestamp: '15 phút trước',
+      description: t('pages.statistics.mockData.customerNewRequest'),
+      timestamp: `15 ${t('pages.statistics.mockData.minutesAgo')}`,
       status: 'info',
     },
     {
       id: '3',
       type: 'maintenance',
-      description: 'Phiếu sửa chữa #MT001 cần xử lý',
-      timestamp: '1 giờ trước',
+      description: t('pages.statistics.mockData.maintenancePending'),
+      timestamp: `1 ${t('pages.statistics.mockData.hoursAgo')}`,
       status: 'warning',
     },
     {
       id: '4',
       type: 'financial',
-      description: 'Hóa đơn #INV001 đã được thanh toán',
-      timestamp: '2 giờ trước',
+      description: t('pages.statistics.mockData.invoicePaid'),
+      timestamp: `2 ${t('pages.statistics.mockData.hoursAgo')}`,
       status: 'success',
     },
     {
       id: '5',
       type: 'container',
-      description: 'Container CTN002 vào cổng thành công',
-      timestamp: '3 giờ trước',
+      description: t('pages.statistics.mockData.containerGateIn'),
+      timestamp: `3 ${t('pages.statistics.mockData.hoursAgo')}`,
       status: 'success',
     },
   ];
@@ -70,7 +72,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({ activities }
 
   return (
     <div className="p-6 bg-white/10 rounded-lg border border-white/20">
-      <h3 className="text-lg font-semibold mb-4 text-white">Hoạt động gần đây</h3>
+      <h3 className="text-lg font-semibold mb-4 text-white">{t('pages.statistics.sections.recentActivities')}</h3>
       
       <div className="space-y-3">
         {displayActivities.map((activity) => (

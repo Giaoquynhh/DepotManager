@@ -989,6 +989,112 @@
       "noData": "No Data",
       "noDataSubtitle": "No reports to display"
     },
+    "statistics": {
+      "title": "Statistics Overview",
+      "welcome": "Welcome to the Statistics System",
+      "noAccess": "No Access",
+      "noAccessMessage": "You don't have permission to view statistics overview.",
+      "noData": "No Data",
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "retry": "Retry",
+      "timeRange": {
+        "today": "Today",
+        "week": "This Week", 
+        "month": "This Month",
+        "year": "This Year"
+      },
+      "controls": {
+        "refresh": "Refresh",
+        "export": "Export Report"
+      },
+      "cards": {
+        "containers": "Containers",
+        "customers": "Customers",
+        "revenue": "Revenue",
+        "maintenance": "Maintenance"
+      },
+      "sections": {
+        "recentActivities": "Recent Activities",
+        "topCustomers": "Top Customers",
+        "pendingRepairs": "Pending Repairs",
+        "containerStatus": "Container Status",
+        "financialOverview": "Financial Overview",
+        "customerStats": "Customer Stats",
+        "maintenanceSummary": "Maintenance Summary"
+      },
+      "labels": {
+        "total": "Total",
+        "active": "Active",
+        "newThisMonth": "New This Month",
+        "thisMonth": "This Month",
+        "totalRevenue": "Total Revenue",
+        "unpaid": "Unpaid",
+        "overdue": "Overdue",
+        "revenueByService": "Revenue by Service",
+        "averageInvoiceValue": "Average Invoice Value",
+        "totalRepairs": "Total Repairs",
+        "avgRepairTime": "Avg Repair Time",
+        "byStatus": "By Status",
+        "commonIssues": "Common Issues",
+        "totalRepairCost": "Total Repair Cost",
+        "requests": "requests",
+        "times": "times",
+        "days": "days"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "rejected": "Rejected"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "containerStatus": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "gateIn": "Gate In",
+        "inYard": "In Yard",
+        "inCar": "In Car",
+        "gateOut": "Gate Out",
+        "completed": "Completed",
+        "positioned": "Positioned in yard",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High", 
+        "urgent": "Urgent"
+      },
+      "repairStatus": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "mockData": {
+        "containerDoorDamage": "Container door damage",
+        "containerLockError": "Container lock error",
+        "containerBottomDamage": "Container bottom damage", 
+        "noRepairs": "No repair tickets",
+        "viewAll": "View all",
+        "containerCompleted": "Container CTN001 processing completed",
+        "customerNewRequest": "Customer ABC Corp created new request",
+        "maintenancePending": "Repair ticket #MT001 needs processing",
+        "invoicePaid": "Invoice #INV001 has been paid",
+        "containerGateIn": "Container CTN002 gate in successful",
+        "minutesAgo": "minutes ago",
+        "hoursAgo": "hours ago"
+      }
+    },
     "account": {
       "title": "Account",
       "welcome": "Welcome to the Account Management Page",

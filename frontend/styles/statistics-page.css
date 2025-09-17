@@ -1,0 +1,29 @@
+/* Statistics Page Override Styles */
+.statistics-dashboard-wrapper .depot-dashboard {
+  min-height: auto !important;
+  background: transparent !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.statistics-dashboard-wrapper .depot-dashboard .depot-header {
+  border-radius: 8px 8px 0 0;
+  margin: -1rem -1rem 0 -1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.statistics-dashboard-wrapper .depot-dashboard .flex {
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.statistics-dashboard-wrapper .depot-dashboard .sidebar {
+  border-radius: 0 0 0 8px;
+}
+
+.statistics-dashboard-wrapper .depot-dashboard .main-content {
+  border-radius: 0 0 8px 0;
+}

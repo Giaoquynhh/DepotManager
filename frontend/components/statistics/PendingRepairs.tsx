@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface RepairTicket {
   id: string;
@@ -14,28 +15,31 @@ interface PendingRepairsProps {
   repairs: RepairTicket[];
 }
 
-const priorityConfig = {
-  LOW: { label: 'Thấp', color: 'bg-green-100 text-green-800' },
-  MEDIUM: { label: 'Trung bình', color: 'bg-yellow-100 text-yellow-800' },
-  HIGH: { label: 'Cao', color: 'bg-orange-100 text-orange-800' },
-  URGENT: { label: 'Khẩn cấp', color: 'bg-red-100 text-red-800' },
-};
+const getPriorityConfig = (t: (key: string) => string) => ({
+  LOW: { label: t('pages.statistics.priority.low'), color: 'bg-green-100 text-green-800' },
+  MEDIUM: { label: t('pages.statistics.priority.medium'), color: 'bg-yellow-100 text-yellow-800' },
+  HIGH: { label: t('pages.statistics.priority.high'), color: 'bg-orange-100 text-orange-800' },
+  URGENT: { label: t('pages.statistics.priority.urgent'), color: 'bg-red-100 text-red-800' },
+});
 
-const statusConfig = {
-  PENDING: { label: 'Chờ xử lý', color: 'bg-yellow-100 text-yellow-800' },
-  APPROVED: { label: 'Đã duyệt', color: 'bg-blue-100 text-blue-800' },
-  IN_PROGRESS: { label: 'Đang sửa', color: 'bg-purple-100 text-purple-800' },
-  COMPLETED: { label: 'Hoàn thành', color: 'bg-green-100 text-green-800' },
-  CANCELLED: { label: 'Hủy bỏ', color: 'bg-red-100 text-red-800' },
-};
+const getStatusConfig = (t: (key: string) => string) => ({
+  PENDING: { label: t('pages.statistics.repairStatus.pending'), color: 'bg-yellow-100 text-yellow-800' },
+  APPROVED: { label: t('pages.statistics.repairStatus.approved'), color: 'bg-blue-100 text-blue-800' },
+  IN_PROGRESS: { label: t('pages.statistics.repairStatus.inProgress'), color: 'bg-purple-100 text-purple-800' },
+  COMPLETED: { label: t('pages.statistics.repairStatus.completed'), color: 'bg-green-100 text-green-800' },
+  CANCELLED: { label: t('pages.statistics.repairStatus.cancelled'), color: 'bg-red-100 text-red-800' },
+});
 
 export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
+  const { t } = useTranslation();
+  const priorityConfig = getPriorityConfig(t);
+  const statusConfig = getStatusConfig(t);
   // Mock data for demonstration
   const mockRepairs: RepairTicket[] = [
     {
       id: 'RT001',
       containerNumber: 'CTN-001-2024',
-      issueDescription: 'Hư hỏng cửa container',
+      issueDescription: t('pages.statistics.mockData.containerDoorDamage'),
       priority: 'HIGH',
       status: 'PENDING',
       estimatedCost: 2500000,
@@ -44,7 +48,7 @@ export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
     {
       id: 'RT002',
       containerNumber: 'CTN-002-2024',
-      issueDescription: 'Lỗi khóa container',
+      issueDescription: t('pages.statistics.mockData.containerLockError'),
       priority: 'MEDIUM',
       status: 'APPROVED',
       estimatedCost: 1500000,
@@ -53,7 +57,7 @@ export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
     {
       id: 'RT003',
       containerNumber: 'CTN-003-2024',
-      issueDescription: 'Hư hỏng đáy container',
+      issueDescription: t('pages.statistics.mockData.containerBottomDamage'),
       priority: 'URGENT',
       status: 'IN_PROGRESS',
       estimatedCost: 5000000,
@@ -83,14 +87,14 @@ export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
 
   return (
     <div className="p-6 bg-white/10 rounded-lg border border-white/20">
-      <h3 className="text-lg font-semibold mb-4 text-white">Phiếu sửa chữa chờ xử lý</h3>
+      <h3 className="text-lg font-semibold mb-4 text-white">{t('pages.statistics.sections.pendingRepairs')}</h3>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         {displayRepairs.map((repair) => (
           <div key={repair.id} className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex items-start justify-between mb-3">
               <div>
-                <div className="font-medium text-sm text-white">{repair.containerNumber}</div>
+                <div className="font-medium text-sm text-white mb-1">{repair.containerNumber}</div>
                 <div className="text-xs text-white/70">#{repair.id}</div>
               </div>
               <div className="flex space-x-2">
@@ -114,8 +118,8 @@ export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
               </div>
             </div>
             
-            <div className="mb-2">
-              <p className="text-sm text-white">{repair.issueDescription}</p>
+            <div className="mb-3">
+              <p className="text-sm text-white leading-relaxed">{repair.issueDescription}</p>
             </div>
             
             <div className="flex items-center justify-between text-xs text-white/70">
@@ -128,13 +132,13 @@ export const PendingRepairs: React.FC<PendingRepairsProps> = ({ repairs }) => {
 
       {displayRepairs.length === 0 && (
         <div className="text-center py-8 text-white/70">
-          <p>Không có phiếu sửa chữa chờ xử lý</p>
+          <p>{t('pages.statistics.mockData.noRepairs')}</p>
         </div>
       )}
 
       <div className="mt-4 pt-4 border-t border-white/20">
         <button className="text-sm text-white hover:text-white/80 font-medium">
-          Xem tất cả phiếu sửa chữa →
+          {t('pages.statistics.mockData.viewAll')} →
         </button>
       </div>
     </div>

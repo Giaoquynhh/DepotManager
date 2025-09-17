@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatisticsService } from '../../services/statistics';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface FinancialOverviewProps {
   data: {
@@ -17,11 +18,12 @@ interface FinancialOverviewProps {
 }
 
 export const FinancialOverview: React.FC<FinancialOverviewProps> = ({ data }) => {
+  const { t } = useTranslation();
   return (
     <div className="chart-container">
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm">💰</span>
-        <h3 className="text-sm font-bold text-white">Financial Overview</h3>
+        <h3 className="text-sm font-bold text-white">{t('pages.statistics.sections.financialOverview')}</h3>
       </div>
       
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -29,30 +31,30 @@ export const FinancialOverview: React.FC<FinancialOverviewProps> = ({ data }) =>
           <div className="text-sm font-bold text-white">
             {StatisticsService.formatCurrency(data.thisMonthRevenue)}
           </div>
-          <div className="text-xs font-medium text-white">This Month</div>
+          <div className="text-xs font-medium text-white">{t('pages.statistics.labels.thisMonth')}</div>
         </div>
         <div className="text-center p-2 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg border border-blue-400/30 hover:from-blue-500/30 hover:to-blue-600/30 transition-all duration-300">
           <div className="text-sm font-bold text-white">
             {StatisticsService.formatCurrency(data.totalRevenue)}
           </div>
-          <div className="text-xs font-medium text-white">Total Revenue</div>
+          <div className="text-xs font-medium text-white">{t('pages.statistics.labels.totalRevenue')}</div>
         </div>
         <div className="text-center p-2 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-lg border border-yellow-400/30 hover:from-yellow-500/30 hover:to-yellow-600/30 transition-all duration-300">
           <div className="text-sm font-bold text-white">
             {StatisticsService.formatCurrency(data.unpaidAmount)}
           </div>
-          <div className="text-xs font-medium text-white">Unpaid</div>
+          <div className="text-xs font-medium text-white">{t('pages.statistics.labels.unpaid')}</div>
         </div>
         <div className="text-center p-2 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-lg border border-red-400/30 hover:from-red-500/30 hover:to-red-600/30 transition-all duration-300">
           <div className="text-sm font-bold text-white">
             {StatisticsService.formatCurrency(data.overdueAmount)}
           </div>
-          <div className="text-xs font-medium text-white">Overdue</div>
+          <div className="text-xs font-medium text-white">{t('pages.statistics.labels.overdue')}</div>
         </div>
       </div>
 
       <div className="mb-4">
-        <h4 className="text-sm font-semibold mb-3 text-white">Revenue by Service</h4>
+        <h4 className="text-sm font-semibold mb-3 text-white">{t('pages.statistics.labels.revenueByService')}</h4>
         <div className="space-y-2">
           {data.revenueByService.map((service, index) => (
             <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200">
@@ -67,7 +69,7 @@ export const FinancialOverview: React.FC<FinancialOverviewProps> = ({ data }) =>
 
       <div className="pt-4 border-t border-white/20">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-white/70">Average Invoice Value:</span>
+          <span className="text-sm text-white/70">{t('pages.statistics.labels.averageInvoiceValue')}:</span>
           <span className="text-sm font-bold text-white">
             {StatisticsService.formatCurrency(data.averageInvoiceValue)}
           </span>

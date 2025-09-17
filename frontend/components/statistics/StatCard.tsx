@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface StatCardProps {
   title: string;
@@ -48,6 +49,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   trend,
   subtitle,
 }) => {
+  const { t } = useTranslation();
   const cardEmoji = emoji || emojiMap[title.toLowerCase() as keyof typeof emojiMap] || emojiMap.default;
   
   return (

@@ -987,6 +987,112 @@
       "noData": "Không có dữ liệu",
       "noDataSubtitle": "Không có báo cáo nào để hiển thị"
     },
+    "statistics": {
+      "title": "Thống kê tổng quan",
+      "welcome": "Chào mừng đến với hệ thống thống kê",
+      "noAccess": "Không có quyền truy cập",
+      "noAccessMessage": "Bạn không có quyền xem thống kê tổng quan.",
+      "noData": "Không có dữ liệu",
+      "loading": "Đang tải...",
+      "error": "Có lỗi xảy ra",
+      "retry": "Thử lại",
+      "timeRange": {
+        "today": "Hôm nay",
+        "week": "Tuần này", 
+        "month": "Tháng này",
+        "year": "Năm này"
+      },
+      "controls": {
+        "refresh": "Làm mới",
+        "export": "Xuất báo cáo"
+      },
+      "cards": {
+        "containers": "Containers",
+        "customers": "Khách hàng",
+        "revenue": "Doanh thu",
+        "maintenance": "Bảo trì"
+      },
+      "sections": {
+        "recentActivities": "Hoạt động gần đây",
+        "topCustomers": "Khách hàng hàng đầu",
+        "pendingRepairs": "Phiếu sửa chữa chờ xử lý",
+        "containerStatus": "Trạng thái Container",
+        "financialOverview": "Tổng quan tài chính",
+        "customerStats": "Thống kê khách hàng",
+        "maintenanceSummary": "Tóm tắt bảo trì"
+      },
+      "labels": {
+        "total": "Tổng cộng",
+        "active": "Đang hoạt động",
+        "newThisMonth": "Mới tháng này",
+        "thisMonth": "Tháng này",
+        "totalRevenue": "Tổng doanh thu",
+        "unpaid": "Chưa thanh toán",
+        "overdue": "Quá hạn",
+        "revenueByService": "Doanh thu theo dịch vụ",
+        "averageInvoiceValue": "Giá trị hóa đơn trung bình",
+        "totalRepairs": "Tổng sửa chữa",
+        "avgRepairTime": "Thời gian sửa chữa TB",
+        "byStatus": "Theo trạng thái",
+        "commonIssues": "Lỗi thường gặp",
+        "totalRepairCost": "Tổng chi phí sửa chữa",
+        "requests": "yêu cầu",
+        "times": "lần",
+        "days": "ngày"
+      },
+      "status": {
+        "pending": "Chờ xử lý",
+        "approved": "Đã duyệt",
+        "inProgress": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "rejected": "Từ chối"
+      },
+      "priority": {
+        "low": "Thấp",
+        "medium": "Trung bình",
+        "high": "Cao",
+        "urgent": "Khẩn cấp"
+      },
+      "containerStatus": {
+        "pending": "Chờ xử lý",
+        "scheduled": "Đã lên lịch",
+        "gateIn": "Vào cổng",
+        "inYard": "Trong bãi",
+        "inCar": "Trên xe",
+        "gateOut": "Ra cổng",
+        "completed": "Hoàn thành",
+        "positioned": "Đã định vị trong bãi",
+        "rejected": "Từ chối",
+        "cancelled": "Hủy bỏ"
+      },
+      "priority": {
+        "low": "Thấp",
+        "medium": "Trung bình", 
+        "high": "Cao",
+        "urgent": "Khẩn cấp"
+      },
+      "repairStatus": {
+        "pending": "Chờ xử lý",
+        "approved": "Đã duyệt",
+        "inProgress": "Đang sửa",
+        "completed": "Hoàn thành",
+        "cancelled": "Hủy bỏ"
+      },
+      "mockData": {
+        "containerDoorDamage": "Hư hỏng cửa container",
+        "containerLockError": "Lỗi khóa container", 
+        "containerBottomDamage": "Hư hỏng đáy container",
+        "noRepairs": "Không có phiếu sửa chữa nào",
+        "viewAll": "Xem tất cả",
+        "containerCompleted": "Container CTN001 đã hoàn thành xử lý",
+        "customerNewRequest": "Khách hàng ABC Corp đã tạo request mới",
+        "maintenancePending": "Phiếu sửa chữa #MT001 cần xử lý",
+        "invoicePaid": "Hóa đơn #INV001 đã được thanh toán",
+        "containerGateIn": "Container CTN002 vào cổng thành công",
+        "minutesAgo": "phút trước",
+        "hoursAgo": "giờ trước"
+      }
+    },
     "account": {
       "title": "Tài khoản",
       "welcome": "Chào mừng đến với trang quản lý tài khoản",

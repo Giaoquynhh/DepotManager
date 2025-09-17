@@ -14,6 +14,8 @@ export interface StatisticsOverview {
       IN_CAR: number;
       GATE_OUT: number;
       COMPLETED: number;
+      REJECTED?: number;
+      GATE_REJECTED?: number;
     };
     byType: {
       IMPORT: number;
