@@ -600,3 +600,33 @@ model Notification {
     @@index([type])
     @@index([created_at])
 }
+
+// =====================
+// Module Setup - Shipping Lines & Transport Companies
+// =====================
+
+model ShippingLine {
+    id        String   @id @default(cuid())
+    code      String   @unique
+    name      String
+    eir       String
+    note      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    @@map("shipping_lines")
+}
+
+model TransportCompany {
+    id        String   @id @default(cuid())
+    code      String   @unique
+    name      String
+    address   String?
+    mst       String?  // Tax code
+    phone     String?
+    note      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    @@map("transport_companies")
+}

@@ -775,6 +775,22 @@ export default function Header() {
                 </Link>
             )}
 
+            {/* Setup */}
+            {(() => {
+              const allow = me?.role === 'SystemAdmin' || me?.role === 'SaleAdmin';
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'setup.manage')
+                : allow;
+              return ok;
+            })() && (
+            <Link className={`sidebar-link ${router.pathname === '/Setup' ? 'active' : ''}`} href="/Setup" onClick={handleSidebarLinkClick}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+              </svg>
+              <span>{t('sidebar.setup')}</span>
+            </Link>
+            )}
 
             {/* Account */}
             {(() => {

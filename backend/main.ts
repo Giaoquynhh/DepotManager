@@ -29,6 +29,7 @@ import containerRoutes from './modules/containers/controller/ContainerRoutes';
 import maintenanceRoutes from './modules/maintenance/controller/MaintenanceRoutes';
 import financeRoutes from './modules/finance/controller/FinanceRoutes';
 import reportsRoutes from './modules/reports/controller/ReportsRoutes';
+import setupRoutes from './modules/setup/controller/SetupRoutes';
 
 const app = express();
 const server = createServer(app);
@@ -107,6 +108,7 @@ app.use('/containers', containerRoutes);
 app.use('/maintenance', maintenanceRoutes);
 app.use('/finance', financeRoutes);
 app.use('/reports', authenticate, reportsRoutes);
+app.use('/api/setup', setupRoutes);
 
 const start = async () => {
 	await connectDatabase();

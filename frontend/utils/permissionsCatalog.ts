@@ -24,6 +24,7 @@ export interface PermissionItem {
 export const PERMISSION_CATALOG: PermissionItem[] = [
   { key: 'users_partners.view', label: 'Người dùng/Đối tác', group: 'Hệ thống' },
   { key: 'permissions.manage', label: 'Phân quyền', group: 'Hệ thống', adminOnly: true },
+  { key: 'setup.manage', label: 'Thiết lập hệ thống', group: 'Hệ thống', adminOnly: true },
   { key: 'account.view', label: 'Tài khoản', group: 'Hệ thống' },
   { key: 'requests.depot', label: 'Yêu cầu (Depot)', group: 'Yêu cầu' },
   { key: 'requests.customer', label: 'Yêu cầu (Khách hàng)', group: 'Yêu cầu' },

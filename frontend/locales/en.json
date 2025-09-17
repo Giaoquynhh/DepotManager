@@ -21,6 +21,11 @@
     "reset": "Reset",
     "retry": "Retry",
     "prev": "Prev",
+    "showing": "Showing",
+    "of": "of",
+    "items": "items",
+    "previous": "Previous",
+    "next": "Next",
     "sortBy": "Sort by",
     "na": "N/A",
     "processing": "Processing...",
@@ -65,6 +70,9 @@
     "invoices": "Invoices",
     "createInvoice": "Create Invoice",
     "reports": "Reports",
+    "setup": "Setup",
+    "shippingLines": "Shipping Lines",
+    "transportCompanies": "Transport Companies",
     "account": "Account"
   },
   "language": {
