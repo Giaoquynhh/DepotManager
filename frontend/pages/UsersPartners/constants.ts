@@ -5,6 +5,8 @@ export const ROLE_COLORS = {
   HRManager: '#059669',
   SaleAdmin: '#ea580c',
   Driver: '#0891b2',
+  Security: '#334155',
+  Dispatcher: '#0ea5e9',
   CustomerAdmin: '#0891b2',
   PartnerAdmin: '#7c2d12',
   CustomerUser: '#6b7280'
@@ -17,5 +19,5 @@ export const STATUS_COLORS = {
   LOCKED: '#7c2d12'
 };
 
-export const INTERNAL_ROLES = ['SystemAdmin', 'BusinessAdmin', 'HRManager', 'SaleAdmin', 'Driver'];
+export const INTERNAL_ROLES = ['SystemAdmin', 'BusinessAdmin', 'HRManager', 'SaleAdmin', 'Driver', 'Security', 'Dispatcher'];
 export const CUSTOMER_ROLES = ['CustomerAdmin', 'PartnerAdmin', 'CustomerUser'];

@@ -23,6 +23,6 @@ export interface Company {
   tax_code: string;
 }
 
-export type UserAction = 'disable' | 'enable' | 'lock' | 'unlock' | 'invite' | 'delete';
+export type UserAction = 'disable' | 'enable' | 'lock' | 'unlock' | 'delete';
 export type ActiveTab = 'users' | 'partners';
 export type Language = 'vi' | 'en';

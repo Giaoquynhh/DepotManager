@@ -705,22 +705,7 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Statistics Dashboard Module - Thống kê tổng quan */}
-            {(() => {
-              const allow = isSystemAdmin(me?.role) || isBusinessAdmin(me?.role) || isAccountant(me?.role) || isSaleAdmin(me?.role) || isYardManager(me?.role) || isMaintenanceManager(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'statistics.view')
-                : allow;
-              return ok;
-            })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Statistics' ? 'active' : ''}`} href="/Statistics" onMouseDown={handleSidebarLinkClick}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 3v18h18"></path>
-                  <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-                </svg>
-                <span>{t('sidebar.statistics')}</span>
-              </Link>
-            )}
+            
 
             {/* Maintenance - Repairs */}
             {(() => {

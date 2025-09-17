@@ -1,64 +1,61 @@
-# UsersPartners Page - Email Integration
+# UsersPartners – Trạng thái mục Đối tác (UI-only)
 
-## Tổng quan
-
-Trang UsersPartners đã được tích hợp với hệ thống email để gửi lời mời kích hoạt tài khoản qua email thực tế khi tạo user mới.
+Tài liệu này cập nhật trạng thái mới cho tab Đối tác sau khi gỡ API cũ. Hiện tại tab Đối tác hoạt động ở chế độ UI-only để demo luồng tạo/cập nhật dữ liệu tức thời trên client.
 
 ## Cấu trúc trang
 
-### File chính
-- **Component**: `pages/UsersPartners/index.tsx`
-- **RBAC**: `utils/rbac.ts`
-- **API Client**: `services/api.ts`
+### File chính FE
+- Page: `frontend/pages/UsersPartners/index.tsx`
+- Modal tạo nhân sự: `frontend/pages/UsersPartners/components/CreateEmployeeModal.tsx`
+- Modal tạo/cập nhật đối tác: `frontend/pages/UsersPartners/components/CreatePartnerModal.tsx`
+- Hook nghiệp vụ: `frontend/pages/UsersPartners/hooks/useUsersPartners.ts`
+- Bảng Users: `frontend/pages/UsersPartners/components/UserTable.tsx`
+- Button actions: `frontend/pages/UsersPartners/components/ActionButtons.tsx`
+- Utils hiển thị role: `frontend/pages/UsersPartners/utils/roleUtils.ts`
+- Constants màu & role: `frontend/pages/UsersPartners/constants.ts`
+- Translations: `frontend/pages/UsersPartners/translations.ts`
 
 ### Chức năng chính
 
-#### 1. **Tạo nhân sự nội bộ**
-- **Quyền**: `SystemAdmin`, `BusinessAdmin`, `HRManager`
-- **Modal form** với các trường:
+#### 1. **Tạo nhân sự nội bộ (mới)**
+- **Quyền**: `SystemAdmin`
+- **Modal form** với các trường bắt buộc:
   - Họ tên (full_name)
   - Email
-  - Role: `SystemAdmin`, `BusinessAdmin`, `HRManager`, `SaleAdmin`, `Driver`
-- **API**: `POST /users` với payload `{full_name, email, role}`
-- **Email**: Tự động gửi email mời sau khi tạo thành công
+  - Mật khẩu (password)
+  - Role: `SystemAdmin`, `SaleAdmin`, `Driver`
+- **API**: `POST /users` với payload `{full_name, email, password, role}`
+- **Kết quả**: Tài khoản được tạo ở trạng thái `ACTIVE` (không sử dụng email invite)
 
-#### 2. **Tạo user khách hàng**
-- **Quyền**: `SystemAdmin`, `BusinessAdmin`, `CustomerAdmin`
-- **Modal form** với các trường:
-  - Họ tên (full_name)
-  - Email
-  - Role: `CustomerAdmin`, `CustomerUser`
-  - tenant_id (ID khách hàng)
-- **API**: `POST /users` với payload `{full_name, email, role, tenant_id}`
-- **Email**: Tự động gửi email mời sau khi tạo thành công
+ Code mapping (Create Internal Staff):
+ - UI modal: `components/CreateEmployeeModal.tsx`
+ - Form state & gọi API: `hooks/useUsersPartners.ts` (hàm `createEmployee` – gửi kèm `password`)
+ - Wire modal từ page: `index.tsx` (props `empPassword`, `setEmpPassword`, ...)
+
+#### 2. **Đối tác (UI-only)**
+- Bảng cột: Mã đối tác | Tên đối tác | Hành động
+- Nút "Tạo đối tác": mở modal tạo. Trường bắt buộc: Mã đối tác, Tên đối tác (hiển thị dấu * đỏ). Các trường còn lại optional.
+- Sau khi Tạo: dữ liệu được thêm ngay vào bảng từ state `partnersLocal` (không gọi API).
+- Nút "Cập nhật" ở từng dòng: mở modal với dữ liệu hiện tại, chỉnh sửa xong nhấn Tạo để lưu vào state.
+- Nút "Xóa": loại dòng khỏi bảng (state client).
+
+ Code mapping (Partners UI):
+ - UI modal: `components/CreatePartnerModal.tsx`
+ - Quản lý state/local list: `index.tsx` (state partnersLocal / editIndex)
 
 #### 3. **Quản lý trạng thái user**
 - **Vô hiệu hóa/Bật lại**: `PATCH /users/{id}/disable` hoặc `enable`
 - **Khóa/Mở khóa**: `PATCH /users/{id}/lock` hoặc `unlock`
-- **Gửi lại lời mời**: `POST /users/{id}/send-invite` (tạo token mới + gửi email)
 - **Xóa**: `DELETE /users/{id}` (chỉ cho user đã DISABLED)
 
-## Email Integration
+> Không còn API/GUI cho thao tác "Gửi lại lời mời". Nếu cần mời lại, quản trị viên có thể xóa user rồi tạo lại để sinh token mới.
 
-### Thông báo thành công
-```typescript
-// Khi tạo user thành công
-employeeCreated: 'Tạo nhân sự nội bộ thành công. Email mời đã được gửi!'
-customerCreated: 'Tạo user khách hàng thành công. Email mời đã được gửi!'
+## Hiển thị token
+- Hệ thống có thể hiển thị `invite_token` trong UI sau khi tạo user thành công (tùy thiết kế).
+- Người dùng có thể vào trang `/Register?token={token}` để kích hoạt tài khoản.
 
-// Khi gửi lại lời mời
-emailSent: 'Email mời đã được gửi!'
-```
-
-### Hiển thị token
-- Sau khi gửi lại lời mời, hiển thị token kích hoạt
-- Link trực tiếp đến trang Register: `/Register?token={token}`
-- Thông báo: "Mở /Register để kích hoạt"
-
-### Xử lý lỗi
-- **Email lỗi không làm fail việc tạo user**
-- Hiển thị thông báo thành công tạo user
-- Log lỗi email ở backend console
+### Ghi chú
+- Phần email/invite của Users giữ nguyên theo mô tả bên dưới; riêng Partners hiện không dùng email/invite.
 
 ## Bộ lọc và hiển thị
 
@@ -76,10 +73,10 @@ const filteredUsers = (users?.data || []).filter((u: any) => {
 
 ### Màu sắc role badges
 - `SystemAdmin`: Đỏ (#dc2626)
-- `BusinessAdmin`: Tím (#7c3aed)
-- `HRManager`: Xanh lá (#059669)
 - `SaleAdmin`: Cam (#ea580c)
 - `Driver`: Xanh dương (#0891b2)
+- `Security`: Xám đậm (#334155)
+- `Dispatcher`: Xanh nước (#0ea5e9)
 - `CustomerAdmin`: Xanh dương (#0891b2)
 - `CustomerUser`: Xám (#6b7280)
 
@@ -99,11 +96,14 @@ canViewUsersPartners(role): boolean {
 }
 ```
 
+ Code mapping (RBAC FE helpers):
+ - Helpers check role: `frontend/utils/rbac.ts` (được page import)
+
 ### Quyền tạo user
 ```typescript
 // Tạo nhân sự nội bộ
 showInternalForm(role): boolean {
-  return ['SystemAdmin','BusinessAdmin','HRManager'].includes(String(role));
+  return ['SystemAdmin'].includes(String(role));
 }
 
 // Tạo user khách hàng
@@ -153,21 +153,9 @@ const createEmployee = async () => {
 };
 ```
 
-### Gửi lại lời mời
+### User actions hỗ trợ
 ```typescript
-const userAction = async (id: string, action: 'disable'|'enable'|'lock'|'unlock'|'invite'|'delete') => {
-  try {
-    if (action === 'invite') {
-      const res = await api.post(`/users/${id}/send-invite`);
-      setLastInviteToken(res.data?.invite_token || '');
-      setMessage(t[language].emailSent); // "Email mời đã được gửi!"
-    }
-    // ... other actions
-    mutate(['/users?role=&page=1&limit=50']); // Refresh danh sách
-  } catch(e: any) { 
-    setMessage(e?.response?.data?.message || t[language].userActionError.replace('{action}', action)); 
-  }
-};
+type UserAction = 'disable' | 'enable' | 'lock' | 'unlock' | 'delete';
 ```
 
 ## Đa ngôn ngữ
@@ -219,18 +207,14 @@ const t = {
 ### Test cases
 1. **Tạo nhân sự nội bộ** với email hợp lệ
 2. **Tạo user khách hàng** với tenant_id
-3. **Gửi lại lời mời** cho user đã tồn tại
-4. **Kiểm tra email** được gửi đến địa chỉ đúng
-5. **Kiểm tra token** trong email và link kích hoạt
-6. **Test validation** với email không hợp lệ
-7. **Test RBAC** với các role khác nhau
+3. **Test RBAC** với các role khác nhau
+4. **Kiểm tra token** và luồng kích hoạt `/Register`
 
-### Manual testing
-1. Mở trang UsersPartners
-2. Tạo user mới với email thật
-3. Kiểm tra email inbox
-4. Click link kích hoạt trong email
-5. Verify user được tạo với status INVITED
+### Manual testing (Partners UI-only)
+1. Mở trang UsersPartners > Đối tác
+2. Bấm "Tạo đối tác" và nhập Mã đối tác, Tên đối tác → Tạo
+3. Kiểm tra dòng mới xuất hiện ngay
+4. Bấm "Cập nhật" để sửa, "Xóa" để xóa
 
 ## Troubleshooting
 
@@ -247,7 +231,6 @@ const t = {
 4. Kiểm tra token format trong database
 
 ### UI không cập nhật
-1. Kiểm tra SWR cache
-2. Kiểm tra API response
-3. Kiểm tra error handling
-4. Refresh trang nếu cần
+1. Kiểm tra state `partnersLocal` trong `index.tsx`
+2. Đảm bảo không reload trang giữa chừng
+3. Kiểm tra logic set/reset `editIndex`

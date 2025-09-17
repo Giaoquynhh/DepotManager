@@ -4,7 +4,8 @@ import { AppRole } from '../../../shared/middlewares/auth';
 export const createEmployeeSchema = Joi.object({
 	full_name: Joi.string().required(),
 	email: Joi.string().email().required(),
-	role: Joi.string().valid('SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','Driver').required()
+	password: Joi.string().min(6).required(),
+	role: Joi.string().valid('SystemAdmin','SaleAdmin','Driver','Security','Dispatcher').required()
 });
 
 export const createCustomerUserSchema = Joi.object({

@@ -17,6 +17,8 @@ export const translations = {
     companyName: 'Tên công ty',
     companyCode: 'Mã công ty',
     accountCount: 'Số lượng tài khoản',
+    partnerName: 'Tên đối tác',
+    partnerCode: 'Mã đối tác',
     actions: 'Hành động',
     // Status badges
     active: 'ACTIVE',
@@ -28,7 +30,6 @@ export const translations = {
     enable: 'Bật lại',
     lock: 'Khóa',
     unlock: 'Mở khóa',
-    resendInvite: 'Gửi lại lời mời',
     emailSent: 'Email mời đã được gửi!',
     delete: 'Xóa',
     // Button tooltips
@@ -36,7 +37,6 @@ export const translations = {
     enableTooltip: 'Mở lại quyền đăng nhập',
     lockTooltip: 'Khóa tạm thời',
     unlockTooltip: 'Cho phép đăng nhập trở lại',
-    resendTooltip: 'Gửi lại thư mời kích hoạt (tạo token mới)',
     deleteTooltip: 'Xóa vĩnh viễn tài khoản đã vô hiệu hóa',
     // Modal titles
     createEmployeeTitle: 'Tạo nhân sự nội bộ',
@@ -44,10 +44,13 @@ export const translations = {
     // Form placeholders
     fullNamePlaceholder: 'Họ tên',
     emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Mật khẩu',
     tenantIdPlaceholder: 'Mã công ty (ID khách hàng)',
     companyNamePlaceholder: 'Tên công ty',
     // Form labels
     driverLabel: 'Tài xế',
+    securityLabel: 'Nhân viên bảo vệ',
+    dispatcherLabel: 'Nhân viên điều độ',
     // Role labels
     systemAdminLabel: 'Quản trị hệ thống',
     businessAdminLabel: 'Quản trị kinh doanh',
@@ -64,7 +67,7 @@ export const translations = {
     pleaseEnterValidEmail: 'Vui lòng nhập email hợp lệ',
     pleaseEnterTenantId: 'Vui lòng nhập mã công ty',
     pleaseEnterCompanyName: 'Vui lòng nhập tên công ty',
-    employeeCreated: 'Tạo nhân sự nội bộ thành công. Email mời đã được gửi!',
+    employeeCreated: 'Tạo nhân sự nội bộ thành công.',
     partnerCreated: 'Tạo đối tác thành công. Email mời đã được gửi!',
     userActionSuccess: 'Đã {action} user',
     createEmployeeError: 'Lỗi tạo nhân sự',
@@ -93,6 +96,8 @@ export const translations = {
     companyName: 'Company Name',
     companyCode: 'Company Code',
     accountCount: 'Account Count',
+    partnerName: 'Partner Name',
+    partnerCode: 'Partner Code',
     actions: 'Actions',
     // Status badges
     active: 'ACTIVE',
@@ -104,7 +109,6 @@ export const translations = {
     enable: 'Enable',
     lock: 'Lock',
     unlock: 'Unlock',
-    resendInvite: 'Resend Invitation',
     emailSent: 'Invitation email sent!',
     delete: 'Delete',
     // Button tooltips
@@ -112,7 +116,6 @@ export const translations = {
     enableTooltip: 'Restore login access',
     lockTooltip: 'Temporarily lock',
     unlockTooltip: 'Allow login again',
-    resendTooltip: 'Resend activation invitation (create new token)',
     deleteTooltip: 'Permanently delete disabled account',
     // Modal titles
     createEmployeeTitle: 'Create Internal Staff',
@@ -120,10 +123,13 @@ export const translations = {
     // Form placeholders
     fullNamePlaceholder: 'Full Name',
     emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Password',
     tenantIdPlaceholder: 'Company Code (Customer ID)',
     companyNamePlaceholder: 'Company Name',
     // Form labels
     driverLabel: 'Driver',
+    securityLabel: 'Security',
+    dispatcherLabel: 'Dispatcher',
     // Role labels
     systemAdminLabel: 'System Administrator',
     businessAdminLabel: 'Business Administrator',
@@ -140,7 +146,7 @@ export const translations = {
     pleaseEnterValidEmail: 'Please enter a valid email',
     pleaseEnterTenantId: 'Please enter company code',
     pleaseEnterCompanyName: 'Please enter company name',
-    employeeCreated: 'Internal staff created successfully. Invitation email sent!',
+    employeeCreated: 'Internal staff created successfully.',
     partnerCreated: 'Partner created successfully. Invitation email sent!',
     userActionSuccess: 'User {action} successfully',
     createEmployeeError: 'Error creating staff',

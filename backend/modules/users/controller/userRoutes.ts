@@ -11,7 +11,6 @@ router.patch('/:id/disable', requireRoles('SystemAdmin','BusinessAdmin','HRManag
 router.patch('/:id/enable', requireRoles('SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin'), (req, res) => controller.enable(req as any, res));
 router.patch('/:id/lock', requireRoles('SystemAdmin','BusinessAdmin','CustomerAdmin'), (req, res) => controller.lock(req as any, res));
 router.patch('/:id/unlock', requireRoles('SystemAdmin','BusinessAdmin','CustomerAdmin'), (req, res) => controller.unlock(req as any, res));
-router.post('/:id/send-invite', requireRoles('SystemAdmin','BusinessAdmin','HRManager','SaleAdmin','CustomerAdmin'), (req, res) => controller.sendInvite(req as any, res));
 router.delete('/:id', requireRoles('SystemAdmin','BusinessAdmin'), (req, res) => controller.delete(req as any, res));
 
 export default router;
