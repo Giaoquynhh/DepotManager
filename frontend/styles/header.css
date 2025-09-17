@@ -10,6 +10,13 @@
   z-index: 1100;
 }
 
+/* Mobile header adjustments */
+@media (max-width: 768px) {
+  .header {
+    padding: 2px 0; /* Giảm padding từ var(--space-1) xuống 2px */
+  }
+}
+
 /* Khi có sidebar, làm header liền mạch với sidebar: bỏ shadow và dùng màu navy */
 body.with-sidebar .header {
   box-shadow: none;
@@ -37,6 +44,14 @@ body.with-sidebar .header {
   width: 100vw;
   margin-left: 0;
   left: 0;
+}
+
+/* Mobile header inner adjustments */
+@media (max-width: 768px) {
+  .header-inner {
+    min-height: 36px; /* Tăng từ 28px lên 36px để cân đối với logo 32px */
+    padding: 0 var(--space-1) 0 var(--space-1); /* Giữ padding */
+  }
 }
 
 /* Navigation Toggle Button - Chỉ hiển thị trên mobile */
@@ -114,9 +129,16 @@ body.with-sidebar .header {
 }
 
 .logo {
-  height: 28px; /* Giảm từ 36px xuống 28px */
+  height: 36px; /* Tăng từ 28px lên 36px */
   width: auto;
   transition: var(--transition-default);
+}
+
+/* Mobile logo adjustments */
+@media (max-width: 768px) {
+  .logo {
+    height: 32px !important; /* Tăng từ 24px lên 32px cho iPhone 14 Pro Max */
+  }
 }
 
 .header-title {
@@ -129,6 +151,13 @@ body.with-sidebar .header {
   text-overflow: ellipsis;
 }
 
+/* Mobile title adjustments */
+@media (max-width: 768px) {
+  .header-title {
+    font-size: var(--font-size-sm); /* Thu nhỏ title trên mobile */
+  }
+}
+
 /* Header Actions Section */
 .header-actions {
   display: flex;
@@ -139,6 +168,13 @@ body.with-sidebar .header {
   justify-self: end;
   min-width: max-content;
   flex-shrink: 0;
+}
+
+/* Mobile header actions adjustments */
+@media (max-width: 768px) {
+  .header-actions {
+    gap: var(--space-2); /* Giảm khoảng cách giữa các phần tử */
+  }
 }
 
 .user-info {
@@ -211,6 +247,18 @@ body.with-sidebar .header {
   min-width: auto;
 }
 
+/* Mobile button adjustments */
+@media (max-width: 768px) {
+  .header-logout-btn,
+  .header-login-btn {
+    padding: 8px 10px !important; /* Tăng padding để cân đối với logo 32px */
+    font-size: var(--font-size-xs) !important;
+    min-height: 28px; /* Tăng từ 24px lên 28px để cân đối */
+    gap: 6px; /* Tăng gap để cân đối */
+    border-width: 1px !important; /* Giữ border 1px */
+  }
+}
+
 .header-logout-btn:hover,
 .header-login-btn:hover {
   background: var(--color-text-inverse);
@@ -247,6 +295,18 @@ body.with-sidebar .header {
   z-index: 10;
   min-height: 32px; /* Giảm từ 36px xuống 32px */
   min-width: auto;
+}
+
+/* Mobile account button adjustments */
+@media (max-width: 768px) {
+  .header-account-btn {
+    padding: 8px 10px !important; /* Tăng padding để cân đối với logo 32px */
+    font-size: var(--font-size-xs) !important;
+    min-height: 28px; /* Tăng từ 24px lên 28px để cân đối */
+    gap: 6px; /* Tăng gap để cân đối */
+    min-width: auto; /* Bỏ min-width để nút nhỏ hơn */
+    border-width: 1px !important; /* Giữ border 1px */
+  }
 }
 
 .header-account-btn:hover {

@@ -4,8 +4,9 @@
   border-radius: var(--radius-lg);
   /* overflow: hidden; */ /* Loại bỏ overflow hidden để tránh cắt mất nội dung */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  /* Thêm scroll ngang khi cần thiết */
-  overflow-x: auto;
+  /* Thêm scroll ngang và dọc khi cần thiết */
+  overflow: auto;
+  max-height: 70vh; /* Giới hạn chiều cao để tạo scroll dọc */
 }
 
 .table-modern{
@@ -169,4 +170,35 @@
   display: flex;
   gap: var(--space-2);
   align-items: center;
+}
+
+/* 🎯 Custom Scrollbar Styles */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.table-container::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox scrollbar */
+.table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }

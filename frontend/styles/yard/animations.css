@@ -81,15 +81,9 @@
   }
 }
 
-/* 🔄 Refresh Animation */
+/* 🔄 Refresh Animation - Disabled */
 .yard-action-bubble.refresh-animation {
-  animation: refresh-spin 1s ease-in-out;
-}
-
-@keyframes refresh-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+  /* Animation disabled - static display */
 }
 
 /* 🎭 Enhanced Hover Effects */
@@ -237,14 +231,9 @@
   opacity: 0.6;
 }
 
-/* 🎭 Floating Animation for Action Bubbles */
+/* 🎭 Floating Animation for Action Bubbles - Disabled */
 .yard-action-bubble {
-  animation: float-gentle 3s ease-in-out infinite;
-}
-
-@keyframes float-gentle {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
+  /* Animation disabled - static display */
 }
 
 /* 🎯 Glow Pulse for Active Elements */

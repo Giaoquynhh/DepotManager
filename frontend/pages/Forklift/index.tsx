@@ -15,6 +15,7 @@ interface ForkliftTask {
   assigned_driver_id?: string;
   created_by: string;
   cancel_reason?: string;
+  cost?: number;
   createdAt: string;
   updatedAt: string;
   driver?: {
@@ -408,7 +409,6 @@ export default function Forklift() {
         )}
 
         <div className="gate-table-header">
-          <h2>{t('pages.forklift.jobList')}</h2>
           <div className="header-actions">
             <span className="badge badge-primary">
               {t('pages.forklift.totalJobs').replace('{count}', tasks.length.toString())}

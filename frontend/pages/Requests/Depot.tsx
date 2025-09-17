@@ -209,36 +209,28 @@ export default function DepotRequests() {
 					</div>
 				</div>
 
-				{/* Search and Filter */}
-				<div className="search-filter-section modern-search">
+				{/* Search and Filter - Gate Style */}
+				<div className="gate-search-section">
 					<div className="search-row">
 						<div className="search-section">
-							<div className="search-input-group">
-								<span className="search-icon">
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-										<circle cx="11" cy="11" r="8"></circle>
-										<path d="m21 21-4.35-4.35"></path>
-									</svg>
-								</span>
-								<input
-									type="text"
-									className="search-input"
-									placeholder={t('pages.requests.searchPlaceholder')}
-									aria-label={t('pages.requests.searchPlaceholder')}
-									value={localSearch}
-									onChange={(e) => {
-										const v = e.target.value;
-										setLocalSearch(v);
-										handleSearch(v);
-									}}
-								/>
-							</div>
+							<input
+								type="text"
+								className="search-input"
+								placeholder={t('pages.requests.searchPlaceholder')}
+								aria-label={t('pages.requests.searchPlaceholder')}
+								value={localSearch}
+								onChange={(e) => {
+									const v = e.target.value;
+									setLocalSearch(v);
+									handleSearch(v);
+								}}
+							/>
 						</div>
 
 						<div className="filter-group">
 							<select
 								aria-label={t('pages.requests.typeLabel')}
-								className="filter-select modern-select"
+								className="filter-select"
 								value={localType}
 								onChange={(e) => {
 									const v = e.target.value;
@@ -255,7 +247,7 @@ export default function DepotRequests() {
 						<div className="filter-group">
 							<select
 								aria-label={t('pages.requests.statusLabel')}
-								className="filter-select modern-select"
+								className="filter-select"
 								value={state.filterStatus || 'all'}
 								onChange={(e) => actions.setFilterStatus(e.target.value)}
 							>

@@ -171,16 +171,16 @@ function ContainersList(){
       {!data && !error && (
         <div className="muted" style={{marginBottom:12}}>{t('common.loading')}</div>
       )}
-      <div style={{overflow:'hidden', borderRadius:12, border:'1px solid #e8eef6'}}>
-        <table className="table">
-          <thead style={{background:'#f7f9ff'}}>
+      <div className="gate-table-container">
+        <table className="gate-table">
+          <thead>
             <tr>
-              <th>{t('pages.containers.tableHeaders.container')}</th>
-              <th>{t('pages.containers.tableHeaders.yard')}</th>
-              <th>{t('pages.containers.tableHeaders.block')}</th>
-              <th>{t('pages.containers.tableHeaders.slot')}</th>
-              <th>{t('pages.containers.tableHeaders.status')}</th>
-              <th>{t('pages.containers.tableHeaders.checkInfo')}</th>
+              <th data-column="container">{t('pages.containers.tableHeaders.container')}</th>
+              <th data-column="yard">{t('pages.containers.tableHeaders.yard')}</th>
+              <th data-column="block">{t('pages.containers.tableHeaders.block')}</th>
+              <th data-column="slot">{t('pages.containers.tableHeaders.slot')}</th>
+              <th data-column="status">{t('pages.containers.tableHeaders.status')}</th>
+              <th data-column="checkInfo">{t('pages.containers.tableHeaders.checkInfo')}</th>
             </tr>
           </thead>
           <tbody>
@@ -191,12 +191,12 @@ function ContainersList(){
                 </td>
               </tr>
             ) : filteredItems.map((it:any)=>(
-              <tr key={it.container_no}>
-                <td style={{fontWeight:700}}>{it.container_no}</td>
-                <td>{it.yard_name || '-'}</td>
-                <td>{it.block_code || '-'}</td>
-                <td>{it.slot_code || '-'}</td>
-                                 <td>
+              <tr key={it.container_no} className="table-row">
+                <td data-column="container" style={{fontWeight:700}}>{it.container_no}</td>
+                <td data-column="yard">{it.yard_name || '-'}</td>
+                <td data-column="block">{it.block_code || '-'}</td>
+                <td data-column="slot">{it.slot_code || '-'}</td>
+                <td data-column="status">
                    <div style={{display:'flex', flexDirection:'column'}}>
                      {it.derived_status ? (
                        <>
@@ -242,7 +242,7 @@ function ContainersList(){
                      )}
                    </div>
                  </td>
-                                 <td>
+                <td data-column="checkInfo">
                    <div style={{display:'flex', flexDirection:'column', gap:4}}>
                      {it.service_gate_checked_at && (
                        <small className="muted">

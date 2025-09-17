@@ -79,28 +79,31 @@
   }
   
   .header-inner {
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-2);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-3);
+    gap: var(--space-2);
+    min-height: 32px; /* Giảm chiều cao header inner */
   }
   
   .nav-toggle {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    padding: var(--space-1);
   }
   
   .header-brand {
     margin-left: 0;
+    gap: var(--space-2);
   }
   
   .logo {
-    height: 24px; /* Giảm kích thước logo trên mobile */
+    height: 32px !important; /* Tăng từ 24px lên 32px cho iPhone 14 Pro Max */
   }
   
   .header-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xs);
     display: none; /* Hide title on very small screens */
   }
   
@@ -109,13 +112,14 @@
   }
   
   .header-actions {
-    gap: var(--space-2);
+    gap: var(--space-1);
   }
   
   .header-logout-btn,
   .header-login-btn {
-    padding: var(--space-2);
+    padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-xs);
+    min-height: 24px;
   }
   
   .header-logout-btn span,
@@ -124,6 +128,11 @@
   }
   
   /* On small mobile screens, hide the text label inside the account button */
+  .header-account-btn {
+    padding: var(--space-1) var(--space-2);
+    min-height: 24px;
+  }
+  
   .header-account-btn span {
     display: none;
   }
@@ -132,7 +141,7 @@
 /* Tablet */
 @media (min-width: 769px) and (max-width: 1024px) {
   .logo {
-    height: 26px; /* Kích thước logo trên tablet */
+    height: 32px; /* Tăng từ 26px lên 32px trên tablet */
   }
   
   .header-title {
@@ -143,7 +152,7 @@
 /* Medium Mobile */
 @media (min-width: 641px) and (max-width: 768px) {
   .logo {
-    height: 25px; /* Kích thước logo trên medium mobile */
+    height: 30px; /* Tăng từ 25px lên 30px trên medium mobile */
   }
   
   .header-title {
@@ -189,6 +198,40 @@
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
+  /* Thêm scrollbar tổng cho toàn bộ trang trên mobile */
+  body {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    /* Custom scrollbar cho toàn bộ trang */
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--color-gray-400) var(--color-gray-100) !important;
+  }
+  
+  /* Webkit scrollbar cho toàn bộ trang */
+  body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+    border-radius: 4px;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 4px;
+    border: 1px solid var(--color-gray-200);
+  }
+  
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+  }
+  
+  body::-webkit-scrollbar-corner {
+    background: var(--color-gray-100);
+  }
+  
   .search-bar{
     flex-direction: column;
     align-items: stretch;
@@ -206,12 +249,12 @@
   }
   
   .page-layout {
-    padding: var(--space-4);
+    padding: var(--space-2); /* Giảm từ var(--space-4) xuống var(--space-2) */
   }
   
   .page-header {
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-2); /* Giảm từ var(--space-4) xuống var(--space-2) */
     align-items: stretch;
   }
   
@@ -222,5 +265,116 @@
   
   .page-title {
     font-size: var(--font-size-xl);
+  }
+  
+  /* Header adjustments for mobile - Giảm khoảng cách từ header */
+  .header {
+    padding: var(--space-1) 0;
+  }
+  
+  .header-inner {
+    min-height: 32px; /* Giảm từ 36px xuống 32px */
+    padding: 0 var(--space-2) 0 var(--space-1); /* Giảm padding */
+  }
+  
+  .logo {
+    height: 32px !important; /* Tăng từ 24px lên 32px cho iPhone 14 Pro Max */
+  }
+  
+  .header-title {
+    font-size: var(--font-size-xs); /* Giảm từ var(--font-size-sm) xuống var(--font-size-xs) */
+  }
+  
+  .header-actions {
+    gap: var(--space-1); /* Giảm từ var(--space-2) xuống var(--space-1) */
+  }
+  
+  .header-logout-btn,
+  .header-login-btn,
+  .header-account-btn {
+    padding: var(--space-1) var(--space-1); /* Giảm padding */
+    font-size: var(--font-size-xs);
+    min-height: 24px; /* Giảm từ 28px xuống 24px */
+  }
+  
+  /* Giảm khoảng cách container từ header */
+  .container {
+    padding-top: var(--space-2) !important; /* Giảm từ var(--space-4) xuống var(--space-2) */
+  }
+  
+  /* Giảm khoảng cách main-content từ header */
+  .main-content {
+    padding-top: var(--space-1) !important; /* Thêm padding-top nhỏ */
+  }
+}
+
+/* Mobile Landscape (xoay ngang) - Thêm scrollbar tổng */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Đảm bảo scrollbar tổng hoạt động tốt khi xoay ngang */
+  body {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    /* Touch scrolling cho landscape */
+    -webkit-overflow-scrolling: touch !important;
+    /* Đảm bảo scroll hoạt động */
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: contain !important;
+  }
+  
+  /* Scrollbar mỏng hơn cho landscape */
+  body::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: var(--color-gray-100) !important;
+    border-radius: 4px !important;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400) !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--color-gray-200) !important;
+  }
+  
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500) !important;
+  }
+  
+  /* Main content cũng cần scrollbar */
+  .main-content {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+    /* Touch scrolling */
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Container cần scrollbar */
+  .container {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    /* Đảm bảo nội dung không bị cắt */
+    min-width: 100% !important;
+  }
+  
+  /* Gate page specific */
+  .gate-page {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: contain !important;
+    max-height: 100vh !important;
+  }
+  
+  /* Các table container cần scrollbar */
+  .table-container,
+  .gate-table-container,
+  .gate-history-scroll {
+    max-height: 50vh !important; /* Giảm chiều cao cho landscape */
+    overflow-y: scroll !important;
+    overflow-x: auto !important;
   }
 }

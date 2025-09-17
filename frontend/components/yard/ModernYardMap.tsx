@@ -12,6 +12,7 @@ interface Slot {
   isSelected?: boolean;
   occupied_count?: number;
   hold_count?: number;
+  tier_capacity?: number;
 }
 
 interface Block {
@@ -405,16 +406,14 @@ export default function ModernYardMap({
                           <span className="maintenance-icon">🔧</span>
                         )}
                         
-                        {(slot.occupied_count || slot.hold_count) && (
-                          <div className="slot-counters">
-                            {slot.occupied_count && slot.occupied_count > 0 && (
-                              <span className="counter occupied">O:{slot.occupied_count}</span>
-                            )}
-                            {slot.hold_count && slot.hold_count > 0 && (
-                              <span className="counter hold">H:{slot.hold_count}</span>
-                            )}
+                        {/* Hiển thị số container thực tế */}
+                        <div className="slot-counters">
+                          <div className="slot-count-display">
+                            <div className="count-main">
+                              {slot.occupied_count || 0}
+                            </div>
                           </div>
-                        )}
+                        </div>
                         
                         {isSuggested && (
                           <span className="suggestion-badge">💡</span>

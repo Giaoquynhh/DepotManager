@@ -83,7 +83,6 @@ export default function PermissionsPage(){
   const t = {
     vi: {
       title: 'Phân quyền vai trò',
-      subtitle: 'Chỉ SystemAdmin và BusinessAdmin được phép thay đổi vai trò và chức năng của người dùng',
       searchPlaceholder: '🔍 Tìm theo email, họ tên, vai trò...',
       email: 'Email',
       fullName: 'Họ tên',
@@ -137,7 +136,6 @@ export default function PermissionsPage(){
     },
     en: {
       title: 'Role Permissions',
-      subtitle: 'Only SystemAdmin and BusinessAdmin are allowed to change user roles and functions',
       searchPlaceholder: '🔍 Search by email, full name, role...',
       email: 'Email',
       fullName: 'Full Name',
@@ -416,26 +414,34 @@ export default function PermissionsPage(){
           overflow: hidden !important;
           height: 100vh !important;
         }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          body, html {
+            overflow: auto !important;
+            height: auto !important;
+          }
+          .permissions-page {
+            overflow: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+          }
+        }
 
                  .permissions-content {
            overflow: auto;
            height: calc(100vh - 120px);
            padding-bottom: 20px;
          }
-        .permissions-content::-webkit-scrollbar {
-          width: 12px;
-        }
-        .permissions-content::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 6px;
-        }
-        .permissions-content::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 6px;
-        }
-        .permissions-content::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
+         
+         /* Mobile content adjustments */
+         @media (max-width: 768px) {
+           .permissions-content {
+             overflow: auto;
+             height: calc(100vh - 120px);
+             padding-bottom: 40px;
+           }
+         }
         
 
          
@@ -452,6 +458,62 @@ export default function PermissionsPage(){
            transition: all 0.3s ease;
          }
          
+         /* Desktop only - ẩn trên mobile */
+         .desktop-only {
+           display: block;
+         }
+         
+         /* Mobile search container */
+         .mobile-search-container {
+           display: none;
+           padding: 16px 20px;
+           background: rgba(255, 255, 255, 0.1);
+           border-radius: 0 0 12px 12px;
+           margin-top: 8px;
+         }
+         
+         /* Mobile search input */
+         .mobile-search {
+           width: 100%;
+           max-width: 100%;
+           padding: 12px 16px;
+           font-size: 14px;
+           border-radius: 20px;
+           border: 2px solid rgba(255,255,255,0.3);
+           background: rgba(255,255,255,0.9);
+           backdrop-filter: blur(10px);
+           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+         }
+         
+         /* Mobile only - ẩn trên desktop */
+         .mobile-only {
+           display: none;
+         }
+         
+         /* Mobile responsive */
+         @media (max-width: 768px) {
+           .desktop-only {
+             display: none;
+           }
+           
+           .mobile-only {
+             display: block;
+           }
+           
+           .mobile-search-container {
+             display: block;
+           }
+           
+           
+           .search-input {
+             min-width: 200px;
+             width: 100%;
+             max-width: 100%;
+             padding: 12px 16px;
+             font-size: 14px;
+           }
+         }
+         
          .search-input:focus {
            outline: none;
            border-color: rgba(255,255,255,0.8);
@@ -466,7 +528,7 @@ export default function PermissionsPage(){
          }
         
         /* Enhanced Table Styles */
-                 .enhanced-table {
+        .enhanced-table {
            width: 100%;
            min-width: 1400px;
            border-collapse: separate;
@@ -628,6 +690,13 @@ export default function PermissionsPage(){
         .mobile-cards {
           display: none;
         }
+        
+        /* Ensure mobile cards are visible on mobile */
+        @media (max-width: 768px) {
+          .mobile-cards {
+            display: block !important;
+          }
+        }
         .user-card {
           background: white;
           border: 1px solid #e5e7eb;
@@ -635,6 +704,19 @@ export default function PermissionsPage(){
           padding: 16px;
           margin-bottom: 16px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* Mobile card improvements */
+        @media (max-width: 768px) {
+          .user-card {
+            margin: 8px;
+            padding: 12px;
+          }
+          .mobile-cards {
+            overflow: visible;
+            max-height: none;
+          }
+          
         }
         .user-card-header {
           display: flex;
@@ -681,20 +763,28 @@ export default function PermissionsPage(){
            <div className="header-content">
              <div className="header-left">
                <h1 className="page-title gradient gradient-ultimate">{t[language].title}</h1>
-               <div className="page-subtitle">
-                 <span className="info-icon">ℹ️</span>
-                 <span>{t[language].subtitle}</span>
-               </div>
              </div>
              <div className="header-actions">
-               <input 
-                 type="text" 
-                 className="search-input"
-                 placeholder={t[language].searchPlaceholder}
-                 value={keyword}
-                 onChange={e=>setKeyword(e.target.value)}
-               />
+               <div className="desktop-only">
+                 <input 
+                   type="text" 
+                   className="search-input"
+                   placeholder={t[language].searchPlaceholder}
+                   value={keyword}
+                   onChange={e=>setKeyword(e.target.value)}
+                 />
+               </div>
              </div>
+           </div>
+           {/* Mobile search bar - hiển thị dưới header */}
+           <div className="mobile-search-container mobile-only">
+             <input 
+               type="text" 
+               className="search-input mobile-search"
+               placeholder={t[language].searchPlaceholder}
+               value={keyword}
+               onChange={e=>setKeyword(e.target.value)}
+             />
            </div>
          </div>
                         <div className="permissions-content">
@@ -1238,3 +1328,4 @@ export default function PermissionsPage(){
      </>
    );
 }
+
