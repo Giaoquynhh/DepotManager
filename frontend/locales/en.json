@@ -55,6 +55,7 @@
   },
   "sidebar": {
     "mainMenu": "Main Menu",
+    "hrManagement": "HR Management",
     "usersPartners": "Users/Partners",
     "permissions": "Permissions",
     "requests": "Requests",

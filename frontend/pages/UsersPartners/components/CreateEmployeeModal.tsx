@@ -46,19 +46,19 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
       <div className="grid" style={{gap:12}}>
         <input 
           type="text" 
-          placeholder={translations[language].fullNamePlaceholder} 
+          placeholder={`${translations[language].fullNamePlaceholder} *`} 
           value={empFullName} 
           onChange={e => setEmpFullName(e.target.value)} 
         />
         <input 
           type="email" 
-          placeholder={translations[language].emailPlaceholder} 
+          placeholder={`${translations[language].emailPlaceholder} *`} 
           value={empEmail} 
           onChange={e => setEmpEmail(e.target.value)} 
         />
         <input 
           type="password" 
-          placeholder={translations[language].passwordPlaceholder} 
+          placeholder={`${translations[language].passwordPlaceholder} *`} 
           value={empPassword} 
           onChange={e => setEmpPassword(e.target.value)} 
         />
@@ -70,9 +70,6 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           <option value="Dispatcher">{getRoleDisplayName('Dispatcher')}</option>
         </select>
         <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-          <button className="btn btn-outline" onClick={onCancel}>
-            {translations[language].close}
-          </button>
           <button 
             className="btn" 
             onClick={onCreateEmployee} 

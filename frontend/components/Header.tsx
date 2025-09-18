@@ -22,6 +22,7 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(true);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [gateSubmenuOpen, setGateSubmenuOpen] = useState(false);
+  const [hrSubmenuOpen, setHrSubmenuOpen] = useState(false);
   const accountBtnRef = useRef<HTMLButtonElement | null>(null);
   const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{top:number; right:number}>({ top: 0, right: 12 });
@@ -269,6 +270,10 @@ export default function Header() {
 
   const toggleGateSubmenu = () => {
     setGateSubmenuOpen(prev => !prev);
+  };
+
+  const toggleHrSubmenu = () => {
+    setHrSubmenuOpen(prev => !prev);
   };
 
   // Recalculate dropdown position on resize/scroll when open
@@ -568,39 +573,91 @@ export default function Header() {
             {/* Helper: permission-aware gating - chỉ hiển thị khi đã đăng nhập */}
             {hasToken && (
               <>
-                {/* Users & Partners Module */}
+                {/* HR Management Module with Submenu */}
             {(() => {
-              const allow = canViewUsersPartners(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+              const allowUsersPartners = canViewUsersPartners(me?.role);
+              const allowPermissions = isSystemAdmin(me?.role);
+              const okUsersPartners = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'users_partners.view')
-                : allow;
-              return ok;
-            })() && (
-              <Link className={`sidebar-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} href="/UsersPartners" onClick={handleSidebarLinkClick}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <span>{t('sidebar.usersPartners')}</span>
-              </Link>
-            )}
-
-            {/* Role Permissions Module */}
-            {(() => {
-              const allow = isSystemAdmin(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                : allowUsersPartners;
+              const okPermissions = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'permissions.manage')
-                : allow;
-              return ok;
+                : allowPermissions;
+              return okUsersPartners || okPermissions;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Permissions' ? 'active' : ''}`} href="/Permissions" onClick={handleSidebarLinkClick}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                <span>{t('sidebar.permissions')}</span>
-              </Link>
+              <div className="sidebar-group">
+                <button 
+                  className={`sidebar-link sidebar-group-toggle ${router.pathname === '/UsersPartners' || router.pathname === '/Permissions' ? 'active' : ''}`}
+                  onClick={toggleHrSubmenu}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <span>{t('sidebar.hrManagement')}</span>
+                  <svg 
+                    width="12" 
+                    height="12" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    style={{
+                      transform: hrSubmenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                      marginLeft: 'auto'
+                    }}
+                  >
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </button>
+                
+                {hrSubmenuOpen && (
+                  <div className="sidebar-submenu">
+                    {(() => {
+                      const allow = canViewUsersPartners(me?.role);
+                      const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                        ? hasPermission(me?.permissions, 'users_partners.view')
+                        : allow;
+                      return ok;
+                    })() && (
+                      <Link 
+                        className={`sidebar-link sidebar-submenu-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} 
+                        href="/UsersPartners" 
+                        onClick={handleSidebarLinkClick}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>{t('sidebar.usersPartners')}</span>
+                      </Link>
+                    )}
+                    {(() => {
+                      const allow = isSystemAdmin(me?.role);
+                      const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                        ? hasPermission(me?.permissions, 'permissions.manage')
+                        : allow;
+                      return ok;
+                    })() && (
+                      <Link 
+                        className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Permissions' ? 'active' : ''}`} 
+                        href="/Permissions" 
+                        onClick={handleSidebarLinkClick}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span>{t('sidebar.permissions')}</span>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Requests Depot Module */}

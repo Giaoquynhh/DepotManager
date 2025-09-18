@@ -56,6 +56,7 @@
   },
   "sidebar": {
     "mainMenu": "Menu chính",
+    "hrManagement": "Quản lý nhân sự",
     "usersPartners": "Người dùng/Đối tác",
     "permissions": "Phân quyền",
     "requests": "Yêu cầu",

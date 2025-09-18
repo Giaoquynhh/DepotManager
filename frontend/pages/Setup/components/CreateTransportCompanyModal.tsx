@@ -78,94 +78,80 @@ export const CreateTransportCompanyModal: React.FC<CreateTransportCompanyModalPr
             )}
 
             <div className="form-group">
-              <label className="form-label">
-                {translations[language].code} <span style={{color: '#dc2626'}}>*</span>
-              </label>
               <input
                 type="text"
                 className="form-input"
                 value={formData.code}
                 onChange={(e) => handleInputChange('code', e.target.value)}
-                placeholder={translations[language].codePlaceholder}
+                placeholder={`${translations[language].codePlaceholder} *`}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">
-                {translations[language].name} <span style={{color: '#dc2626'}}>*</span>
-              </label>
               <input
                 type="text"
                 className="form-input"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder={translations[language].namePlaceholder}
+                placeholder={`${translations[language].namePlaceholder} *`}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">{translations[language].contactPerson}</label>
               <input
                 type="text"
                 className="form-input"
                 value={formData.contactPerson}
                 onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                placeholder={translations[language].contactPersonPlaceholder}
+                placeholder={`${translations[language].contactPersonPlaceholder} (tùy chọn)`}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">{translations[language].phone}</label>
               <input
                 type="tel"
                 className="form-input"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder={translations[language].phonePlaceholder}
+                placeholder={`${translations[language].phonePlaceholder} (tùy chọn)`}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">{translations[language].email}</label>
               <input
                 type="email"
                 className="form-input"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder={translations[language].emailPlaceholder}
+                placeholder={`${translations[language].emailPlaceholder} (tùy chọn)`}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">{translations[language].vehicleCount}</label>
               <input
                 type="number"
                 className="form-input"
                 value={formData.vehicleCount}
                 onChange={(e) => handleInputChange('vehicleCount', parseInt(e.target.value) || 0)}
-                placeholder={translations[language].vehicleCountPlaceholder}
+                placeholder={`${translations[language].vehicleCountPlaceholder} (tùy chọn)`}
                 min="0"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">{translations[language].address}</label>
               <textarea
                 className="form-input"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder={translations[language].addressPlaceholder}
+                placeholder={`${translations[language].addressPlaceholder} (tùy chọn)`}
                 rows={3}
               />
             </div>
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-outline" onClick={onCancel}>
-              {translations[language].cancel}
-            </button>
             <button type="submit" className="btn">
               {translations[language].save}
             </button>

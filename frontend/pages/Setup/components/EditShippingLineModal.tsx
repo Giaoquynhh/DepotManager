@@ -75,28 +75,20 @@ export const EditShippingLineModal: React.FC<EditShippingLineModalProps> = ({
             )}
 
             <div style={{marginBottom: '20px'}}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '600',
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                {translations[language].code} <span style={{color: '#dc2626'}}>*</span>
-              </label>
               <input
                 type="text"
                 style={{
                   width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400',
                   transition: 'border-color 0.2s ease'
                 }}
                 value={formData.code}
                 onChange={(e) => handleInputChange('code', e.target.value)}
-                placeholder={translations[language].codePlaceholder}
+                placeholder={`${translations[language].codePlaceholder} *`}
                 required
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -104,28 +96,20 @@ export const EditShippingLineModal: React.FC<EditShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '600',
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                {translations[language].name} <span style={{color: '#dc2626'}}>*</span>
-              </label>
               <input
                 type="text"
                 style={{
                   width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400',
                   transition: 'border-color 0.2s ease'
                 }}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder={translations[language].namePlaceholder}
+                placeholder={`${translations[language].namePlaceholder} *`}
                 required
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -133,28 +117,20 @@ export const EditShippingLineModal: React.FC<EditShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '600',
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                {translations[language].eir} <span style={{color: '#dc2626'}}>*</span>
-              </label>
               <input
                 type="text"
                 style={{
                   width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400',
                   transition: 'border-color 0.2s ease'
                 }}
                 value={formData.eir}
                 onChange={(e) => handleInputChange('eir', e.target.value)}
-                placeholder={translations[language].eirPlaceholder}
+                placeholder={`${translations[language].eirPlaceholder} *`}
                 required
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -162,29 +138,21 @@ export const EditShippingLineModal: React.FC<EditShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '600',
-                color: '#374151',
-                fontSize: '14px'
-              }}>
-                {translations[language].note} <span style={{color: '#6b7280', fontSize: '12px'}}>({translations[language].optional})</span>
-              </label>
               <textarea
                 style={{
                   width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400',
                   transition: 'border-color 0.2s ease',
                   resize: 'vertical',
                   minHeight: '80px'
                 }}
                 value={formData.note}
                 onChange={(e) => handleInputChange('note', e.target.value)}
-                placeholder={translations[language].notePlaceholder}
+                placeholder={`${translations[language].notePlaceholder} (${translations[language].optional})`}
                 rows={3}
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -193,9 +161,6 @@ export const EditShippingLineModal: React.FC<EditShippingLineModalProps> = ({
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-outline" onClick={onCancel}>
-              {translations[language].cancel}
-            </button>
             <button type="submit" className="btn">
               {translations[language].update}
             </button>

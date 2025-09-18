@@ -108,8 +108,8 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
         }}>
           <h2 style={{
             margin: 0,
-            fontSize: '20px',
-            fontWeight: '600',
+            fontSize: '18px',
+            fontWeight: '500',
             color: '#111827'
           }}>
             {translations[language].editTransportCompany}
@@ -148,48 +148,29 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
 
           {/* Code Field - Required */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].transportCompanyCode} <span style={{ color: '#dc2626' }}>*</span>
-            </label>
             <input
               type="text"
               value={formData.code}
               onChange={(e) => handleInputChange('code', e.target.value)}
-              placeholder={translations[language].transportCompanyCodePlaceholder}
+              placeholder={`${translations[language].transportCompanyCodePlaceholder} *`}
               style={{
                 width: '100%',
                 padding: '8px 12px',
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
-                fontFamily: 'monospace',
-                fontWeight: '600'
+                fontWeight: '400'
               }}
             />
           </div>
 
           {/* Name Field - Required */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].transportCompanyName} <span style={{ color: '#dc2626' }}>*</span>
-            </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={translations[language].transportCompanyNamePlaceholder}
+              placeholder={`${translations[language].transportCompanyNamePlaceholder} *`}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -203,20 +184,11 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
 
           {/* Address Field - Optional */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].address} <span style={{ color: '#6b7280', fontSize: '12px' }}>({translations[language].optional})</span>
-            </label>
             <input
               type="text"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder={translations[language].addressPlaceholder}
+              placeholder={`${translations[language].addressPlaceholder} (${translations[language].optional})`}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -229,47 +201,29 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
 
           {/* MST Field - Optional */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].mst} <span style={{ color: '#6b7280', fontSize: '12px' }}>({translations[language].optional})</span>
-            </label>
             <input
               type="text"
               value={formData.mst}
               onChange={(e) => handleInputChange('mst', e.target.value)}
-              placeholder={translations[language].mstPlaceholder}
+              placeholder={`${translations[language].mstPlaceholder} (${translations[language].optional})`}
               style={{
                 width: '100%',
                 padding: '8px 12px',
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
-                fontFamily: 'monospace'
+                fontWeight: '400'
               }}
             />
           </div>
 
           {/* Phone Field - Optional */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].phone} <span style={{ color: '#6b7280', fontSize: '12px' }}>({translations[language].optional})</span>
-            </label>
             <input
               type="text"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder={translations[language].phonePlaceholder}
+              placeholder={`${translations[language].phonePlaceholder} (${translations[language].optional})`}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -282,19 +236,10 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
 
           {/* Note Field - Optional */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              {translations[language].note} <span style={{ color: '#6b7280', fontSize: '12px' }}>({translations[language].optional})</span>
-            </label>
             <textarea
               value={formData.note}
               onChange={(e) => handleInputChange('note', e.target.value)}
-              placeholder={translations[language].notePlaceholder}
+              placeholder={`${translations[language].notePlaceholder} (${translations[language].optional})`}
               rows={3}
               style={{
                 width: '100%',
@@ -302,6 +247,7 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
+                fontWeight: '400',
                 resize: 'vertical',
                 minHeight: '80px'
               }}
@@ -317,22 +263,6 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
             paddingTop: '16px'
           }}>
             <button
-              type="button"
-              onClick={onCancel}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                backgroundColor: 'white',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              {translations[language].cancel}
-            </button>
-            <button
               type="submit"
               style={{
                 padding: '8px 16px',
@@ -341,7 +271,7 @@ export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps>
                 backgroundColor: '#059669',
                 color: 'white',
                 fontSize: '14px',
-                fontWeight: '500',
+                fontWeight: '400',
                 cursor: 'pointer'
               }}
             >
