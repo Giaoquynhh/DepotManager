@@ -17,10 +17,10 @@ interface GateHistoryItem {
 }
 
 interface GateHistoryProps {
-  onBack: () => void;
+  // No props needed
 }
 
-export default function GateHistory({ onBack }: GateHistoryProps) {
+export default function GateHistory({}: GateHistoryProps) {
   const [history, setHistory] = useState<GateHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
@@ -132,30 +132,6 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
           <div className="header-left">
             <h1 className="page-title gradient gradient-ultimate">Lịch sử ra vào cổng</h1>
           </div>
-          <div className="header-right">
-            <button
-              onClick={onBack}
-              className="back-button"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                padding: 'var(--space-2) var(--space-3)',
-                backgroundColor: 'var(--color-gray-100)',
-                color: 'var(--color-gray-700)',
-                border: '1px solid var(--color-gray-200)',
-                borderRadius: 'var(--radius-lg)',
-                cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"></path>
-              </svg>
-              Quay lại
-            </button>
-          </div>
         </div>
       </div>
 
@@ -174,20 +150,11 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
           marginBottom: 'var(--space-4)'
         }}>
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-gray-700)',
-              marginBottom: 'var(--space-2)'
-            }}>
-              Tìm kiếm theo mã container
-            </label>
             <input
               type="text"
               value={searchParams.container_no}
               onChange={(e) => setSearchParams(prev => ({ ...prev, container_no: e.target.value, page: 1 }))}
-              placeholder="Nhập mã container..."
+              placeholder="Tìm kiếm theo mã container..."
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',
@@ -198,20 +165,11 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             />
           </div>
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-gray-700)',
-              marginBottom: 'var(--space-2)'
-            }}>
-              Tìm kiếm theo tên tài xế
-            </label>
             <input
               type="text"
               value={searchParams.driver_name}
               onChange={(e) => setSearchParams(prev => ({ ...prev, driver_name: e.target.value, page: 1 }))}
-              placeholder="Nhập tên tài xế..."
+              placeholder="Tìm kiếm theo tên tài xế..."
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',
@@ -222,20 +180,11 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
             />
           </div>
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-gray-700)',
-              marginBottom: 'var(--space-2)'
-            }}>
-              Tìm kiếm theo biển số xe
-            </label>
             <input
               type="text"
               value={searchParams.license_plate}
               onChange={(e) => setSearchParams(prev => ({ ...prev, license_plate: e.target.value, page: 1 }))}
-              placeholder="Nhập biển số xe..."
+              placeholder="Tìm kiếm theo biển số xe..."
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',
@@ -260,40 +209,6 @@ export default function GateHistory({ onBack }: GateHistoryProps) {
               Đang tìm kiếm tự động...
             </div>
           )}
-          <button
-            onClick={handleSearch}
-            disabled={searching}
-            className="action-btn action-btn-primary"
-            style={{
-              padding: 'var(--space-3) var(--space-6)',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              opacity: searching ? 0.7 : 1,
-              cursor: searching ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {searching ? '⏳ Đang tìm...' : '🔍 Tìm kiếm'}
-          </button>
-          <button
-            onClick={() => {
-              setSearchParams({
-                container_no: '',
-                driver_name: '',
-                license_plate: '',
-                page: 1,
-                limit: 20
-              });
-              fetchHistory();
-            }}
-            className="action-btn action-btn-secondary"
-            style={{
-              padding: 'var(--space-3) var(--space-6)',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 'var(--font-weight-medium)'
-            }}
-          >
-            🗑️ Xóa bộ lọc
-          </button>
         </div>
       </div>
 

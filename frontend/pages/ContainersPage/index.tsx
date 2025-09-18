@@ -283,6 +283,21 @@ export default function ContainersPage(){
   
   return (
     <>
+      <style>{`
+        /* Mobile scroll fix for Containers page */
+        @media (max-width: 768px) {
+          body {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          .container.depot-requests {
+            overflow: visible !important;
+            padding-bottom: 2rem;
+          }
+        }
+      `}</style>
       <Header />
       <main className="container depot-requests">
         {/* Page Header */}

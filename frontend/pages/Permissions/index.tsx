@@ -406,15 +406,6 @@ export default function PermissionsPage(){
   return (
     <>
       <style>{`
-        body, html {
-          overflow: hidden !important;
-          height: 100vh !important;
-        }
-        .permissions-page {
-          overflow: hidden !important;
-          height: 100vh !important;
-        }
-        
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
           body, html {
@@ -427,18 +418,29 @@ export default function PermissionsPage(){
             min-height: 100vh;
           }
         }
+        
+        /* Mobile landscape specific adjustments */
+        @media (max-width: 1024px) and (orientation: landscape) {
+          body, html {
+            overflow: auto !important;
+            height: auto !important;
+          }
+          .permissions-page {
+            overflow: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+          }
+          .permissions-content {
+            overflow: visible !important;
+            height: auto !important;
+          }
+        }
 
-                 .permissions-content {
-           overflow: auto;
-           height: calc(100vh - 120px);
-           padding-bottom: 20px;
-         }
-         
          /* Mobile content adjustments */
          @media (max-width: 768px) {
            .permissions-content {
-             overflow: auto;
-             height: calc(100vh - 120px);
+             overflow: visible;
+             height: auto;
              padding-bottom: 40px;
            }
          }
@@ -538,6 +540,47 @@ export default function PermissionsPage(){
            overflow: hidden;
            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
          }
+         
+         /* Table container with horizontal scroll */
+         .enhanced-table-container {
+           overflow-x: auto;
+           overflow-y: visible;
+           width: 100%;
+           -webkit-overflow-scrolling: touch;
+         }
+         
+        /* Mobile landscape horizontal scroll */
+        @media (max-width: 1024px) and (orientation: landscape) {
+          .enhanced-table-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+          }
+          
+          .enhanced-table {
+            min-width: 1400px;
+            width: max-content;
+          }
+          
+          /* Custom scrollbar for mobile landscape */
+          .enhanced-table-container::-webkit-scrollbar {
+            height: 8px;
+          }
+          .enhanced-table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+          }
+          .enhanced-table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+          }
+          .enhanced-table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+        }
                  .enhanced-table th {
            background: #f8fafc;
            color: #334155;
@@ -687,6 +730,16 @@ export default function PermissionsPage(){
             display: block;
           }
         }
+        
+        /* Mobile landscape - show table with horizontal scroll */
+        @media (max-width: 1024px) and (orientation: landscape) {
+          .enhanced-table {
+            display: table !important;
+          }
+          .mobile-cards {
+            display: none !important;
+          }
+        }
         .mobile-cards {
           display: none;
         }
@@ -754,8 +807,6 @@ export default function PermissionsPage(){
       `}</style>
       <Header />
       <main className="container depot-requests" style={{ 
-        overflow: 'hidden', 
-        height: '100vh',
         paddingTop: '20px',
         paddingBottom: '20px'
       }}>
@@ -787,9 +838,9 @@ export default function PermissionsPage(){
              />
            </div>
          </div>
-                        <div className="permissions-content">
+                        <div className="permissions-content" style={{ overflow: 'visible', height: 'auto' }}>
                      {/* Desktop Table View */}
-           <div className="enhanced-table-container" style={{ padding: '10px' }}>
+           <div className="enhanced-table-container" style={{ padding: '10px', overflowX: 'auto' }}>
             <table className="enhanced-table">
                              <thead>
                  <tr>

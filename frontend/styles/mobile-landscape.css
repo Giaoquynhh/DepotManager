@@ -1,0 +1,465 @@
+/* Mobile Landscape Mode Fixes */
+/* Hỗ trợ mobile landscape với width > 768px và height < 500px */
+
+/* Mobile Landscape - Tất cả thiết bị */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Giảm chiều cao header cho mobile landscape */
+  .header {
+    padding: 15px !important; /* Bỏ hoàn toàn padding */
+    height: 45px !important; /* Tăng thêm chiều cao header để có nhiều không gian hơn */
+    min-height: 45px !important;
+    max-height: 45px !important;
+  }
+  
+  .header-inner {
+    min-height: 45px !important; /* Tăng min-height để phù hợp với header */
+    height: 45px !important; /* Cố định chiều cao inner */
+    padding: 8px var(--space-2) !important; /* Giảm padding cho mobile landscape */
+    display: flex !important;
+    align-items: center !important; /* Căn nội dung giữa để không bị ẩn */
+    justify-content: center !important; /* Căn giữa nội dung */
+  }
+  
+  /* Đặc biệt cho trang đăng nhập - căn giữa header */
+  .header-inner.auth-center {
+    justify-content: center !important; /* Căn giữa hoàn toàn */
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .header-inner.auth-center .header-brand {
+    margin-left: 0 !important;
+    justify-self: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    gap: var(--space-2) !important;
+  }
+  
+  .header-inner.auth-center .header-actions {
+    display: none !important; /* Ẩn actions để tập trung vào logo */
+  }
+  
+  .logo {
+    height: 28px !important; /* Tăng logo lên thêm để rõ ràng hơn */
+  }
+  
+  /* Tăng kích thước logo cho trang đăng nhập */
+  .header-inner.auth-center .logo {
+    height: 32px !important; /* Tăng logo cho mobile landscape */
+  }
+  
+  .header-inner.auth-center .header-title {
+    font-size: var(--font-size-lg) !important; /* Tăng font size cho mobile landscape */
+  }
+  
+  .header-title {
+    font-size: 16px !important; /* Tăng title lên thêm để rõ ràng hơn */
+    line-height: 1.4 !important; /* Tăng line-height để chữ rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .header-logout-btn,
+  .header-login-btn {
+    padding: 8px 16px !important; /* Tăng padding button thêm */
+    font-size: 13px !important; /* Tăng font size button thêm */
+    min-height: 26px !important; /* Tăng height button thêm */
+    gap: 8px !important;
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .header-account-btn {
+    padding: 8px 16px !important; /* Tăng padding button thêm */
+    font-size: 13px !important; /* Tăng font size button thêm */
+    min-height: 26px !important; /* Tăng height button thêm */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  /* Tăng kích thước user info */
+  .user-role {
+    font-size: 13px !important; /* Tăng font size thêm để rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .user-email {
+    font-size: 13px !important; /* Tăng font size thêm để rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  /* Tăng kích thước language toggle */
+  .language-toggle-btn {
+    padding: 8px 16px !important; /* Tăng padding thêm */
+    font-size: 13px !important; /* Tăng font size thêm */
+    min-height: 26px !important; /* Tăng height thêm */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .language-flag {
+    width: 18px !important; /* Tăng kích thước flag thêm */
+    height: 18px !important;
+  }
+  
+  .language-name {
+    font-size: 13px !important; /* Tăng font size thêm */
+  }
+  
+  .language-code {
+    font-size: 12px !important; /* Tăng font size thêm */
+  }
+  /* Đảm bảo body có thể scroll */
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior: contain !important;
+    height: 100vh !important;
+    /* Cho phép scroll để xem header đầy đủ */
+    scroll-behavior: smooth !important;
+  }
+  
+  /* Đảm bảo có thể scroll lên để xem header */
+  html {
+    scroll-behavior: smooth !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Scrollbar styling cho mobile landscape */
+  body::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: var(--color-gray-100, #f3f4f6) !important;
+    border-radius: 4px !important;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400, #9ca3af) !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--color-gray-200, #e5e7eb) !important;
+  }
+  
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500, #6b7280) !important;
+  }
+  
+  /* Main content container - Điều chỉnh để không bị che bởi header */
+  .main-content {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    margin-top: 0 !important; /* Bỏ margin-top vì body đã có padding-top */
+  }
+  
+  /* Giảm padding-top của body cho mobile landscape */
+  body {
+    padding-top: 45px !important; /* Cập nhật theo chiều cao header mới */
+  }
+  
+  /* Container classes - Điều chỉnh để không bị che bởi header */
+  .container {
+    overflow: visible !important;
+    max-height: calc(100vh - 45px) !important; /* Trừ đi chiều cao header mới */
+    padding-top: 0 !important; /* Bỏ padding-top vì body đã có padding-top */
+    padding-bottom: 2rem !important;
+  }
+  
+  .container.depot-requests {
+    overflow: visible !important;
+    max-height: calc(100vh - 45px) !important; /* Trừ đi chiều cao header mới */
+    padding-top: 0 !important;
+    padding-bottom: 2rem !important;
+  }
+  
+  /* Header fixes - Cố định header */
+  .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    width: 100% !important;
+  }
+  
+  .page-header {
+    position: relative !important;
+    z-index: 10 !important;
+  }
+  
+  /* Table container fixes */
+  .table-container {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Card fixes */
+  .card {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Modal fixes */
+  .modal-overlay {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .modal-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* Mobile Portrait - Đảm bảo nội dung không bị che bởi header */
+@media (max-width: 768px) and (orientation: portrait) {
+  body {
+    padding-top: 50px !important; /* Đảm bảo nội dung mobile portrait không bị che */
+  }
+  
+  .container {
+    max-height: calc(100vh - 50px) !important;
+    padding-top: 0 !important;
+  }
+  
+  .main-content {
+    margin-top: 0 !important;
+  }
+}
+
+/* Mobile Landscape - Chỉ cho thiết bị có width nhỏ hơn 1024px */
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
+  /* Đảm bảo không có overflow hidden nào cản trở scroll */
+  * {
+    box-sizing: border-box !important;
+  }
+  
+  /* Fix cho các element có overflow hidden */
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+  
+  /* Fix cho sidebar nếu có */
+  .sidebar {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 280px !important; /* Tăng chiều rộng sidebar để cân đối với header */
+    top: 45px !important; /* Cập nhật vị trí top theo chiều cao header mới */
+  }
+  
+  /* Tăng kích thước sidebar content */
+  .sidebar-content {
+    padding: 16px 20px !important; /* Tăng padding để cân đối với header */
+  }
+  
+  /* Tăng kích thước sidebar links */
+  .sidebar-link {
+    padding: 16px 20px !important; /* Tăng padding cho links */
+    font-size: 15px !important; /* Tăng font size */
+    min-height: 56px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước sidebar icons */
+  .sidebar-link svg {
+    width: 20px !important; /* Tăng kích thước icons */
+    height: 20px !important;
+  }
+  
+  /* Tăng kích thước sidebar group toggle */
+  .sidebar-group-toggle {
+    padding: 16px 20px !important; /* Tăng padding */
+    font-size: 15px !important; /* Tăng font size */
+    min-height: 56px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước sidebar submenu */
+  .sidebar-submenu-link {
+    padding: 12px 20px !important; /* Tăng padding */
+    font-size: 14px !important; /* Tăng font size */
+    min-height: 48px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước submenu icons */
+  .sidebar-submenu-link svg {
+    width: 18px !important; /* Tăng kích thước icons */
+    height: 18px !important;
+  }
+  
+  /* Fix cho header - Cố định header */
+  .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    width: 100% !important;
+  }
+  
+  /* Fix cho navigation */
+  .nav {
+    overflow: visible !important;
+  }
+  
+  /* Fix cho search/filter sections */
+  .search-filter-section {
+    overflow: visible !important;
+    flex-wrap: wrap !important;
+  }
+  
+  /* Fix cho buttons */
+  .btn {
+    white-space: nowrap !important;
+  }
+  
+  /* Fix cho dropdowns */
+  .dropdown {
+    overflow: visible !important;
+  }
+  
+  .dropdown-content {
+    overflow: visible !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Mobile Landscape - Cho thiết bị có width lớn hơn 1024px nhưng vẫn là mobile */
+@media (min-width: 1025px) and (orientation: landscape) and (max-height: 500px) {
+  /* Áp dụng các fix tương tự cho tablet landscape */
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-top: 50px !important; /* Cập nhật theo chiều cao header mới */
+  }
+  
+  /* Cố định header và giảm kích thước */
+  .header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    width: 100% !important;
+    padding: 0 !important; /* Bỏ padding hoàn toàn */
+    height: 50px !important; /* Tăng thêm chiều cao header để có nhiều không gian hơn */
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
+  
+  .header-inner {
+    min-height: 50px !important; /* Tăng min-height để phù hợp với header */
+    height: 50px !important; /* Cố định chiều cao inner */
+    padding: 14px var(--space-1) 14px var(--space-1) !important; /* Tăng padding thêm để chữ có nhiều không gian hơn */
+    display: flex !important;
+    align-items: center !important; /* Căn nội dung giữa để không bị ẩn */
+  }
+  
+  .logo {
+    height: 26px !important; /* Tăng logo thêm để rõ ràng hơn */
+  }
+  
+  .header-title {
+    font-size: 17px !important; /* Tăng title thêm để rõ ràng hơn */
+    line-height: 1.4 !important; /* Tăng line-height để chữ rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  /* Tăng kích thước logo cho trang đăng nhập trên tablet landscape */
+  .header-inner.auth-center .logo {
+    height: 34px !important; /* Tăng logo cho tablet landscape */
+  }
+  
+  .header-inner.auth-center .header-title {
+    font-size: var(--font-size-xl) !important; /* Tăng font size cho tablet landscape */
+  }
+  
+  .header-logout-btn,
+  .header-login-btn {
+    padding: 9px 18px !important; /* Tăng padding thêm */
+    font-size: 14px !important; /* Tăng font size thêm */
+    min-height: 28px !important; /* Tăng height thêm */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .header-account-btn {
+    padding: 9px 18px !important; /* Tăng padding thêm */
+    font-size: 14px !important; /* Tăng font size thêm */
+    min-height: 28px !important; /* Tăng height thêm */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .user-role {
+    font-size: 14px !important; /* Tăng font size thêm để rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .user-email {
+    font-size: 14px !important; /* Tăng font size thêm để rõ ràng hơn */
+    margin: 0 !important; /* Bỏ margin để căn giữa */
+  }
+  
+  .main-content {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+    margin-top: 0 !important; /* Bỏ margin-top vì body đã có padding-top */
+  }
+  
+  .container {
+    overflow: visible !important;
+    max-height: calc(100vh - 50px) !important; /* Trừ đi chiều cao header mới */
+    padding-top: 0 !important;
+  }
+  
+  /* Tăng kích thước sidebar cho tablet landscape */
+  .sidebar {
+    width: 300px !important; /* Tăng chiều rộng sidebar cho tablet */
+    top: 50px !important; /* Cập nhật vị trí top theo chiều cao header mới */
+  }
+  
+  /* Tăng kích thước sidebar content cho tablet */
+  .sidebar-content {
+    padding: 18px 24px !important; /* Tăng padding cho tablet */
+  }
+  
+  /* Tăng kích thước sidebar links cho tablet */
+  .sidebar-link {
+    padding: 18px 24px !important; /* Tăng padding cho links */
+    font-size: 16px !important; /* Tăng font size */
+    min-height: 60px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước sidebar icons cho tablet */
+  .sidebar-link svg {
+    width: 22px !important; /* Tăng kích thước icons */
+    height: 22px !important;
+  }
+  
+  /* Tăng kích thước sidebar group toggle cho tablet */
+  .sidebar-group-toggle {
+    padding: 18px 24px !important; /* Tăng padding */
+    font-size: 16px !important; /* Tăng font size */
+    min-height: 60px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước sidebar submenu cho tablet */
+  .sidebar-submenu-link {
+    padding: 14px 24px !important; /* Tăng padding */
+    font-size: 15px !important; /* Tăng font size */
+    min-height: 52px !important; /* Tăng chiều cao tối thiểu */
+  }
+  
+  /* Tăng kích thước submenu icons cho tablet */
+  .sidebar-submenu-link svg {
+    width: 20px !important; /* Tăng kích thước icons */
+    height: 20px !important;
+  }
+}

@@ -33,7 +33,7 @@ html,body,#__next{height:100%}
 }
 
 /* Mobile Landscape (xoay ngang) - Scrollbar tổng */
-@media (max-width: 768px) and (orientation: landscape) {
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
   body {
     overflow-x: auto !important;
     overflow-y: auto !important;

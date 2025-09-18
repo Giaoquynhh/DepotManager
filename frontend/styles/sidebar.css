@@ -2,7 +2,7 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: calc(var(--header-clearance) + 3.8px);
+  top: calc(var(--header-clearance) - 4px);
   bottom: 0;
   width: 240px;
   background: linear-gradient(180deg, 
@@ -188,4 +188,98 @@
   .sidebar-overlay {
     display: none !important;
   }
+}
+
+/* Submenu Styles */
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  padding: var(--space-3) var(--space-3);
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  position: relative;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 48px;
+  width: 100%;
+  text-align: left;
+  transition: none;
+}
+
+.sidebar-group-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 1);
+}
+
+.sidebar-group-toggle.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 1);
+  border-left: 3px solid rgba(59, 130, 246, 0.8);
+}
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.2);
+  margin-left: var(--space-4);
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  padding-left: var(--space-2);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sidebar-submenu-link {
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  min-height: 40px;
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.7);
+  border-left: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sidebar-submenu-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border-left-color: rgba(59, 130, 246, 0.5);
+}
+
+.sidebar-submenu-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 1);
+  border-left-color: rgba(59, 130, 246, 0.8);
+}
+
+.sidebar-submenu-link svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+
+.sidebar-submenu-link:hover svg,
+.sidebar-submenu-link.active svg {
+  opacity: 1;
 }

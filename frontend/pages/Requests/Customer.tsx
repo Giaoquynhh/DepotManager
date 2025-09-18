@@ -159,6 +159,21 @@ export default function CustomerRequests() {
 
 	return (
 		<>
+			<style>{`
+				/* Mobile scroll fix for Customer Requests page */
+				@media (max-width: 768px) {
+					body {
+						overflow-y: auto !important;
+						overflow-x: hidden !important;
+						-webkit-overflow-scrolling: touch;
+					}
+					
+					.container.customer-requests {
+						overflow: visible !important;
+						padding-bottom: 2rem;
+					}
+				}
+			`}</style>
 			<Header />
 			<main className="container customer-requests">
 				{/* Page Header */}

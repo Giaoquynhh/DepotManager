@@ -16,6 +16,13 @@
   min-width: 1200px; /* Đặt min-width để đảm bảo tất cả cột hiển thị đầy đủ */
 }
 
+/* Mobile responsive cho table modern */
+@media (max-width: 768px) {
+  .table-modern {
+    min-width: 100%; /* Cho phép bảng co lại trên mobile */
+  }
+}
+
 .table-modern th{
   background: var(--color-gray-50) !important; /* #F9FAFB - xám sáng */
   color: var(--color-gray-700) !important; /* #374151 - xám đậm */

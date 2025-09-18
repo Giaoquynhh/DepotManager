@@ -360,6 +360,13 @@
   position: relative;
 }
 
+/* Mobile responsive cho gate table */
+@media (max-width: 768px) {
+  .gate-table {
+    min-width: 100%; /* Cho phép bảng co lại trên mobile */
+  }
+}
+
 /* Sticky header cho bảng */
 .gate-table thead {
   position: sticky;
@@ -670,7 +677,7 @@
 }
 
 /* Mobile Landscape cho Gate History */
-@media (max-width: 768px) and (orientation: landscape) {
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
   /* Scrollbar tổng cho trang Gate History landscape */
   body {
     overflow-x: auto !important;

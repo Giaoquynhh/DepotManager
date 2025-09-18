@@ -17,6 +17,50 @@
 /* 1. Variables and Design System */
 @import url('./variables.css');
 
+/* Ẩn scrollbar bên ngoài cho toàn bộ trang */
+html, body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  max-width: 100vw !important;
+}
+
+/* Thêm padding cho body để tránh bị che bởi header fixed */
+body {
+  padding-top: 30px !important; /* Giữ nguyên 30px cho mobile portrait */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ẩn scrollbar cho tất cả elements */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html {
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar {
+  display: none !important;
+}
+
 /* 2. Base styles, typography, and layout */
 @import url('./base.css');
 
@@ -132,7 +176,7 @@
   animation: gradientShift 15s ease infinite;
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @keyframes gradientShift {
@@ -412,63 +456,46 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* Scrollbar tổng cho toàn bộ trang trên mobile */
+  /* Cho phép scroll trên mobile */
   body {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-gray-400) var(--color-gray-100);
-  }
-  
-  body::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  body::-webkit-scrollbar-track {
-    background: var(--color-gray-100);
-    border-radius: 4px;
-  }
-  
-  body::-webkit-scrollbar-thumb {
-    background: var(--color-gray-400);
-    border-radius: 4px;
-    border: 1px solid var(--color-gray-200);
-  }
-  
-  body::-webkit-scrollbar-thumb:hover {
-    background: var(--color-gray-500);
+    -webkit-overflow-scrolling: touch;
+    padding-top: 30px !important; /* Giữ nguyên 30px cho mobile */
   }
   
   .profile-container {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    padding-bottom: 2rem;
   }
   
   .glass-card {
     padding: 1.5rem;
+    margin-bottom: 1rem;
   }
   
   .futuristic-profile {
     padding: 1rem;
+    min-height: 100vh;
+    overflow: visible;
   }
 }
 
 /* Mobile Landscape (xoay ngang) - Scrollbar tổng */
-@media (max-width: 768px) and (orientation: landscape) {
-  /* Scrollbar tổng cho landscape */
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
+  /* Cho phép scroll trên landscape */
   body {
-    overflow-x: auto !important;
-    overflow-y: auto !important;
+    overflow-x: hidden;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     overscroll-behavior: contain;
   }
   
-  /* Scrollbar mỏng hơn cho landscape */
+  /* Ẩn scrollbar bên ngoài */
   body::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    display: none !important;
   }
   
   /* Main content scrollbar */

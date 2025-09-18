@@ -199,32 +199,6 @@ export default function GateDashboard() {
           <div className="header-left">
             <h1 className="page-title gradient gradient-ultimate">{t('pages.gate.title')}</h1>
           </div>
-          <div className="header-actions">
-            <button
-              onClick={() => window.location.href = '/Gate/History'}
-              className="action-btn action-btn-secondary"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                padding: 'var(--space-3) var(--space-4)',
-                backgroundColor: 'var(--color-blue-600)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-lg)',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 4h13l3 7-3 7H3V4z"></path>
-                <path d="M8 11l2 2 4-4"></path>
-              </svg>
-              Lịch sử ra vào
-            </button>
-          </div>
         </div>
       </div>
 

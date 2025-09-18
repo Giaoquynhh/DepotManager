@@ -367,6 +367,21 @@ export default function Forklift() {
   if (error) {
     return (
       <>
+        <style>{`
+          /* Mobile scroll fix for Forklift page */
+          @media (max-width: 768px) {
+            body {
+              overflow-y: auto !important;
+              overflow-x: hidden !important;
+              -webkit-overflow-scrolling: touch;
+            }
+            
+            .container {
+              overflow: visible !important;
+              padding-bottom: 2rem;
+            }
+          }
+        `}</style>
         <Header />
         <main className="container">
           <div className="card card-padding-lg">
@@ -382,6 +397,21 @@ export default function Forklift() {
 
   return (
     <>
+      <style>{`
+        /* Mobile scroll fix for Forklift page */
+        @media (max-width: 768px) {
+          body {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          .container.depot-requests {
+            overflow: visible !important;
+            padding-bottom: 2rem;
+          }
+        }
+      `}</style>
       <Header />
       <main className="container depot-requests">
         {/* Page Header */}

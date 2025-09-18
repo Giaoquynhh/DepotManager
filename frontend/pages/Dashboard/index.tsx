@@ -29,6 +29,21 @@ export default function Dashboard(){
 	const role = me?.role || me?.roles?.[0];
 	return (
 		<>
+			<style>{`
+				/* Mobile scroll fix for Dashboard page */
+				@media (max-width: 768px) {
+					body {
+						overflow-y: auto !important;
+						overflow-x: hidden !important;
+						-webkit-overflow-scrolling: touch;
+					}
+					
+					.container {
+						overflow: visible !important;
+						padding-bottom: 2rem;
+					}
+				}
+			`}</style>
 			<Header />
             <main className="container">
                 <Card title={`Chào ${me?.full_name || ''} (${role || '...'})`}>

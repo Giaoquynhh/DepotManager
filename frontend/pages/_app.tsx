@@ -13,6 +13,7 @@ import '../styles/yard-configuration.css';
 import '../styles/register.css';
 import '../styles/notification-badge.css';
 import '../styles/forklift.css';
+import '../styles/mobile-landscape.css';
 import DriverNotification from '@components/DriverNotification';
 import { Toaster } from 'sonner';
 
@@ -37,7 +38,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 		<>
 			<Head>
 				<title>Smartlog Depot Management</title>
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 			</Head>
 						<Toaster position="top-right" richColors />
 			<Component {...pageProps} />

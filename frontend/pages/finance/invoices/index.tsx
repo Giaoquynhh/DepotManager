@@ -68,6 +68,21 @@ export default function InvoiceList(){
 
   return (
     <>
+      <style>{`
+        /* Mobile scroll fix for Finance Invoices page */
+        @media (max-width: 768px) {
+          body {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          .container.depot-requests.invoice-page {
+            overflow: visible !important;
+            padding-bottom: 2rem;
+          }
+        }
+      `}</style>
       <Header />
       <main className="container depot-requests invoice-page">
         <div className="page-header modern-header">

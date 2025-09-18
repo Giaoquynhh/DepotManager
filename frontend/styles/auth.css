@@ -11,6 +11,60 @@
   align-items: center; /* đảm bảo căn giữa theo trục dọc */
 }
 
+/* Mobile Portrait - Tăng chiều cao header cho giao diện đăng nhập */
+@media (max-width: 768px) and (orientation: portrait) {
+  .header-inner.auth-center {
+    min-height: 60px !important; /* Tăng từ 25px lên 60px cho mobile portrait */
+    padding: 12px var(--space-2) !important; /* Tăng padding cho mobile portrait */
+  }
+  
+  .header-inner.auth-center .logo {
+    height: 35.5px !important; /* Tăng logo từ 32px lên 36px cho mobile portrait */
+  }
+  
+  .header-inner.auth-center .header-title {
+    font-size: var(--font-size-xs) !important; /* Giảm từ sm xuống xs cho mobile portrait */
+    display: block !important; /* Hiển thị title trên mobile portrait */
+  }
+}
+
+/* Mobile Landscape - Căn giữa header cho giao diện đăng nhập */
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
+  .header-inner.auth-center {
+    justify-content: center !important; /* Đảm bảo căn giữa trên mobile landscape */
+    align-items: center !important; /* Căn giữa theo trục dọc */
+    min-height: 45px !important; /* Giảm chiều cao cho mobile landscape */
+    padding: 8px var(--space-2) !important; /* Giảm padding cho mobile landscape */
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .header-inner.auth-center .header-brand {
+    margin-left: 0 !important; /* Bỏ margin để căn giữa hoàn hảo */
+    justify-self: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    gap: var(--space-2) !important;
+  }
+  
+  .header-inner.auth-center .logo {
+    height: 32px !important; /* Tăng logo cho mobile landscape */
+  }
+  
+  .header-inner.auth-center .header-title {
+    font-size: var(--font-size-lg) !important; /* Tăng font size cho mobile landscape */
+    display: block !important; /* Hiển thị title trên mobile landscape */
+    white-space: nowrap !important;
+  }
+  
+  .header-inner.auth-center .header-actions {
+    display: none !important; /* Ẩn actions trên mobile landscape để tập trung vào logo */
+  }
+}
+
 /* Đảm bảo trang đăng nhập không có thanh cuộn */
 body:has(.auth-hero) {
   overflow: hidden !important;
@@ -49,6 +103,14 @@ main:has(.auth-hero) {
   overflow: hidden;
 }
 
+/* Mobile Portrait - Tăng chiều cao khung đăng nhập */
+@media (max-width: 768px) and (orientation: portrait) {
+  .auth-hero {
+    height: calc(100vh - 60px) !important; /* Cập nhật theo chiều cao header mới */
+    padding: var(--space-4) !important; /* Giảm padding cho mobile */
+  }
+}
+
 .auth-card {
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-xl);
@@ -59,6 +121,15 @@ main:has(.auth-hero) {
   background: var(--color-bg-primary);
   overflow: hidden;
   max-height: calc(100vh - var(--header-height) - 64px); /* Giới hạn chiều cao tối đa */
+}
+
+/* Mobile Portrait - Tăng chiều cao khung đăng nhập */
+@media (max-width: 768px) and (orientation: portrait) {
+  .auth-card {
+    padding: 32px 24px !important; /* Tăng padding cho mobile portrait */
+    max-height: calc(100vh - 60px - 32px) !important; /* Cập nhật theo header mới */
+    min-height: 500px !important; /* Đảm bảo chiều cao tối thiểu */
+  }
 }
 
 .auth-card h2 {

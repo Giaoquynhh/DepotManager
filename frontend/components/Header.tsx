@@ -21,6 +21,7 @@ export default function Header() {
   const [navOpen, setNavOpen] = useState(false); // Khởi tạo đóng, sẽ được set bởi logic restore
   const [isLoading, setIsLoading] = useState(true);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [gateSubmenuOpen, setGateSubmenuOpen] = useState(false);
   const accountBtnRef = useRef<HTMLButtonElement | null>(null);
   const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{top:number; right:number}>({ top: 0, right: 12 });
@@ -113,6 +114,15 @@ export default function Header() {
       }
     }
   }, []);
+
+  // Auto-open Gate submenu when on Gate pages
+  useEffect(() => {
+    if (router.pathname === '/Gate' || router.pathname === '/Gate/History') {
+      setGateSubmenuOpen(true);
+    } else {
+      setGateSubmenuOpen(false);
+    }
+  }, [router.pathname]);
 
   // Auto-refresh permissions on tab focus/visibility/route change
   useEffect(() => {
@@ -255,6 +265,10 @@ export default function Header() {
 
   const toggleAccountDropdown = () => {
     setAccountDropdownOpen(prev => !prev);
+  };
+
+  const toggleGateSubmenu = () => {
+    setGateSubmenuOpen(prev => !prev);
   };
 
   // Recalculate dropdown position on resize/scroll when open
@@ -626,7 +640,7 @@ export default function Header() {
               </Link>
             )}
 
-            {/* Gate Module */}
+            {/* Gate Module with Submenu */}
             {(() => {
               const allow = canUseGate(me?.role) || isSecurity(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
@@ -634,14 +648,65 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Gate' ? 'active' : ''}`} href="/Gate" onClick={handleSidebarLinkClick}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <path d="M16 10a4 4 0 0 1-8 0"></path>
-                </svg>
-                <span>{t('sidebar.gate')}</span>
-              </Link>
+              <div className="sidebar-group">
+                <button 
+                  className={`sidebar-link sidebar-group-toggle ${router.pathname === '/Gate' || router.pathname === '/Gate/History' ? 'active' : ''}`}
+                  onClick={toggleGateSubmenu}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
+                  <span>{t('sidebar.gate')}</span>
+                  <svg 
+                    width="12" 
+                    height="12" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    style={{
+                      transform: gateSubmenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                      marginLeft: 'auto'
+                    }}
+                  >
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </button>
+                
+                {gateSubmenuOpen && (
+                  <div className="sidebar-submenu">
+                    <Link 
+                      className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Gate' ? 'active' : ''}`} 
+                      href="/Gate" 
+                      onClick={handleSidebarLinkClick}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="9" y2="9.01"></line>
+                        <line x1="15" y1="9" x2="15" y2="9.01"></line>
+                        <line x1="9" y1="15" x2="9" y2="15.01"></line>
+                        <line x1="15" y1="15" x2="15" y2="15.01"></line>
+                        <line x1="9" y1="12" x2="15" y2="12"></line>
+                      </svg>
+                      <span>Bảng điều khiển</span>
+                    </Link>
+                    <Link 
+                      className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Gate/History' ? 'active' : ''}`} 
+                      href="/Gate/History" 
+                      onClick={handleSidebarLinkClick}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 4h13l3 7-3 7H3V4z"></path>
+                        <path d="M8 11l2 2 4-4"></path>
+                      </svg>
+                      <span>Lịch sử ra vào</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Yard Module */}

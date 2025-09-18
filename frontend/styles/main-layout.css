@@ -1,13 +1,21 @@
 /* Main Content Layout */
 .main-content {
   position: absolute;
-  top: var(--header-clearance); /* Giữ vị trí dưới header */
+  top: 52px !important; /* CỐ ĐỊNH VỊ TRÍ DƯỚI HEADER FIXED */
   right: 0;
   left: 0;
   padding: 0; /* Tránh double padding với .container, đồng bộ với Depot */
   overflow-y: auto; /* Cho phép cuộn nội dung */
   scrollbar-gutter: stable; /* Cố định khoảng trống thanh cuộn để lề phải nhất quán */
-  height: calc(100% - var(--header-clearance));
+  height: calc(100vh - 52px) !important; /* CỐ ĐỊNH CHIỀU CAO */
+}
+
+/* Mobile Portrait - Cập nhật vị trí main-content cho header cao hơn */
+@media (max-width: 768px) and (orientation: portrait) {
+  .main-content {
+    top: 60px !important; /* Cập nhật vị trí cho header cao hơn */
+    height: calc(100vh - 60px) !important; /* Cập nhật chiều cao cho header cao hơn */
+  }
 }
 
 .main-content.full-width {

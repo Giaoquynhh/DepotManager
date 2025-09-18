@@ -231,6 +231,71 @@ export default function RepairsPage() {
 
   return (
     <>
+      <style>{`
+        /* Mobile scroll fix for Maintenance Repairs page */
+        @media (max-width: 768px) {
+          body {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          .container.depot-requests {
+            overflow: visible !important;
+            padding-bottom: 2rem;
+          }
+        }
+        
+        /* Mobile Landscape scroll fix */
+        @media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
+          body {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pan-y;
+            overscroll-behavior: contain;
+            padding-top: 15px !important; /* Giảm padding cho mobile landscape */
+          }
+          
+          /* Cố định header và giảm kích thước */
+          .header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1000 !important;
+            width: 100% !important;
+            padding: 1px 0 !important; /* Giảm padding header */
+          }
+          
+          .header-inner {
+            min-height: 20px !important; /* Giảm min-height */
+          }
+          
+          .logo {
+            height: 16px !important; /* Giảm logo */
+          }
+          
+          .header-title {
+            font-size: 9px !important; /* Giảm title */
+          }
+          
+          .container.depot-requests {
+            overflow: visible !important;
+            padding-bottom: 2rem;
+            max-height: calc(100vh - 15px); /* Trừ đi chiều cao header mới */
+            padding-top: 0; /* Bỏ padding-top vì body đã có padding-top */
+          }
+          
+          .main-content {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            max-height: 100vh;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 0; /* Bỏ margin-top vì body đã có padding-top */
+          }
+        }
+      `}</style>
       <Header />
       <main className="container depot-requests">
         <div className="page-header modern-header">

@@ -46,6 +46,30 @@ export default function Account(){
 
 	return (
 		<>
+			<style>{`
+				/* Mobile scroll fix for Account page */
+				@media (max-width: 768px) {
+					body {
+						overflow-y: auto !important;
+						overflow-x: hidden !important;
+						-webkit-overflow-scrolling: touch;
+					}
+					
+					.container.futuristic-profile {
+						overflow: visible !important;
+						min-height: 100vh;
+						padding-bottom: 2rem;
+					}
+					
+					.profile-container {
+						padding-bottom: 2rem;
+					}
+					
+					.glass-card {
+						margin-bottom: 1rem;
+					}
+				}
+			`}</style>
 			<Header />
 			<main className="container futuristic-profile">
 				{/* Animated Background */}

@@ -134,7 +134,13 @@
   table-layout: fixed; /* Cố định layout để các cột có độ rộng ổn định */
   min-width: 1200px; /* Tăng từ 1020px lên 1200px để bảng rộng hơn */
   max-width: 100%; /* Không vượt quá container */
-  white-space: nowrap; /* Ngăn text xuống dòng */
+}
+
+/* Mobile responsive cho modern table */
+@media (max-width: 768px) {
+  .modern-table {
+    min-width: 100%; /* Cho phép bảng co lại trên mobile */
+  }
 }
 
 .table-modern thead {
