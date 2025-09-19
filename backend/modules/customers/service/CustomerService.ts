@@ -16,9 +16,15 @@ export class CustomerService {
 		return { data, total, page, totalPages: Math.ceil(total / limit) };
 	}
 
-	async create(actorId: string, payload: { name: string; tax_code: string; address?: string; contact_email?: string }) {
-		const existsTax = await repo.findByTaxCode(payload.tax_code);
-		if (existsTax) throw new Error('Mã số thuế đã tồn tại');
+	async create(actorId: string, payload: { code: string; name: string; tax_code?: string; address?: string; contact_email?: string }) {
+		const existsCode = await repo.findByCode(payload.code);
+		if (existsCode) throw new Error('Mã khách hàng đã tồn tại');
+		
+		if (payload.tax_code) {
+			const existsTax = await repo.findByTaxCode(payload.tax_code);
+			if (existsTax) throw new Error('Mã số thuế đã tồn tại');
+		}
+		
 		const customer = await repo.create({ ...payload, status: 'ACTIVE' });
 		await audit(actorId, 'CUSTOMER.CREATED', 'CUSTOMER', String((customer as any)._id));
 
@@ -51,6 +57,16 @@ export class CustomerService {
 		const updated = await repo.updateById(id, { status: 'INACTIVE' });
 		if (!updated) throw new Error('Khách hàng không tồn tại');
 		await audit(actorId, 'CUSTOMER.DISABLED', 'CUSTOMER', id);
+		return true;
+	}
+
+	async delete(actorId: string, id: string) {
+		const customer = await repo.findById(id);
+		if (!customer) throw new Error('Khách hàng không tồn tại');
+		
+		// Xóa customer khỏi database
+		await repo.deleteById(id);
+		await audit(actorId, 'CUSTOMER.DELETED', 'CUSTOMER', id);
 		return true;
 	}
 

@@ -46,10 +46,10 @@ export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
     <Modal title={title || 'Tạo đối tác'} visible={visible} onCancel={onCancel} size="sm">
       <div className="grid" style={{ gap: 12 }}>
         <div>
-          <input type="text" value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="Mã đối tác *" />
+          <input type="text" value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="Mã khách hàng *" />
         </div>
         <div>
-          <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Tên đối tác *" />
+          <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Tên khách hàng *" />
         </div>
         <div>
           <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Địa chỉ (tùy chọn)" />
@@ -78,7 +78,9 @@ export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
         )}
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button className="btn" style={{ background: '#7c3aed', color: '#fff' }} onClick={onSubmit}>Tạo</button>
+          <button className="btn" style={{ background: '#7c3aed', color: '#fff' }} onClick={onSubmit}>
+            {title?.includes('Cập nhật') ? 'Cập nhật' : 'Tạo'}
+          </button>
         </div>
       </div>
     </Modal>

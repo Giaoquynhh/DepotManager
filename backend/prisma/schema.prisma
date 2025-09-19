@@ -46,13 +46,17 @@ model User {
 
 model Customer {
 	id            String   @id @default(cuid())
-	name          String   @unique
-	tax_code      String   @unique
+	code          String   @unique  // Mã khách hàng (Customer Code)
+	name          String             // Tên khách hàng (có thể trùng)
+	tax_code      String?  @unique  // MST (optional, unique nếu có)
 	address       String?
 	contact_email String?
 	status        String   // ACTIVE | INACTIVE
 	createdAt     DateTime @default(now())
 	updatedAt     DateTime @updatedAt
+	
+	// Relations
+	serviceRequests ServiceRequest[]
 }
 
 model Partner {
@@ -84,7 +88,12 @@ model ServiceRequest {
     tenant_id     String?
     created_by    String
     type          String   // IMPORT | EXPORT | CONVERT
+    request_no    String?  // Auto-generated request number (NA/HA + date + sequence)
     container_no  String?  // Optional cho EXPORT
+    shipping_line_id String? // Reference to ShippingLine
+    container_type_id String? // Reference to ContainerType
+    customer_id   String?  // Reference to Customer
+    vehicle_company_id String? // Reference to TransportCompany
     eta           DateTime?
     status        String   // TODO: Định nghĩa lại trạng thái mới
     forwarded_at    DateTime?
@@ -127,6 +136,12 @@ model ServiceRequest {
     
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
+
+    // Relations
+    shipping_line    ShippingLine? @relation(fields: [shipping_line_id], references: [id])
+    container_type   ContainerType? @relation(fields: [container_type_id], references: [id])
+    customer         Customer? @relation(fields: [customer_id], references: [id])
+    vehicle_company  TransportCompany? @relation(fields: [vehicle_company_id], references: [id])
 
     docs             DocumentFile[]
     paymentRequests  PaymentRequest[]
@@ -612,6 +627,9 @@ model ShippingLine {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     
+    // Relations
+    serviceRequests ServiceRequest[]
+    
     @@map("shipping_lines")
 }
 
@@ -626,6 +644,9 @@ model TransportCompany {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     
+    // Relations
+    serviceRequests ServiceRequest[]
+    
     @@map("transport_companies")
 }
 
@@ -636,6 +657,9 @@ model ContainerType {
     note        String?
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
+    
+    // Relations
+    serviceRequests ServiceRequest[]
     
     @@map("container_types")
 }

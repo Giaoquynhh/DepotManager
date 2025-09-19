@@ -1,7 +1,9 @@
 # Frontend UsersPartners Module
 
 ## Tổng quan
-Module quản lý người dùng và đối tác với giao diện đa ngôn ngữ (Tiếng Việt/Tiếng Anh) và phân quyền RBAC.
+Module quản lý người dùng với giao diện đa ngôn ngữ (Tiếng Việt/Tiếng Anh) và phân quyền RBAC.
+
+**Cập nhật v2025-01-27:** Module Partners đã được chuyển sang Setup/Customers. UsersPartners giờ chỉ quản lý Users.
 
 ## URL
 - **Production**: `http://localhost:5002/UsersPartners`
@@ -17,17 +19,17 @@ pages/UsersPartners/
 ├── utils/roleUtils.ts        # Utility functions cho roles
 ├── hooks/useUsersPartners.ts # Custom hook quản lý state
 └── components/
-    ├── TabNavigation.tsx     # Tab chuyển đổi Users/Partners
+    ├── TabNavigation.tsx     # Tab navigation (đã vô hiệu hóa)
     ├── UserTable.tsx         # Bảng hiển thị users
     ├── ActionButtons.tsx     # Các nút hành động
     ├── CreateEmployeeModal.tsx # Modal tạo nhân viên
-    └── CreatePartnerModal.tsx  # Modal tạo đối tác
+    └── CreatePartnerModal.tsx  # Modal tạo đối tác (đã chuyển sang Setup/Customers)
 ```
 
 ## Phân quyền (RBAC)
 
 ### Quyền truy cập
-- **SystemAdmin/Admin**: Toàn quyền quản lý users và partners
+- **SystemAdmin/Admin**: Toàn quyền quản lý users
 - **SaleAdmin**: Chỉ quản lý users nội bộ
 - **Các role khác**: Không có quyền truy cập (hiển thị thông báo "Access Denied")
 
@@ -36,7 +38,6 @@ pages/UsersPartners/
 - **Lock/Unlock**: Chỉ SystemAdmin
 - **Delete**: Chỉ SystemAdmin (chỉ user đã DISABLED)
 - **Create Employee**: SystemAdmin, SaleAdmin
-- **Create Partner**: SystemAdmin, Admin
 
 ## Quản lý Users
 
@@ -58,16 +59,16 @@ pages/UsersPartners/
 - **Lock/Unlock**: Khóa tạm thời (chỉ SystemAdmin)
 - **Delete**: Xóa vĩnh viễn (chỉ tài khoản đã disabled)
 
-## Quản lý Partners
+## Quản lý Partners (Đã chuyển)
 
 ### Trạng thái hiện tại
-- **Tính năng tạm thời bị vô hiệu hóa** (chỉ hiển thị UI local)
-- Dữ liệu được lưu local, chưa kết nối backend
-- Có modal tạo đối tác với các trường: mã, tên, địa chỉ, MST, SĐT, ghi chú
+- **Module Partners đã được chuyển sang Setup/Customers**
+- Truy cập tại: `http://localhost:5002/Setup/Customers`
+- Sử dụng lại component CreatePartnerModal từ UsersPartners
 
-### Các trường thông tin
-- **Mã đối tác** (bắt buộc)
-- **Tên đối tác** (bắt buộc)
+### Các trường thông tin (tại Setup/Customers)
+- **Mã khách hàng** (bắt buộc)
+- **Tên khách hàng** (bắt buộc)
 - **Địa chỉ** (tùy chọn)
 - **MST** (tùy chọn)
 - **SĐT** (tùy chọn)
@@ -76,8 +77,8 @@ pages/UsersPartners/
 ## Giao diện người dùng
 
 ### Tab Navigation
-- **Users Tab**: Hiển thị danh sách người dùng
-- **Partners Tab**: Hiển thị danh sách đối tác (chỉ SystemAdmin/Admin)
+- **Tab Navigation đã bị vô hiệu hóa** - Partners chuyển sang Setup/Customers
+- **Chỉ hiển thị Users**: Danh sách người dùng
 
 ### Bảng dữ liệu Users
 - **Email**: Hiển thị với màu xanh dương
@@ -92,10 +93,11 @@ pages/UsersPartners/
 - **Mật khẩu** (bắt buộc, tối thiểu 6 ký tự)
 - **Vai trò**: Dropdown chọn role
 
-### Modal tạo đối tác
+### Modal tạo đối tác (Đã chuyển)
+- **Đã chuyển sang Setup/Customers**: `http://localhost:5002/Setup/Customers`
 - Form với các trường thông tin cơ bản
-- Validation: Mã và tên đối tác là bắt buộc
-- Hỗ trợ chỉnh sửa và xóa đối tác
+- Validation: Mã và tên khách hàng là bắt buộc
+- Hỗ trợ chỉnh sửa và xóa khách hàng
 
 ## Tính năng kỹ thuật
 

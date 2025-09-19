@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { requestService } from '../../../services/requests';
 
 interface ExportRequestProps {
 	localSearch: string;
@@ -8,6 +9,7 @@ interface ExportRequestProps {
 	setLocalType: (type: string) => void;
 	localStatus: string;
 	setLocalStatus: (status: string) => void;
+	refreshTrigger?: number;
 }
 
 export const ExportRequest: React.FC<ExportRequestProps> = ({
@@ -16,7 +18,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 	localType,
 	setLocalType,
 	localStatus,
-	setLocalStatus
+	setLocalStatus,
+	refreshTrigger
 }) => {
 	const { t } = useTranslation();
 
@@ -44,51 +47,56 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 		notes?: string; // Ghi chú
 	};
 
-    // Helper sinh 15 dòng mock
-    const createMockLowerRows = (): LowerRequestRow[] => {
-        const shippingLines = ['Hapag-Lloyd', 'OOCL', 'Yang Ming', 'Maersk', 'CMA CGM', 'ONE'];
-        const customers = ['Công ty JKL', 'Công ty MNO', 'Công ty PQR', 'Công ty STU'];
-        const transports = ['Nhà xe GHI', 'Nhà xe JKL', 'Nhà xe MNO', 'Nhà xe PQR'];
-        const statuses = ['PENDING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
-        const types = ['20FT', '40FT'];
-        const demDet = ['DEM', 'DET'];
-        const rows: LowerRequestRow[] = [];
-        for (let i = 0; i < 15; i++) {
-            const idx = i % shippingLines.length;
-            const id = (i + 1).toString();
-            const num = (101 + i).toString();
-            const contPrefix = ['HLBU','OOLU','YMLU','MRKU','CMAU','ONEY'][idx];
-            const vehiclePrefix = ['51D','51E','51F','51G'][i % 4];
-            const hour = 9 + (i % 6);
-            const minute = (i * 9) % 60;
-            rows.push({
-                id,
-                shippingLine: shippingLines[idx],
-                requestNo: `REQ-2024-${num}`,
-                containerNo: `${contPrefix}${(1234567 + i * 211).toString().slice(0,7)}`,
-                containerType: types[i % 2],
-                serviceType: 'Hạ container',
-                status: statuses[i % statuses.length],
-                customer: customers[i % customers.length],
-                transportCompany: transports[i % transports.length],
-                vehicleNumber: `${vehiclePrefix}-${(20000 + i * 97).toString().slice(0,5)}`,
-                driverName: ['Phạm Văn D','Hoàng Thị E','Vũ Văn F','Ngô Thị G'][i % 4],
-                driverPhone: `090${(2222222 + i * 111).toString().slice(0,7)}`,
-                appointmentTime: `2024-01-${(16 + (i % 5)).toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`,
-                timeIn: `2024-01-${(16 + (i % 5)).toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${((minute+5)%60).toString().padStart(2,'0')}`,
-                timeOut: i % 3 === 1 ? null as any : `2024-01-${(16 + (i % 5)).toString().padStart(2,'0')} ${(hour+2).toString().padStart(2,'0')}:${((minute+25)%60).toString().padStart(2,'0')}`,
-                totalAmount: 2100000 + (i % 6) * 190000,
-                paymentStatus: i % 2 === 0 ? 'Chưa thanh toán' : 'Đã thanh toán',
-                documentsCount: (i % 5) + 1,
-                demDet: demDet[i % 2],
-                notes: ['Container hàng thực phẩm','Container hàng dệt may','Container điện tử',''] [i % 4]
-            });
+    // Dữ liệu thực tế từ API (khởi tạo rỗng)
+    const [rows, setRows] = React.useState<LowerRequestRow[]>([]);
+
+    // Function để fetch requests từ API
+    const fetchRequests = async () => {
+        try {
+            const response = await requestService.getRequests('EXPORT');
+            if (response.data.success) {
+                // Transform data từ API thành format của table
+                const transformedData = response.data.data.map((request: any) => ({
+                    id: request.id,
+                    shippingLine: request.shipping_line?.name || '',
+                    requestNo: request.request_no || '',
+                    containerNo: request.container_no || '',
+                    containerType: request.container_type?.code || '',
+                    serviceType: 'Hạ container',
+                    status: request.status,
+                    customer: request.customer?.name || '',
+                    transportCompany: request.vehicle_company?.name || '',
+                    vehicleNumber: request.license_plate || '',
+                    driverName: request.driver_name || '',
+                    driverPhone: request.driver_phone || '',
+                    appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
+                    timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
+                    timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
+                    totalAmount: request.total_amount || '',
+                    paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+                    documentsCount: request.attachments_count || 0,
+                    demDet: request.dem_det || '',
+                    notes: request.appointment_note || ''
+                }));
+                setRows(transformedData);
+            }
+        } catch (error) {
+            console.error('Error fetching export requests:', error);
         }
-        return rows;
     };
 
-    // Dữ liệu tạm thời (placeholder). Khi có API list, thay bằng fetch từ service.
-    const [rows, setRows] = React.useState<LowerRequestRow[]>(createMockLowerRows());
+    // Effect để fetch data khi component mount
+    React.useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    // Effect để refresh data khi refreshTrigger thay đổi
+    React.useEffect(() => {
+        if (refreshTrigger) {
+            fetchRequests();
+        }
+    }, [refreshTrigger]);
+
 
 	return (
 		<>

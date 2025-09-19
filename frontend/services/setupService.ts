@@ -32,6 +32,18 @@ export interface ContainerType {
   updatedAt: string;
 }
 
+export interface Customer {
+  id: string;
+  code: string;
+  name: string;
+  tax_code?: string;
+  address?: string;
+  contact_email?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateShippingLineData {
   code: string;
   name: string;
@@ -80,6 +92,7 @@ export interface PaginationQuery {
   page?: number;
   limit?: number;
   search?: string;
+  status?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -386,6 +399,100 @@ class SetupService {
         success: false,
         error: 'DELETE_ERROR',
         message: error.response?.data?.message || 'Failed to delete container type'
+      };
+    }
+  }
+
+  // Customer methods
+  async getCustomers(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<Customer>>> {
+    try {
+      const params = new URLSearchParams();
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.status) params.append('status', query.status);
+      
+      const response = await api.get(`/customers?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching customers:', error);
+      return {
+        success: false,
+        error: 'FETCH_ERROR',
+        message: error.response?.data?.message || 'Failed to fetch customers'
+      };
+    }
+  }
+
+  async createCustomer(data: {
+    code: string;
+    name: string;
+    tax_code?: string;
+    address?: string;
+    contact_email?: string;
+  }): Promise<ApiResponse<Customer>> {
+    console.log('Sending request to /customers with data:', data);
+    
+    try {
+      const response = await api.post('/customers', data);
+      console.log('Response received:', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating customer:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Full error:', JSON.stringify(error.response?.data, null, 2));
+      
+      // Trả về response lỗi thay vì throw
+      return {
+        success: false,
+        error: 'CREATE_ERROR',
+        message: error.response?.data?.message || error.message || 'Failed to create customer'
+      };
+    }
+  }
+
+  async updateCustomer(id: string, data: {
+    name?: string;
+    address?: string;
+    contact_email?: string;
+  }): Promise<ApiResponse<Customer>> {
+    try {
+      const response = await api.patch(`/customers/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating customer:', error);
+      return {
+        success: false,
+        error: 'UPDATE_ERROR',
+        message: error.response?.data?.message || 'Failed to update customer'
+      };
+    }
+  }
+
+  async disableCustomer(id: string): Promise<ApiResponse<null>> {
+    try {
+      const response = await api.patch(`/customers/${id}/disable`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error disabling customer:', error);
+      return {
+        success: false,
+        error: 'DISABLE_ERROR',
+        message: error.response?.data?.message || 'Failed to disable customer'
+      };
+    }
+  }
+
+  async deleteCustomer(id: string): Promise<ApiResponse<null>> {
+    try {
+      const response = await api.delete(`/customers/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting customer:', error);
+      return {
+        success: false,
+        error: 'DELETE_ERROR',
+        message: error.response?.data?.message || 'Failed to delete customer'
       };
     }
   }

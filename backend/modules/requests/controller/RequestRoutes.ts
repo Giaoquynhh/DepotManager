@@ -36,5 +36,11 @@ router.post('/create',
     controller.createRequest
 );
 
+// Get list of requests
+router.get('/', 
+    requireRoles('SaleAdmin', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    controller.getRequests
+);
+
 export default router;
 

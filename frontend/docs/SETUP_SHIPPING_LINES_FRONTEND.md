@@ -3,7 +3,7 @@
 ## Tổng quan
 Module Setup trong frontend cung cấp giao diện quản lý thông tin các hãng tàu, nhà xe và loại container với đầy đủ tính năng CRUD, upload Excel, validation dữ liệu, phân trang và xử lý lỗi thông minh. Module được xây dựng với React/Next.js và hỗ trợ đa ngôn ngữ.
 
-**Cập nhật v2025-01-27:** Module Setup đã được refactor từ tab-based navigation sang submenu-based navigation trong sidebar, cung cấp trải nghiệm người dùng tốt hơn và cấu trúc rõ ràng hơn.
+**Cập nhật v2025-09-19:** Module Setup đã được refactor từ tab-based navigation sang submenu-based navigation trong sidebar, cung cấp trải nghiệm người dùng tốt hơn và cấu trúc rõ ràng hơn. Đã thêm Container submenus với auto-generation request numbers, relations với các bảng khác, và xóa option "Yêu cầu" khỏi sidebar.
 
 ## Navigation Structure
 
@@ -12,12 +12,29 @@ Module Setup trong frontend cung cấp giao diện quản lý thông tin các h�
   - **Hãng tàu** (Shipping Lines) - `/Setup/ShippingLines`
   - **Nhà xe** (Transport Companies) - `/Setup/TransportCompanies`  
   - **Loại container** (Container Types) - `/Setup/ContainerTypes`
+  - **Khách hàng** (Customers) - `/Setup/Customers`
+- **Hạ container** (Lower Container) - Menu chính có thể mở rộng/thu gọn
+  - **Yêu cầu hạ container** (Lower Container Requests) - `/LowerContainer`
+- **Nâng container** (Lift Container) - Menu chính có thể mở rộng/thu gọn
+  - **Yêu cầu nâng container** (Lift Container Requests) - `/LiftContainer`
+
+### Container Submenus Features
+- **Auto-generation Request Numbers**: 
+  - Import: `NAddmmyyy00000` (NA + date + sequence)
+  - Export: `HAddmmyyy00000` (HA + date + sequence)
+- **Relations Display**: Hiển thị tên thực tế từ các bảng liên quan
+- **File Upload**: Hỗ trợ upload chứng từ (PDF, JPG, PNG)
+- **Status Tracking**: Theo dõi trạng thái yêu cầu
+- **Real-time Refresh**: Tự động refresh table sau khi tạo request
 
 ### URL Structure
 - `http://localhost:5002/Setup` - Redirect đến ShippingLines
 - `http://localhost:5002/Setup/ShippingLines` - Quản lý hãng tàu
 - `http://localhost:5002/Setup/TransportCompanies` - Quản lý nhà xe
 - `http://localhost:5002/Setup/ContainerTypes` - Quản lý loại container
+- `http://localhost:5002/Setup/Customers` - Quản lý khách hàng
+- `http://localhost:5002/LowerContainer` - Quản lý yêu cầu hạ container
+- `http://localhost:5002/LiftContainer` - Quản lý yêu cầu nâng container
 
 ## Thay đổi chính (v2025-01-27)
 
@@ -40,11 +57,30 @@ Module Setup trong frontend cung cấp giao diện quản lý thông tin các h�
 
 ### ✅ Cải tiến Code Organization
 - **Trước:** 1 file Setup/index.tsx lớn (>300 dòng) quản lý tất cả
-- **Sau:** 3 file riêng biệt, mỗi file <200 dòng
+- **Sau:** 4 file riêng biệt, mỗi file <200 dòng
 - **Lợi ích:**
   - Code dễ maintain hơn
   - Logic rõ ràng cho từng module
   - Dễ debug và test
+
+### ✅ Tái cấu trúc Module Partners
+- **Trước:** Partners quản lý trong UsersPartners module
+- **Sau:** Partners chuyển thành Customers trong Setup module
+- **Lợi ích:**
+  - Phân loại rõ ràng: Users vs Customers
+  - Setup module tập trung quản lý dữ liệu cơ bản
+  - Tái sử dụng component CreatePartnerModal
+  - Navigation logic hơn
+
+### ✅ Thêm Container Submenus
+- **Thêm mới:** Hạ container và Nâng container submenus
+- **Tích hợp:** Yêu cầu hạ/nâng container trực tiếp vào submenu
+- **Xóa bỏ:** Option "Yêu cầu" cũ khỏi sidebar
+- **Lợi ích:**
+  - Navigation trực quan hơn
+  - Phân loại rõ ràng theo chức năng
+  - Loại bỏ menu trung gian không cần thiết
+  - Truy cập nhanh đến các chức năng container
 
 ## Cấu trúc Component
 
@@ -70,6 +106,25 @@ Module Setup trong frontend cung cấp giao diện quản lý thông tin các h�
 interface SetupSubmenuProps {
   isExpanded: boolean;
   onToggle: () => void;
+}
+```
+
+### 3. Container Submenu Component
+**File:** `components/ContainerSubmenu.tsx`
+
+**Chức năng:**
+- Hiển thị submenu cho Hạ container và Nâng container
+- Quản lý state mở/đóng submenu
+- Navigation đến các trang yêu cầu tương ứng
+- Hiển thị icon và label phù hợp cho từng loại container
+
+**Props:**
+```typescript
+interface ContainerSubmenuProps {
+  isExpanded: boolean;
+  onToggle: () => void;
+  containerType: 'lift' | 'lower';
+  onSidebarLinkClick?: (e: React.MouseEvent) => void;
 }
 ```
 
@@ -171,6 +226,84 @@ const [containerTypeFormData, setContainerTypeFormData] = useState<ContainerType
   description: '',
   note: ''
 });
+```
+
+### 6. Trang quản lý Khách hàng
+**File:** `pages/Setup/Customers.tsx`
+
+**Chức năng:**
+- Quản lý thông tin khách hàng (chuyển từ UsersPartners/Partners)
+- Xử lý các action CRUD cho khách hàng
+- Tích hợp modal tạo/chỉnh sửa khách hàng
+- Hiển thị thông báo success/error
+- Quản lý dữ liệu local (có thể tích hợp API sau)
+
+**Component tái sử dụng:**
+- Sử dụng lại `CreatePartnerModal` từ `pages/UsersPartners/components/`
+- Sử dụng lại `translations` từ `pages/UsersPartners/translations.ts`
+
+**Key State:**
+```typescript
+// Customers State
+const [partnersLocal, setPartnersLocal] = useState<any[]>([]);
+const [showPartnerModal, setShowPartnerModal] = useState(false);
+const [editIndex, setEditIndex] = useState<number | null>(null);
+const [message, setMessage] = useState('');
+
+// Form states
+const [customerCode, setCustomerCode] = useState('');
+const [customerName, setCustomerName] = useState('');
+const [address, setAddress] = useState('');
+const [taxCode, setTaxCode] = useState('');
+const [phone, setPhone] = useState('');
+const [note, setNote] = useState('');
+const [errorText, setErrorText] = useState('');
+```
+
+### 7. Trang quản lý Hạ container
+**File:** `pages/LowerContainer.tsx`
+
+**Chức năng:**
+- Quản lý yêu cầu hạ container (chuyển từ Requests/Depot)
+- Tích hợp logic và UI từ ExportRequest component
+- Hiển thị danh sách yêu cầu hạ container
+- Tạo yêu cầu hạ container mới
+- Tìm kiếm và lọc theo loại/trạng thái
+
+**Component tái sử dụng:**
+- Sử dụng lại `ExportRequest` từ `pages/Requests/components/`
+- Sử dụng lại `CreateLowerRequestModal` từ `pages/Requests/components/`
+
+**Key State:**
+```typescript
+// Lower Container State
+const [localSearch, setLocalSearch] = useState('');
+const [localType, setLocalType] = useState('all');
+const [localStatus, setLocalStatus] = useState('all');
+const [isCreateLowerModalOpen, setIsCreateLowerModalOpen] = useState(false);
+```
+
+### 8. Trang quản lý Nâng container
+**File:** `pages/LiftContainer.tsx`
+
+**Chức năng:**
+- Quản lý yêu cầu nâng container (chuyển từ Requests/Depot)
+- Tích hợp logic và UI từ ImportRequest component
+- Hiển thị danh sách yêu cầu nâng container
+- Tạo yêu cầu nâng container mới
+- Tìm kiếm và lọc theo loại/trạng thái
+
+**Component tái sử dụng:**
+- Sử dụng lại `ImportRequest` từ `pages/Requests/components/`
+- Sử dụng lại `CreateLiftRequestModal` từ `pages/Requests/components/`
+
+**Key State:**
+```typescript
+// Lift Container State
+const [localSearch, setLocalSearch] = useState('');
+const [localType, setLocalType] = useState('all');
+const [localStatus, setLocalStatus] = useState('all');
+const [isCreateLiftModalOpen, setIsCreateLiftModalOpen] = useState(false);
 ```
 
 **Key Functions:**
@@ -896,10 +1029,11 @@ setTransportCompanies(prev => prev.filter(tc => tc.id !== id));
 
 ### Truy cập Setup Module
 1. **Từ Sidebar:** Click vào "Thiết lập" để mở submenu
-2. **Chọn module:** Click vào một trong 3 tùy chọn:
+2. **Chọn module:** Click vào một trong 4 tùy chọn:
    - Hãng tàu (Shipping Lines)
    - Nhà xe (Transport Companies)  
    - Loại container (Container Types)
+   - Khách hàng (Customers)
 
 ### Navigation giữa các trang
 - **Từ submenu:** Click vào tên module trong submenu
@@ -924,6 +1058,7 @@ manageContainer/frontend/
 │   ├── ShippingLines.tsx               # Shipping lines management page
 │   ├── TransportCompanies.tsx          # Transport companies management page
 │   ├── ContainerTypes.tsx              # Container types management page
+│   ├── Customers.tsx                   # Customers management page
 │   ├── hooks/
 │   │   └── useSetupState.ts            # State management hook with pagination
 │   ├── handlers/
@@ -934,6 +1069,21 @@ manageContainer/frontend/
 │       ├── ShippingLinesTable.tsx      # Shipping lines data table with pagination
 │       ├── AddShippingLineModal.tsx    # Add shipping line modal
 │       ├── EditShippingLineModal.tsx   # Edit shipping line modal
+├── pages/LowerContainer.tsx            # Lower container requests page
+├── pages/LiftContainer.tsx             # Lift container requests page
+├── pages/Requests/components/
+│   ├── ImportRequest.tsx               # Import requests table component
+│   ├── ExportRequest.tsx               # Export requests table component
+│   ├── CreateLiftRequestModal.tsx      # Create lift request modal
+│   ├── CreateLowerRequestModal.tsx     # Create lower request modal
+│   └── index.ts                        # Component exports
+├── components/
+│   ├── ContainerSubmenu.tsx            # Container submenu component
+│   └── Header.tsx                      # Main header with navigation
+├── services/
+│   └── requests.ts                     # API service for requests
+└── utils/
+    └── requestNumberGenerator.ts       # Auto-generate request numbers
 │       ├── UploadExcelModal.tsx        # Upload shipping lines Excel modal
 │       ├── TransportCompaniesTable.tsx # Transport companies data table with pagination
 │       ├── AddTransportCompanyModal.tsx # Add transport company modal
@@ -946,21 +1096,33 @@ manageContainer/frontend/
 │       ├── SetupHeader.tsx             # Header component for setup pages
 │       ├── SuccessMessage.tsx          # Success message component
 │       └── SetupModals.tsx             # Modal management component
+├── pages/LowerContainer.tsx            # Lower container requests management page
+├── pages/LiftContainer.tsx             # Lift container requests management page
+├── pages/Requests/components/          # Shared request components
+│   ├── ImportRequest.tsx               # Import request component (used by LiftContainer)
+│   ├── ExportRequest.tsx               # Export request component (used by LowerContainer)
+│   ├── CreateLiftRequestModal.tsx      # Create lift request modal
+│   ├── CreateLowerRequestModal.tsx     # Create lower request modal
+│   └── index.ts                        # Component exports
 ├── components/
 │   ├── SetupSubmenu.tsx                # Setup submenu component for sidebar
-│   ├── Header.tsx                      # Navigation header (updated with submenu)
+│   ├── ContainerSubmenu.tsx            # Container submenu component for sidebar
+│   ├── Header.tsx                      # Navigation header (updated with submenus, removed Requests)
 │   ├── Card.tsx                        # Card component
 │   └── Pagination.tsx                  # Reusable pagination component
+├── pages/UsersPartners/components/     # Shared components
+│   └── CreatePartnerModal.tsx          # Reused by Setup/Customers
 ├── services/
 │   └── setupService.ts                 # API service for setup operations
 ├── locales/
-│   ├── vi.json                         # Vietnamese translations (updated with submenu)
-│   └── en.json                         # English translations (updated with submenu)
+│   ├── vi.json                         # Vietnamese translations (updated with container submenus)
+│   └── en.json                         # English translations (updated with container submenus)
 ├── hooks/
 │   └── useTranslation.ts               # Translation hook
 └── styles/
     ├── modal.css                       # Modal styles
-    └── table.css                       # Table styles
+    ├── table.css                       # Table styles
+    └── header.css                      # Header styles (updated logo/title sizing)
 ```
 
 ### Key Dependencies
@@ -1100,6 +1262,17 @@ NEXT_PUBLIC_UPLOAD_MAX_SIZE=10485760
 ```
 
 ## Changelog
+
+### Version 1.3.0 (2025-01-27)
+- **Container Submenus**: Thêm Hạ container và Nâng container submenus vào sidebar
+- **Requests Integration**: Tích hợp yêu cầu hạ/nâng container trực tiếp vào submenu
+- **Sidebar Cleanup**: Xóa option "Yêu cầu" cũ khỏi sidebar để đơn giản hóa navigation
+- **New Pages**: Tạo pages LowerContainer.tsx và LiftContainer.tsx
+- **Component Reuse**: Tái sử dụng ImportRequest và ExportRequest components
+- **Header Updates**: Cập nhật Header.tsx với ContainerSubmenu component
+- **Translation Updates**: Thêm translations cho container submenus
+- **File Structure**: Cập nhật cấu trúc file mapping với các trang mới
+- **Navigation UX**: Cải thiện trải nghiệm navigation với submenu trực quan hơn
 
 ### Version 1.2.0 (2024-01-25)
 - **Pagination System**: Added comprehensive pagination for both shipping lines and transport companies tables

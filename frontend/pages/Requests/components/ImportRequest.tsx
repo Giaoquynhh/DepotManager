@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { requestService } from '../../../services/requests';
 
 interface ImportRequestProps {
 	localSearch: string;
@@ -8,6 +9,7 @@ interface ImportRequestProps {
 	setLocalType: (type: string) => void;
 	localStatus: string;
 	setLocalStatus: (status: string) => void;
+	refreshTrigger?: number;
 }
 
 export const ImportRequest: React.FC<ImportRequestProps> = ({
@@ -16,7 +18,8 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 	localType,
 	setLocalType,
 	localStatus,
-	setLocalStatus
+	setLocalStatus,
+	refreshTrigger
 }) => {
 	const { t } = useTranslation();
 
@@ -44,50 +47,56 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         notes?: string; // Ghi chú
     };
 
-    // Helper sinh 15 dòng mock
-    const createMockLiftRows = (): LiftRequestRow[] => {
-        const shippingLines = ['MSC', 'CMA CGM', 'COSCO', 'Maersk', 'Hapag-Lloyd', 'ONE', 'Yang Ming'];
-        const customers = ['Công ty ABC', 'Công ty DEF', 'Công ty GHI', 'Công ty JKL', 'Công ty MNO'];
-        const transports = ['Nhà xe XYZ', 'Nhà xe ABC', 'Nhà xe DEF', 'Nhà xe GHI', 'Nhà xe JKL'];
-        const statuses = ['PENDING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
-        const types = ['20FT', '40FT'];
-        const rows: LiftRequestRow[] = [];
-        for (let i = 0; i < 15; i++) {
-            const idx = i % shippingLines.length;
-            const id = (i + 1).toString();
-            const num = (i + 1).toString().padStart(3, '0');
-            const contPrefix = ['MSCU', 'CMAU', 'COSU', 'MRKU', 'HLBU', 'ONEY', 'YMLU'][idx];
-            const vehiclePrefix = ['51A', '51B', '51C', '51D', '51E'][i % 5];
-            const hour = 8 + (i % 6); // 08..13
-            const minute = (i * 7) % 60; // 00..59
-            rows.push({
-                id,
-                shippingLine: `${shippingLines[idx]}`,
-                requestNo: `REQ-2024-${num}`,
-                containerNo: `${contPrefix}${(1000000 + i * 137).toString().slice(0, 7)}`,
-                containerType: types[i % 2],
-                bookingBill: `BK-2024-${num}`,
-                serviceType: 'Nâng container',
-                status: statuses[i % statuses.length],
-                customer: customers[i % customers.length],
-                transportCompany: transports[i % transports.length],
-                vehicleNumber: `${vehiclePrefix}-${(10000 + i * 123).toString().slice(0, 5)}`,
-                driverName: ['Nguyễn Văn A','Trần Thị B','Lê Văn C','Phạm Văn D','Hoàng Thị E'][i % 5],
-                driverPhone: `090${(1234567 + i * 321).toString().slice(0,7)}`,
-                appointmentTime: `2024-01-${(14 + (i % 5)).toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`,
-                timeIn: `2024-01-${(14 + (i % 5)).toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${((minute+5)%60).toString().padStart(2,'0')}`,
-                timeOut: i % 3 === 2 ? `2024-01-${(14 + (i % 5)).toString().padStart(2,'0')} ${(hour+2).toString().padStart(2,'0')}:${((minute+20)%60).toString().padStart(2,'0')}` : (i % 3 === 1 ? null as any : `2024-01-${(14 + (i % 5)).toString().padStart(2,'0')} ${(hour+2).toString().padStart(2,'0')}:${((minute+30)%60).toString().padStart(2,'0')}`),
-                totalAmount: 2000000 + (i % 6) * 250000,
-                paymentStatus: i % 2 === 0 ? 'Chưa thanh toán' : 'Đã thanh toán',
-                documentsCount: (i % 6) + 1,
-                notes: ['Container cần kiểm tra kỹ','Container hàng điện tử','Container hàng may mặc','Container thực phẩm',''] [i % 5]
-            });
+    // Dữ liệu thực tế từ API (khởi tạo rỗng)
+    const [rows, setRows] = React.useState<LiftRequestRow[]>([]);
+
+    // Function để fetch requests từ API
+    const fetchRequests = async () => {
+        try {
+            const response = await requestService.getRequests('IMPORT');
+            if (response.data.success) {
+                // Transform data từ API thành format của table
+                const transformedData = response.data.data.map((request: any) => ({
+                    id: request.id,
+                    shippingLine: request.shipping_line?.name || '',
+                    requestNo: request.request_no || '',
+                    containerNo: request.container_no || '',
+                    containerType: request.container_type?.code || '',
+                    bookingBill: request.booking_bill || '',
+                    serviceType: 'Nâng container',
+                    status: request.status,
+                    customer: request.customer?.name || '',
+                    transportCompany: request.vehicle_company?.name || '',
+                    vehicleNumber: request.license_plate || '',
+                    driverName: request.driver_name || '',
+                    driverPhone: request.driver_phone || '',
+                    appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
+                    timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
+                    timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
+                    totalAmount: request.total_amount || '',
+                    paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+                    documentsCount: request.attachments_count || 0,
+                    notes: request.appointment_note || ''
+                }));
+                setRows(transformedData);
+            }
+        } catch (error) {
+            console.error('Error fetching import requests:', error);
         }
-        return rows;
     };
 
-    // Dữ liệu tạm thời (placeholder). Khi có API list, thay bằng fetch từ service.
-    const [rows, setRows] = React.useState<LiftRequestRow[]>(createMockLiftRows());
+    // Effect để fetch data khi component mount
+    React.useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    // Effect để refresh data khi refreshTrigger thay đổi
+    React.useEffect(() => {
+        if (refreshTrigger) {
+            fetchRequests();
+        }
+    }, [refreshTrigger]);
+
 
 	return (
 		<>

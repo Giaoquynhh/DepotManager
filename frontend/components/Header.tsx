@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
-import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance } from '@utils/rbac';
+import { canViewUsersPartners, canUseGate, isSystemAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance } from '@utils/rbac';
 import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { SetupSubmenu } from './SetupSubmenu';
+import { ContainerSubmenu } from './ContainerSubmenu';
 
 interface User {
   email?: string;
@@ -25,6 +26,8 @@ export default function Header() {
   const [gateSubmenuOpen, setGateSubmenuOpen] = useState(false);
   const [hrSubmenuOpen, setHrSubmenuOpen] = useState(false);
   const [setupSubmenuOpen, setSetupSubmenuOpen] = useState(false);
+  const [liftContainerSubmenuOpen, setLiftContainerSubmenuOpen] = useState(false);
+  const [lowerContainerSubmenuOpen, setLowerContainerSubmenuOpen] = useState(false);
   const accountBtnRef = useRef<HTMLButtonElement | null>(null);
   const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{top:number; right:number}>({ top: 0, right: 12 });
@@ -124,6 +127,21 @@ export default function Header() {
       setGateSubmenuOpen(true);
     } else {
       setGateSubmenuOpen(false);
+    }
+  }, [router.pathname]);
+
+  // Auto-open Container submenus when on Container pages
+  useEffect(() => {
+    if (router.pathname === '/LiftContainer') {
+      setLiftContainerSubmenuOpen(true);
+    } else {
+      setLiftContainerSubmenuOpen(false);
+    }
+
+    if (router.pathname === '/LowerContainer') {
+      setLowerContainerSubmenuOpen(true);
+    } else {
+      setLowerContainerSubmenuOpen(false);
     }
   }, [router.pathname]);
 
@@ -636,7 +654,7 @@ export default function Header() {
                           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
-                        <span>{t('sidebar.usersPartners')}</span>
+                        <span>Người dùng</span>
                       </Link>
                     )}
                     {(() => {
@@ -662,26 +680,6 @@ export default function Header() {
               </div>
             )}
 
-            {/* Requests Depot Module */}
-            {(() => {
-              const allow = isSaleAdmin(me?.role) || isAccountant(me?.role) || isSystemAdmin(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'requests.depot')
-                : allow;
-              return ok;
-            })() && (
-              <Link className={`sidebar-link ${router.pathname === '/Requests/Depot' ? 'active' : ''}`} href="/Requests/Depot" onClick={handleSidebarLinkClick}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10,9 9,9 8,9"></polyline>
-                </svg>
-                <span>{t('sidebar.requests')}</span>
-              </Link>
-            )}
-            
             {/* Requests Customer Module removed */}
 
             {/* Gate Module with Submenu */}
@@ -789,6 +787,38 @@ export default function Header() {
                   </svg>
                   <span>{t('sidebar.containerManagement')}</span>
                 </Link>
+            )}
+
+            {/* Lower Container Module with Submenu */}
+            {(() => {
+              const allow = canManageContainers(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
+              <ContainerSubmenu 
+                isExpanded={lowerContainerSubmenuOpen} 
+                onToggle={() => setLowerContainerSubmenuOpen(!lowerContainerSubmenuOpen)}
+                containerType="lower"
+                onSidebarLinkClick={handleSidebarLinkClick}
+              />
+            )}
+
+            {/* Lift Container Module with Submenu */}
+            {(() => {
+              const allow = canManageContainers(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
+              <ContainerSubmenu 
+                isExpanded={liftContainerSubmenuOpen} 
+                onToggle={() => setLiftContainerSubmenuOpen(!liftContainerSubmenuOpen)}
+                containerType="lift"
+                onSidebarLinkClick={handleSidebarLinkClick}
+              />
             )}
 
             {/* Forklift Module - Xe nâng */}

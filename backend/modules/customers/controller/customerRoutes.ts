@@ -9,5 +9,6 @@ router.get('/', requireRoles('SystemAdmin','SaleAdmin'), (req, res) => controlle
 router.post('/', requireRoles('SystemAdmin','SaleAdmin'), (req, res) => controller.create(req as any, res));
 router.patch('/:id', requireRoles('SystemAdmin','SaleAdmin'), (req, res) => controller.update(req as any, res));
 router.patch('/:id/disable', requireRoles('SystemAdmin','SaleAdmin'), (req, res) => controller.disable(req as any, res));
+router.delete('/:id', requireRoles('SystemAdmin','SaleAdmin'), (req, res) => controller.delete(req as any, res));
 
 export default router;

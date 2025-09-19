@@ -306,15 +306,13 @@ export default function UsersPartners() {
                             
                             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
                                 <h3 style={{margin:0, fontSize:18, fontWeight:700, color:'#0b2b6d'}}>
-                    {(['SystemAdmin', 'admin'].includes(role) 
-                    ? (activeTab === 'users' ? t[language].usersList : t[language].partnersList)
-                    : t[language].usersList)}
+                    {t[language].usersList}
                                 </h3>
                                 <div style={{display:'flex', gap:8}}>
                   {/* Đã gỡ nút tạo user cho role khách hàng */}
                   
                   {/* Button tạo nhân sự nội bộ */}
-                  {showInternalForm(role) && activeTab === 'users' && (
+                  {showInternalForm(role) && (
                                         <div style={{position:'relative'}}>
                       <button 
                         className="btn" 
@@ -343,30 +341,6 @@ export default function UsersPartners() {
                       />
                                                         </div>
                                                     )}
-                  
-                  {/* Button tạo đối tác */}
-                  {activeTab === 'partners' && (role === 'SystemAdmin' || role === 'admin') && (
-                    <div style={{position:'relative'}}>
-                      <button
-                        className="btn"
-                        onClick={() => {
-                          // open create modal
-                          setEditIndex(null);
-                          setCustomerCode('');
-                          setCustomerName('');
-                          setAddress('');
-                          setTaxCode('');
-                          setPhone('');
-                          setNote('');
-                          setErrorText('');
-                          setShowPartnerModal(true);
-                        }}
-                        style={{background:'#7c3aed', color:'#fff'}}
-                      >
-                        {translations[language].createPartner}
-                      </button>
-                    </div>
-                  )}
                                 </div>
                             </div>
               
@@ -375,25 +349,14 @@ export default function UsersPartners() {
                                 <table className="table">
                                                                          <thead style={{background: '#f8fafc'}}>
                                          <tr>
-                      {(!['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
-                        <>
                           <th>{translations[language].email}</th>
                           <th>{translations[language].fullName}</th>
                           <th>{translations[language].role}</th>
                           <th>{translations[language].status}</th>
                           <th>{translations[language].actions}</th>
-                        </>
-                      ) : (
-                        <>
-                          <th>{translations[language].partnerCode}</th>
-                          <th>{translations[language].partnerName}</th>
-                          <th>{translations[language].actions}</th>
-                        </>
-                      )}
                                          </tr>
                                      </thead>
                   
-                    {(!['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                     <UserTable
                       users={filteredUsers}
                       role={role}
@@ -403,33 +366,6 @@ export default function UsersPartners() {
                       getRoleDisplayName={(role) => getRoleDisplayName(role, language)}
                       getStatusDisplayName={getStatusDisplayName}
                     />
-                  ) : (
-                    <tbody>
-                      {partnersLocal.map((p, idx) => (
-                        <tr key={p.code + idx}>
-                          <td style={{fontFamily:'monospace'}}>{p.code}</td>
-                          <td style={{fontWeight:600}}>{p.name}</td>
-                          <td>
-                            <div style={{display:'flex', gap:8}}>
-                              <button className="btn btn-xs" onClick={() => {
-                                // open edit modal with existing values
-                                setCustomerCode(p.code);
-                                setCustomerName(p.name);
-                                setAddress(p.address || '');
-                                setTaxCode(p.taxCode || '');
-                                setPhone(p.phone || '');
-                                setNote(p.note || '');
-                                setErrorText('');
-                                setEditIndex(idx);
-                                setShowPartnerModal(true);
-                              }}>Cập nhật</button>
-                              <button className="btn btn-xs btn-outline" onClick={() => setPartnersLocal(list => list.filter((x,i)=>i!==idx))}>Xóa</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  )}
 							</table>
                             </div>
               
@@ -466,26 +402,6 @@ export default function UsersPartners() {
                                 </div>
                             )}
               
-              {/* Modal & chức năng đối tác đã tạm gỡ bỏ */}
-              <CreatePartnerModal
-                visible={showPartnerModal}
-                onCancel={() => { setShowPartnerModal(false); setEditIndex(null); }}
-                onSubmit={validateAndCreate}
-                title={editIndex !== null ? 'Cập nhật đối tác' : 'Tạo đối tác'}
-                customerCode={customerCode}
-                setCustomerCode={setCustomerCode}
-                customerName={customerName}
-                setCustomerName={setCustomerName}
-                address={address}
-                setAddress={setAddress}
-                taxCode={taxCode}
-                setTaxCode={setTaxCode}
-                phone={phone}
-                setPhone={setPhone}
-                note={note}
-                setNote={setNote}
-                errorText={errorText}
-              />
 						</Card>
 					</div>
 				</div>

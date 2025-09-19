@@ -1,6 +1,8 @@
 # UsersPartners Module
 
-Module quản lý người dùng và đối tác đã được refactor thành các component nhỏ để dễ bảo trì.
+Module quản lý người dùng đã được refactor thành các component nhỏ để dễ bảo trì.
+
+**Cập nhật v2025-01-27:** Module Partners đã được chuyển sang Setup/Customers module. UsersPartners giờ chỉ quản lý Users.
 
 ## Cấu trúc thư mục
 
@@ -12,13 +14,12 @@ UsersPartners/
 ├── translations.ts           # Bản dịch đa ngôn ngữ
 ├── README.md                 # Tài liệu này
 ├── components/               # Các component UI
-│   ├── TabNavigation.tsx     # Tab chuyển đổi Users/Partners
+│   ├── TabNavigation.tsx     # Tab navigation (đã vô hiệu hóa)
 │   ├── UserTable.tsx         # Bảng hiển thị users
-│   ├── PartnersTable.tsx     # Bảng hiển thị partners
 │   ├── ActionButtons.tsx     # Các nút hành động
 │   ├── CompanySearch.tsx     # Tìm kiếm công ty với dropdown
 │   ├── CreateEmployeeModal.tsx # Modal tạo nhân sự
-│   ├── CreatePartnerModal.tsx  # Modal tạo đối tác
+│   ├── CreatePartnerModal.tsx  # Modal tạo đối tác (đã chuyển sang Setup/Customers)
 │   └── CompanyUsersModal.tsx   # Modal danh sách tài khoản công ty
 ├── hooks/                    # Custom hooks
 │   └── useUsersPartners.ts   # Hook chính chứa logic và state
@@ -35,13 +36,12 @@ UsersPartners/
 - **`translations.ts`**: Bản dịch tiếng Việt và tiếng Anh
 
 ### Components
-- **`TabNavigation.tsx`**: Tab chuyển đổi giữa Users và Partners (ẩn cho CustomerAdmin)
+- **`TabNavigation.tsx`**: Tab navigation (đã vô hiệu hóa - Partners chuyển sang Setup/Customers)
 - **`UserTable.tsx`**: Bảng hiển thị danh sách users với các hành động
-- **`PartnersTable.tsx`**: Bảng hiển thị danh sách partners (có thể click để xem chi tiết)
 - **`ActionButtons.tsx`**: Component tái sử dụng cho các nút hành động (disable, enable, lock, etc.)
 - **`CompanySearch.tsx`**: Input tìm kiếm công ty với dropdown autocomplete
 - **`CreateEmployeeModal.tsx`**: Modal tạo nhân sự nội bộ
-- **`CreatePartnerModal.tsx`**: Modal tạo đối tác (có CompanySearch)
+- **`CreatePartnerModal.tsx`**: Modal tạo đối tác (đã chuyển sang Setup/Customers)
 - **`CompanyUsersModal.tsx`**: Modal hiển thị danh sách tài khoản của một công ty
 
 ### Hooks

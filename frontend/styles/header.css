@@ -191,7 +191,7 @@ body.with-sidebar .header {
 }
 
 .logo {
-  height: 20px; /* Giảm từ 28px xuống 20px để thu nhỏ header */
+  height: 24px; /* Tăng từ 20px lên 24px để cân đối hơn */
   width: auto;
   transition: var(--transition-default);
 }
@@ -205,7 +205,7 @@ body.with-sidebar .header {
 
 .header-title {
   font-weight: var(--font-weight-extrabold);
-  font-size: var(--font-size-lg); /* Tăng lại từ sm (14px) lên lg (18px) */
+  font-size: var(--font-size-xl); /* Tăng từ lg (18px) lên xl (20px) để cân đối với logo */
   color: var(--color-text-inverse);
   margin: 0;
   white-space: nowrap;

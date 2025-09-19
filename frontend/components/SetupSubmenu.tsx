@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTranslation } from '../hooks/useTranslation';
@@ -49,117 +49,62 @@ export const SetupSubmenu: React.FC<SetupSubmenuProps> = ({ isExpanded, onToggle
         </svg>
       ),
       label: t('sidebar.containerTypes')
+    },
+    {
+      key: 'customers',
+      href: '/Setup/Customers',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      ),
+      label: t('sidebar.customers')
     }
   ];
 
-  const isSetupActive = router.pathname.startsWith('/Setup');
+  const isSetupPage = router.pathname.startsWith('/Setup');
 
   return (
-    <div className="setup-submenu">
-      {/* Main Setup Link */}
+    <div className="sidebar-group">
       <button
-        className={`sidebar-link setup-main-link ${isSetupActive ? 'active' : ''}`}
+        className={`sidebar-link sidebar-group-toggle ${isSetupPage ? 'active' : ''}`}
         onClick={onToggle}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-2)',
-          background: 'transparent',
-          color: isSetupActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.85)',
-          padding: 'var(--space-3) var(--space-3)',
-          margin: '0',
-          transition: 'none',
-          fontWeight: '600',
-          fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-          fontSize: 'var(--font-size-sm)',
-          textDecoration: 'none',
-          position: 'relative',
-          borderRadius: '0',
-          boxShadow: 'none',
-          minHeight: '48px',
-          border: 'none',
-          width: '100%',
-          textAlign: 'left',
-          cursor: 'pointer'
-        }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
         </svg>
         <span>{t('sidebar.setup')}</span>
-        <svg 
-          width="12" 
-          height="12" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
           strokeWidth="2"
           style={{
-            marginLeft: 'auto',
             transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease'
+            transition: 'transform 0.2s ease',
+            marginLeft: 'auto'
           }}
         >
           <polyline points="9,18 15,12 9,6"></polyline>
         </svg>
       </button>
 
-      {/* Submenu Items */}
       {isExpanded && (
-        <div className="setup-submenu-items" style={{
-          paddingLeft: 'var(--space-6)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2px'
-        }}>
-          {submenuItems.map((item) => {
-            const isActive = router.pathname === item.href;
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`sidebar-link setup-submenu-link ${isActive ? 'active' : ''}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-2)',
-                  background: 'transparent',
-                  color: isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.7)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  margin: '0',
-                  transition: 'none',
-                  fontWeight: '500',
-                  fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-                  fontSize: 'var(--font-size-xs)',
-                  textDecoration: 'none',
-                  position: 'relative',
-                  borderRadius: '0',
-                  boxShadow: 'none',
-                  minHeight: '40px',
-                  border: 'none',
-                  width: '100%',
-                  textAlign: 'left',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        <div className="sidebar-submenu">
+          {submenuItems.map((item) => (
+            <Link
+              key={item.key}
+              className={`sidebar-link sidebar-submenu-link ${router.pathname === item.href ? 'active' : ''}`}
+              href={item.href}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
         </div>
       )}
     </div>

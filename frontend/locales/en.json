@@ -75,6 +75,9 @@
     "shippingLines": "Shipping Lines",
     "transportCompanies": "Transport Companies",
     "containerTypes": "Container Types",
+    "customers": "Customers",
+    "lowerContainer": "Lower Container",
+    "liftContainer": "Lift Container",
     "account": "Account"
   },
   "language": {

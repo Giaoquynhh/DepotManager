@@ -76,6 +76,9 @@
     "shippingLines": "Hãng tàu",
     "transportCompanies": "Nhà xe",
     "containerTypes": "Loại container",
+    "customers": "Khách hàng",
+    "lowerContainer": "Hạ container",
+    "liftContainer": "Nâng container",
     "account": "Tài khoản"
   },
   "language": {

@@ -17,6 +17,7 @@ export class CustomerController {
 		try { return res.json(await service.update(req.user!._id, req.params.id, value)); } catch (e: any) { return res.status(400).json({ message: e.message }); }
 	}
 	async disable(req: AuthRequest, res: Response) { try { await service.disable(req.user!._id, req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
+	async delete(req: AuthRequest, res: Response) { try { await service.delete(req.user!._id, req.params.id); return res.json({ success: true }); } catch (e: any) { return res.status(400).json({ message: e.message }); } }
 }
 
 export default new CustomerController();

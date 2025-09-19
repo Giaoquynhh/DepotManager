@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { setupService, type ShippingLine, type TransportCompany, type ContainerType } from '../../../services/setupService';
+import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
+import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
 
 interface CreateLiftRequestModalProps {
 	isOpen: boolean;
@@ -10,6 +11,7 @@ interface CreateLiftRequestModalProps {
 }
 
 export interface LiftRequestData {
+	requestNo?: string; // Auto-generated request number
 	shippingLine: string;
 	bookingBill: string;
 	containerNumber?: string;
@@ -57,16 +59,21 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	const [selectedTransportCompanyName, setSelectedTransportCompanyName] = useState<string>('');
 	// Container types (from Setup page)
 	const [containerTypes, setContainerTypes] = useState<ContainerType[]>([]);
+	// Customers (from Setup page)
+	const [customers, setCustomers] = useState<Customer[]>([]);
+	const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
 
 	// Custom dropdown states
 	const [isShippingLineOpen, setIsShippingLineOpen] = useState(false);
 	const [isContainerTypeOpen, setIsContainerTypeOpen] = useState(false);
 	const [isTransportCompanyOpen, setIsTransportCompanyOpen] = useState(false);
+	const [isCustomerOpen, setIsCustomerOpen] = useState(false);
 	
 	// Search states
 	const [shippingLineSearch, setShippingLineSearch] = useState('');
 	const [containerTypeSearch, setContainerTypeSearch] = useState('');
 	const [transportCompanySearch, setTransportCompanySearch] = useState('');
+	const [customerSearch, setCustomerSearch] = useState('');
 	
 	// File upload states
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -75,14 +82,16 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	useEffect(() => {
 		(async () => {
 			try {
-				const [slRes, tcRes, ctRes] = await Promise.all([
+				const [slRes, tcRes, ctRes, custRes] = await Promise.all([
 					setupService.getShippingLines({ page: 1, limit: 100 }),
 					setupService.getTransportCompanies({ page: 1, limit: 100 }),
-					setupService.getContainerTypes({ page: 1, limit: 100 })
+					setupService.getContainerTypes({ page: 1, limit: 100 }),
+					setupService.getCustomers()
 				]);
 				if (slRes.success && slRes.data) setShippingLines(slRes.data.data);
 				if (tcRes.success && tcRes.data) setTransportCompanies(tcRes.data.data);
 				if (ctRes.success && ctRes.data) setContainerTypes(ctRes.data.data);
+				if (custRes.success && custRes.data) setCustomers(custRes.data);
 			} catch (_) {}
 		})();
 	}, []);
@@ -120,6 +129,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		tc.name.toLowerCase().includes(transportCompanySearch.toLowerCase())
 	);
 
+	const filteredCustomers = customers.filter(customer => 
+		customer.tax_code.toLowerCase().includes(customerSearch.toLowerCase()) ||
+		customer.name.toLowerCase().includes(customerSearch.toLowerCase())
+	);
+
 	// File upload handlers
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const files = event.target.files;
@@ -145,6 +159,17 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			...prev,
 			documents: prev.documents?.filter((_, i) => i !== index) || []
 		}));
+	};
+
+	// Customer handlers
+	const handleCustomerSelect = (customer: Customer) => {
+		setFormData(prev => ({
+			...prev,
+			customer: customer.id
+		}));
+		setSelectedCustomerName(`${customer.tax_code} - ${customer.name}`);
+		setIsCustomerOpen(false);
+		setCustomerSearch('');
 	};
 
 	const formatFileSize = (bytes: number) => {
@@ -197,29 +222,41 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			try {
 				setIsUploading(true);
 				
-				// Prepare data for API
-				const requestData = {
-					type: 'IMPORT',
-					container_no: formData.containerNumber,
-					eta: formData.appointmentTime,
-					shipping_line_id: formData.shippingLine,
-					container_type_id: formData.containerType,
-					customer_id: formData.customer,
-					vehicle_company_id: formData.vehicleCompany,
-					vehicle_number: formData.vehicleNumber,
-					driver_name: formData.driver,
-					driver_phone: formData.driverPhone,
-					appointment_time: formData.appointmentTime,
-					notes: formData.notes,
-					files: formData.documents || []
-				};
+				// Generate request number automatically
+				const requestNumber = await generateNewRequestNumber('import');
+				
+            // Prepare data for API with auto-generated request number
+            const requestData = {
+                type: 'IMPORT',
+                request_no: requestNumber, // Add auto-generated request number
+                status: 'PENDING', // Default status for new import requests
+                container_no: formData.containerNumber,
+                eta: formData.appointmentTime,
+                shipping_line_id: formData.shippingLine || null,
+                container_type_id: formData.containerType || null,
+                customer_id: null, // Không gửi customer_id vì chưa có dữ liệu Customer
+                vehicle_company_id: formData.vehicleCompany || null,
+                vehicle_number: formData.vehicleNumber,
+                driver_name: formData.driver,
+                driver_phone: formData.driverPhone,
+                appointment_time: formData.appointmentTime,
+                notes: formData.notes,
+                files: formData.documents || []
+            };
+
+				// Debug logging
+				console.log('Creating import request with data:', requestData);
+				console.log('Token from localStorage:', localStorage.getItem('token'));
 
 				// Call API to create request with files
 				const response = await requestService.createRequest(requestData);
 				
 				if (response.data.success) {
-					// Success - call parent onSubmit with response data
-					onSubmit(formData);
+					// Success - call parent onSubmit with response data including request number
+					onSubmit({
+						...formData,
+						requestNo: requestNumber // Include auto-generated request number
+					});
 					
 					// Reset form
 					setFormData({
@@ -256,9 +293,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		setIsShippingLineOpen(false);
 		setIsContainerTypeOpen(false);
 		setIsTransportCompanyOpen(false);
+		setIsCustomerOpen(false);
 		setShippingLineSearch('');
 		setContainerTypeSearch('');
 		setTransportCompanySearch('');
+		setCustomerSearch('');
 		setUploadedFiles([]);
 		onClose();
 	};
@@ -765,13 +804,100 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							<label style={requiredLabelStyle}>
 								Khách hàng <span style={requiredAsteriskStyle}>*</span>
 							</label>
-							<input
-								type="text"
-								style={errors.customer ? formInputErrorStyle : formInputStyle}
-								value={formData.customer}
-								onChange={(e) => handleInputChange('customer', e.target.value)}
-								placeholder="Nhập tên khách hàng"
-							/>
+							<div className="custom-dropdown-container" style={{ position: 'relative' }}>
+								<button
+									type="button"
+									style={errors.customer ? formInputErrorStyle : formInputStyle}
+									onClick={() => setIsCustomerOpen(!isCustomerOpen)}
+									className="custom-dropdown-button"
+								>
+									{selectedCustomerName || 'Chọn khách hàng'}
+									<svg
+										width="12"
+										height="12"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										style={{
+											transform: isCustomerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+											transition: 'transform 0.2s ease',
+											marginLeft: 'auto'
+										}}
+									>
+										<polyline points="6,9 12,15 18,9"></polyline>
+									</svg>
+								</button>
+								
+								{isCustomerOpen && (
+									<div className="custom-dropdown-menu" style={{
+										position: 'absolute',
+										top: '100%',
+										left: 0,
+										right: 0,
+										backgroundColor: 'white',
+										border: '1px solid #e2e8f0',
+										borderRadius: '8px',
+										boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+										zIndex: 1000,
+										maxHeight: '200px',
+										overflowY: 'auto'
+									}}>
+										<input
+											type="text"
+											placeholder="Tìm kiếm khách hàng..."
+											value={customerSearch}
+											onChange={(e) => setCustomerSearch(e.target.value)}
+											style={{
+												width: '100%',
+												padding: '8px 12px',
+												border: 'none',
+												borderBottom: '1px solid #e2e8f0',
+												outline: 'none',
+												fontSize: '14px'
+											}}
+										/>
+										{filteredCustomers.map((customer) => (
+											<button
+												key={customer.id}
+												type="button"
+												onClick={() => handleCustomerSelect(customer)}
+												style={{
+													width: '100%',
+													padding: '8px 12px',
+													border: 'none',
+													backgroundColor: 'transparent',
+													textAlign: 'left',
+													cursor: 'pointer',
+													fontSize: '14px',
+													display: 'flex',
+													flexDirection: 'column',
+													alignItems: 'flex-start'
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.backgroundColor = '#f8fafc';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.backgroundColor = 'transparent';
+												}}
+											>
+												<span style={{ fontWeight: '500' }}>{customer.tax_code}</span>
+												<span style={{ fontSize: '12px', color: '#64748b' }}>{customer.name}</span>
+											</button>
+										))}
+										{filteredCustomers.length === 0 && (
+											<div style={{
+												padding: '8px 12px',
+												color: '#64748b',
+												fontSize: '14px',
+												textAlign: 'center'
+											}}>
+												Không tìm thấy khách hàng
+											</div>
+										)}
+									</div>
+								)}
+							</div>
 							{errors.customer && <span style={errorMessageStyle}>{errors.customer}</span>}
 						</div>
 
