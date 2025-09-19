@@ -49,12 +49,12 @@ manageContainer/
 ├── frontend/
 │   └── pages/Requests/
 │       ├── components/
-│       │   └── DepotRequestTable.tsx      # ✅ Updated: Added multiple files upload button + new columns
+│       │   └── DepotRequestTable.tsx      # ⚠️ DEPRECATED - Không còn được sử dụng
 │       ├── hooks/
-│       │   └── useDepotActions.ts         # ✅ Updated: Added handleUploadDocument for multiple files
-│       ├── Depot.tsx                      # ✅ Updated: Uses DepotRequestTable
+│       │   └── useDepotActions.ts         # ⚠️ DEPRECATED - Đã bị loại bỏ
+│       ├── Depot.tsx                      # ⚠️ SIMPLIFIED - Chỉ còn khung tĩnh (static skeleton)
 │       └── styles/
-│           └── DepotRequestTable.css      # ✅ Added styling for new elements
+│           └── DepotRequestTable.css      # ⚠️ DEPRECATED - Không còn được sử dụng
 └── docs/
     ├── EXPORT_DOC_UPLOAD_FEATURE.md      # ✅ Backend documentation
     └── EXPORT_DOC_UPLOAD_FRONTEND.md     # ✅ Frontend documentation
@@ -68,16 +68,14 @@ manageContainer/
 - `SaleAdmin` ✅
 
 ### 2. Tìm yêu cầu EXPORT với status PICK_CONTAINER
-- Vào trang "Yêu cầu (Depot)"
-- Tìm row có:
-  - **Loại**: EXPORT
-  - **Trạng thái**: ĐANG CHỌN CONTAINER
-  - **Chứng từ**: Có nút "📎 Thêm chứng từ"
+**⚠️ DEPRECATED - Tính năng này không còn khả dụng**
+
+Trang "Yêu cầu (Depot)" hiện tại chỉ là khung tĩnh, không có bảng dữ liệu hay chức năng upload.
 
 ### 3. Click "Thêm chứng từ"
-- Chọn file PDF, JPG, hoặc PNG (tối đa 10MB)
-- Hệ thống tự động upload và chuyển trạng thái
-- Hiển thị thông báo thành công
+**⚠️ DEPRECATED - Tính năng này không còn khả dụng**
+
+Tính năng upload chứng từ đã bị loại bỏ khỏi trang Depot. Cần được định nghĩa lại từ đầu.
 
 ## 🔧 Technical Implementation
 
@@ -216,18 +214,40 @@ const handleAddDocument = async (requestId: string, containerNo: string) => {
 ```
 
 #### 3. Depot.tsx
+**⚠️ DEPRECATED - Page đã được rút gọn thành khung tĩnh**
+
 ```typescript
-// ✅ Updated to use DepotRequestTable with onAddDocument prop
-<DepotRequestTable 
-    // ... other props
-    onAddDocument={actions.handleAddDocument}  // ✅ New prop
-    // ... other props
-/>
+// ⚠️ DEPRECATED - Page hiện tại chỉ là khung tĩnh
+export default function DepotRequests() {
+    const { t } = useTranslation();
+    const [localSearch, setLocalSearch] = React.useState('');
+    const [localType, setLocalType] = React.useState('all');
+    const [localStatus, setLocalStatus] = React.useState('all');
+
+    return (
+        <>
+            <Header />
+            <main className="container depot-requests">
+                {/* Chỉ có header, search/filter inputs, và empty state */}
+                <div className="table-empty modern-empty">
+                    <div className="empty-icon">📋</div>
+                    <p>{t('pages.requests.noRequests')}</p>
+                </div>
+            </main>
+        </>
+    );
+}
 ```
+
+**Lưu ý**: Page này cần được định nghĩa lại hoàn toàn với logic mới.
 
 ## 🧪 Testing
 
-### Test Cases
+**⚠️ DEPRECATED - Tính năng testing không còn khả dụng**
+
+Tất cả test cases và manual testing steps đã không còn áp dụng vì trang Depot đã được rút gọn thành khung tĩnh.
+
+### Previous Test Cases (Deprecated)
 1. **✅ Success Case**: Upload multiple PDF files cho EXPORT request với status PICK_CONTAINER
 2. **✅ Success Case**: Upload mixed files (PDF + JPG + PNG) cho EXPORT request với status PICK_CONTAINER
 3. **❌ Too Many Files Error**: Upload quá 10 files cùng lúc
@@ -237,12 +257,14 @@ const handleAddDocument = async (requestId: string, containerNo: string) => {
 7. **❌ Status Error**: Upload cho request với status khác PICK_CONTAINER
 8. **❌ Role Error**: Upload với role không có quyền
 
-### Manual Testing Steps
+### Previous Manual Testing Steps (Deprecated)
 1. Tạo yêu cầu EXPORT
 2. Tạo lịch hẹn để chuyển status sang PICK_CONTAINER
 3. Click "Upload documents"
 4. Chọn nhiều files PDF/JPG/PNG (tối đa 10 files)
 5. Verify upload thành công và status chuyển sang SCHEDULED
+
+**Lưu ý**: Cần tạo lại test cases mới khi định nghĩa lại trang Depot.
 
 ## 🐛 Troubleshooting
 
@@ -322,9 +344,10 @@ db.documents.find({request_id: "request_id", type: "EXPORT_DOC"})
 - **Phase 3**: Testing và bug fixes ✅
 - **Phase 4**: Documentation ✅
 - **Phase 5**: Production deployment 🚀
+- **Phase 6**: ⚠️ DEPRECATED - Page Depot đã được rút gọn thành khung tĩnh
 
 ---
 
-**Status**: ✅ Complete  
+**Status**: ⚠️ DEPRECATED - Tính năng không còn khả dụng  
 **Last Updated**: January 6, 2025  
-**Version**: 1.0.0
+**Version**: 1.0.0 (Deprecated)

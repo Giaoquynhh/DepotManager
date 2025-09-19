@@ -29,7 +29,7 @@ manageContainer/
     ├── components/
     │   └── RequestForm.tsx                    # ⚪ Không thay đổi (đã có error handling)
     ├── pages/Requests/
-    │   └── Customer.tsx                       # ⚪ Không thay đổi
+│   └── (ĐÃ GỠ) Customer.tsx               # Đã xoá khỏi codebase
     ├── services/
     │   └── api.ts                            # ⚪ Không thay đổi
     ├── docs/

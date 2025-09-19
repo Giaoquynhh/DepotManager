@@ -57,7 +57,7 @@ async function main(){
 					created_by: admin.id,
 					type: 'IMPORT',
 					container_no: containerA,
-					status: 'GATE_IN',
+					status: 'TODO_NEW_STATUS',
 					gate_checked_at: new Date(),
 					gate_checked_by: admin.id,
 					driver_name: 'Nguyễn Văn A',

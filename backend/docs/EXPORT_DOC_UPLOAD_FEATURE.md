@@ -138,6 +138,12 @@ export const uploadDocSchema = Joi.object({
 ## Frontend Implementation
 
 ### 1. Component (`DepotRequestTable.tsx`)
+
+**⚠️ DEPRECATED - Component không còn được sử dụng**
+
+Component này đã bị loại bỏ khỏi trang Depot. Trang Depot hiện tại chỉ là khung tĩnh.
+
+#### Previous Implementation (Deprecated)
 ```typescript
 // Hiển thị nút "Thêm chứng từ" cho yêu cầu EXPORT với trạng thái PICK_CONTAINER
 {item.type === 'EXPORT' && item.status === 'PICK_CONTAINER' && onAddDocument ? (
@@ -153,7 +159,15 @@ export const uploadDocSchema = Joi.object({
 )}
 ```
 
+**Lưu ý**: Component này vẫn tồn tại trong codebase nhưng không còn được sử dụng. Cần được tạo lại khi định nghĩa lại trang Depot.
+
 ### 2. Hook (`useDepotActions.ts`)
+
+**⚠️ DEPRECATED - Hook đã bị loại bỏ**
+
+Hook này đã bị xóa khỏi trang Depot. Tất cả logic state management và API calls đã được loại bỏ.
+
+#### Previous Implementation (Deprecated)
 ```typescript
 const handleAddDocument = async (requestId: string, containerNo: string) => {
     setLoadingId(requestId + 'ADD_DOC');
@@ -203,6 +217,8 @@ const handleAddDocument = async (requestId: string, containerNo: string) => {
     }
 };
 ```
+
+**Lưu ý**: Hook này vẫn tồn tại trong codebase nhưng không còn được sử dụng. Cần được tạo lại khi định nghĩa lại trang Depot.
 
 ### 3. API Service
 ```typescript

@@ -18,7 +18,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   translations
 }) => {
   // Chỉ hiển thị tabs cho các role có quyền quản lý cả nhân viên và customer
-  const canManageBoth = ['SystemAdmin', 'BusinessAdmin', 'admin'].includes(role);
+  const canManageBoth = ['SystemAdmin', 'admin'].includes(role);
   
   if (!canManageBoth) {
     return null; // Chỉ hiển thị tab "Người dùng" cho các role khác

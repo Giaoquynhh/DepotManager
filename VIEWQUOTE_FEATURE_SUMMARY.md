@@ -16,7 +16,7 @@ Tính năng `viewquote` được thêm vào `RepairTicket` để kiểm soát qu
 
 ### `viewquote = 2`
 - **Kích hoạt**: Khi ở page `http://localhost:5002/Requests/Depot` click button "Gửi xác nhận"
-- **Hiệu ứng**: Page `http://localhost:5002/Requests/Customer` sẽ hiển thị action "Xem hóa đơn/Chấp nhận/Từ chối"
+- **Hiệu ứng**: Luồng hiển thị phía Customer đã bị gỡ bỏ; không còn trang Customer.
 - **API**: `POST /requests/:id/send-customer-confirmation`
 
 ## Luồng hoạt động
@@ -26,7 +26,7 @@ Tính năng `viewquote` được thêm vào `RepairTicket` để kiểm soát qu
    ↓ Click "Gửi yêu cầu xác nhận"
 2. Depot có thể xem hóa đơn (viewquote = 1)
    ↓ Click "Gửi xác nhận"
-3. Customer có thể xem hóa đơn và quyết định (viewquote = 2)
+3. (ĐÃ GỠ BỎ) Luồng Customer xem hóa đơn và quyết định (viewquote = 2)
 ```
 
 ## Các thay đổi đã thực hiện
@@ -62,11 +62,8 @@ Tính năng `viewquote` được thêm vào `RepairTicket` để kiểm soát qu
 - **File**: `manageContainer/frontend/pages/Requests/components/DepotRequestTable.tsx`
 - **Thay đổi**: Chỉ hiển thị button "Xem hóa đơn" và "Gửi xác nhận" khi `viewquote = 1`
 
-#### 2. Request Table (Customer)
-- **File**: `manageContainer/frontend/components/RequestTable.tsx`
-- **Thay đổi**: 
-  - Thêm `viewquote?: number` vào interface `Request`
-  - Chỉ hiển thị actions khi `viewquote = 2`
+#### 2. Request Table (Customer) — ĐÃ GỠ BỎ
+- Các mô tả liên quan đến hiển thị actions ở trang Customer không còn áp dụng.
 
 #### 3. Depot Actions Hook
 - **File**: `manageContainer/frontend/pages/Requests/hooks/useDepotActions.ts`
@@ -107,8 +104,7 @@ Response: { success: true, message: "Đã gửi xác nhận cho khách hàng th�
 ### Bước 3: Gửi xác nhận cho khách hàng
 1. Ở Depot page, click button "Gửi xác nhận"
 2. Kiểm tra `viewquote = 2`
-3. Vào `http://localhost:5002/Requests/Customer`
-4. Kiểm tra actions "Xem hóa đơn", "Chấp nhận", "Từ chối" xuất hiện
+3. (ĐÃ GỠ BỎ) Bỏ qua bước vào Customer page vì trang đã bị xoá
 
 ## Lưu ý quan trọng
 
@@ -123,8 +119,8 @@ Response: { success: true, message: "Đã gửi xác nhận cho khách hàng th�
 Tính năng viewquote đã được implement hoàn chỉnh với:
 - ✅ Database schema và migration
 - ✅ Backend API endpoints
-- ✅ Frontend UI updates
+- ✅ Frontend UI updates (Depot)
 - ✅ Logic validation và error handling
 - ✅ Audit logging
 
-Tính năng này giúp kiểm soát quyền xem hóa đơn sửa chữa một cách có hệ thống và bảo mật.
+Luồng Customer liên quan đã được gỡ bỏ khỏi tài liệu và codebase.

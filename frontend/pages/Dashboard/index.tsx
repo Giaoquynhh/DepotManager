@@ -16,7 +16,7 @@ export default function Dashboard(){
         if (params.get('stay') === '1') return;
         const firstRoute = (()=>{
             if (canViewUsersPartners(role)) return '/UsersPartners';
-            if (isCustomerRole(role)) return '/Requests/Customer';
+            // (ĐÃ GỠ) Customer route không còn
             if (isSaleAdmin(role) || isAccountant(role)) return '/Requests/Depot';
             if (canUseGate(role)) return '/Gate';
             if (isSaleAdmin(role)) return '/Yard';
@@ -53,11 +53,7 @@ export default function Dashboard(){
 								Tạo/mời user, quản lý khách hàng/đối tác.
 							</Card>
 						)}
-						{isCustomerRole(role) && (
-							<Card title="Yêu cầu dịch vụ (Khách hàng)" actions={<Link className="btn" href="/Requests/Customer">Mở</Link>}>
-								Tạo và theo dõi yêu cầu của công ty bạn.
-							</Card>
-						)}
+                        {/* (ĐÃ GỠ) Thẻ Khách hàng đã bị loại bỏ */}
 						{(isSaleAdmin(role) || isAccountant(role)) && (
 							<Card title="Yêu cầu dịch vụ (Depot)" actions={<Link className="btn" href="/Requests/Depot">Mở</Link>}>
 								Tiếp nhận/từ chối, upload chứng từ, gửi yêu cầu thanh toán.

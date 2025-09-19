@@ -11,7 +11,7 @@ Tính năng `viewquote` kiểm soát quyền xem hóa đơn sửa chữa ở cá
    ↓ Click "Gửi yêu cầu xác nhận"
 2. Depot có thể xem hóa đơn (viewquote = 1)
    ↓ Click "Gửi xác nhận"
-3. Customer có thể xem hóa đơn và quyết định (viewquote = 2)
+3. (ĐÃ GỠ BỎ) Customer page trước đây hiển thị hóa đơn và quyết định (viewquote = 2)
 ```
 
 ## Components được cập nhật
@@ -49,53 +49,9 @@ Tính năng `viewquote` kiểm soát quyền xem hóa đơn sửa chữa ở cá
 )}
 ```
 
-### 2. RequestTable.tsx (Customer)
+### 2. RequestTable.tsx (Customer) — ĐÃ GỠ BỎ LIÊN KẾT
 
-**File**: `frontend/components/RequestTable.tsx`
-
-#### Thay đổi chính
-- Thêm `viewquote?: number` vào interface `Request`
-- Thêm điều kiện `item.viewquote === 2` cho việc hiển thị actions
-- Chỉ hiển thị actions khi `viewquote = 2`
-
-#### Interface cập nhật
-```typescript
-interface Request {
-  id: string;
-  type: string;
-  container_no: string;
-  eta: string;
-  status: string;
-  rejected_reason?: string;
-  latest_payment?: any;
-  documents?: any[];
-  has_invoice?: boolean;
-  is_paid?: boolean;
-  appointment_time?: string;
-  appointment_location_type?: string;
-  appointment_location_id?: string;
-  appointment_note?: string;
-  viewquote?: number; // ✅ New field
-}
-```
-
-#### Code mới
-```typescript
-{/* Actions for PENDING_ACCEPT requests (Customer only) - chỉ hiển thị khi viewquote = 2 */}
-{item.status === 'PENDING_ACCEPT' && item.viewquote === 2 && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
-    <>
-        <button className="btn btn-sm btn-info" /* ... */ >
-            📄 {t('pages.requests.actions.viewRepairInvoice')}
-        </button>
-        <button className="btn btn-sm btn-success" /* ... */ >
-            ✅ {t('pages.requests.actions.accept')}
-        </button>
-        <button className="btn btn-sm btn-danger" /* ... */ >
-            ❌ {t('pages.requests.actions.reject')}
-        </button>
-    </>
-)}
-```
+Phần mô tả liên quan đến hiển thị actions cho Customer (viewquote = 2) không còn áp dụng do trang Customer đã bị xoá khỏi codebase.
 
 ### 3. useDepotActions.ts
 
@@ -144,9 +100,7 @@ const handleSendCustomerConfirmation = async (id: string) => {
    - API: `POST /requests/:id/send-customer-confirmation`
    - Kết quả: `viewquote = 2`
 
-4. **Requests/Customer** → Hiển thị actions khi `viewquote = 2`
-   - API: `GET /requests` (trả về `viewquote` trong response)
-   - UI: Hiển thị "Xem hóa đơn", "Chấp nhận", "Từ chối"
+4. (ĐÃ GỠ BỎ) Luồng Customer hiển thị actions khi `viewquote = 2` không còn áp dụng.
 
 ## Conditional Rendering Logic
 
@@ -161,17 +115,8 @@ const handleSendCustomerConfirmation = async (id: string) => {
 )}
 ```
 
-### Customer Page
-```typescript
-// Chỉ hiển thị khi PENDING_ACCEPT và viewquote = 2
-{item.status === 'PENDING_ACCEPT' && item.viewquote === 2 && userRole && ['CustomerAdmin', 'CustomerUser'].includes(userRole) && (
-    <>
-        {/* View Invoice Button */}
-        {/* Accept Button */}
-        {/* Reject Button */}
-    </>
-)}
-```
+### Customer Page — ĐÃ GỠ BỎ
+Luồng render cho trang Customer không còn.
 
 ## State Management
 
@@ -212,17 +157,16 @@ disabled={loadingId === item.id + 'CONFIRM'}
 #### Test Case 1: viewquote = 0
 - **Setup**: Tạo phiếu sửa chữa mới
 - **Expected**: Chỉ Maintenance/Repairs có thể xem hóa đơn
-- **Verify**: Depot và Customer không hiển thị actions
+- **Verify**: Depot và (ĐÃ GỠ BỎ) Customer không hiển thị actions
 
 #### Test Case 2: viewquote = 1
 - **Setup**: Click "Gửi yêu cầu xác nhận" ở Maintenance/Repairs
 - **Expected**: Depot hiển thị "Xem hóa đơn" và "Gửi xác nhận"
-- **Verify**: Customer vẫn chưa hiển thị actions
+- **Verify**: Customer (đã gỡ) không còn
 
 #### Test Case 3: viewquote = 2
 - **Setup**: Click "Gửi xác nhận" ở Depot
-- **Expected**: Customer hiển thị "Xem hóa đơn", "Chấp nhận", "Từ chối"
-- **Verify**: Depot vẫn hiển thị actions (có thể cần cập nhật logic)
+- **Expected**: (ĐÃ GỠ BỎ) Customer flow không còn áp dụng
 
 ### 2. Manual Testing Steps
 
@@ -240,8 +184,7 @@ disabled={loadingId === item.id + 'CONFIRM'}
 3. **Gửi xác nhận cho khách hàng**
    - Click "Gửi xác nhận" ở Depot
    - Verify `viewquote = 2`
-   - Vào `http://localhost:5002/Requests/Customer`
-   - Verify actions xuất hiện
+   - (ĐÃ GỠ BỎ) Bỏ qua bước vào Customer page
 
 ## Future Enhancements
 
@@ -279,11 +222,10 @@ frontend/
 ├── pages/
 │   ├── Requests/
 │   │   ├── Depot.tsx                    # Depot page
-│   │   ├── Customer.tsx                 # Customer page
 │   │   └── components/
 │   │       └── DepotRequestTable.tsx    # Depot table component
 ├── components/
-│   └── RequestTable.tsx                 # Customer table component
+│   └── RequestTable.tsx                 # Table component (không còn ràng buộc với trang Customer)
 └── pages/Requests/hooks/
     └── useDepotActions.ts               # Depot actions hook
 ```
@@ -293,4 +235,4 @@ frontend/
 **Ngày tạo:** 2025-09-09  
 **Phiên bản:** 1.0.0  
 **Tác giả:** Development Team  
-**Trạng thái:** ✅ Hoàn thành implementation
+**Trạng thái:** ✅ Hoàn thành implementation (đã gỡ Customer page)

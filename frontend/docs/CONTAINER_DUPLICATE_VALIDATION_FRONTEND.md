@@ -285,7 +285,7 @@ test('should display error message when container exists', async () => {
 | File | Mô tả | Vai trò |
 |------|-------|---------|
 | `components/RequestForm.tsx` | Form tạo request | Xử lý input và hiển thị lỗi |
-| `pages/Requests/Customer.tsx` | Trang customer requests | Modal chứa form |
+| (ĐÃ GỠ) `pages/Requests/Customer.tsx` | Trang Customer | Đã xoá khỏi codebase |
 | `services/api.ts` | API service | Gửi request đến backend |
 | `hooks/useTranslation.ts` | Translation hook | Đa ngôn ngữ |
 | `styles/request-form.css` | CSS styles | Styling cho form và messages |

@@ -1,4 +1,4 @@
-export type AppRole = 'SystemAdmin' | 'BusinessAdmin' | 'SaleAdmin' | 'CustomerAdmin' | 'CustomerUser' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver';
+export type AppRole = 'SystemAdmin' | 'SaleAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver' | 'admin';
 
 export function homeFor(role: AppRole): string {
     if (canViewUsersPartners(role)) return '/UsersPartners';
@@ -9,7 +9,7 @@ export function homeFor(role: AppRole): string {
 }
 
 export function canViewUsersPartners(role?: string): boolean {
-	return ['SystemAdmin','BusinessAdmin','admin'].includes(String(role));
+	return ['SystemAdmin','admin'].includes(String(role));
 }
 
 export function showInternalForm(role?: string): boolean {
@@ -21,7 +21,7 @@ export function showCustomerForm(role?: string): boolean {
 }
 
 export function showPartnerForm(role?: string): boolean {
-	return ['SystemAdmin','BusinessAdmin','admin'].includes(String(role));
+	return ['SystemAdmin','admin'].includes(String(role));
 }
 
 // UsersPartners không còn hỗ trợ vai khách hàng
@@ -63,7 +63,6 @@ export function canManageFinance(role?: string): boolean {
 
 // Extra helpers for sidebar mapping
 export function isSystemAdmin(role?: string): boolean { return String(role) === 'SystemAdmin'; }
-export function isBusinessAdmin(role?: string): boolean { return String(role) === 'BusinessAdmin'; }
 export function isSecurity(role?: string): boolean { return String(role) === 'Security'; }
 export function isYardManager(role?: string): boolean { return String(role) === 'YardManager'; }
 export function isMaintenanceManager(role?: string): boolean { return String(role) === 'MaintenanceManager'; }

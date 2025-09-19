@@ -380,7 +380,7 @@ Tính năng `viewquote` kiểm soát quyền xem hóa đơn sửa chữa ở cá
 
 #### `viewquote = 2`
 - **Kích hoạt**: Khi ở Depot page click button "Gửi xác nhận"
-- **Hiệu ứng**: Page Requests/Customer sẽ hiển thị action "Xem hóa đơn/Chấp nhận/Từ chối"
+- **Hiệu ứng**: Luồng hiển thị tại trang Customer đã bị gỡ bỏ; không còn trang Customer.
 - **API**: `POST /requests/:id/send-customer-confirmation`
 
 ### Luồng hoạt động

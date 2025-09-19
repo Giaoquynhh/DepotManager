@@ -86,7 +86,7 @@ model ServiceRequest {
     type          String   // IMPORT | EXPORT | CONVERT
     container_no  String?  // Optional cho EXPORT
     eta           DateTime?
-    status        String   // PENDING | PICK_CONTAINER | SCHEDULED | FORWARDED | GATE_IN | CHECKING | GATE_REJECTED | REJECTED | COMPLETED | EXPORTED | IN_YARD | LEFT_YARD | PENDING_ACCEPT | ACCEPT | CHECKED | POSITIONED | FORKLIFTING | IN_YARD | IN_CAR | GATE_OUT
+    status        String   // TODO: Định nghĩa lại trạng thái mới
     forwarded_at    DateTime?
     forwarded_by    String?
     gate_checked_at DateTime?
@@ -321,12 +321,7 @@ enum InventoryMoveType {
 }
 
 enum RepairStatus {
-  CHECKING
-  PENDING_ACCEPT
-  ACCEPT
-  REPAIRING
-  CHECKED
-  REJECTED
+  // TODO: Định nghĩa lại trạng thái sửa chữa mới
 }
 
 model Equipment {

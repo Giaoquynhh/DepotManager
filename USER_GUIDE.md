@@ -186,21 +186,7 @@ Gợi ý chụp và đặt ảnh vào thư mục `images/user_guide/` rồi cậ
 
 ### 5.1. Khách hàng (Customer)
 
-- Tạo yêu cầu
-  - Vào Yêu cầu khách hàng: `Requests/Customer` > "Tạo yêu cầu".
-  - Chọn loại (IMPORT/EXPORT), nhập số container, ETA, ghi chú.
-  - Gửi để tạo yêu cầu ở trạng thái PENDING.
-- Tìm kiếm/lọc/sắp xếp
-  - Ô tìm kiếm theo mã container.
-  - Bộ lọc "Tất cả loại" và sắp xếp theo ETA bằng nút ở tiêu đề cột.
-- Bổ sung chứng từ (đưa yêu cầu sang FORWARDED)
-  - Với yêu cầu SCHEDULED/RECEIVED (tùy trường hợp), bấm "Bổ sung thông tin".
-  - Tải lên file PDF/JPG/PNG; khi thành công hệ thống sẽ hiển thị thông báo và cập nhật trạng thái → FORWARDED.
-- Chat
-  - Bấm nút Chat ở mỗi dòng để mở cửa sổ chat, trao đổi với Depot.
-- Hóa đơn & Thanh toán
-  - Khi có hóa đơn, nhấn "Xem hóa đơn" (Invoice Viewer).
-  - Nếu cho phép thanh toán trực tuyến, bấm "Thanh toán" và thực hiện theo hướng dẫn (mock hiện tại cập nhật trạng thái thanh toán).
+Trang Yêu cầu khách hàng (Requests/Customer) đã được gỡ bỏ. Các thao tác tạo/bổ sung yêu cầu của Customer không còn trong hệ thống hiện tại.
 
 ### 5.2. Depot Staff/Manager
 

@@ -71,14 +71,8 @@
 - Hỗ trợ download file
 - Loading states và error handling
 
-#### 2.3. Customer Page
-**File:** `manageContainer/frontend/pages/Requests/Customer.tsx`
-- Thêm import `UploadSupplementModal`
-- Thêm state `showSupplementModal`
-- Thêm functions:
-  - `handleOpenSupplementModal`
-  - `handleSupplementSuccess`
-- Truyền `handleOpenSupplementModal` vào RequestTable actions
+#### 2.3. Customer Page — ĐÃ GỠ BỎ
+Trang Customer và phần tích hợp upload bổ sung từ phía Customer đã được xoá khỏi codebase.
 
 #### 2.4. RequestTable Component
 **File:** `manageContainer/frontend/components/RequestTable.tsx`
@@ -239,7 +233,7 @@ console.error('Error details:', {
 ### Frontend
 1. `components/UploadSupplementModal.tsx` - Upload UI
 2. `components/SupplementDocuments.tsx` - Display UI
-3. `pages/Requests/Customer.tsx` - Customer integration
+3. (ĐÃ GỠ) `pages/Requests/Customer.tsx` - Customer integration
 4. `pages/Requests/Depot.tsx` - Depot integration
 5. `components/RequestTable.tsx` - Action buttons
 6. `components/index.ts` - Exports

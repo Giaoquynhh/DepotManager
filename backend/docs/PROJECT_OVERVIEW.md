@@ -1,7 +1,32 @@
 # PROJECT OVERVIEW - Container Management System
 
 ## Tổng quan dự án
-Hệ thống quản lý container toàn diện với các module chính: Auth, Requests, Gate, Yard, Forklift, Maintenance, Finance, Reports và Chat. Hệ thống đã được cập nhật với **Request State Machine** và **logic phân biệt IMPORT/EXPORT** để quản lý workflow trạng thái một cách nhất quán.
+Hệ thống quản lý container toàn diện với các module chính: Auth, Requests, Gate, Yard, Forklift, Maintenance, Finance, Reports và Chat.
+
+## ⚠️ THAY ĐỔI GẦN ĐÂY: RESET MODULE REQUESTS
+
+**Ngày cập nhật:** 2025-01-19  
+**Trạng thái:** Module Requests đã được reset về trạng thái ban đầu
+
+### 🔄 Thay đổi:
+- **Đã xóa toàn bộ logic backend** liên quan đến requests
+- **Đã xóa toàn bộ logic frontend** của page `/Requests/Depot`
+- **Chỉ giữ lại khung UI cơ bản** như hiển thị trong ảnh
+- **Sẵn sàng để định nghĩa lại từ đầu** với logic và state machine mới
+
+### 📁 Cấu trúc hiện tại:
+```
+backend/modules/requests/
+├── service/
+│   ├── AttachmentService.ts
+│   ├── RequestBaseService.ts
+│   └── RequestService.ts.backup
+└── (các thư mục khác đã bị xóa)
+
+frontend/pages/Requests/
+├── Depot.tsx (chỉ có khung UI cơ bản)
+└── (các components và hooks đã bị xóa)
+```
 
 ## 🚀 Tính năng mới: Phân biệt IMPORT/EXPORT với trạng thái IN_CAR
 

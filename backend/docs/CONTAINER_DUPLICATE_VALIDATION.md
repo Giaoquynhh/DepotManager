@@ -166,7 +166,7 @@ if (activeRequest) {
 | File | Mô tả | Vai trò |
 |------|-------|---------|
 | `components/RequestForm.tsx` | Form tạo request | Hiển thị lỗi từ API |
-| `pages/Requests/Customer.tsx` | Trang quản lý request | Modal tạo request |
+| (ĐÃ GỠ) `pages/Requests/Customer.tsx` | Trang Customer | Đã xoá khỏi codebase |
 | `services/api.ts` | API service | Gửi request đến backend |
 
 ## 🚀 Deployment

@@ -393,7 +393,7 @@ export default function UsersPartners() {
                                          </tr>
                                      </thead>
                   
-                  {(role === 'CustomerAdmin' || !['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
+                    {(!['SystemAdmin', 'admin'].includes(role) || activeTab === 'users') ? (
                     <UserTable
                       users={filteredUsers}
                       role={role}
