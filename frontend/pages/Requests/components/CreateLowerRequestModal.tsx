@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { setupService, type ShippingLine, type TransportCompany, type ContainerType } from '../../../services/setupService';
 
 interface CreateLowerRequestModalProps {
 	isOpen: boolean;
@@ -44,6 +45,30 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	});
 
 	const [errors, setErrors] = useState<Partial<LowerRequestData>>({});
+
+	// Shipping lines (from Setup page)
+	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
+	const [selectedShippingLineName, setSelectedShippingLineName] = useState<string>('');
+	// Transport companies (Nhà xe)
+	const [transportCompanies, setTransportCompanies] = useState<TransportCompany[]>([]);
+	const [selectedTransportCompanyName, setSelectedTransportCompanyName] = useState<string>('');
+	// Container types (from Setup page)
+	const [containerTypes, setContainerTypes] = useState<ContainerType[]>([]);
+
+	useEffect(() => {
+		(async () => {
+			try {
+				const [slRes, tcRes, ctRes] = await Promise.all([
+					setupService.getShippingLines({ page: 1, limit: 100 }),
+					setupService.getTransportCompanies({ page: 1, limit: 100 }),
+					setupService.getContainerTypes({ page: 1, limit: 100 })
+				]);
+				if (slRes.success && slRes.data) setShippingLines(slRes.data.data);
+				if (tcRes.success && tcRes.data) setTransportCompanies(tcRes.data.data);
+				if (ctRes.success && ctRes.data) setContainerTypes(ctRes.data.data);
+			} catch (_) {}
+		})();
+	}, []);
 
 	const handleInputChange = (field: keyof LowerRequestData, value: string) => {
 		setFormData(prev => ({
@@ -256,13 +281,24 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 							<label style={requiredLabelStyle}>
 								Hãng tàu <span style={requiredAsteriskStyle}>*</span>
 							</label>
-							<input
-								type="text"
-								style={errors.shippingLine ? formInputErrorStyle : formInputStyle}
-								value={formData.shippingLine}
-								onChange={(e) => handleInputChange('shippingLine', e.target.value)}
-								placeholder="Nhập hãng tàu"
-							/>
+						<select
+							style={errors.shippingLine ? formSelectErrorStyle : formSelectStyle}
+							value={formData.shippingLine}
+							onChange={(e) => {
+								const id = e.target.value;
+								handleInputChange('shippingLine', id);
+								const sl = shippingLines.find(s => s.id === id);
+								setSelectedShippingLineName(sl?.name || '');
+							}}
+						>
+							<option value="">Chọn hãng tàu</option>
+							{shippingLines.map(sl => (
+								<option key={sl.id} value={sl.id}>{`${sl.code} - ${sl.name}`}</option>
+							))}
+						</select>
+						{selectedShippingLineName && (
+							<small style={{ color: '#64748b', marginTop: '6px' }}>Tên hãng tàu: {selectedShippingLineName}</small>
+						)}
 							{errors.shippingLine && <span style={errorMessageStyle}>{errors.shippingLine}</span>}
 						</div>
 
@@ -281,7 +317,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 							{errors.containerNumber && <span style={errorMessageStyle}>{errors.containerNumber}</span>}
 						</div>
 
-						{/* Loại container - Required */}
+						{/* Loại container - Required (id mapping, display code + description) */}
 						<div style={formGroupStyle}>
 							<label style={requiredLabelStyle}>
 								Loại container <span style={requiredAsteriskStyle}>*</span>
@@ -292,12 +328,9 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 								onChange={(e) => handleInputChange('containerType', e.target.value)}
 							>
 								<option value="">Chọn loại container</option>
-								<option value="20ft">20ft</option>
-								<option value="40ft">40ft</option>
-								<option value="45ft">45ft</option>
-								<option value="20ft HC">20ft HC</option>
-								<option value="40ft HC">40ft HC</option>
-								<option value="45ft HC">45ft HC</option>
+								{containerTypes.map(ct => (
+									<option key={ct.id} value={ct.id}>{`${ct.code} - ${ct.description}`}</option>
+								))}
 							</select>
 							{errors.containerType && <span style={errorMessageStyle}>{errors.containerType}</span>}
 						</div>
@@ -334,18 +367,29 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 							{errors.customer && <span style={errorMessageStyle}>{errors.customer}</span>}
 						</div>
 
-						{/* Nhà xe - Optional */}
+						{/* Nhà xe - Optional (id mapping, display code + name) */}
 						<div style={formGroupStyle}>
 							<label style={formLabelStyle}>
 								Nhà xe
 							</label>
-							<input
-								type="text"
-								style={formInputStyle}
-								value={formData.vehicleCompany}
-								onChange={(e) => handleInputChange('vehicleCompany', e.target.value)}
-								placeholder="Nhập tên nhà xe"
-							/>
+							<select
+								style={formSelectStyle}
+								value={formData.vehicleCompany || ''}
+								onChange={(e) => {
+									const id = e.target.value;
+									handleInputChange('vehicleCompany', id);
+									const tc = transportCompanies.find(c => c.id === id);
+									setSelectedTransportCompanyName(tc?.name || '');
+								}}
+							>
+								<option value="">Chọn nhà xe</option>
+								{transportCompanies.map(tc => (
+									<option key={tc.id} value={tc.id}>{`${tc.code} - ${tc.name}`}</option>
+								))}
+							</select>
+							{selectedTransportCompanyName && (
+								<small style={{ color: '#64748b', marginTop: '6px' }}>Tên nhà xe: {selectedTransportCompanyName}</small>
+							)}
 						</div>
 
 						{/* Số xe - Optional */}

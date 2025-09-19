@@ -135,18 +135,30 @@ export default function DepotRequests() {
 ### 5. **Create Request Modals** (Hoàn thành)
 
 #### **Create Lift Request Modal** (Nâng container)
+- **File**: `pages/Requests/components/CreateLiftRequestModal.tsx`
 - **Trigger**: Click button "Tạo yêu cầu nâng container" ở tab "Yêu cầu nâng container"
 - **Form Fields**:
   - **Required**: Hãng tàu, Số Booking/Bill, Loại container, Khách hàng
   - **Optional**: Số container, Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
   - **Default**: Loại dịch vụ = "Nâng container" (readonly)
+- **Data Integration**:
+  - **Hãng tàu**: Dropdown với dữ liệu từ `setupService.getShippingLines()`
+  - **Nhà xe**: Dropdown với dữ liệu từ `setupService.getTransportCompanies()`
+  - **Loại container**: Dropdown với dữ liệu từ `setupService.getContainerTypes()`
+  - **Display Format**: "Mã - Tên" trong dropdown, hiển thị tên đầy đủ bên dưới
 
 #### **Create Lower Request Modal** (Hạ container)
+- **File**: `pages/Requests/components/CreateLowerRequestModal.tsx`
 - **Trigger**: Click button "Tạo yêu cầu hạ container" ở tab "Yêu cầu hạ container"
 - **Form Fields**:
   - **Required**: Hãng tàu, Số container, Loại container, Khách hàng
   - **Optional**: Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
   - **Default**: Loại dịch vụ = "Hạ container" (readonly)
+- **Data Integration**:
+  - **Hãng tàu**: Dropdown với dữ liệu từ `setupService.getShippingLines()`
+  - **Nhà xe**: Dropdown với dữ liệu từ `setupService.getTransportCompanies()`
+  - **Loại container**: Dropdown với dữ liệu từ `setupService.getContainerTypes()`
+  - **Display Format**: "Mã - Tên" trong dropdown, hiển thị tên đầy đủ bên dưới
 
 #### **Common Features**:
 - **Form Layout**: 2 cột responsive, form fields được sắp xếp theo thứ tự logic
@@ -218,6 +230,7 @@ export default function DepotRequests() {
 - **UI**: Icon 📦⬇️, "Yêu cầu hạ container"
 
 #### **CreateLiftRequestModal.tsx** (Create Lift Request Modal)
+- **File**: `pages/Requests/components/CreateLiftRequestModal.tsx`
 - **Props**: `isOpen`, `onClose`, `onSubmit`
 - **Tính năng**: Form tạo yêu cầu nâng container với validation real-time
 - **UI**: Modal popup với form 2 cột, inline styles, responsive design
@@ -225,10 +238,15 @@ export default function DepotRequests() {
   - **Required**: Hãng tàu, Số Booking/Bill, Loại container, Khách hàng
   - **Optional**: Số container, Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
   - **Default**: Loại dịch vụ = "Nâng container" (readonly)
+- **Data Integration**:
+  - **Hãng tàu**: `setupService.getShippingLines()` - hiển thị "Mã - Tên", submit ID
+  - **Nhà xe**: `setupService.getTransportCompanies()` - hiển thị "Mã - Tên", submit ID  
+  - **Loại container**: `setupService.getContainerTypes()` - hiển thị "Mã - Mô tả", submit ID
 - **Validation**: Real-time validation với error messages và styling
 - **Styling**: Inline styles để tránh CSS import conflicts
 
 #### **CreateLowerRequestModal.tsx** (Create Lower Request Modal)
+- **File**: `pages/Requests/components/CreateLowerRequestModal.tsx`
 - **Props**: `isOpen`, `onClose`, `onSubmit`
 - **Tính năng**: Form tạo yêu cầu hạ container với validation real-time
 - **UI**: Modal popup với form 2 cột, inline styles, responsive design
@@ -236,22 +254,26 @@ export default function DepotRequests() {
   - **Required**: Hãng tàu, Số container, Loại container, Khách hàng
   - **Optional**: Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
   - **Default**: Loại dịch vụ = "Hạ container" (readonly)
+- **Data Integration**:
+  - **Hãng tàu**: `setupService.getShippingLines()` - hiển thị "Mã - Tên", submit ID
+  - **Nhà xe**: `setupService.getTransportCompanies()` - hiển thị "Mã - Tên", submit ID
+  - **Loại container**: `setupService.getContainerTypes()` - hiển thị "Mã - Mô tả", submit ID
 - **Validation**: Real-time validation với error messages và styling
 - **Styling**: Inline styles để tránh CSS import conflicts
 - **Form Layout** (CreateLiftRequestModal):
   ```typescript
   // Cột trái
-  - Hãng tàu* (text input)
+  - Hãng tàu* (select dropdown - setupService.getShippingLines())
   - Số container (text input) 
   - Loại dịch vụ* (readonly input)
-  - Nhà xe (text input)
+  - Nhà xe (select dropdown - setupService.getTransportCompanies())
   - Tài xế (text input)
   - Thời gian hẹn (datetime-local input)
   - Chứng từ (file input)
   
   // Cột phải  
   - Số Booking/Bill* (text input)
-  - Loại container* (select dropdown)
+  - Loại container* (select dropdown - setupService.getContainerTypes())
   - Khách hàng* (text input)
   - Số xe (text input)
   - SĐT Tài xế (tel input)
@@ -263,10 +285,10 @@ export default function DepotRequests() {
 - **Form Layout** (CreateLowerRequestModal):
   ```typescript
   // Cột trái
-  - Hãng tàu* (text input)
-  - Loại container* (select dropdown)
+  - Hãng tàu* (select dropdown - setupService.getShippingLines())
+  - Loại container* (select dropdown - setupService.getContainerTypes())
   - Khách hàng* (text input)
-  - Nhà xe (text input)
+  - Nhà xe (select dropdown - setupService.getTransportCompanies())
   - Tài xế (text input)
   - Thời gian hẹn (datetime-local input)
   - Chứng từ (file input)
@@ -353,6 +375,7 @@ pages/Requests/
 │   ├── ImportRequest.tsx (xử lý Import Request)
 │   ├── ExportRequest.tsx (xử lý Export Request)
 │   ├── CreateLiftRequestModal.tsx (modal tạo yêu cầu nâng container)
+│   ├── CreateLowerRequestModal.tsx (modal tạo yêu cầu hạ container)
 │   └── index.ts (export components và types)
 └── (các hooks và utils sẽ được tạo mới)
 ```
@@ -369,7 +392,7 @@ pages/Requests/
 - `.gate-table-container`: Container cho table
 - `.table-empty.modern-empty`: Empty state styling
 
-### **CreateLiftRequestModal.tsx:**
+### **CreateLiftRequestModal.tsx & CreateLowerRequestModal.tsx:**
 - **Styling**: Inline styles (không sử dụng CSS classes)
 - **Lý do**: Tránh CSS import conflicts trong Next.js
 - **Features**: 
@@ -378,6 +401,9 @@ pages/Requests/
   - Error states với red styling
   - Hover effects cho buttons
   - Animation cho modal appearance
+  - Data integration với setupService
+  - Dropdown với display format "Mã - Tên"
+  - Real-time validation
 
 ---
 
@@ -389,6 +415,11 @@ pages/Requests/
   - Create Lift Request Modal (nâng container)
   - Create Lower Request Modal (hạ container)
   - Đầy đủ form fields cho cả 2 loại request
+- **Data Integration**: 
+  - Hãng tàu: Dropdown với dữ liệu từ `setupService.getShippingLines()`
+  - Nhà xe: Dropdown với dữ liệu từ `setupService.getTransportCompanies()`
+  - Loại container: Dropdown với dữ liệu từ `setupService.getContainerTypes()`
+  - Display format: "Mã - Tên" trong dropdown, hiển thị tên đầy đủ bên dưới
 - **Validation**: Real-time validation cho required fields
 - **Responsive Design**: Mobile-friendly layout
 - **TypeScript**: Type-safe interfaces và props cho cả 2 modals
