@@ -1,99 +1,90 @@
 import { api } from './api';
 
-export interface RequestData {
-  id: string;
-  container_no?: string;
+export interface CreateRequestData {
   type: string;
-  status: string;
+  container_no?: string;
   eta?: string;
-  created_by: string;
-  tenant_id?: string;
-  is_pick?: boolean;
-  has_invoice?: boolean;
-  is_paid?: boolean;
-  documents?: any[];
-  latest_payment?: any;
+  shipping_line_id?: string;
+  container_type_id?: string;
+  customer_id?: string;
+  vehicle_company_id?: string;
+  vehicle_number?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  appointment_time?: string;
+  notes?: string;
+  files?: File[];
 }
 
-export interface AvailableContainer {
-  container_no: string;
-  location: string;
-  status: string;
-  placed_at: string;
+export interface RequestAttachment {
+  id: string;
+  request_id: string;
+  uploader_id: string;
+  uploader_role: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  storage_url: string;
+  uploaded_at: string;
 }
 
-export const requestsApi = {
-  // Lấy danh sách requests
-  list: (params?: { page?: number; limit?: number; type?: string; status?: string }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.type) queryParams.append('type', params.type);
-    if (params?.status) queryParams.append('status', params.status);
-    
-    return api.get(`/requests?${queryParams.toString()}`);
-  },
-
-  // Lấy request theo ID
-  getById: (id: string) => {
-    return api.get(`/requests/${id}`);
-  },
-
-  // Cập nhật trạng thái request
-  updateStatus: (id: string, status: string, reason?: string) => {
-    return api.patch(`/requests/${id}/status`, { status, reason });
-  },
-
-  // Cập nhật container number
-  updateContainerNo: (id: string, container_no: string) => {
-    return api.patch(`/requests/${id}/container`, { container_no });
-  },
-
-  // Từ chối request
-  rejectRequest: (id: string, reason?: string) => {
-    return api.patch(`/requests/${id}/reject`, { reason });
-  },
-
-  // Soft delete request
-  softDeleteRequest: (id: string, scope: 'depot' | 'customer') => {
-    return api.delete(`/requests/${id}?scope=${scope}`);
-  },
-
-  // Khôi phục request
-  restoreRequest: (id: string, scope: 'depot' | 'customer') => {
-    return api.post(`/requests/${id}/restore`, { scope });
-  },
-
-  // Gửi yêu cầu thanh toán
-  sendPayment: (id: string) => {
-    return api.post(`/requests/${id}/payment-request`);
-  },
-
-  // Lấy danh sách container available cho EXPORT
-  getAvailableContainersForExport: (searchQuery?: string) => {
-    const params = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
-    return api.get(`/requests/containers/available${params}`);
-  },
-
-  // Upload document
-  uploadDocument: (id: string, file: File, type: string) => {
+export const requestService = {
+  // Create a new request with files
+  async createRequest(data: CreateRequestData) {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', type);
-    return api.post(`/requests/${id}/docs`, formData, {
+    
+    // Add text fields
+    formData.append('type', data.type);
+    if (data.container_no) formData.append('container_no', data.container_no);
+    if (data.eta) formData.append('eta', data.eta);
+    if (data.shipping_line_id) formData.append('shipping_line_id', data.shipping_line_id);
+    if (data.container_type_id) formData.append('container_type_id', data.container_type_id);
+    if (data.customer_id) formData.append('customer_id', data.customer_id);
+    if (data.vehicle_company_id) formData.append('vehicle_company_id', data.vehicle_company_id);
+    if (data.vehicle_number) formData.append('vehicle_number', data.vehicle_number);
+    if (data.driver_name) formData.append('driver_name', data.driver_name);
+    if (data.driver_phone) formData.append('driver_phone', data.driver_phone);
+    if (data.appointment_time) formData.append('appointment_time', data.appointment_time);
+    if (data.notes) formData.append('notes', data.notes);
+    
+    // Add files
+    if (data.files && data.files.length > 0) {
+      data.files.forEach((file, index) => {
+        formData.append('files', file);
+      });
+    }
+
+    return api.post('/requests/create', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
   },
 
-  // Lấy danh sách documents
-  getDocuments: (id: string) => {
-    return api.get(`/requests/${id}/docs`);
+  // Upload files for existing request
+  async uploadFiles(requestId: string, files: File[]) {
+    const formData = new FormData();
+    
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return api.post(`/requests/${requestId}/files`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
-  // Xóa document
-  deleteDocument: (id: string, docId: string) => {
-    return api.delete(`/requests/${id}/docs/${docId}`);
+  // Get files for a request
+  async getFiles(requestId: string) {
+    return api.get(`/requests/${requestId}/files`);
+  },
+
+  // Delete a file
+  async deleteFile(fileId: string, reason?: string) {
+    return api.delete(`/requests/files/${fileId}`, {
+      data: { reason }
+    });
   }
 };

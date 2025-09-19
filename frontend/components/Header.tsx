@@ -7,6 +7,7 @@ import { canViewUsersPartners, isSaleAdmin, isAccountant, canUseGate, isSystemAd
 import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 import { useTranslation } from '../hooks/useTranslation';
+import { SetupSubmenu } from './SetupSubmenu';
 
 interface User {
   email?: string;
@@ -23,6 +24,7 @@ export default function Header() {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [gateSubmenuOpen, setGateSubmenuOpen] = useState(false);
   const [hrSubmenuOpen, setHrSubmenuOpen] = useState(false);
+  const [setupSubmenuOpen, setSetupSubmenuOpen] = useState(false);
   const accountBtnRef = useRef<HTMLButtonElement | null>(null);
   const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{top:number; right:number}>({ top: 0, right: 12 });
@@ -890,13 +892,10 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-            <Link className={`sidebar-link ${router.pathname === '/Setup' ? 'active' : ''}`} href="/Setup" onClick={handleSidebarLinkClick}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
-              </svg>
-              <span>{t('sidebar.setup')}</span>
-            </Link>
+              <SetupSubmenu 
+                isExpanded={setupSubmenuOpen} 
+                onToggle={() => setSetupSubmenuOpen(!setupSubmenuOpen)} 
+              />
             )}
 
             {/* Account */}

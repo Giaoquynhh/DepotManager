@@ -1,20 +1,87 @@
 # Setup Module - Frontend Documentation
 
 ## Tổng quan
-Module Setup trong frontend cung cấp giao diện quản lý thông tin các hãng tàu và nhà xe với đầy đủ tính năng CRUD, upload Excel, validation dữ liệu, phân trang và xử lý lỗi thông minh. Module được xây dựng với React/Next.js và hỗ trợ đa ngôn ngữ.
+Module Setup trong frontend cung cấp giao diện quản lý thông tin các hãng tàu, nhà xe và loại container với đầy đủ tính năng CRUD, upload Excel, validation dữ liệu, phân trang và xử lý lỗi thông minh. Module được xây dựng với React/Next.js và hỗ trợ đa ngôn ngữ.
+
+**Cập nhật v2025-01-27:** Module Setup đã được refactor từ tab-based navigation sang submenu-based navigation trong sidebar, cung cấp trải nghiệm người dùng tốt hơn và cấu trúc rõ ràng hơn.
+
+## Navigation Structure
+
+### Sidebar Submenu
+- **Thiết lập** (Setup) - Menu chính có thể mở rộng/thu gọn
+  - **Hãng tàu** (Shipping Lines) - `/Setup/ShippingLines`
+  - **Nhà xe** (Transport Companies) - `/Setup/TransportCompanies`  
+  - **Loại container** (Container Types) - `/Setup/ContainerTypes`
+
+### URL Structure
+- `http://localhost:5002/Setup` - Redirect đến ShippingLines
+- `http://localhost:5002/Setup/ShippingLines` - Quản lý hãng tàu
+- `http://localhost:5002/Setup/TransportCompanies` - Quản lý nhà xe
+- `http://localhost:5002/Setup/ContainerTypes` - Quản lý loại container
+
+## Thay đổi chính (v2025-01-27)
+
+### ✅ Cải tiến Navigation
+- **Trước:** Tab navigation trên trang Setup chính
+- **Sau:** Submenu trong sidebar với 3 trang riêng biệt
+- **Lợi ích:** 
+  - Sidebar gọn gàng hơn
+  - Navigation rõ ràng và trực quan
+  - Mỗi trang có URL riêng, dễ bookmark và share
+  - Tải trang nhanh hơn (chỉ load data cần thiết)
+
+### ✅ Cải tiến Performance
+- **Trước:** Load tất cả data (shipping lines + transport companies + container types) cùng lúc
+- **Sau:** Chỉ load data của trang hiện tại
+- **Lợi ích:**
+  - Giảm thời gian tải trang
+  - Tiết kiệm bộ nhớ
+  - Trải nghiệm người dùng mượt mà hơn
+
+### ✅ Cải tiến Code Organization
+- **Trước:** 1 file Setup/index.tsx lớn (>300 dòng) quản lý tất cả
+- **Sau:** 3 file riêng biệt, mỗi file <200 dòng
+- **Lợi ích:**
+  - Code dễ maintain hơn
+  - Logic rõ ràng cho từng module
+  - Dễ debug và test
 
 ## Cấu trúc Component
 
-### 1. Trang chính Setup
+### 1. Trang chính Setup (Redirect)
 **File:** `pages/Setup/index.tsx`
 
 **Chức năng:**
-- Quản lý state cho shipping lines và transport companies
-- Xử lý các action CRUD cho cả hai loại dữ liệu
+- Redirect tự động đến trang ShippingLines mặc định
+- Đơn giản hóa navigation flow
+- Không còn quản lý state phức tạp
+
+### 2. Setup Submenu Component
+**File:** `components/SetupSubmenu.tsx`
+
+**Chức năng:**
+- Hiển thị submenu có thể mở rộng/thu gọn trong sidebar
+- Quản lý state mở/đóng submenu
+- Navigation đến các trang con tương ứng
+- Hiển thị icon và label phù hợp cho từng mục
+
+**Props:**
+```typescript
+interface SetupSubmenuProps {
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+```
+
+### 3. Trang quản lý Hãng tàu
+**File:** `pages/Setup/ShippingLines.tsx`
+
+**Chức năng:**
+- Quản lý state cho shipping lines
+- Xử lý các action CRUD cho hãng tàu
 - Tích hợp các modal components
 - Hiển thị thông báo success/error
-- Tab navigation giữa hãng tàu và nhà xe
-- Phân trang cho cả hai bảng dữ liệu
+- Phân trang cho bảng dữ liệu
 - Xử lý lỗi thông minh với thông báo rõ ràng
 
 **Key State:**
@@ -37,7 +104,21 @@ const [shippingLineFormData, setShippingLineFormData] = useState<ShippingLineFor
   eir: '',
   note: ''
 });
+```
 
+### 4. Trang quản lý Nhà xe
+**File:** `pages/Setup/TransportCompanies.tsx`
+
+**Chức năng:**
+- Quản lý state cho transport companies
+- Xử lý các action CRUD cho nhà xe
+- Tích hợp các modal components
+- Hiển thị thông báo success/error
+- Phân trang cho bảng dữ liệu
+- Xử lý lỗi thông minh với thông báo rõ ràng
+
+**Key State:**
+```typescript
 // Transport Companies State
 const [transportCompanies, setTransportCompanies] = useState<TransportCompany[]>([]);
 const [transportCompaniesPagination, setTransportCompaniesPagination] = useState({
@@ -58,11 +139,38 @@ const [transportCompanyFormData, setTransportCompanyFormData] = useState<Transpo
   phone: '',
   note: ''
 });
+```
 
-// Common State
-const [errorText, setErrorText] = useState('');
-const [transportCompanyErrorText, setTransportCompanyErrorText] = useState('');
-const [successMessage, setSuccessMessage] = useState('');
+### 5. Trang quản lý Loại container
+**File:** `pages/Setup/ContainerTypes.tsx`
+
+**Chức năng:**
+- Quản lý state cho container types
+- Xử lý các action CRUD cho loại container
+- Tích hợp các modal components
+- Hiển thị thông báo success/error
+- Phân trang cho bảng dữ liệu
+- Xử lý lỗi thông minh với thông báo rõ ràng
+
+**Key State:**
+```typescript
+// Container Types State
+const [containerTypes, setContainerTypes] = useState<ContainerType[]>([]);
+const [containerTypesPagination, setContainerTypesPagination] = useState({
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 0
+});
+const [showAddContainerTypeModal, setShowAddContainerTypeModal] = useState(false);
+const [showEditContainerTypeModal, setShowEditContainerTypeModal] = useState(false);
+const [showUploadContainerTypeModal, setShowUploadContainerTypeModal] = useState(false);
+const [editingContainerType, setEditingContainerType] = useState<ContainerType | null>(null);
+const [containerTypeFormData, setContainerTypeFormData] = useState<ContainerTypeFormData>({
+  code: '',
+  description: '',
+  note: ''
+});
 ```
 
 **Key Functions:**
@@ -784,20 +892,45 @@ setTransportCompanies(prev => prev.filter(tc => tc.id !== id));
 - **English (en)**: Ngôn ngữ phụ
 - Dynamic switching với `useTranslation` hook
 
+## Hướng dẫn sử dụng
+
+### Truy cập Setup Module
+1. **Từ Sidebar:** Click vào "Thiết lập" để mở submenu
+2. **Chọn module:** Click vào một trong 3 tùy chọn:
+   - Hãng tàu (Shipping Lines)
+   - Nhà xe (Transport Companies)  
+   - Loại container (Container Types)
+
+### Navigation giữa các trang
+- **Từ submenu:** Click vào tên module trong submenu
+- **Từ URL:** Truy cập trực tiếp qua URL
+- **Breadcrumb:** Sử dụng browser back/forward buttons
+
+### Quản lý dữ liệu
+Mỗi trang có đầy đủ chức năng:
+- **Xem danh sách:** Bảng dữ liệu với phân trang
+- **Thêm mới:** Button "+ Thêm mới" 
+- **Chỉnh sửa:** Button "Sửa" trên mỗi dòng
+- **Xóa:** Button "Xóa" trên mỗi dòng
+- **Upload Excel:** Button "Upload Excel" để import hàng loạt
+
 ## File Mapping
 
 ### Frontend Files
 ```
 manageContainer/frontend/
 ├── pages/Setup/
-│   ├── index.tsx                        # Main Setup page
+│   ├── index.tsx                        # Main Setup page (redirect to ShippingLines)
+│   ├── ShippingLines.tsx               # Shipping lines management page
+│   ├── TransportCompanies.tsx          # Transport companies management page
+│   ├── ContainerTypes.tsx              # Container types management page
 │   ├── hooks/
 │   │   └── useSetupState.ts            # State management hook with pagination
 │   ├── handlers/
 │   │   ├── shippingLineHandlers.ts     # Shipping line handlers with pagination & error handling
-│   │   └── transportCompanyHandlers.ts # Transport company handlers with pagination & error handling
+│   │   ├── transportCompanyHandlers.ts # Transport company handlers with pagination & error handling
+│   │   └── containerTypeHandlers.ts    # Container type handlers with pagination & error handling
 │   └── components/
-│       ├── TabNavigation.tsx            # Tab switching
 │       ├── ShippingLinesTable.tsx      # Shipping lines data table with pagination
 │       ├── AddShippingLineModal.tsx    # Add shipping line modal
 │       ├── EditShippingLineModal.tsx   # Edit shipping line modal
@@ -805,16 +938,24 @@ manageContainer/frontend/
 │       ├── TransportCompaniesTable.tsx # Transport companies data table with pagination
 │       ├── AddTransportCompanyModal.tsx # Add transport company modal
 │       ├── EditTransportCompanyModal.tsx # Edit transport company modal
-│       └── UploadTransportCompanyExcelModal.tsx # Upload transport companies Excel modal
-├── services/
-│   └── setupService.ts                 # API service for setup operations
+│       ├── UploadTransportCompanyExcelModal.tsx # Upload transport companies Excel modal
+│       ├── ContainerTypesTable.tsx     # Container types data table with pagination
+│       ├── AddContainerTypeModal.tsx   # Add container type modal
+│       ├── EditContainerTypeModal.tsx  # Edit container type modal
+│       ├── UploadContainerTypeExcelModal.tsx # Upload container types Excel modal
+│       ├── SetupHeader.tsx             # Header component for setup pages
+│       ├── SuccessMessage.tsx          # Success message component
+│       └── SetupModals.tsx             # Modal management component
 ├── components/
-│   ├── Header.tsx                      # Navigation header
+│   ├── SetupSubmenu.tsx                # Setup submenu component for sidebar
+│   ├── Header.tsx                      # Navigation header (updated with submenu)
 │   ├── Card.tsx                        # Card component
 │   └── Pagination.tsx                  # Reusable pagination component
+├── services/
+│   └── setupService.ts                 # API service for setup operations
 ├── locales/
-│   ├── vi.json                         # Vietnamese translations (updated with pagination)
-│   └── en.json                         # English translations (updated with pagination)
+│   ├── vi.json                         # Vietnamese translations (updated with submenu)
+│   └── en.json                         # English translations (updated with submenu)
 ├── hooks/
 │   └── useTranslation.ts               # Translation hook
 └── styles/

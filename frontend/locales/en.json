@@ -74,6 +74,7 @@
     "setup": "Setup",
     "shippingLines": "Shipping Lines",
     "transportCompanies": "Transport Companies",
+    "containerTypes": "Container Types",
     "account": "Account"
   },
   "language": {

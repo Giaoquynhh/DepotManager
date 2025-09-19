@@ -75,6 +75,7 @@
     "setup": "Thiết lập",
     "shippingLines": "Hãng tàu",
     "transportCompanies": "Nhà xe",
+    "containerTypes": "Loại container",
     "account": "Tài khoản"
   },
   "language": {
