@@ -32,6 +32,18 @@ export interface UpdateTransportCompanyDto {
   note?: string;
 }
 
+export interface CreateContainerTypeDto {
+  code: string;
+  description: string;
+  note?: string;
+}
+
+export interface UpdateContainerTypeDto {
+  code?: string;
+  description?: string;
+  note?: string;
+}
+
 export interface ShippingLineResponse {
   id: string;
   code: string;
@@ -49,6 +61,15 @@ export interface TransportCompanyResponse {
   address?: string;
   mst?: string;
   phone?: string;
+  note?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContainerTypeResponse {
+  id: string;
+  code: string;
+  description: string;
   note?: string;
   createdAt: Date;
   updatedAt: Date;

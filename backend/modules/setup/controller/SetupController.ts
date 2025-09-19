@@ -5,6 +5,8 @@ import {
   UpdateShippingLineDto, 
   CreateTransportCompanyDto, 
   UpdateTransportCompanyDto,
+  CreateContainerTypeDto,
+  UpdateContainerTypeDto,
   PaginationQuery
 } from '../dto/SetupDtos';
 
@@ -313,6 +315,147 @@ export class SetupController {
       res.json(result);
     } catch (error) {
       console.error('Error in uploadTransportCompanyExcel controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // Upload container type Excel file
+  async uploadContainerTypeExcel(req: Request, res: Response) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No file uploaded'
+        });
+      }
+
+      const result = await service.uploadContainerTypeExcel(req.file);
+
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in uploadContainerTypeExcel controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // Container Types
+  async getContainerTypes(req: Request, res: Response) {
+    try {
+      const query: PaginationQuery = {
+        page: req.query.page ? parseInt(req.query.page as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        search: req.query.search as string
+      };
+
+      const result = await service.getContainerTypes(query);
+      
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getContainerTypes controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async getContainerTypeById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.getContainerTypeById(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 400;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getContainerTypeById controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async createContainerType(req: Request, res: Response) {
+    try {
+      const data: CreateContainerTypeDto = req.body;
+      const result = await service.createContainerType(data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Error in createContainerType controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async updateContainerType(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const data: UpdateContainerTypeDto = req.body;
+      const result = await service.updateContainerType(id, data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 
+                          result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in updateContainerType controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async deleteContainerType(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.deleteContainerType(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in deleteContainerType controller:', error);
       res.status(500).json({
         success: false,
         error: 'INTERNAL_SERVER_ERROR',

@@ -1,7 +1,7 @@
 // Tab Navigation component for Setup page
 import React from 'react';
 
-export type SetupTab = 'shippingLines' | 'transportCompanies';
+export type SetupTab = 'shippingLines' | 'transportCompanies' | 'containerTypes';
 
 interface TabNavigationProps {
   activeTab: SetupTab;
@@ -34,8 +34,10 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
         style={{
           position: 'absolute',
           top: '4px',
-          left: activeTab === 'shippingLines' ? '4px' : 'calc(50% + 2px)',
-          width: 'calc(50% - 4px)',
+          left: activeTab === 'shippingLines' ? '4px' : 
+                activeTab === 'transportCompanies' ? 'calc(33.33% + 2px)' : 
+                'calc(66.66% + 2px)',
+          width: 'calc(33.33% - 4px)',
           height: 'calc(100% - 8px)',
           background: 'linear-gradient(135deg, #0b2b6d 0%, #1e40af 100%)',
           borderRadius: '8px',
@@ -128,6 +130,48 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
           <polyline points="10,9 9,9 8,9"/>
         </svg>
         {translations[language].transportCompaniesTab}
+      </button>
+      
+      <button 
+        onClick={() => setActiveTab('containerTypes')}
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          flex: 1,
+          padding: '12px 20px',
+          border: 'none',
+          background: 'transparent',
+          color: activeTab === 'containerTypes' ? 'white' : '#64748b',
+          cursor: 'pointer',
+          fontSize: '15px',
+          fontWeight: '600',
+          borderRadius: '8px',
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          textShadow: activeTab === 'containerTypes' ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none'
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== 'containerTypes') {
+            e.currentTarget.style.color = '#334155';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== 'containerTypes') {
+            e.currentTarget.style.color = '#64748b';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        {translations[language].containerTypesTab}
       </button>
     </div>
   );

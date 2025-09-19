@@ -7,6 +7,7 @@ import Card from '../../components/Card';
 import { TabNavigation, SetupTab } from './components/TabNavigation';
 import { ShippingLinesTable } from './components/ShippingLinesTable';
 import { TransportCompaniesTable } from './components/TransportCompaniesTable';
+import { ContainerTypesTable } from './components/ContainerTypesTable';
 import { SetupHeader } from './components/SetupHeader';
 import { SuccessMessage } from './components/SuccessMessage';
 import { SetupModals } from './components/SetupModals';
@@ -15,6 +16,7 @@ import { SetupModals } from './components/SetupModals';
 import { useSetupState } from './hooks/useSetupState';
 import { createShippingLineHandlers } from './handlers/shippingLineHandlers';
 import { createTransportCompanyHandlers } from './handlers/transportCompanyHandlers';
+import { createContainerTypeHandlers } from './handlers/containerTypeHandlers';
 
 // Import constants
 import { translations } from './constants/translations';
@@ -62,6 +64,24 @@ export default function Setup() {
     transportCompanyErrorText,
     setTransportCompanyErrorText,
 
+    // Container Types State
+    containerTypes,
+    setContainerTypes,
+    containerTypesPagination,
+    setContainerTypesPagination,
+    showAddContainerTypeModal,
+    setShowAddContainerTypeModal,
+    showEditContainerTypeModal,
+    setShowEditContainerTypeModal,
+    showUploadContainerTypeModal,
+    setShowUploadContainerTypeModal,
+    editingContainerType,
+    setEditingContainerType,
+    containerTypeFormData,
+    setContainerTypeFormData,
+    containerTypeErrorText,
+    setContainerTypeErrorText,
+
     // Common State
     successMessage,
     setSuccessMessage
@@ -100,10 +120,27 @@ export default function Setup() {
     translations
   );
 
+  const containerTypeHandlers = createContainerTypeHandlers(
+    setContainerTypes,
+    setContainerTypesPagination,
+    setShowAddContainerTypeModal,
+    setShowEditContainerTypeModal,
+    setShowUploadContainerTypeModal,
+    setEditingContainerType,
+    setContainerTypeFormData,
+    setContainerTypeErrorText,
+    setSuccessMessage,
+    containerTypes,
+    containerTypesPagination,
+    language,
+    translations
+  );
+
   // Load data from API
   useEffect(() => {
     shippingLineHandlers.loadShippingLines();
     transportCompanyHandlers.loadTransportCompanies();
+    containerTypeHandlers.loadContainerTypes();
   }, []);
 
   // Modal cancel handlers
@@ -139,6 +176,22 @@ export default function Setup() {
     setTransportCompanyErrorText('');
   };
 
+  const handleCancelAddContainerTypeModal = () => {
+    setShowAddContainerTypeModal(false);
+    setContainerTypeErrorText('');
+  };
+
+  const handleCancelEditContainerTypeModal = () => {
+    setShowEditContainerTypeModal(false);
+    setEditingContainerType(null);
+    setContainerTypeErrorText('');
+  };
+
+  const handleCancelUploadContainerTypeModal = () => {
+    setShowUploadContainerTypeModal(false);
+    setContainerTypeErrorText('');
+  };
+
   return (
     <>
       <Header />
@@ -163,6 +216,8 @@ export default function Setup() {
                 onUploadExcel={shippingLineHandlers.handleUploadExcel}
                 onAddNewTransportCompany={transportCompanyHandlers.handleAddNewTransportCompany}
                 onUploadTransportCompanyExcel={transportCompanyHandlers.handleUploadTransportCompanyExcel}
+                onAddNewContainerType={containerTypeHandlers.handleAddNewContainerType}
+                onUploadContainerTypeExcel={() => setShowUploadContainerTypeModal(true)}
               />
 
               {/* Success Message */}
@@ -179,7 +234,7 @@ export default function Setup() {
                   onDelete={shippingLineHandlers.handleDeleteShippingLine}
                   onPageChange={shippingLineHandlers.handlePageChange}
                 />
-              ) : (
+              ) : activeTab === 'transportCompanies' ? (
                 <TransportCompaniesTable
                   transportCompanies={transportCompanies}
                   pagination={transportCompaniesPagination}
@@ -188,6 +243,16 @@ export default function Setup() {
                   onEdit={transportCompanyHandlers.handleEditTransportCompany}
                   onDelete={transportCompanyHandlers.handleDeleteTransportCompany}
                   onPageChange={transportCompanyHandlers.handlePageChange}
+                />
+              ) : (
+                <ContainerTypesTable
+                  containerTypes={containerTypes}
+                  pagination={containerTypesPagination}
+                  language={language}
+                  translations={translations}
+                  onEdit={containerTypeHandlers.handleEditContainerType}
+                  onDelete={containerTypeHandlers.handleDeleteContainerType}
+                  onPageChange={containerTypeHandlers.handlePageChange}
                 />
               )}
             </Card>
@@ -215,6 +280,15 @@ export default function Setup() {
         setTransportCompanyFormData={setTransportCompanyFormData}
         transportCompanyErrorText={transportCompanyErrorText}
         
+        // Container Types Modals
+        showAddContainerTypeModal={showAddContainerTypeModal}
+        showEditContainerTypeModal={showEditContainerTypeModal}
+        showUploadContainerTypeModal={showUploadContainerTypeModal}
+        editingContainerType={editingContainerType}
+        containerTypeFormData={containerTypeFormData}
+        setContainerTypeFormData={setContainerTypeFormData}
+        containerTypeErrorText={containerTypeErrorText}
+        
         // Handlers
         onCancelAddModal={handleCancelAddModal}
         onCancelEditModal={handleCancelEditModal}
@@ -222,12 +296,18 @@ export default function Setup() {
         onCancelAddTransportCompanyModal={handleCancelAddTransportCompanyModal}
         onCancelEditTransportCompanyModal={handleCancelEditTransportCompanyModal}
         onCancelUploadTransportCompanyModal={handleCancelUploadTransportCompanyModal}
+        onCancelAddContainerTypeModal={handleCancelAddContainerTypeModal}
+        onCancelEditContainerTypeModal={handleCancelEditContainerTypeModal}
+        onCancelUploadContainerTypeModal={handleCancelUploadContainerTypeModal}
         onSubmitShippingLine={shippingLineHandlers.handleSubmitShippingLine}
         onUpdateShippingLine={(data) => shippingLineHandlers.handleUpdateShippingLine(data, editingShippingLine)}
         onFileUpload={shippingLineHandlers.handleFileUpload}
         onSubmitTransportCompany={transportCompanyHandlers.handleSubmitTransportCompany}
         onUpdateTransportCompany={(data) => transportCompanyHandlers.handleUpdateTransportCompany(data, editingTransportCompany)}
         onTransportCompanyFileUpload={transportCompanyHandlers.handleTransportCompanyFileUpload}
+        onContainerTypeFileUpload={containerTypeHandlers.handleContainerTypeFileUpload}
+        onSubmitContainerType={containerTypeHandlers.handleSubmitContainerType}
+        onUpdateContainerType={(data) => containerTypeHandlers.handleUpdateContainerType(data, editingContainerType)}
         
         // Common
         language={language}

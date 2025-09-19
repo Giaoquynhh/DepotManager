@@ -154,7 +154,7 @@ export class RequestBaseService {
 					TRUE as repair_checked,
 					rt."updatedAt" as updated_at
 				FROM "RepairTicket" rt
-				WHERE rt.status::text = 'CHECKED' AND rt.container_no IS NOT NULL
+				WHERE rt.status::text = 'COMPLETED' AND rt.container_no IS NOT NULL
 				ORDER BY rt.container_no, rt."updatedAt" DESC
 			),
 			yard_placement AS (

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 interface UploadTransportCompanyExcelModalProps {
   visible: boolean;
   onCancel: () => void;
-  onUpload: (file: File) => void;
+  onUpload: (files: File[]) => void;
   language: 'vi' | 'en';
   translations: any;
 }
@@ -17,7 +17,7 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
   translations
 }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -34,37 +34,31 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
     e.stopPropagation();
     setDragActive(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-          file.type === 'application/vnd.ms-excel' ||
-          file.name.endsWith('.xlsx') || 
-          file.name.endsWith('.xls')) {
-        setSelectedFile(file);
-      } else {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || f.type === 'application/vnd.ms-excel' || f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+      if (files.length === 0) {
         alert(translations[language].code ? 'Vui lòng chọn file Excel (.xlsx hoặc .xls)' : 'Please select an Excel file (.xlsx or .xls)');
+      } else {
+        setSelectedFiles(prev => [...prev, ...files]);
       }
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-          file.type === 'application/vnd.ms-excel' ||
-          file.name.endsWith('.xlsx') || 
-          file.name.endsWith('.xls')) {
-        setSelectedFile(file);
-      } else {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files).filter(f => f.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || f.type === 'application/vnd.ms-excel' || f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+      if (files.length === 0) {
         alert(translations[language].code ? 'Vui lòng chọn file Excel (.xlsx hoặc .xls)' : 'Please select an Excel file (.xlsx or .xls)');
+      } else {
+        setSelectedFiles(prev => [...prev, ...files]);
       }
     }
   };
 
   const handleUpload = () => {
-    if (selectedFile) {
-      onUpload(selectedFile);
-      setSelectedFile(null);
+    if (selectedFiles.length > 0) {
+      onUpload(selectedFiles);
+      setSelectedFiles([]);
     }
   };
 
@@ -250,6 +244,7 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
             type="file"
             accept=".xlsx,.xls"
             onChange={handleFileInput}
+            multiple
             style={{ display: 'none' }}
           />
           
@@ -299,7 +294,7 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
         </div>
 
         {/* Selected File */}
-        {selectedFile && (
+        {selectedFiles.length > 0 && (
           <div style={{
             marginTop: '16px',
             padding: '12px',
@@ -307,49 +302,18 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
             borderRadius: '6px',
             border: '1px solid #bbf7d0'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span style={{ fontSize: '20px' }}>📄</span>
-                <div>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#166534'
-                  }}>
-                    {selectedFile.name}
-                  </p>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '12px',
-                    color: '#166534'
-                  }}>
-                    {(selectedFile.size / 1024).toFixed(1)} KB
-                  </p>
+            {selectedFiles.map((f, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>📄</span>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#166534' }}>{f.name}</p>
+                    <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>{(f.size/1024).toFixed(1)} KB</p>
+                  </div>
                 </div>
+                <button onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#166534', padding: 4 }}>×</button>
               </div>
-              <button
-                onClick={() => setSelectedFile(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  color: '#166534',
-                  padding: '4px'
-                }}
-              >
-                ×
-              </button>
-            </div>
+            ))}
           </div>
         )}
 
@@ -379,16 +343,16 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
           </button>
           <button
             onClick={handleUpload}
-            disabled={!selectedFile}
+            disabled={selectedFiles.length === 0}
             style={{
               padding: '8px 16px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: selectedFile ? '#059669' : '#9ca3af',
+              backgroundColor: selectedFiles.length ? '#059669' : '#9ca3af',
               color: 'white',
               fontSize: '14px',
               fontWeight: '500',
-              cursor: selectedFile ? 'pointer' : 'not-allowed'
+              cursor: selectedFiles.length ? 'pointer' : 'not-allowed'
             }}
           >
             {translations[language].upload}

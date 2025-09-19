@@ -30,10 +30,10 @@ export const containerListQuerySchema = Joi.object({
   q: Joi.string().optional(),
   status: Joi.string().optional(),
   type: Joi.string().optional(),
-  // Cho phép đặc biệt 'CHECKED' (hợp nhất Gate checked hoặc RepairTicket CHECKED)
+  // Cho phép đặc biệt 'COMPLETED' (hợp nhất Gate checked hoặc RepairTicket COMPLETED)
   // và các trạng thái ServiceRequest hợp lệ khác để lọc trực tiếp theo trạng thái SR mới nhất
   service_status: Joi.string().valid(
-    'CHECKED',
+    'COMPLETED',
     'PENDING','SCHEDULED','FORWARDED','GATE_IN','CHECKING','GATE_REJECTED','REJECTED','COMPLETED','EXPORTED','IN_YARD','LEFT_YARD','PENDING_ACCEPT'
   ).optional(),
   page: Joi.number().integer().min(1).default(1),

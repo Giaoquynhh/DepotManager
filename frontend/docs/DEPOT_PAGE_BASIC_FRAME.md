@@ -132,13 +132,24 @@ export default function DepotRequests() {
 - **Tab 2**: Icon 📦⬇️, "Chưa có yêu cầu hạ container nào"
 - Subtitle tương ứng cho từng loại request
 
-### 5. **Create Lift Request Modal** (Hoàn thành)
+### 5. **Create Request Modals** (Hoàn thành)
+
+#### **Create Lift Request Modal** (Nâng container)
 - **Trigger**: Click button "Tạo yêu cầu nâng container" ở tab "Yêu cầu nâng container"
-- **Form Layout**: 2 cột responsive, form fields được sắp xếp theo thứ tự logic
 - **Form Fields**:
-  - **Cột trái**: Hãng tàu*, Số container, Loại dịch vụ*, Nhà xe, Tài xế, Thời gian hẹn, Chứng từ
-  - **Cột phải**: Số Booking/Bill*, Loại container*, Khách hàng*, Số xe, SĐT Tài xế
-  - **Full width**: Ghi chú (textarea)
+  - **Required**: Hãng tàu, Số Booking/Bill, Loại container, Khách hàng
+  - **Optional**: Số container, Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
+  - **Default**: Loại dịch vụ = "Nâng container" (readonly)
+
+#### **Create Lower Request Modal** (Hạ container)
+- **Trigger**: Click button "Tạo yêu cầu hạ container" ở tab "Yêu cầu hạ container"
+- **Form Fields**:
+  - **Required**: Hãng tàu, Số container, Loại container, Khách hàng
+  - **Optional**: Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
+  - **Default**: Loại dịch vụ = "Hạ container" (readonly)
+
+#### **Common Features**:
+- **Form Layout**: 2 cột responsive, form fields được sắp xếp theo thứ tự logic
 - **Validation**: 
   - Real-time validation cho các trường required
   - Error messages hiển thị dưới mỗi field
@@ -216,7 +227,18 @@ export default function DepotRequests() {
   - **Default**: Loại dịch vụ = "Nâng container" (readonly)
 - **Validation**: Real-time validation với error messages và styling
 - **Styling**: Inline styles để tránh CSS import conflicts
-- **Form Layout**:
+
+#### **CreateLowerRequestModal.tsx** (Create Lower Request Modal)
+- **Props**: `isOpen`, `onClose`, `onSubmit`
+- **Tính năng**: Form tạo yêu cầu hạ container với validation real-time
+- **UI**: Modal popup với form 2 cột, inline styles, responsive design
+- **Fields**: 
+  - **Required**: Hãng tàu, Số container, Loại container, Khách hàng
+  - **Optional**: Nhà xe, Số xe, Tài xế, SĐT Tài xế, Thời gian hẹn, Chứng từ, Ghi chú
+  - **Default**: Loại dịch vụ = "Hạ container" (readonly)
+- **Validation**: Real-time validation với error messages và styling
+- **Styling**: Inline styles để tránh CSS import conflicts
+- **Form Layout** (CreateLiftRequestModal):
   ```typescript
   // Cột trái
   - Hãng tàu* (text input)
@@ -237,18 +259,56 @@ export default function DepotRequests() {
   // Full width
   - Ghi chú (textarea)
   ```
+
+- **Form Layout** (CreateLowerRequestModal):
+  ```typescript
+  // Cột trái
+  - Hãng tàu* (text input)
+  - Loại container* (select dropdown)
+  - Khách hàng* (text input)
+  - Nhà xe (text input)
+  - Tài xế (text input)
+  - Thời gian hẹn (datetime-local input)
+  - Chứng từ (file input)
+  
+  // Cột phải  
+  - Số container* (text input)
+  - Loại dịch vụ* (readonly input)
+  - Số xe (text input)
+  - SĐT Tài xế (tel input)
+  
+  // Full width
+  - Ghi chú (textarea)
+  ```
 - **Error Handling**: 
   - Required field validation
   - Real-time error clearing
   - Visual error indicators (red border, error messages)
-- **TypeScript Interface**:
+- **TypeScript Interfaces**:
   ```typescript
+  // Lift Request (Nâng container)
   interface LiftRequestData {
     shippingLine: string;        // Required
     bookingBill: string;         // Required  
     containerNumber?: string;    // Optional
     containerType: string;       // Required
     serviceType: string;         // Default: "Nâng container"
+    customer: string;            // Required
+    vehicleCompany?: string;     // Optional
+    vehicleNumber?: string;      // Optional
+    driver?: string;             // Optional
+    driverPhone?: string;        // Optional
+    appointmentTime?: string;    // Optional
+    documents?: string;          // Optional
+    notes?: string;              // Optional
+  }
+
+  // Lower Request (Hạ container)
+  interface LowerRequestData {
+    shippingLine: string;        // Required
+    containerNumber: string;     // Required
+    containerType: string;       // Required
+    serviceType: string;         // Default: "Hạ container"
     customer: string;            // Required
     vehicleCompany?: string;     // Optional
     vehicleNumber?: string;      // Optional
@@ -325,16 +385,19 @@ pages/Requests/
 
 ### ✅ **Đã hoàn thành:**
 - **UI Framework**: 2 tabs với navigation animation
-- **Modal System**: Create Lift Request Modal với đầy đủ form fields
+- **Modal System**: 
+  - Create Lift Request Modal (nâng container)
+  - Create Lower Request Modal (hạ container)
+  - Đầy đủ form fields cho cả 2 loại request
 - **Validation**: Real-time validation cho required fields
 - **Responsive Design**: Mobile-friendly layout
-- **TypeScript**: Type-safe interfaces và props
+- **TypeScript**: Type-safe interfaces và props cho cả 2 modals
 - **Error Handling**: User-friendly error messages
+- **Form Layout**: 2 cột responsive với sắp xếp fields logic
 
 ### 🚧 **Đang phát triển:**
-- **API Integration**: Submit form data to backend
-- **Data Fetching**: Load existing requests
-- **Export Request Modal**: Tương tự như Import Request
+- **API Integration**: Submit form data to backend cho cả 2 loại request
+- **Data Fetching**: Load existing requests và hiển thị trong table
 
 ### 📋 **Sẵn sàng cho:**
 - Backend API development

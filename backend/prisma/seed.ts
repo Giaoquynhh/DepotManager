@@ -41,12 +41,12 @@ async function main(){
 		console.log('Yard layout already exists, skipping.');
 	}
 
-	// Seed dữ liệu mẫu cho báo cáo containers CHECKED (bật bằng SEED_DEMO=true)
+	// Seed dữ liệu mẫu cho báo cáo containers COMPLETED (bật bằng SEED_DEMO=true)
 	const enableDemo = process.env.SEED_DEMO === 'true';
 	if (enableDemo) try {
 		const admin = await prisma.user.findUnique({ where: { email } });
 
-		// A. Container đã Gate CHECKED (có ServiceRequest.gate_checked_at)
+		// A. Container đã Gate COMPLETED (có ServiceRequest.gate_checked_at)
 		const containerA = 'TGHU1234567';
 		const existsA = await prisma.serviceRequest.findFirst({
 			where: { container_no: containerA, gate_checked_at: { not: null } }
@@ -80,24 +80,24 @@ async function main(){
 			console.log('ServiceRequest (gate checked) exists:', containerA);
 		}
 
-		// B. Container đã Repair CHECKED (RepairTicket.status = CHECKED)
+		// B. Container đã Repair COMPLETED (RepairTicket.status = COMPLETED)
 		const containerB = 'MSCU7654321';
 		const existsB = await prisma.repairTicket.findFirst({
-			where: { container_no: containerB, status: RepairStatus.CHECKED }
+			where: { container_no: containerB, status: RepairStatus.COMPLETED }
 		});
 		if (!existsB && admin) {
 			await prisma.repairTicket.create({
 				data: {
-					code: 'RT-DEMO-CHECKED-1',
+					code: 'RT-DEMO-COMPLETED-1',
 					container_no: containerB,
 					created_by: admin.id,
-					status: RepairStatus.CHECKED,
+					status: RepairStatus.COMPLETED,
 					problem_description: 'Demo checked repair'
 				}
 			});
-			console.log('Seeded RepairTicket CHECKED:', containerB);
+			console.log('Seeded RepairTicket COMPLETED:', containerB);
 		} else {
-			console.log('RepairTicket CHECKED exists:', containerB);
+			console.log('RepairTicket COMPLETED exists:', containerB);
 		}
 	} catch (e) {
 		console.error('Seed demo data error:', e);

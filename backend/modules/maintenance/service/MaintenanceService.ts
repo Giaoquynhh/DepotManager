@@ -74,7 +74,7 @@ export class MaintenanceService {
         await tx.inventoryItem.update({ where: { id: it.inventory_item_id }, data: { qty_on_hand: { decrement: it.quantity } } });
         await tx.inventoryMovement.create({ data: { inventory_item_id: it.inventory_item_id, type: 'OUT', quantity: it.quantity, ref_type: 'REPAIR', ref_id: id } });
       }
-      const updated = await tx.repairTicket.update({ where: { id }, data: { status: 'PENDING_ACCEPT' as any, manager_comment } });
+      const updated = await tx.repairTicket.update({ where: { id }, data: { status: 'PENDING' as any, manager_comment } });
       await audit(actor._id, 'REPAIR.APPROVED', 'REPAIR', id);
       return updated;
     });
@@ -83,9 +83,9 @@ export class MaintenanceService {
   async rejectRepair(actor: any, id: string, manager_comment?: string) {
     const ticket = await prisma.repairTicket.findUnique({ where: { id } });
     if (!ticket) throw new Error('Phiếu không tồn tại');
-    if (ticket.status !== 'CHECKING') throw new Error('Chỉ từ chối phiếu đang kiểm tra (CHECKING)');
-    const updated = await prisma.repairTicket.update({ where: { id }, data: { status: 'REJECTED' as any, manager_comment } });
-    await audit(actor._id, 'REPAIR.REJECTED', 'REPAIR', id);
+    if (ticket.status !== 'PENDING') throw new Error('Chỉ từ chối phiếu đang kiểm tra (PENDING)');
+    const updated = await prisma.repairTicket.update({ where: { id }, data: { status: 'CANCELLED' as any, manager_comment } });
+    await audit(actor._id, 'REPAIR.CANCELLED', 'REPAIR', id);
     return updated;
   }
 
@@ -102,7 +102,7 @@ export class MaintenanceService {
     console.log('Current ticket:', ticket);
     
     // Kiểm tra trạng thái hợp lệ
-    const validStatuses = ['CHECKING', 'PENDING_ACCEPT', 'REPAIRING', 'CHECKED', 'REJECTED'];
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
     if (!validStatuses.includes(status)) {
       throw new Error('Trạng thái không hợp lệ');
     }
@@ -122,7 +122,7 @@ export class MaintenanceService {
     console.log('Updated ticket:', updated);
     
     // Cập nhật trạng thái request nếu cần
-    if (ticket.container_no && (status === 'CHECKED' || status === 'REJECTED')) {
+    if (ticket.container_no && (status === 'COMPLETED' || status === 'CANCELLED')) {
       try {
         await this.updateRequestStatusByContainer(ticket.container_no, status);
       } catch (error) {
@@ -144,15 +144,15 @@ export class MaintenanceService {
     const ticket = await prisma.repairTicket.findUnique({ where: { id } });
     if (!ticket) throw new Error('Phiếu không tồn tại');
     
-    if (ticket.status !== 'CHECKING') {
-      throw new Error('Chỉ hoàn thành kiểm tra cho phiếu đang kiểm tra (CHECKING)');
+    if (ticket.status !== 'PENDING') {
+      throw new Error('Chỉ hoàn thành kiểm tra cho phiếu đang kiểm tra (PENDING)');
     }
     
     let newStatus: string;
     if (result === 'PASS') {
-      newStatus = 'CHECKED';
+      newStatus = 'COMPLETED';
     } else {
-      newStatus = 'REJECTED';
+      newStatus = 'CANCELLED';
     }
     
     const updated = await prisma.repairTicket.update({ 
@@ -201,11 +201,11 @@ export class MaintenanceService {
       // Mapping repair status sang request status
       let newRequestStatus: string;
       switch (repairStatus) {
-        case 'CHECKED':
-          newRequestStatus = 'CHECKED';
+        case 'COMPLETED':
+          newRequestStatus = 'COMPLETED';
           break;
-        case 'REJECTED':
-          newRequestStatus = 'REJECTED';
+        case 'CANCELLED':
+          newRequestStatus = 'CANCELLED';
           break;
         default:
           console.log(`ℹ️ Không cần đồng bộ cho repair status: ${repairStatus}`);
@@ -285,7 +285,7 @@ export class MaintenanceService {
       include: { items: true }
     });
     if (!repairTicket) throw new Error('Phiếu sửa chữa không tồn tại');
-    if (repairTicket.status !== 'CHECKING') throw new Error('Chỉ tạo hóa đơn cho phiếu đang kiểm tra');
+    if (repairTicket.status !== 'PENDING') throw new Error('Chỉ tạo hóa đơn cho phiếu đang kiểm tra');
 
     // Tính toán chi phí phụ tùng và kiểm tra tồn kho
     let partsCost = 0;
@@ -310,7 +310,7 @@ export class MaintenanceService {
       data: {
         estimated_cost: totalCost,
         labor_cost: payload.labor_cost,
-        status: 'PENDING_ACCEPT' as any,
+        status: 'PENDING' as any,
         items: {
           deleteMany: {}, // Xóa items cũ
           create: payload.selected_parts.map(part => ({
@@ -334,22 +334,22 @@ export class MaintenanceService {
       });
     }
 
-    // Cập nhật trạng thái request thành PENDING_ACCEPT nếu có
+    // Cập nhật trạng thái request thành PENDING nếu có
     if (repairTicket.container_no) {
       try {
-        // Chỉ cập nhật request ACTIVE (không phải REJECTED, COMPLETED, GATE_REJECTED)
+        // Chỉ cập nhật request ACTIVE (không phải CANCELLED, COMPLETED, GATE_REJECTED)
         await prisma.serviceRequest.updateMany({
           where: { 
             container_no: repairTicket.container_no,
             status: { 
-              notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED'] // Chỉ cập nhật request active
+              notIn: ['COMPLETED', 'CANCELLED', 'GATE_REJECTED'] // Chỉ cập nhật request active
             }
           },
           data: {
-            status: 'PENDING_ACCEPT'
+            status: 'PENDING'
           }
         });
-        console.log(`✅ Updated ServiceRequest status to PENDING_ACCEPT for container: ${repairTicket.container_no}`);
+        console.log(`✅ Updated ServiceRequest status to PENDING for container: ${repairTicket.container_no}`);
       } catch (error) {
         console.log('Không thể cập nhật trạng thái request:', error);
         // Không throw error vì đây không phải lỗi nghiêm trọng
@@ -566,7 +566,7 @@ export class MaintenanceService {
         throw new Error('Phiếu sửa chữa không tồn tại');
       }
 
-      if (repairTicket.status !== 'PENDING_ACCEPT') {
+      if (repairTicket.status !== 'PENDING') {
         throw new Error('Chỉ có thể cập nhật hóa đơn khi phiếu ở trạng thái "Chờ chấp nhận"');
       }
 
@@ -643,7 +643,7 @@ export class MaintenanceService {
     }
   }
 
-  // Gửi yêu cầu xác nhận - chuyển trạng thái request server thành PENDING_ACCEPT
+  // Gửi yêu cầu xác nhận - chuyển trạng thái request server thành PENDING
   async sendConfirmationRequest(actor: any, repairTicketId: string) {
     try {
       // Kiểm tra phiếu sửa chữa tồn tại
@@ -656,7 +656,7 @@ export class MaintenanceService {
         throw new Error('Phiếu sửa chữa không tồn tại');
       }
 
-      if (repairTicket.status !== 'PENDING_ACCEPT') {
+      if (repairTicket.status !== 'PENDING') {
         throw new Error('Chỉ có thể gửi yêu cầu xác nhận khi phiếu ở trạng thái "Chờ chấp nhận"');
       }
 
@@ -695,12 +695,12 @@ export class MaintenanceService {
         }
       }
 
-      // Cập nhật trạng thái ServiceRequest thành PENDING_ACCEPT
+      // Cập nhật trạng thái ServiceRequest thành PENDING
       if (serviceRequest) {
         await prisma.serviceRequest.update({
           where: { id: serviceRequest.id },
           data: { 
-            status: 'PENDING_ACCEPT',
+            status: 'PENDING',
             updatedAt: new Date()
           }
         });
@@ -711,7 +711,7 @@ export class MaintenanceService {
         await prisma.equipment.update({
           where: { id: repairTicket.equipment_id },
           data: { 
-            status: 'PENDING_ACCEPT',
+            status: 'PENDING',
             updatedAt: new Date()
           }
         });
@@ -734,7 +734,7 @@ export class MaintenanceService {
   }
 
 
-  // Tiến hành sửa chữa - chuyển trạng thái từ ACCEPT sang REPAIRING
+  // Tiến hành sửa chữa - chuyển trạng thái từ PENDING sang IN_PROGRESS
   async startRepair(actor: any, repairTicketId: string) {
     try {
       console.log('🔧 Starting repair for ticket:', repairTicketId);
@@ -748,26 +748,26 @@ export class MaintenanceService {
         throw new Error('Phiếu sửa chữa không tồn tại');
       }
 
-      if (repairTicket.status !== 'ACCEPT') {
+      if (repairTicket.status !== 'IN_PROGRESS') {
         throw new Error('Chỉ có thể tiến hành sửa chữa khi phiếu ở trạng thái "Đã chấp nhận"');
       }
 
-      // Cập nhật trạng thái thành REPAIRING
+      // Cập nhật trạng thái thành IN_PROGRESS
       const updatedRepairTicket = await prisma.repairTicket.update({
         where: { id: repairTicketId },
         data: { 
-          status: 'REPAIRING' as any,
+          status: 'IN_PROGRESS' as any,
           updatedAt: new Date()
         }
       });
 
-      console.log('✅ Updated RepairTicket status to REPAIRING:', updatedRepairTicket.id);
+      console.log('✅ Updated RepairTicket status to IN_PROGRESS:', updatedRepairTicket.id);
       
       // Audit log
       await audit(actor._id, 'REPAIR.STARTED', 'REPAIR', repairTicketId, {
         container_no: repairTicket.container_no,
         old_status: repairTicket.status,
-        new_status: 'REPAIRING'
+        new_status: 'IN_PROGRESS'
       });
 
       return updatedRepairTicket;
@@ -777,7 +777,7 @@ export class MaintenanceService {
     }
   }
 
-  // Hoàn thành sửa chữa - chuyển trạng thái từ REPAIRING sang CHECKED
+  // Hoàn thành sửa chữa - chuyển trạng thái từ IN_PROGRESS sang COMPLETED
   async completeRepair(actor: any, repairTicketId: string) {
     try {
       console.log('✅ Completing repair for ticket:', repairTicketId);
@@ -791,25 +791,25 @@ export class MaintenanceService {
         throw new Error('Phiếu sửa chữa không tồn tại');
       }
 
-      if (repairTicket.status !== 'REPAIRING') {
+      if (repairTicket.status !== 'IN_PROGRESS') {
         throw new Error('Chỉ có thể hoàn thành sửa chữa khi phiếu ở trạng thái "Đang sửa chữa"');
       }
 
-      // Cập nhật trạng thái thành CHECKED
+      // Cập nhật trạng thái thành COMPLETED
       const updatedRepairTicket = await prisma.repairTicket.update({
         where: { id: repairTicketId },
         data: { 
-          status: 'CHECKED' as any,
+          status: 'COMPLETED' as any,
           updatedAt: new Date()
         }
       });
 
-      console.log('✅ Updated RepairTicket status to CHECKED:', updatedRepairTicket.id);
+      console.log('✅ Updated RepairTicket status to COMPLETED:', updatedRepairTicket.id);
       
       // Đồng bộ ServiceRequest nếu có container_no
       if (repairTicket.container_no) {
         try {
-          await this.updateRequestStatusByContainer(repairTicket.container_no, 'CHECKED');
+          await this.updateRequestStatusByContainer(repairTicket.container_no, 'COMPLETED');
           console.log(`✅ Đã đồng bộ ServiceRequest cho container ${repairTicket.container_no}`);
         } catch (error) {
           console.error(`❌ Lỗi khi đồng bộ ServiceRequest cho container ${repairTicket.container_no}:`, error);
@@ -821,7 +821,7 @@ export class MaintenanceService {
       await audit(actor._id, 'REPAIR.COMPLETED', 'REPAIR', repairTicketId, {
         container_no: repairTicket.container_no,
         old_status: repairTicket.status,
-        new_status: 'CHECKED'
+        new_status: 'COMPLETED'
       });
 
       return updatedRepairTicket;

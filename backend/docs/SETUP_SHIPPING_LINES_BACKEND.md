@@ -1,7 +1,7 @@
 # Setup Module - Backend Documentation
 
 ## Tổng quan
-Module Setup quản lý thông tin các hãng tàu và nhà xe trong hệ thống Smartlog Depot Management. Module này cung cấp các API endpoints để thêm, sửa, xóa và quản lý dữ liệu hãng tàu và nhà xe với hỗ trợ phân trang và xử lý lỗi thông minh.
+Module Setup quản lý thông tin các hãng tàu, nhà xe và loại container trong hệ thống Smartlog Depot Management. Module này cung cấp các API endpoints để thêm, sửa, xóa và quản lý dữ liệu các danh mục với hỗ trợ phân trang, upload Excel và xử lý lỗi thông minh.
 
 ## Cấu trúc Database
 
@@ -42,6 +42,20 @@ model TransportCompany {
 ### 1. Lấy danh sách hãng tàu
 ```http
 GET /api/setup/shipping-lines
+```
+
+### Bảng ContainerTypes
+```sql
+model ContainerType {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("container_types")
+}
 ```
 
 **Query Parameters:**
@@ -262,6 +276,81 @@ GET /api/setup/transport-companies
       "totalPages": 1
     }
   }
+}
+```
+
+## Container Types API Endpoints
+
+### 1. Lấy danh sách loại container
+```http
+GET /api/setup/container-types
+```
+
+**Query Parameters:**
+- `page` (optional): Số trang (default: 1)
+- `limit` (optional): Số lượng item per page (default: 10)
+- `search` (optional): Tìm kiếm theo mã/mô tả
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [
+      {
+        "id": "cmabc",
+        "code": "20GP",
+        "description": "20' General Purpose",
+        "note": "",
+        "createdAt": "2025-09-19T10:30:00Z",
+        "updatedAt": "2025-09-19T10:30:00Z"
+      }
+    ],
+    "pagination": { "page": 1, "limit": 10, "total": 1, "totalPages": 1 }
+  }
+}
+```
+
+### 2. Tạo loại container
+```http
+POST /api/setup/container-types
+```
+**Request Body:**
+```json
+{ "code": "40HQ", "description": "40' High Cube", "note": "" }
+```
+
+### 3. Cập nhật loại container
+```http
+PUT /api/setup/container-types/:id
+```
+
+### 4. Xóa loại container
+```http
+DELETE /api/setup/container-types/:id
+```
+
+### 5. Upload Excel loại container
+```http
+POST /api/setup/container-types/upload-excel
+```
+**Request:**
+- Content-Type: `multipart/form-data`
+- Field: `file` (.xlsx/.xls)
+
+**Excel Format:**
+- Cột 1: Mã loại (required)
+- Cột 2: Mô tả (required)
+- Cột 3: Ghi chú (optional)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "cmxyz", "code": "20GP", "description": "20' GP" }
+  ],
+  "message": "Successfully uploaded 1 container types"
 }
 ```
 
@@ -504,12 +593,12 @@ POST /api/setup/transport-companies/upload-excel
 manageContainer/backend/
 ├── modules/setup/
 │   ├── controller/
-│   │   ├── setupController.ts          # Main controller
-│   │   └── setupRoutes.ts              # Route definitions
+│   │   ├── SetupController.ts          # Main controller (đã thêm uploadContainerTypeExcel)
+│   │   └── SetupRoutes.ts              # Route definitions (đã thêm POST /container-types/upload-excel)
 │   ├── dto/
 │   │   └── SetupDtos.ts                # Data transfer objects
 │   ├── service/
-│   │   └── SetupService.ts             # Business logic
+│   │   └── SetupService.ts             # Business logic (đã thêm uploadContainerTypeExcel)
 │   └── repository/
 │       └── SetupRepository.ts          # Data access layer
 ├── prisma/schema.prisma                # Database schema
@@ -534,6 +623,13 @@ manageContainer/backend/
 - `updateTransportCompany()`: Cập nhật nhà xe
 - `deleteTransportCompany()`: Xóa nhà xe
 - `uploadTransportCompanyExcel()`: Upload và parse Excel cho nhà xe
+
+#### Container Types
+- `getContainerTypes()`: Lấy danh sách loại container
+- `createContainerType()`: Tạo loại container
+- `updateContainerType()`: Cập nhật loại container
+- `deleteContainerType()`: Xóa loại container
+- `uploadContainerTypeExcel()`: Upload và parse Excel loại container
 
 ## Error Handling
 

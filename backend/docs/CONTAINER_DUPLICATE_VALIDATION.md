@@ -82,10 +82,10 @@ catch (error: any) {
 - `SCHEDULED` - Đã đặt lịch
 - `FORWARDED` - Đã chuyển tiếp
 - `GATE_IN` - Đã vào cổng
-- `CHECKING` - Đang kiểm tra
-- `PENDING_ACCEPT` - Chờ chấp nhận
-- `ACCEPT` - Đã chấp nhận
-- `CHECKED` - Đã kiểm tra
+- `PENDING` - Đang chờ
+- `IN_PROGRESS` - Đang xử lý/sửa chữa
+- `COMPLETED` - Hoàn tất
+- `CANCELLED` - Hủy
 - `POSITIONED` - Đã định vị
 - `FORKLIFTING` - Đang vận chuyển
 - `IN_YARD` - Trong bãi

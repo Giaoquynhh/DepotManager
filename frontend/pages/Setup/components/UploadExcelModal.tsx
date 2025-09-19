@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 interface UploadExcelModalProps {
   visible: boolean;
   onCancel: () => void;
-  onUpload: (file: File) => void;
+  onUpload: (files: File[]) => void;
   language: 'vi' | 'en';
   translations: any;
 }
@@ -18,39 +18,41 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
   translations
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   if (!visible) return null;
 
-  const handleFileSelect = (file: File) => {
-    if (file && (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                 file.type === 'application/vnd.ms-excel' ||
-                 file.name.endsWith('.xlsx') || 
-                 file.name.endsWith('.xls'))) {
-      setSelectedFile(file);
-    } else {
+  const isExcel = (file: File) => (
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+    file.type === 'application/vnd.ms-excel' ||
+    file.name.endsWith('.xlsx') || 
+    file.name.endsWith('.xls')
+  );
+
+  const handleFileSelect = (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    const invalid = arr.find(f => !isExcel(f));
+    if (invalid) {
       alert(translations[language].code 
         ? 'Vui lòng chọn file Excel (.xlsx hoặc .xls)'
         : 'Please select an Excel file (.xlsx or .xls)'
       );
+      return;
     }
+    setSelectedFiles(prev => [...prev, ...arr]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
+    const files = e.target.files;
+    if (files && files.length > 0) handleFileSelect(files);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFileSelect(file);
-    }
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) handleFileSelect(files);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -64,9 +66,9 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
   };
 
   const handleUpload = () => {
-    if (selectedFile) {
-      onUpload(selectedFile);
-      setSelectedFile(null);
+    if (selectedFiles.length > 0) {
+      onUpload(selectedFiles);
+      setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -74,7 +76,7 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
   };
 
   const handleCancel = () => {
-    setSelectedFile(null);
+    setSelectedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -207,6 +209,7 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
                 ref={fileInputRef}
                 type="file"
                 accept=".xlsx,.xls"
+                multiple
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
@@ -257,8 +260,8 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
             </div>
           </div>
 
-          {/* Selected File Display */}
-          {selectedFile && (
+          {/* Selected Files Display */}
+          {selectedFiles.length > 0 && (
             <div style={{
               padding: '12px 16px',
               background: '#f0f9ff',
@@ -266,49 +269,21 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
               borderRadius: '8px',
               marginBottom: '20px'
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
-                </svg>
-                <div style={{flex: 1}}>
-                  <p style={{
-                    margin: '0 0 4px 0',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#0c4a6e'
-                  }}>
-                    {selectedFile.name}
-                  </p>
-                  <p style={{
-                    margin: '0',
-                    fontSize: '12px',
-                    color: '#0369a1'
-                  }}>
-                    {(selectedFile.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                  style={{
-                    padding: '4px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#6b7280'
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+              {selectedFiles.map((f, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 0' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
                   </svg>
-                </button>
-              </div>
+                  <div style={{flex: 1}}>
+                    <p style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: 500, color: '#0c4a6e' }}>{f.name}</p>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#0369a1' }}>{(f.size/1024).toFixed(1)} KB</p>
+                  </div>
+                  <button type="button" onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
@@ -342,10 +317,10 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
             type="button" 
             className="btn" 
             onClick={handleUpload}
-            disabled={!selectedFile}
+            disabled={selectedFiles.length === 0}
             style={{
-              background: selectedFile ? '#059669' : '#9ca3af',
-              cursor: selectedFile ? 'pointer' : 'not-allowed'
+              background: selectedFiles.length ? '#059669' : '#9ca3af',
+              cursor: selectedFiles.length ? 'pointer' : 'not-allowed'
             }}
           >
             {translations[language].code ? 'Tải lên' : 'Upload'}

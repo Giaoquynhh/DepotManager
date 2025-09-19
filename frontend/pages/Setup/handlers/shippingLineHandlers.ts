@@ -279,56 +279,52 @@ export const createShippingLineHandlers = (
     setShowUploadModal(true);
   };
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (files: File[]) => {
     try {
       // Import XLSX dynamically
       const XLSX = await import('xlsx');
-      
-      // Read the file
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      
-      // Skip header row and process data
-      const rows = jsonData.slice(1) as string[][];
       const newShippingLines: ShippingLine[] = [];
       const errors: string[] = [];
-      
-      rows.forEach((row, index) => {
-        if (row.length >= 3 && row[0] && row[1] && row[2]) {
-          const code = row[0].toString().trim();
-          const name = row[1].toString().trim();
-          const eir = row[2].toString().trim();
-          const note = row[3] ? row[3].toString().trim() : '';
-          
-          // Check for duplicate code
-          const isDuplicate = shippingLines.some(sl => 
-            sl.code.toLowerCase() === code.toLowerCase()
-          ) || newShippingLines.some(sl => 
-            sl.code.toLowerCase() === code.toLowerCase()
-          );
-          
-          if (isDuplicate) {
-            errors.push(`Dòng ${index + 2}: Mã hãng tàu "${code}" đã tồn tại`);
-          } else {
-            newShippingLines.push({
-              id: code,
-              code: code,
-              name: name,
-              eir: eir,
-              note: note,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
+
+      for (const file of files) {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const rows = jsonData.slice(1) as string[][];
+
+        rows.forEach((row, index) => {
+          if (row.length >= 3 && row[0] && row[1] && row[2]) {
+            const code = row[0].toString().trim();
+            const name = row[1].toString().trim();
+            const eir = row[2].toString().trim();
+            const note = row[3] ? row[3].toString().trim() : '';
+
+            const isDuplicate = shippingLines.some(sl => 
+              sl.code.toLowerCase() === code.toLowerCase()
+            ) || newShippingLines.some(sl => 
+              sl.code.toLowerCase() === code.toLowerCase()
+            );
+
+            if (isDuplicate) {
+              errors.push(`Dòng ${index + 2} (${file.name}): Mã hãng tàu "${code}" đã tồn tại`);
+            } else {
+              newShippingLines.push({
+                id: code,
+                code: code,
+                name: name,
+                eir: eir,
+                note: note,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+            }
+          } else if (row.some(cell => cell && cell.toString().trim())) {
+            errors.push(`Dòng ${index + 2} (${file.name}): Thiếu thông tin bắt buộc (Mã hãng tàu, Tên hãng tàu, EIR)`);
           }
-        } else if (row.some(cell => cell && cell.toString().trim())) {
-          errors.push(`Dòng ${index + 2}: Thiếu thông tin bắt buộc (Mã hãng tàu, Tên hãng tàu, EIR)`);
-        }
-      });
+        });
+      }
       
       if (errors.length > 0) {
         setErrorText(`Lỗi trong file Excel:\n${errors.join('\n')}`);

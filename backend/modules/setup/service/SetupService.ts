@@ -4,10 +4,13 @@ import {
   UpdateShippingLineDto, 
   CreateTransportCompanyDto, 
   UpdateTransportCompanyDto,
+  CreateContainerTypeDto,
+  UpdateContainerTypeDto,
   PaginationQuery,
   ApiResponse,
   ShippingLineResponse,
   TransportCompanyResponse,
+  ContainerTypeResponse,
   PaginatedResponse
 } from '../dto/SetupDtos';
 import * as XLSX from 'xlsx';
@@ -468,6 +471,249 @@ export class SetupService {
         success: false,
         error: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to process Excel file'
+      };
+    }
+  }
+
+  // Upload container type Excel file
+  async uploadContainerTypeExcel(file: Express.Multer.File): Promise<ApiResponse<ContainerTypeResponse[]>> {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Expect columns: Code, Description, Note
+      const rows = jsonData.slice(1) as string[][];
+      const containerTypes: ContainerTypeResponse[] = [];
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0 || !row.some(cell => cell && cell.toString().trim())) {
+          continue;
+        }
+
+        if (row.length < 2 || !row[0] || !row[1]) {
+          errors.push(`Row ${i + 2}: Missing required fields (Code and Description)`);
+          continue;
+        }
+
+        const code = row[0].toString().trim();
+        const description = row[1].toString().trim();
+        const note = row[2] ? row[2].toString().trim() : '';
+
+        // Check duplicate in current batch
+        const isDuplicate = containerTypes.some(ct => ct.code.toLowerCase() === code.toLowerCase());
+        if (isDuplicate) {
+          errors.push(`Row ${i + 2}: Duplicate code "${code}"`);
+          continue;
+        }
+
+        const createData: CreateContainerTypeDto = {
+          code,
+          description,
+          note: note || undefined
+        };
+
+        try {
+          const result = await this.createContainerType(createData);
+          if (result.success && result.data) {
+            containerTypes.push(result.data);
+          } else {
+            errors.push(`Row ${i + 2}: ${result.message || 'Failed to create'}`);
+          }
+        } catch (error) {
+          errors.push(`Row ${i + 2}: Failed to create container type`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Some rows failed to process',
+          details: errors
+        };
+      }
+
+      if (containerTypes.length === 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No valid data found in Excel file'
+        };
+      }
+
+      return {
+        success: true,
+        data: containerTypes,
+        message: `Successfully uploaded ${containerTypes.length} container types`
+      };
+    } catch (error) {
+      console.error('Error uploading container type Excel:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process Excel file'
+      };
+    }
+  }
+  // Container Types
+  async getContainerTypes(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<ContainerTypeResponse>>> {
+    try {
+      const result = await repo.getContainerTypes(query);
+      return {
+        success: true,
+        data: {
+          data: result.containerTypes,
+          pagination: result.pagination
+        }
+      };
+    } catch (error) {
+      console.error('Error getting container types:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get container types'
+      };
+    }
+  }
+
+  async getContainerTypeById(id: string): Promise<ApiResponse<ContainerTypeResponse>> {
+    try {
+      const containerType = await repo.getContainerTypeById(id);
+      if (!containerType) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Container type not found'
+        };
+      }
+      return {
+        success: true,
+        data: containerType
+      };
+    } catch (error) {
+      console.error('Error getting container type by id:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get container type'
+      };
+    }
+  }
+
+  async createContainerType(data: CreateContainerTypeDto): Promise<ApiResponse<ContainerTypeResponse>> {
+    try {
+      // Validation
+      if (!data.code || !data.description) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Code and description are required'
+        };
+      }
+
+      const containerType = await repo.createContainerType(data);
+      return {
+        success: true,
+        data: containerType
+      };
+    } catch (error: any) {
+      console.error('Error creating container type:', error);
+      
+      // Handle unique constraint error
+      if (error.code === 'P2002') {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Container type code already exists'
+        };
+      }
+
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create container type'
+      };
+    }
+  }
+
+  async updateContainerType(id: string, data: UpdateContainerTypeDto): Promise<ApiResponse<ContainerTypeResponse>> {
+    try {
+      // Validation
+      if (data.code !== undefined && !data.code) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Code cannot be empty'
+        };
+      }
+      if (data.description !== undefined && !data.description) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Description cannot be empty'
+        };
+      }
+
+      const containerType = await repo.updateContainerType(id, data);
+      if (!containerType) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Container type not found'
+        };
+      }
+
+      return {
+        success: true,
+        data: containerType
+      };
+    } catch (error: any) {
+      console.error('Error updating container type:', error);
+      
+      // Handle unique constraint error
+      if (error.code === 'P2002') {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Container type code already exists'
+        };
+      }
+
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update container type'
+      };
+    }
+  }
+
+  async deleteContainerType(id: string): Promise<ApiResponse<null>> {
+    try {
+      const deleted = await repo.deleteContainerType(id);
+      if (!deleted) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Container type not found'
+        };
+      }
+
+      return {
+        success: true,
+        data: null,
+        message: 'Container type deleted successfully'
+      };
+    } catch (error) {
+      console.error('Error deleting container type:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete container type'
       };
     }
   }

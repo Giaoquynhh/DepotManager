@@ -288,17 +288,17 @@ export class YardService {
 				} : 'No request found');
 
 				// Kiểm tra xem container có trạng thái "Đang chờ sắp xếp" không
-				// Container đang chờ sắp xếp nếu có ServiceRequest với status = 'CHECKED'
-				const isWaitingForPlacement = latestRequest && latestRequest.status === 'CHECKED';
+				// Container đang chờ sắp xếp nếu có ServiceRequest với status = 'COMPLETED'
+				const isWaitingForPlacement = latestRequest && latestRequest.status === 'COMPLETED';
 				console.log(`🔍 [SystemAdmin] Is waiting for placement (ServiceRequest): ${isWaitingForPlacement}`);
 				
-				// Nếu không có ServiceRequest CHECKED, kiểm tra RepairTicket
+				// Nếu không có ServiceRequest COMPLETED, kiểm tra RepairTicket
 				let isWaitingFromRepair = false;
 				if (!isWaitingForPlacement) {
 					const repairTicket = await tx.repairTicket.findFirst({
 						where: { 
 							container_no,
-							status: 'CHECKED'
+							status: 'COMPLETED'
 						},
 						orderBy: { updatedAt: 'desc' }
 					});
@@ -321,7 +321,7 @@ export class YardService {
 						}
 					});
 
-					// Cập nhật request status từ CHECKED sang POSITIONED (nếu có ServiceRequest)
+					// Cập nhật request status từ COMPLETED sang POSITIONED (nếu có ServiceRequest)
 					if (isWaitingForPlacement && latestRequest) {
 						await tx.serviceRequest.update({
 							where: { id: latestRequest.id },
@@ -356,14 +356,14 @@ export class YardService {
 					}
 				});
 
-				// Cập nhật request status từ CHECKED sang POSITIONED
+				// Cập nhật request status từ COMPLETED sang POSITIONED
 				// Tìm ServiceRequest mới nhất của container này
 				const latestRequest = await tx.serviceRequest.findFirst({
 					where: { container_no },
 					orderBy: { createdAt: 'desc' }
 				});
 
-				if (latestRequest && latestRequest.status === 'CHECKED') {
+				if (latestRequest && latestRequest.status === 'COMPLETED') {
 					await tx.serviceRequest.update({
 						where: { id: latestRequest.id },
 						data: { 
@@ -418,10 +418,10 @@ export class YardService {
 			
 			const container = containerExists[0];
 			
-			// Kiểm tra container đã được kiểm tra chưa (CHECKED)
+			// Kiểm tra container đã được kiểm tra chưa (COMPLETED)
 			const isChecked = container.gate_checked_at || container.repair_checked;
 			if (!isChecked) {
-				return { canPlace: false, reason: 'Container chưa được kiểm tra (CHECKED)' };
+				return { canPlace: false, reason: 'Container chưa được kiểm tra (COMPLETED)' };
 			}
 			
 			// Kiểm tra container đã được đặt vào yard chưa

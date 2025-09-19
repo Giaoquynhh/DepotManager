@@ -56,4 +56,12 @@ router.put('/transport-companies/:id', requireRoles('SystemAdmin', 'SaleAdmin'),
 router.delete('/transport-companies/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.deleteTransportCompany);
 router.post('/transport-companies/upload-excel', requireRoles('SystemAdmin', 'SaleAdmin'), upload.single('file'), controller.uploadTransportCompanyExcel);
 
+// Container Types Routes
+router.get('/container-types', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getContainerTypes);
+router.get('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getContainerTypeById);
+router.post('/container-types', requireRoles('SystemAdmin', 'SaleAdmin'), controller.createContainerType);
+router.put('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.updateContainerType);
+router.delete('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.deleteContainerType);
+router.post('/container-types/upload-excel', requireRoles('SystemAdmin', 'SaleAdmin'), upload.single('file'), controller.uploadContainerTypeExcel);
+
 export default router;

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ShippingLine, TransportCompany, PaginatedResponse } from '../../../services/setupService';
+import { ShippingLine, TransportCompany, ContainerType, PaginatedResponse } from '../../../services/setupService';
 import { ShippingLineFormData } from '../components/AddShippingLineModal';
 import { TransportCompanyFormData } from '../components/AddTransportCompanyModal';
+import { ContainerTypeFormData } from '../components/AddContainerTypeModal';
 
 export const useSetupState = () => {
   // State for shipping lines
@@ -46,6 +47,25 @@ export const useSetupState = () => {
   });
   const [transportCompanyErrorText, setTransportCompanyErrorText] = useState('');
 
+  // State for container types
+  const [containerTypes, setContainerTypes] = useState<ContainerType[]>([]);
+  const [containerTypesPagination, setContainerTypesPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  });
+  const [showAddContainerTypeModal, setShowAddContainerTypeModal] = useState(false);
+  const [showEditContainerTypeModal, setShowEditContainerTypeModal] = useState(false);
+  const [showUploadContainerTypeModal, setShowUploadContainerTypeModal] = useState(false);
+  const [editingContainerType, setEditingContainerType] = useState<ContainerType | null>(null);
+  const [containerTypeFormData, setContainerTypeFormData] = useState<ContainerTypeFormData>({
+    code: '',
+    description: '',
+    note: ''
+  });
+  const [containerTypeErrorText, setContainerTypeErrorText] = useState('');
+
   // Common state
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -85,6 +105,24 @@ export const useSetupState = () => {
     setTransportCompanyFormData,
     transportCompanyErrorText,
     setTransportCompanyErrorText,
+
+    // Container Types State
+    containerTypes,
+    setContainerTypes,
+    containerTypesPagination,
+    setContainerTypesPagination,
+    showAddContainerTypeModal,
+    setShowAddContainerTypeModal,
+    showEditContainerTypeModal,
+    setShowEditContainerTypeModal,
+    showUploadContainerTypeModal,
+    setShowUploadContainerTypeModal,
+    editingContainerType,
+    setEditingContainerType,
+    containerTypeFormData,
+    setContainerTypeFormData,
+    containerTypeErrorText,
+    setContainerTypeErrorText,
 
     // Common State
     successMessage,

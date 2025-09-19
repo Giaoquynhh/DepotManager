@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@components/Header';
 import { useTranslation } from '../../hooks/useTranslation';
-import { RequestTabNavigation, ImportRequest, ExportRequest, CreateLiftRequestModal, LiftRequestData } from './components';
+import { RequestTabNavigation, ImportRequest, ExportRequest, CreateLiftRequestModal, CreateLowerRequestModal, LiftRequestData, LowerRequestData } from './components';
 
 type ActiveTab = 'lift' | 'lower';
 
@@ -11,7 +11,8 @@ export default function DepotRequests() {
 	const [localType, setLocalType] = React.useState('all');
 	const [localStatus, setLocalStatus] = React.useState('all');
 	const [activeTab, setActiveTab] = React.useState<ActiveTab>('lift');
-	const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+	const [isCreateLiftModalOpen, setIsCreateLiftModalOpen] = React.useState(false);
+	const [isCreateLowerModalOpen, setIsCreateLowerModalOpen] = React.useState(false);
 
 	// Map tab với loại request
 	const getRequestType = (tab: ActiveTab) => {
@@ -30,10 +31,9 @@ export default function DepotRequests() {
 
 	const handleCreateRequest = () => {
 		if (activeTab === 'lift') {
-			setIsCreateModalOpen(true);
+			setIsCreateLiftModalOpen(true);
 		} else {
-			// TODO: Implement Export Request modal
-			console.log('Export Request modal not implemented yet');
+			setIsCreateLowerModalOpen(true);
 		}
 	};
 
@@ -41,6 +41,12 @@ export default function DepotRequests() {
 		console.log('Lift Request Data:', data);
 		// TODO: Implement API call to create lift request
 		alert('Yêu cầu nâng container đã được tạo thành công!');
+	};
+
+	const handleSubmitLowerRequest = (data: LowerRequestData) => {
+		console.log('Lower Request Data:', data);
+		// TODO: Implement API call to create lower request
+		alert('Yêu cầu hạ container đã được tạo thành công!');
 	};
 
 	return (
@@ -108,9 +114,16 @@ export default function DepotRequests() {
 
 				{/* Create Lift Request Modal */}
 				<CreateLiftRequestModal
-					isOpen={isCreateModalOpen}
-					onClose={() => setIsCreateModalOpen(false)}
+					isOpen={isCreateLiftModalOpen}
+					onClose={() => setIsCreateLiftModalOpen(false)}
 					onSubmit={handleSubmitLiftRequest}
+				/>
+
+				{/* Create Lower Request Modal */}
+				<CreateLowerRequestModal
+					isOpen={isCreateLowerModalOpen}
+					onClose={() => setIsCreateLowerModalOpen(false)}
+					onSubmit={handleSubmitLowerRequest}
 				/>
 			</main>
 		</>

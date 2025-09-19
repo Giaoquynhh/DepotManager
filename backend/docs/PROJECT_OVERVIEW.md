@@ -34,7 +34,7 @@ frontend/pages/Requests/
 
 #### 1. **Import Request Workflow (Giữ nguyên):**
 ```
-1. CHECKED → POSITIONED (Yard confirm)
+1. COMPLETED → POSITIONED (Yard confirm)
 2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
 3. FORKLIFTING → IN_YARD (Forklift approval)
 ```
@@ -177,7 +177,7 @@ manageContainer/frontend/
 
 #### **Import Request Workflow:**
 ```
-1. CHECKED → POSITIONED (Yard confirm)
+1. COMPLETED → POSITIONED (Yard confirm)
 2. POSITIONED → FORKLIFTING (Driver click "Bắt đầu")
 3. FORKLIFTING → IN_YARD (Forklift approval)
 ```

@@ -4,9 +4,12 @@ import {
   UpdateShippingLineDto, 
   CreateTransportCompanyDto, 
   UpdateTransportCompanyDto,
+  CreateContainerTypeDto,
+  UpdateContainerTypeDto,
   PaginationQuery,
   ShippingLineResponse,
-  TransportCompanyResponse
+  TransportCompanyResponse,
+  ContainerTypeResponse
 } from '../dto/SetupDtos';
 
 export class SetupRepository {
@@ -148,6 +151,72 @@ export class SetupRepository {
     return await prisma.transportCompany.delete({
       where: { id }
     });
+  }
+
+  // Container Types
+  async getContainerTypes(query: PaginationQuery = {}) {
+    const { page = 1, limit = 10, search = '' } = query;
+    const skip = (page - 1) * limit;
+
+    const where = search ? {
+      OR: [
+        { description: { contains: search, mode: 'insensitive' as const } },
+        { code: { contains: search, mode: 'insensitive' as const } }
+      ]
+    } : {};
+
+    const [containerTypes, total] = await Promise.all([
+      prisma.containerType.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.containerType.count({ where })
+    ]);
+
+    return {
+      containerTypes: containerTypes as ContainerTypeResponse[],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  async getContainerTypeById(id: string): Promise<ContainerTypeResponse | null> {
+    const containerType = await prisma.containerType.findUnique({
+      where: { id }
+    });
+    return containerType as ContainerTypeResponse | null;
+  }
+
+  async createContainerType(data: CreateContainerTypeDto): Promise<ContainerTypeResponse> {
+    const containerType = await prisma.containerType.create({
+      data
+    });
+    return containerType as ContainerTypeResponse;
+  }
+
+  async updateContainerType(id: string, data: UpdateContainerTypeDto): Promise<ContainerTypeResponse | null> {
+    const containerType = await prisma.containerType.update({
+      where: { id },
+      data
+    });
+    return containerType as ContainerTypeResponse;
+  }
+
+  async deleteContainerType(id: string): Promise<boolean> {
+    try {
+      await prisma.containerType.delete({
+        where: { id }
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
 

@@ -23,6 +23,15 @@ export interface TransportCompany {
   updatedAt: string;
 }
 
+export interface ContainerType {
+  id: string;
+  code: string;
+  description: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateShippingLineData {
   code: string;
   name: string;
@@ -52,6 +61,18 @@ export interface UpdateTransportCompanyData {
   address?: string;
   mst?: string;
   phone?: string;
+  note?: string;
+}
+
+export interface CreateContainerTypeData {
+  code: string;
+  description: string;
+  note?: string;
+}
+
+export interface UpdateContainerTypeData {
+  code?: string;
+  description?: string;
   note?: string;
 }
 
@@ -262,11 +283,8 @@ class SetupService {
   // Upload transport company Excel file
   async uploadTransportCompanyExcel(file: FormData): Promise<ApiResponse<TransportCompany[]>> {
     try {
-      const response = await api.post('/api/setup/transport-companies/upload-excel', file, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Let the browser set the correct multipart boundary automatically
+      const response = await api.post('/api/setup/transport-companies/upload-excel', file);
       return response.data;
     } catch (error: any) {
       console.error('Error uploading transport company Excel:', error);
@@ -274,6 +292,100 @@ class SetupService {
         success: false,
         error: 'UPLOAD_ERROR',
         message: error.response?.data?.message || 'Failed to upload Excel file'
+      };
+    }
+  }
+
+  // Upload container type Excel file
+  async uploadContainerTypeExcel(file: FormData): Promise<ApiResponse<ContainerType[]>> {
+    try {
+      // Let the browser set the correct multipart boundary automatically
+      const response = await api.post('/api/setup/container-types/upload-excel', file);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error uploading container type Excel:', error);
+      return {
+        success: false,
+        error: 'UPLOAD_ERROR',
+        message: error.response?.data?.message || 'Failed to upload Excel file'
+      };
+    }
+  }
+
+  // Container Types
+  async getContainerTypes(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<ContainerType>>> {
+    try {
+      const params = new URLSearchParams();
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.search) params.append('search', query.search);
+
+      const response = await api.get(`/api/setup/container-types?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching container types:', error);
+      return {
+        success: false,
+        error: 'FETCH_ERROR',
+        message: error.response?.data?.message || 'Failed to fetch container types'
+      };
+    }
+  }
+
+  async getContainerTypeById(id: string): Promise<ApiResponse<ContainerType>> {
+    try {
+      const response = await api.get(`/api/setup/container-types/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching container type:', error);
+      return {
+        success: false,
+        error: 'FETCH_ERROR',
+        message: error.response?.data?.message || 'Failed to fetch container type'
+      };
+    }
+  }
+
+  async createContainerType(data: CreateContainerTypeData): Promise<ApiResponse<ContainerType>> {
+    try {
+      const response = await api.post('/api/setup/container-types', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating container type:', error);
+      return {
+        success: false,
+        error: 'CREATE_ERROR',
+        message: error.response?.data?.message || 'Failed to create container type',
+        details: error.response?.data?.details
+      };
+    }
+  }
+
+  async updateContainerType(id: string, data: UpdateContainerTypeData): Promise<ApiResponse<ContainerType>> {
+    try {
+      const response = await api.put(`/api/setup/container-types/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating container type:', error);
+      return {
+        success: false,
+        error: 'UPDATE_ERROR',
+        message: error.response?.data?.message || 'Failed to update container type',
+        details: error.response?.data?.details
+      };
+    }
+  }
+
+  async deleteContainerType(id: string): Promise<ApiResponse<null>> {
+    try {
+      const response = await api.delete(`/api/setup/container-types/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting container type:', error);
+      return {
+        success: false,
+        error: 'DELETE_ERROR',
+        message: error.response?.data?.message || 'Failed to delete container type'
       };
     }
   }

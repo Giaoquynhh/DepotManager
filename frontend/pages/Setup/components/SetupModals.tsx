@@ -1,13 +1,17 @@
 import React from 'react';
-import { ShippingLine, TransportCompany } from '../../../services/setupService';
+import { ShippingLine, TransportCompany, ContainerType } from '../../../services/setupService';
 import { ShippingLineFormData } from './AddShippingLineModal';
 import { TransportCompanyFormData } from './AddTransportCompanyModal';
+import { ContainerTypeFormData } from './AddContainerTypeModal';
 import { AddShippingLineModal } from './AddShippingLineModal';
 import { EditShippingLineModal } from './EditShippingLineModal';
 import { UploadExcelModal } from './UploadExcelModal';
 import { AddTransportCompanyModal } from './AddTransportCompanyModal';
 import { EditTransportCompanyModal } from './EditTransportCompanyModal';
 import { UploadTransportCompanyExcelModal } from './UploadTransportCompanyExcelModal';
+import { UploadContainerTypeExcelModal } from './UploadContainerTypeExcelModal';
+import { AddContainerTypeModal } from './AddContainerTypeModal';
+import { EditContainerTypeModal } from './EditContainerTypeModal';
 
 interface SetupModalsProps {
   // Shipping Lines Modals
@@ -23,10 +27,19 @@ interface SetupModalsProps {
   showAddTransportCompanyModal: boolean;
   showEditTransportCompanyModal: boolean;
   showUploadTransportCompanyModal: boolean;
+  showUploadContainerTypeModal?: boolean;
   editingTransportCompany: TransportCompany | null;
   transportCompanyFormData: TransportCompanyFormData;
   setTransportCompanyFormData: React.Dispatch<React.SetStateAction<TransportCompanyFormData>>;
   transportCompanyErrorText: string;
+  
+  // Container Types Modals
+  showAddContainerTypeModal: boolean;
+  showEditContainerTypeModal: boolean;
+  editingContainerType: ContainerType | null;
+  containerTypeFormData: ContainerTypeFormData;
+  setContainerTypeFormData: React.Dispatch<React.SetStateAction<ContainerTypeFormData>>;
+  containerTypeErrorText: string;
   
   // Handlers
   onCancelAddModal: () => void;
@@ -35,12 +48,18 @@ interface SetupModalsProps {
   onCancelAddTransportCompanyModal: () => void;
   onCancelEditTransportCompanyModal: () => void;
   onCancelUploadTransportCompanyModal: () => void;
+  onCancelUploadContainerTypeModal?: () => void;
+  onCancelAddContainerTypeModal: () => void;
+  onCancelEditContainerTypeModal: () => void;
   onSubmitShippingLine: (data: ShippingLineFormData) => void;
   onUpdateShippingLine: (data: ShippingLineFormData) => void;
   onFileUpload: (file: File) => void;
   onSubmitTransportCompany: (data: TransportCompanyFormData) => void;
   onUpdateTransportCompany: (data: TransportCompanyFormData) => void;
   onTransportCompanyFileUpload: (file: File) => void;
+  onContainerTypeFileUpload?: (file: File) => void;
+  onSubmitContainerType: (data: ContainerTypeFormData) => void;
+  onUpdateContainerType: (data: ContainerTypeFormData) => void;
   
   // Common
   language: 'vi' | 'en';
@@ -61,10 +80,19 @@ export const SetupModals: React.FC<SetupModalsProps> = ({
   showAddTransportCompanyModal,
   showEditTransportCompanyModal,
   showUploadTransportCompanyModal,
+  showUploadContainerTypeModal,
   editingTransportCompany,
   transportCompanyFormData,
   setTransportCompanyFormData,
   transportCompanyErrorText,
+  
+  // Container Types Modals
+  showAddContainerTypeModal,
+  showEditContainerTypeModal,
+  editingContainerType,
+  containerTypeFormData,
+  setContainerTypeFormData,
+  containerTypeErrorText,
   
   // Handlers
   onCancelAddModal,
@@ -73,12 +101,18 @@ export const SetupModals: React.FC<SetupModalsProps> = ({
   onCancelAddTransportCompanyModal,
   onCancelEditTransportCompanyModal,
   onCancelUploadTransportCompanyModal,
+  onCancelUploadContainerTypeModal,
+  onCancelAddContainerTypeModal,
+  onCancelEditContainerTypeModal,
   onSubmitShippingLine,
   onUpdateShippingLine,
   onFileUpload,
   onSubmitTransportCompany,
   onUpdateTransportCompany,
   onTransportCompanyFileUpload,
+  onContainerTypeFileUpload,
+  onSubmitContainerType,
+  onUpdateContainerType,
   
   // Common
   language,
@@ -152,6 +186,40 @@ export const SetupModals: React.FC<SetupModalsProps> = ({
         onUpload={onTransportCompanyFileUpload}
         language={language}
         translations={translations}
+      />
+
+      {/* Upload Container Type Excel Modal */}
+      <UploadContainerTypeExcelModal
+        visible={!!showUploadContainerTypeModal}
+        onCancel={onCancelUploadContainerTypeModal || (() => {})}
+        onUpload={onContainerTypeFileUpload || (() => {})}
+        language={language}
+        translations={translations}
+      />
+
+      {/* Add Container Type Modal */}
+      <AddContainerTypeModal
+        visible={showAddContainerTypeModal}
+        onCancel={onCancelAddContainerTypeModal}
+        onSubmit={onSubmitContainerType}
+        formData={containerTypeFormData}
+        setFormData={setContainerTypeFormData}
+        errorText={containerTypeErrorText}
+        language={language}
+        translations={translations}
+      />
+
+      {/* Edit Container Type Modal */}
+      <EditContainerTypeModal
+        visible={showEditContainerTypeModal}
+        onCancel={onCancelEditContainerTypeModal}
+        onSubmit={onUpdateContainerType}
+        formData={containerTypeFormData}
+        setFormData={setContainerTypeFormData}
+        errorText={containerTypeErrorText}
+        language={language}
+        translations={translations}
+        originalCode={editingContainerType?.code || ''}
       />
     </>
   );

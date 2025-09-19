@@ -327,39 +327,23 @@ export const createTransportCompanyHandlers = (
     setShowUploadTransportCompanyModal(true);
   };
 
-  const handleTransportCompanyFileUpload = async (file: File) => {
+  const handleTransportCompanyFileUpload = async (files: File[]) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      let total = 0;
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await setupService.uploadTransportCompanyExcel(formData);
+        if (response.success && response.data) total += response.data.length;
+        else if (!response.success) setTransportCompanyErrorText(response.message || 'Failed to upload Excel file');
+      }
 
-      const response = await setupService.uploadTransportCompanyExcel(formData);
-      
-      if (response.success && response.data) {
-        // Reload first page to show new items
+      if (total > 0) {
         loadTransportCompanies(1, transportCompaniesPagination.limit);
-        
-        // Show success message
-        setSuccessMessage(
-          translations[language].code 
-            ? `Đã tải lên ${response.data.length} nhà xe thành công!`
-            : `Successfully uploaded ${response.data.length} transport companies!`
-        );
-        
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 5000);
-        
-        // Close modal
+        setSuccessMessage(translations[language].code ? `Đã tải lên ${total} nhà xe thành công!` : `Successfully uploaded ${total} transport companies!`);
+        setTimeout(() => setSuccessMessage(''), 5000);
         setShowUploadTransportCompanyModal(false);
         setTransportCompanyErrorText('');
-      } else {
-        // Handle API error
-        setTransportCompanyErrorText(response.message || 'Failed to upload Excel file');
-        if (response.details && response.details.length > 0) {
-          const detailMessages = response.details.map((d: any) => d.message).join(', ');
-          setTransportCompanyErrorText(detailMessages);
-        }
       }
     } catch (error: any) {
       console.error('Error uploading Excel file:', error);

@@ -321,7 +321,10 @@ enum InventoryMoveType {
 }
 
 enum RepairStatus {
-  // TODO: Định nghĩa lại trạng thái sửa chữa mới
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 model Equipment {
@@ -367,7 +370,7 @@ model RepairTicket {
   container_no        String?            // Container number (optional)
   equipment_id        String?            // Làm cho equipment_id optional
   created_by          String
-  status              RepairStatus       @default(CHECKING)
+  status              RepairStatus       @default(PENDING)
   problem_description String
   estimated_cost      Float?             @default(0)
   manager_comment     String?
@@ -624,4 +627,15 @@ model TransportCompany {
     updatedAt DateTime @updatedAt
     
     @@map("transport_companies")
+}
+
+model ContainerType {
+    id          String   @id @default(cuid())
+    code        String   @unique
+    description String
+    note        String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    
+    @@map("container_types")
 }

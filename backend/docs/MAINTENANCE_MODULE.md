@@ -101,7 +101,7 @@ model RepairTicket {
   equipment_id          String?
   problem_description   String
   estimated_cost        Decimal     @default(0)
-  status                RepairStatus @default(CHECKING)
+  status                RepairStatus @default(PENDING)
   manager_comment       String?
   labor_cost            Decimal?
   selected_parts        String?
@@ -136,11 +136,10 @@ model InventoryItem {
 ### RepairStatus Enum
 ```prisma
 enum RepairStatus {
-  CHECKING         // Đang kiểm tra
-  PENDING_ACCEPT   // Chờ chấp nhận
-  REPAIRING        // Đang sửa chữa
-  CHECKED          // Đã kiểm tra
-  REJECTED         // Đã từ chối
+  PENDING          // Đang kiểm tra/đợi
+  IN_PROGRESS      // Đang sửa chữa
+  COMPLETED        // Hoàn thành
+  CANCELLED        // Hủy
 }
 ```
 
@@ -148,23 +147,23 @@ enum RepairStatus {
 
 ### 1. Quy trình kiểm tra container
 ```
-GATE_IN → CHECKING → CHECKED/REJECTED
+GATE_IN → PENDING → COMPLETED/CANCELLED
 ```
 
 **Chi tiết:**
 - Container có trạng thái `GATE_IN` được chọn để kiểm tra
 - Khi bấm "Bắt đầu kiểm tra":
-  - `ServiceRequest.status` → `CHECKING`
-  - Tạo `RepairTicket` với `status = CHECKING`
+  - `ServiceRequest.status` → `PENDING`
+  - Tạo `RepairTicket` với `status = PENDING`
 - Kết quả kiểm tra:
-  - **Đạt chuẩn**: `RepairTicket.status` → `CHECKED`, `ServiceRequest.status` → `CHECKED`
-  - **Không đạt chuẩn**: Giữ nguyên `CHECKING`, hiển thị 2 option:
+  - **Đạt chuẩn**: `RepairTicket.status` → `COMPLETED`, `ServiceRequest.status` → `COMPLETED`
+  - **Không đạt chuẩn**: Giữ nguyên `PENDING`, hiển thị 2 option:
     - "Có thể sửa chữa": Mở popup hóa đơn sửa chữa
     - "Không thể sửa chữa": `RepairTicket.status` → `REJECTED`, `ServiceRequest.status` → `REJECTED`
 
 ### 2. Quy trình sửa chữa
 ```
-CHECKING → REPAIRING → CHECKED
+PENDING → IN_PROGRESS → COMPLETED
 ```
 
 **Chi tiết:**
@@ -180,7 +179,7 @@ CHECKING → REPAIRING → CHECKED
 ### MaintenanceService
 
 #### `createRepair(actor, payload)`
-- Tạo phiếu sửa chữa với `status = CHECKING`
+- Tạo phiếu sửa chữa với `status = PENDING`
 - Tự động tạo `RepairItem` nếu có
 
 #### `updateRepairStatus(actor, id, status, manager_comment)`
@@ -215,7 +214,7 @@ CHECKING → REPAIRING → CHECKED
 ### listRepairsSchema
 ```typescript
 {
-  status: string (optional) - CHECKING, PENDING_ACCEPT, REPAIRING, CHECKED, REJECTED
+  status: string (optional) - PENDING, IN_PROGRESS, COMPLETED, CANCELLED
 }
 ```
 
@@ -253,9 +252,9 @@ CHECKING → REPAIRING → CHECKED
 ## 🧪 Testing
 
 ### Test Cases chính
-1. **Tạo phiếu sửa chữa**: Kiểm tra tạo thành công với status `CHECKING`
-2. **Kiểm tra container**: Kiểm tra chuyển trạng thái từ `GATE_IN` → `CHECKING`
-3. **Hoàn thành kiểm tra**: Kiểm tra chuyển trạng thái → `CHECKED` hoặc `REJECTED`
+1. **Tạo phiếu sửa chữa**: Kiểm tra tạo thành công với status `PENDING`
+2. **Kiểm tra container**: Kiểm tra chuyển trạng thái từ `GATE_IN` → `PENDING`
+3. **Hoàn thành kiểm tra**: Kiểm tra chuyển trạng thái → `COMPLETED` hoặc `CANCELLED`
 4. **Đồng bộ trạng thái**: Kiểm tra `ServiceRequest` và `RepairTicket` đồng bộ
 5. **Cập nhật chi tiết**: Kiểm tra tính toán chi phí tự động
 

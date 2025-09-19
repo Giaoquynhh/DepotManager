@@ -7,8 +7,8 @@ Tài liệu này mô tả việc sửa lỗi đồng bộ trạng thái giữa `
 ## 🐛 Vấn đề đã được giải quyết
 
 ### **Mô tả vấn đề:**
-- Container có `RepairTicket` với status `CHECKED` trong trang Maintenance/Repairs
-- Nhưng `ServiceRequest` vẫn hiển thị status `CHECKING` trong các trang Requests
+- Container có `RepairTicket` với status `COMPLETED` trong trang Maintenance/Repairs
+- Nhưng `ServiceRequest` vẫn hiển thị status `PENDING` trong các trang Requests
 - Gây ra sự không nhất quán trong hiển thị trạng thái container
 
 ### **Nguyên nhân gốc rễ:**
@@ -40,8 +40,8 @@ private async updateRequestStatusByContainer(containerNo: string, repairStatus: 
     // Mapping repair status sang request status
     let newRequestStatus: string;
     switch (repairStatus) {
-      case 'CHECKED':
-        newRequestStatus = 'CHECKED';
+      case 'COMPLETED':
+        newRequestStatus = 'COMPLETED';
         break;
       case 'REJECTED':
         newRequestStatus = 'REJECTED';
@@ -74,7 +74,7 @@ private async updateRequestStatusByContainer(containerNo: string, repairStatus: 
 // Đồng bộ ServiceRequest nếu có container_no
 if (repairTicket.container_no) {
   try {
-    await this.updateRequestStatusByContainer(repairTicket.container_no, 'CHECKED');
+    await this.updateRequestStatusByContainer(repairTicket.container_no, 'COMPLETED');
     console.log(`✅ Đã đồng bộ ServiceRequest cho container ${repairTicket.container_no}`);
   } catch (error) {
     console.error(`❌ Lỗi khi đồng bộ ServiceRequest cho container ${repairTicket.container_no}:`, error);
@@ -125,10 +125,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function syncRepairRequestStatus() {
-  // Lấy tất cả RepairTicket có status CHECKED
+  // Lấy tất cả RepairTicket có status COMPLETED
   const checkedRepairTickets = await prisma.repairTicket.findMany({
     where: { 
-      status: 'CHECKED',
+      status: 'COMPLETED',
       container_no: { not: null }
     },
     orderBy: { updatedAt: 'desc' }
@@ -141,11 +141,11 @@ async function syncRepairRequestStatus() {
       orderBy: { createdAt: 'desc' }
     });
 
-    if (latestRequest && latestRequest.status !== 'CHECKED') {
+    if (latestRequest && latestRequest.status !== 'COMPLETED') {
       await prisma.serviceRequest.update({
         where: { id: latestRequest.id },
         data: { 
-          status: 'CHECKED',
+          status: 'COMPLETED',
           updatedAt: new Date()
         }
       });
@@ -157,13 +157,13 @@ async function syncRepairRequestStatus() {
 ## 📊 Kết quả
 
 ### **Dữ liệu đã được đồng bộ:**
-- ✅ **3 ServiceRequest** đã được cập nhật từ `CHECKING`/`ACCEPT` sang `CHECKED`
+- ✅ **3 ServiceRequest** đã được cập nhật từ `PENDING` sang `COMPLETED`
 - ✅ Container **ISO 1113** giờ có trạng thái nhất quán
 - ✅ Container **ISO 1112** giờ có trạng thái nhất quán  
 - ✅ Container **ISO 1111** giờ có trạng thái nhất quán
 
 ### **Logic đồng bộ tự động:**
-- ✅ Khi RepairTicket được cập nhật thành `CHECKED` → ServiceRequest tự động cập nhật thành `CHECKED`
+- ✅ Khi RepairTicket được cập nhật thành `COMPLETED` → ServiceRequest tự động cập nhật thành `COMPLETED`
 - ✅ Khi RepairTicket được cập nhật thành `REJECTED` → ServiceRequest tự động cập nhật thành `REJECTED`
 - ✅ Có logging chi tiết để debug và monitor
 
@@ -188,7 +188,7 @@ Authorization: Bearer <token>
   "data": {
     "container_no": "ISO 1113",
     "repair_ticket_id": "repair-ticket-id",
-    "repair_status": "CHECKED",
+    "repair_status": "COMPLETED",
     "synced_at": "2025-01-27T10:30:00.000Z"
   }
 }
@@ -207,7 +207,7 @@ Authorization: Bearer <token>
 ## 🚀 Cách sử dụng
 
 ### **Đồng bộ tự động:**
-- Khi RepairTicket được cập nhật thành `CHECKED` hoặc `REJECTED`, ServiceRequest sẽ tự động được đồng bộ
+- Khi RepairTicket được cập nhật thành `COMPLETED` hoặc `CANCELLED`, ServiceRequest sẽ tự động được đồng bộ
 - Không cần thao tác thủ công
 
 ### **Đồng bộ thủ công:**
@@ -237,8 +237,8 @@ SELECT
   sr.id as request_id
 FROM "RepairTicket" rt
 LEFT JOIN "ServiceRequest" sr ON sr.container_no = rt.container_no
-WHERE rt.status = 'CHECKED' 
-  AND sr.status != 'CHECKED'
+WHERE rt.status = 'COMPLETED' 
+  AND sr.status != 'COMPLETED'
 ORDER BY rt.updatedAt DESC;
 ```
 
