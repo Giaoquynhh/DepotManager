@@ -63,7 +63,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           onChange={e => setEmpPassword(e.target.value)} 
         />
         <select value={empRole} onChange={e => setEmpRole(e.target.value)}>
-          <option value="SaleAdmin">{getRoleDisplayName('SaleAdmin')}</option>
+          <option value="TechnicalDepartment">{getRoleDisplayName('TechnicalDepartment')}</option>
           <option value="Driver">{getRoleDisplayName('Driver')}</option>
           <option value="Security">{getRoleDisplayName('Security')}</option>
           <option value="Dispatcher">{getRoleDisplayName('Dispatcher')}</option>

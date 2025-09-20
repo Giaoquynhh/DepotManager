@@ -12,11 +12,9 @@ export class ChatService {
 		// Xác định participants dựa trên role
 		let participants = [actor._id];
 		
-		// Thêm depot staff dựa trên role
-		if (['CustomerAdmin', 'CustomerUser'].includes(actor.role)) {
-			// Customer tạo chat room, thêm depot staff
-			participants.push('system_depot'); // Placeholder, sẽ thay bằng logic thực tế
-		} else if (['SaleAdmin', 'SystemAdmin'].includes(actor.role)) {
+		// Note: CustomerAdmin/CustomerUser roles are deprecated
+		// Chat room creation logic simplified
+		if (['TechnicalDepartment', 'SystemAdmin'].includes(actor.role)) {
 			// Depot staff tạo chat room, thêm customer
 			// Cần logic để tìm customer của request
 		}
@@ -160,14 +158,12 @@ export class ChatService {
 		if (actor.role === 'SystemAdmin') return true;
 
 		// Depot staff có quyền truy cập
-		if (['SaleAdmin', 'Accountant'].includes(actor.role)) {
+		if (['TechnicalDepartment', 'Accountant'].includes(actor.role)) {
 			return true;
 		}
 
-		// Kiểm tra tenant access cho Customer
-		if (['CustomerAdmin', 'CustomerUser'].includes(actor.role)) {
-			return chatRoom.request && chatRoom.request.tenant_id === actor.tenant_id;
-		}
+		// Note: CustomerAdmin/CustomerUser roles are deprecated
+		// Tenant access check removed as these roles no longer exist
 
 		// Kiểm tra user có trong participants không (fallback)
 		try {

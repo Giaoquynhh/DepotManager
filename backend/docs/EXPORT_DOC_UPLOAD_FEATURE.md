@@ -9,7 +9,7 @@ Tính năng này cho phép admin upload chứng từ cho yêu cầu xuất (EXPO
 ### 1. Điều kiện upload
 - **Loại yêu cầu**: Chỉ áp dụng cho yêu cầu `EXPORT`
 - **Trạng thái hiện tại**: Phải là `PICK_CONTAINER`
-- **Quyền**: Chỉ `SaleAdmin`, `SystemAdmin`, `BusinessAdmin` được upload
+- **Quyền**: Chỉ `TechnicalDepartment`, `SystemAdmin`, `BusinessAdmin` được upload
 
 ### 2. Quy trình upload
 ```
@@ -41,10 +41,10 @@ Admin → Click "Upload documents" → Chọn nhiều files → Upload → Tự 
 ### 1. Routes (`RequestRoutes.ts`)
 ```typescript
 // Documents - Single file upload
-router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
+router.post('/:id/docs', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
 
 // Documents - Multiple files upload
-router.post('/:id/docs/multiple', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.array('files', 10), (req, res) => controller.uploadMultipleDocs(req as any, res));
+router.post('/:id/docs/multiple', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.array('files', 10), (req, res) => controller.uploadMultipleDocs(req as any, res));
 
 // Public serve documents (main.ts)
 app.use('/requests/documents', documentRoutes);
@@ -91,7 +91,7 @@ async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE
         if (req.type !== 'EXPORT') {
             throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
         }
-        if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+        if (!['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
             throw new Error('Chỉ admin được upload chứng từ xuất');
         }
     }
@@ -112,7 +112,7 @@ async uploadMultipleDocuments(actor: any, request_id: string, type: 'EIR'|'LOLO'
         if (req.type !== 'EXPORT') {
             throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
         }
-        if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+        if (!['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
             throw new Error('Chỉ admin được upload chứng từ xuất');
         }
     }
@@ -132,7 +132,7 @@ export const uploadDocSchema = Joi.object({
 ### 5. State Machine (`RequestStateMachine.ts`)
 ```typescript
 // Transition từ PICK_CONTAINER sang SCHEDULED đã được định nghĩa
-// và hỗ trợ cho các role: SaleAdmin, SystemAdmin, BusinessAdmin
+// và hỗ trợ cho các role: TechnicalDepartment, SystemAdmin, BusinessAdmin
 ```
 
 ## Frontend Implementation

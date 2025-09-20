@@ -1,7 +1,7 @@
 # Module 5 — Quản lý Container
 
 ## 1) Scope & Roles
-- Role: SaleAdmin (điều độ), SystemAdmin (quản trị)
+- Role: TechnicalDepartment (điều độ), SystemAdmin (quản trị)
 
 ## 2) State Machines
 - Container slot: `EMPTY → RESERVED → OCCUPIED → UNDER_MAINTENANCE → OCCUPIED → EXPORT`
@@ -45,7 +45,7 @@
 - M4 Gate: `IN_YARD` → gọi suggest-position/assign-position
 - M3 Requests: nguồn container, lịch sử
 - M6 Maintenance: khi sửa chữa → `UNDER_MAINTENANCE`
-- M2 Auth: RBAC SaleAdmin/SystemAdmin
+- M2 Auth: RBAC TechnicalDepartment/SystemAdmin
 
 ## 7) Notes
 - RESERVED auto-expire (todo)
@@ -57,7 +57,7 @@
   - `latest_sr`: ServiceRequest mới nhất cho mỗi `container_no`.
   - `rt_checked`: RepairTicket có `status=CHECKED`.
   - Truy vấn sử dụng CTE `params` ép kiểu TEXT và `CROSS JOIN params p` để tránh lỗi Postgres `42P18` (unknown parameter type) khi tham số rỗng; xem `backend/modules/reports/repository/ReportsRepository.ts`.
-- Phân quyền: toàn bộ `/reports/*` yêu cầu `authenticate` + `requireRoles('SystemAdmin','BusinessAdmin','SaleAdmin','Accountant')` (`backend/modules/reports/controller/ReportsRoutes.ts`).
+- Phân quyền: toàn bộ `/reports/*` yêu cầu `authenticate` + `requireRoles('SystemAdmin','BusinessAdmin','TechnicalDepartment','Accountant')` (`backend/modules/reports/controller/ReportsRoutes.ts`).
 - FE API base URL: `NEXT_PUBLIC_API_BASE_URL` trong `frontend/services/api.ts` (mặc định `http://localhost:1000`).
 - Seed demo nhanh cho kiểm thử danh sách container:
   - Biến môi trường: `SEED_DEMO=true`.
@@ -73,7 +73,7 @@
   - Yard
     - Service: `modules/yard/service/YardService.ts`
     - Controller: `modules/yard/controller/YardController.ts`
-    - Routes: `modules/yard/controller/YardRoutes.ts` (requireRoles SaleAdmin/SystemAdmin)
+    - Routes: `modules/yard/controller/YardRoutes.ts` (requireRoles TechnicalDepartment/SystemAdmin)
   - Forklift
     - Service: `modules/forklift/service/ForkliftService.ts`
     - Controller: `modules/forklift/controller/ForkliftController.ts`

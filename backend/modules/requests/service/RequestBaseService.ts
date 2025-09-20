@@ -65,12 +65,8 @@ export class RequestBaseService {
 		const req = await repo.findById(id);
 		if (!req) throw new Error('Yêu cầu không tồn tại');
 		
-		// Kiểm tra quyền truy cập
-		if (actor.tenant_id && (actor.role === 'CustomerAdmin' || actor.role === 'CustomerUser')) {
-			if (req.tenant_id !== actor.tenant_id) {
-				throw new Error('Không có quyền truy cập yêu cầu này');
-			}
-		}
+		// Note: CustomerAdmin/CustomerUser roles are deprecated
+		// Tenant access check removed as these roles no longer exist
 		
 		return req;
 	}
@@ -85,16 +81,12 @@ export class RequestBaseService {
 		
 		// Xác định actor type để filter soft-delete
 		let actorType: 'depot' | 'customer' | undefined;
-		if (['SaleAdmin', 'SystemAdmin', 'Accountant'].includes(actor.role)) {
+		if (['TechnicalDepartment', 'SystemAdmin', 'Accountant'].includes(actor.role)) {
 			actorType = 'depot';
-		} else if (['CustomerAdmin', 'CustomerUser'].includes(actor.role)) {
-			actorType = 'customer';
 		}
 		
-		// Scope: Customer chỉ xem tenant của mình; Accountant/SaleAdmin xem tất cả
-		if (actor.tenant_id && (actor.role === 'CustomerAdmin' || actor.role === 'CustomerUser')) {
-			filter.tenant_id = actor.tenant_id;
-		}
+		// Note: CustomerAdmin/CustomerUser roles are deprecated
+		// Tenant scoping removed as these roles no longer exist
 		
 		const page = Math.max(1, Number(query.page) || 1);
 		const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));

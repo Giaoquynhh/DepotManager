@@ -40,8 +40,8 @@ export const StatisticsDemo: React.FC = () => {
       role: 'Accountant',
       permissions: ['all']
     },
-    SaleAdmin: {
-      role: 'SaleAdmin',
+    TechnicalDepartment: {
+      role: 'TechnicalDepartment',
       permissions: ['containers', 'customers', 'operational']
     },
     YardManager: {

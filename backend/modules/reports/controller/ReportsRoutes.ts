@@ -6,7 +6,7 @@ import controller from './ReportsController';
 const router = Router();
 
 // Allow roles according to spec: SystemAdmin, BusinessAdmin, SaleAdmin, Accountant
-router.use(authenticate, requireRoles('SystemAdmin','BusinessAdmin','SaleAdmin','Accountant'));
+router.use(authenticate, requireRoles('SystemAdmin','BusinessAdmin','TechnicalDepartment','Accountant'));
 
 router.get('/dashboard', (req, res) => controller.dashboard(req as any, res));
 router.post('/custom/preview', (req, res) => controller.customPreview(req as any, res));

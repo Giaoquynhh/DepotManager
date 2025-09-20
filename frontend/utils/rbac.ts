@@ -1,8 +1,8 @@
-export type AppRole = 'SystemAdmin' | 'SaleAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver' | 'Dispatcher' | 'admin';
+export type AppRole = 'SystemAdmin' | 'TechnicalDepartment' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver' | 'Dispatcher' | 'admin';
 
 export function homeFor(role: AppRole): string {
     if (canViewUsersPartners(role)) return '/UsersPartners';
-    if (isSaleAdmin(role) || isAccountant(role)) return '/Requests/Depot';
+    if (isTechnicalDepartment(role) || isAccountant(role)) return '/Requests/Depot';
     if (canUseGate(role)) return '/Gate';
     if (isDriver(role)) return '/DriverDashboard';
     return '/Account';
@@ -27,8 +27,13 @@ export function showPartnerForm(role?: string): boolean {
 // UsersPartners không còn hỗ trợ vai khách hàng
 export function isCustomerRole(_role?: string): boolean { return false; }
 
+export function isTechnicalDepartment(role?: string): boolean {
+	return String(role) === 'TechnicalDepartment';
+}
+
+// Keep old function for backward compatibility
 export function isSaleAdmin(role?: string): boolean {
-	return String(role) === 'SaleAdmin';
+	return String(role) === 'TechnicalDepartment';
 }
 
 export function isAccountant(role?: string): boolean {
@@ -37,7 +42,7 @@ export function isAccountant(role?: string): boolean {
 
 export function canUseGate(role?: string): boolean {
 	// FE chỉ kiểm tra role; backend sẽ xác thực Gate Mode theo thiết bị
-	return ['SaleAdmin','SystemAdmin'].includes(String(role));
+	return ['TechnicalDepartment','SystemAdmin'].includes(String(role));
 }
 
 // SaleAdmin specific permissions

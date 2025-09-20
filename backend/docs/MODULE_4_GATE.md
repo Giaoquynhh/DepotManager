@@ -37,7 +37,7 @@ model ServiceRequest {
 }
 
 Ghi chú:
-- Từ nay không dùng trạng thái `RECEIVED`; trạng thái khởi tạo do SaleAdmin tạo là `SCHEDULED`.
+- Từ nay không dùng trạng thái `RECEIVED`; trạng thái khởi tạo do TechnicalDepartment tạo là `SCHEDULED`.
 - Migration đã cập nhật dữ liệu cũ: `RECEIVED` → `SCHEDULED`, `SENT_TO_GATE` → `FORWARDED`.
 ```
 
@@ -53,7 +53,7 @@ app.use('/gate', authenticate, gateRoutes);
 ```http
 PATCH /gate/requests/:id/forward
 Authorization: Bearer <token>
-Role: SaleAdmin
+Role: TechnicalDepartment
 ```
 
 **Chức năng**: Chuyển tiếp request từ trạng thái `SCHEDULED` sang `FORWARDED`
@@ -75,7 +75,7 @@ Role: SaleAdmin
 ```http
 PATCH /gate/requests/:id/approve
 Authorization: Bearer <token>
-Role: SaleAdmin
+Role: TechnicalDepartment
 ```
 
 **Chức năng**: Gate approve request, chuyển trạng thái dựa trên loại:
@@ -99,7 +99,7 @@ Role: SaleAdmin
 ```http
 PATCH /gate/requests/:id/reject
 Authorization: Bearer <token>
-Role: SaleAdmin
+Role: TechnicalDepartment
 ```
 
 **Body**:
@@ -128,7 +128,7 @@ Role: SaleAdmin
 ```http
 GET /gate/requests/search?status=FORWARDED&container_no=ISO123&type=IMPORT&page=1&limit=20
 Authorization: Bearer <token>
-Role: YardManager | SaleAdmin
+Role: YardManager | TechnicalDepartment
 ```
 
 **Query Parameters**:
@@ -142,14 +142,14 @@ Role: YardManager | SaleAdmin
 ```http
 GET /gate/requests/:id
 Authorization: Bearer <token>
-Role: YardManager | SaleAdmin
+Role: YardManager | TechnicalDepartment
 ```
 
 ### 6. Gate History (Lịch sử ra/vào)
 ```http
 GET /gate/history?container_no=ISO123&driver_name=An&license_plate=51C-123.45&page=1&limit=20
 Authorization: Bearer <token>
-Role: SystemAdmin | BusinessAdmin | YardManager | SaleAdmin | MaintenanceManager
+Role: SystemAdmin | BusinessAdmin | YardManager | TechnicalDepartment | MaintenanceManager
 ```
 
 **Logic (đã cập nhật):**
@@ -200,18 +200,18 @@ Role: SystemAdmin | BusinessAdmin | YardManager | SaleAdmin | MaintenanceManager
 
 ### Role-based Access Control
 - Sử dụng middleware `requireRoles(...roles)`
-- **SaleAdmin**: Có thể forward request
+- **TechnicalDepartment**: Có thể forward request
 - **YardManager**: Có thể gate-accept, gate-reject, search, get details
-- **SaleAdmin + YardManager**: Đều có thể search và xem chi tiết
+- **TechnicalDepartment + YardManager**: Đều có thể search và xem chi tiết
 
 Ví dụ định tuyến:
 
 ```ts
-router.patch('/requests/:id/forward', requireRoles('SaleAdmin'), gateController.forwardRequest);
+router.patch('/requests/:id/forward', requireRoles('TechnicalDepartment'), gateController.forwardRequest);
 router.patch('/requests/:id/gate-accept', requireRoles('YardManager'), gateController.acceptGate);
 router.patch('/requests/:id/gate-reject', requireRoles('YardManager'), gateController.rejectGate);
-router.get('/requests/search', requireRoles('YardManager', 'SaleAdmin'), gateController.searchRequests);
-router.get('/requests/:id', requireRoles('YardManager', 'SaleAdmin'), gateController.getRequestDetails);
+router.get('/requests/search', requireRoles('YardManager', 'TechnicalDepartment'), gateController.searchRequests);
+router.get('/requests/:id', requireRoles('YardManager', 'TechnicalDepartment'), gateController.getRequestDetails);
 ```
 
 ## Error Handling
@@ -256,7 +256,7 @@ router.get('/requests/:id', requireRoles('YardManager', 'SaleAdmin'), gateContro
 
 ## 2) RBAC & Gate Mode
 - Gate Mode chỉ cho phép khi request kèm header `x-device-type: gate` và `x-device-id` thuộc danh sách tin cậy `GATE_DEVICE_IDS` (ENV)
-- Quyền: SaleAdmin trên Gate Device, hoặc SystemAdmin
+- Quyền: TechnicalDepartment trên Gate Device, hoặc SystemAdmin
 - Check-out: nếu chính người đã RECEIVED, bắt buộc `supervisor_pin` (ENV: `GATE_SUP_PIN`)
 
 ## 3) Data model liên quan (Prisma)

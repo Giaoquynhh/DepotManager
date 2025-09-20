@@ -98,3 +98,62 @@ export interface ApiResponse<T> {
   error?: string;
   details?: any[];
 }
+
+// Customer DTOs
+export interface CreateCustomerDto {
+  code: string;
+  name: string;
+  tax_code?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface UpdateCustomerDto {
+  name?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+}
+
+export interface CustomerResponse {
+  id: string;
+  code: string;
+  name: string;
+  tax_code?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// PriceList DTOs
+export interface CreatePriceListDto {
+  serviceCode: string;
+  serviceName: string;
+  type: string; // "Nâng" | "Hạ" | "Tồn kho"
+  price: number;
+  note?: string;
+}
+
+export interface UpdatePriceListDto {
+  serviceCode?: string;
+  serviceName?: string;
+  type?: string;
+  price?: number;
+  note?: string;
+}
+
+export interface PriceListResponse {
+  id: string;
+  serviceCode: string;
+  serviceName: string;
+  type: string;
+  price: number;
+  note?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

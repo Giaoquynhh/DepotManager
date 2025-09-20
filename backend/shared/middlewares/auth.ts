@@ -6,7 +6,7 @@ export type AppRole =
   | 'SystemAdmin'
   | 'BusinessAdmin'
   | 'HRManager'
-  | 'SaleAdmin'
+  | 'TechnicalDepartment'
   | 'CustomerAdmin'
   | 'CustomerUser'
   | 'Security'

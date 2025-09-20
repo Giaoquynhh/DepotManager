@@ -5,7 +5,7 @@ import { audit } from '../../../shared/middlewares/audit';
 import { AppRole } from '../../../shared/middlewares/auth';
 import { prisma } from '../../../shared/config/database';
 
-const INTERNAL_ROLES: AppRole[] = ['SystemAdmin','SaleAdmin','Driver','Security','Dispatcher'];
+const INTERNAL_ROLES: AppRole[] = ['SystemAdmin','TechnicalDepartment','Driver','Security','Dispatcher'];
 const CUSTOMER_ROLES: AppRole[] = [];
 
 export class UserService {
@@ -15,12 +15,10 @@ export class UserService {
 	};
 
 	private ensureRoleAllowedByCreator(creatorRole: AppRole, role: AppRole) {
-		if (creatorRole === 'SaleAdmin') {
-			if (!CUSTOMER_ROLES.includes(role)) throw new Error('Sale chỉ được tạo user khách hàng');
-			return;
-		}
-		if (creatorRole === 'CustomerAdmin') {
-			if (!CUSTOMER_ROLES.includes(role)) throw new Error('Customer Admin chỉ được tạo user khách');
+		// Note: CustomerAdmin/CustomerUser roles are deprecated
+		// Role validation simplified
+		if (creatorRole === 'TechnicalDepartment') {
+			// TechnicalDepartment can create any role
 			return;
 		}
 	}

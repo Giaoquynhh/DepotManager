@@ -89,7 +89,15 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 				if (slRes.success && slRes.data) setShippingLines(slRes.data.data);
 				if (tcRes.success && tcRes.data) setTransportCompanies(tcRes.data.data);
 				if (ctRes.success && ctRes.data) setContainerTypes(ctRes.data.data);
-				if (custRes.success && custRes.data) setCustomers(custRes.data);
+				console.log('Customer API response:', custRes);
+				if (custRes.success && custRes.data) {
+					console.log('Customers loaded:', custRes.data);
+					console.log('Customers data:', custRes.data.data);
+					setCustomers(custRes.data.data || []);
+				} else {
+					console.log('Failed to load customers:', custRes);
+					console.log('Error details:', custRes.message || custRes.error);
+				}
 			} catch (_) {}
 		})();
 	}, []);
@@ -128,8 +136,9 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	);
 
 	const filteredCustomers = customers.filter(customer => 
-		customer.tax_code.toLowerCase().includes(customerSearch.toLowerCase()) ||
-		customer.name.toLowerCase().includes(customerSearch.toLowerCase())
+		(customer.tax_code || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+		customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+		customer.code.toLowerCase().includes(customerSearch.toLowerCase())
 	);
 
 	// File upload handlers
@@ -165,7 +174,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			...prev,
 			customer: customer.id
 		}));
-		setSelectedCustomerName(`${customer.tax_code} - ${customer.name}`);
+		setSelectedCustomerName(`${customer.code} - ${customer.name}`);
 		setIsCustomerOpen(false);
 		setCustomerSearch('');
 	};
@@ -232,7 +241,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
                 eta: formData.appointmentTime,
                 shipping_line_id: formData.shippingLine || null,
                 container_type_id: formData.containerType || null,
-                customer_id: null, // Không gửi customer_id vì chưa có dữ liệu Customer
+                customer_id: formData.customer || null,
                 vehicle_company_id: formData.vehicleCompany || null,
                 vehicle_number: formData.vehicleNumber,
                 driver_name: formData.driver,
@@ -271,6 +280,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 						documents: [],
 						notes: ''
 					});
+					setSelectedCustomerName('');
 					setUploadedFiles([]);
 					onClose();
 				} else {
@@ -295,6 +305,9 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		setContainerTypeSearch('');
 		setTransportCompanySearch('');
 		setCustomerSearch('');
+		setSelectedShippingLineName('');
+		setSelectedTransportCompanyName('');
+		setSelectedCustomerName('');
 		setUploadedFiles([]);
 		onClose();
 	};
@@ -756,6 +769,11 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 									</div>
 								)}
 							</div>
+							{formData.containerType && (
+								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									Mô tả: {containerTypes.find(ct => ct.id === formData.containerType)?.description}
+								</div>
+							)}
 							{errors.containerType && <span style={errorMessageStyle}>{errors.containerType}</span>}
 						</div>
 
@@ -788,7 +806,10 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 									onClick={() => setIsCustomerOpen(!isCustomerOpen)}
 									className="custom-dropdown-button"
 								>
-									{selectedCustomerName || 'Chọn khách hàng'}
+									{formData.customer 
+										? `${customers.find(c => c.id === formData.customer)?.code} - ${customers.find(c => c.id === formData.customer)?.name}`
+										: 'Chọn khách hàng'
+									}
 									<svg
 										width="12"
 										height="12"
@@ -858,7 +879,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 													e.currentTarget.style.backgroundColor = 'transparent';
 												}}
 											>
-												<span style={{ fontWeight: '500' }}>{customer.tax_code}</span>
+												<span style={{ fontWeight: '500' }}>{customer.code}</span>
 												<span style={{ fontSize: '12px', color: '#64748b' }}>{customer.name}</span>
 											</button>
 										))}
@@ -875,6 +896,21 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 									</div>
 								)}
 							</div>
+							{formData.customer && (
+								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									{(() => {
+										const customer = customers.find(c => c.id === formData.customer);
+										return customer ? (
+											<div>
+												<div>Tên: {customer.name}</div>
+												{customer.email && <div>Email: {customer.email}</div>}
+												{customer.phone && <div>SĐT: {customer.phone}</div>}
+												{customer.address && <div>Địa chỉ: {customer.address}</div>}
+											</div>
+										) : null;
+									})()}
+								</div>
+							)}
 							{errors.customer && <span style={errorMessageStyle}>{errors.customer}</span>}
 						</div>
 

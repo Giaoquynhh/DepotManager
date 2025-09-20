@@ -154,7 +154,7 @@ export class AttachmentService {
             where: { id: actorId }
         });
 
-        if (!actor || !['SystemAdmin', 'BusinessAdmin', 'SaleAdmin'].includes(actor.role)) {
+        if (!actor || !['SystemAdmin', 'BusinessAdmin', 'TechnicalDepartment'].includes(actor.role)) {
             throw new Error('INSUFFICIENT_PERMISSIONS');
         }
 
@@ -191,7 +191,7 @@ export class AttachmentService {
             where: { id: actorId }
         });
 
-        if (!actor || !['SystemAdmin', 'BusinessAdmin', 'SaleAdmin'].includes(actor.role)) {
+        if (!actor || !['SystemAdmin', 'BusinessAdmin', 'TechnicalDepartment'].includes(actor.role)) {
             throw new Error('INSUFFICIENT_PERMISSIONS');
         }
 

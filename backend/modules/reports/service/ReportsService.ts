@@ -15,7 +15,7 @@ function normalizeRange(filters: RangeFilters){
 
 function scopeByRole(user: AuthUser, filters: RangeFilters){
   // Enforce limited scopes according to role
-  if (user.role === 'SaleAdmin'){
+  if (user.role === 'TechnicalDepartment'){
     // restrict by customer if provided; otherwise still allow but no extra scope available here
     return filters;
   }

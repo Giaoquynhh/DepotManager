@@ -185,7 +185,7 @@ const TRANSITIONS = [
   {
     from: 'CHECKING',
     to: 'CHECKED',
-    allowedRoles: ['SaleAdmin', 'SystemAdmin'],
+    allowedRoles: ['TechnicalDepartment', 'SystemAdmin'],
     description: 'Hoàn thành kiểm tra - đạt chuẩn'
   }
   // ... other transitions

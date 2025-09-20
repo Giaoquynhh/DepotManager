@@ -337,7 +337,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                   {item.actions && (
                     <div className="action-buttons">
                       {/* Accept button for PENDING requests (Depot only) */}
-                      {item.status === 'PENDING' && userRole && ['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.changeStatus && (
+                      {item.status === 'PENDING' && userRole && ['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.changeStatus && (
                         <button
                           className="btn btn-sm btn-primary"
                           disabled={item.actions.loadingId === item.id + 'RECEIVED'}
@@ -396,7 +396,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                       )}
 
                       {/* Status change buttons for Depot */}
-                      {userRole && ['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.changeStatus && (
+                      {userRole && ['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.changeStatus && (
                         <>
                           {item.status === 'RECEIVED' && (
                             <button
@@ -432,7 +432,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
                       )}
 
                       {/* Payment button */}
-                      {item.status === 'COMPLETED' && userRole && ['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.sendPayment && (
+                      {item.status === 'COMPLETED' && userRole && ['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(userRole) && item.actions.sendPayment && (
                         <button
                           className="btn btn-sm btn-info"
                           disabled={item.actions.loadingId === item.id + 'PAY'}

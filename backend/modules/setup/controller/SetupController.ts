@@ -7,6 +7,10 @@ import {
   UpdateTransportCompanyDto,
   CreateContainerTypeDto,
   UpdateContainerTypeDto,
+  CreateCustomerDto,
+  UpdateCustomerDto,
+  CreatePriceListDto,
+  UpdatePriceListDto,
   PaginationQuery
 } from '../dto/SetupDtos';
 
@@ -456,6 +460,280 @@ export class SetupController {
       res.json(result);
     } catch (error) {
       console.error('Error in deleteContainerType controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // Customers
+  async getCustomers(req: Request, res: Response) {
+    try {
+      const query: PaginationQuery = {
+        page: req.query.page ? parseInt(req.query.page as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        search: req.query.search as string
+      };
+
+      const result = await service.getCustomers(query);
+      
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getCustomers controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async getCustomerById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.getCustomerById(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 400;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getCustomerById controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async createCustomer(req: Request, res: Response) {
+    try {
+      const data: CreateCustomerDto = req.body;
+      const result = await service.createCustomer(data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Error in createCustomer controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async updateCustomer(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const data: UpdateCustomerDto = req.body;
+      const result = await service.updateCustomer(id, data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 
+                          result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in updateCustomer controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async deleteCustomer(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.deleteCustomer(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in deleteCustomer controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async disableCustomer(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.disableCustomer(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in disableCustomer controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // PriceList
+  async getPriceLists(req: Request, res: Response) {
+    try {
+      const query: PaginationQuery = {
+        page: req.query.page ? parseInt(req.query.page as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        search: req.query.search as string
+      };
+
+      const result = await service.getPriceLists(query);
+      
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getPriceLists controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async getPriceListById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.getPriceListById(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 400;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in getPriceListById controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async createPriceList(req: Request, res: Response) {
+    try {
+      const data: CreatePriceListDto = req.body;
+      const result = await service.createPriceList(data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Error in createPriceList controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async updatePriceList(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const data: UpdatePriceListDto = req.body;
+      const result = await service.updatePriceList(id, data);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 
+                          result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in updatePriceList controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  async deletePriceList(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await service.deletePriceList(id);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in deletePriceList controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // Upload price list Excel file
+  async uploadPriceListExcel(req: Request, res: Response) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No file uploaded'
+        });
+      }
+
+      const result = await service.uploadPriceListExcel(req.file);
+
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in uploadPriceListExcel controller:', error);
       res.status(500).json({
         success: false,
         error: 'INTERNAL_SERVER_ERROR',

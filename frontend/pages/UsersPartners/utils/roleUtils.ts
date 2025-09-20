@@ -5,7 +5,7 @@ export const getRoleDisplayName = (role: string, language: 'vi' | 'en' = 'vi') =
   const roleMap = {
     vi: {
       SystemAdmin: translations.vi.systemAdminLabel,
-      SaleAdmin: translations.vi.saleAdminLabel,
+      TechnicalDepartment: translations.vi.saleAdminLabel,
       Driver: translations.vi.driverLabel,
       
       Security: 'Nhân viên bảo vệ',
@@ -13,7 +13,7 @@ export const getRoleDisplayName = (role: string, language: 'vi' | 'en' = 'vi') =
     },
     en: {
       SystemAdmin: translations.en.systemAdminLabel,
-      SaleAdmin: translations.en.saleAdminLabel,
+      TechnicalDepartment: translations.en.saleAdminLabel,
       Driver: translations.en.driverLabel,
       
       Security: 'Security',

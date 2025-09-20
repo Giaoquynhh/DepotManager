@@ -23,7 +23,6 @@ export default function Header() {
   const [navOpen, setNavOpen] = useState(false); // Khởi tạo đóng, sẽ được set bởi logic restore
   const [isLoading, setIsLoading] = useState(true);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
-  const [gateSubmenuOpen, setGateSubmenuOpen] = useState(false);
   const [hrSubmenuOpen, setHrSubmenuOpen] = useState(false);
   const [setupSubmenuOpen, setSetupSubmenuOpen] = useState(false);
   const [liftContainerSubmenuOpen, setLiftContainerSubmenuOpen] = useState(false);
@@ -121,14 +120,6 @@ export default function Header() {
     }
   }, []);
 
-  // Auto-open Gate submenu when on Gate pages
-  useEffect(() => {
-    if (router.pathname === '/Gate' || router.pathname === '/Gate/History') {
-      setGateSubmenuOpen(true);
-    } else {
-      setGateSubmenuOpen(false);
-    }
-  }, [router.pathname]);
 
   // Auto-open HR submenu when on HR pages
   useEffect(() => {
@@ -312,9 +303,6 @@ export default function Header() {
     setAccountDropdownOpen(prev => !prev);
   };
 
-  const toggleGateSubmenu = () => {
-    setGateSubmenuOpen(prev => !prev);
-  };
 
   const toggleHrSubmenu = () => {
     setHrSubmenuOpen(prev => !prev);
@@ -704,9 +692,43 @@ export default function Header() {
               </div>
             )}
 
+            {/* Lower Container Module with Submenu */}
+            {(() => {
+              const allow = canManageContainers(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
+              <ContainerSubmenu 
+                isExpanded={lowerContainerSubmenuOpen} 
+                onToggle={() => setLowerContainerSubmenuOpen(!lowerContainerSubmenuOpen)}
+                containerType="lower"
+                onSidebarLinkClick={handleSidebarLinkClick}
+                onSubmenuLinkClick={handleSubmenuLinkClick}
+              />
+            )}
+
+            {/* Lift Container Module with Submenu */}
+            {(() => {
+              const allow = canManageContainers(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
+              <ContainerSubmenu 
+                isExpanded={liftContainerSubmenuOpen} 
+                onToggle={() => setLiftContainerSubmenuOpen(!liftContainerSubmenuOpen)}
+                containerType="lift"
+                onSidebarLinkClick={handleSidebarLinkClick}
+                onSubmenuLinkClick={handleSubmenuLinkClick}
+              />
+            )}
+
             {/* Requests Customer Module removed */}
 
-            {/* Gate Module with Submenu */}
+            {/* Gate Module */}
             {(() => {
               const allow = canUseGate(me?.role) || isSecurity(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
@@ -714,65 +736,14 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-              <div className="sidebar-group">
-                <button 
-                  className={`sidebar-link sidebar-group-toggle ${router.pathname === '/Gate' || router.pathname === '/Gate/History' ? 'active' : ''}`}
-                  onClick={toggleGateSubmenu}
-                >
+                <Link className={`sidebar-link ${router.pathname === '/Gate' || router.pathname === '/Gate/History' ? 'active' : ''}`} href="/Gate" onClick={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                   </svg>
                   <span>{t('sidebar.gate')}</span>
-                  <svg 
-                    width="12" 
-                    height="12" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2"
-                    style={{
-                      transform: gateSubmenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease',
-                      marginLeft: 'auto'
-                    }}
-                  >
-                    <polyline points="9,18 15,12 9,6"></polyline>
-                  </svg>
-                </button>
-                
-                {gateSubmenuOpen && (
-                  <div className="sidebar-submenu">
-                    <Link 
-                      className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Gate' ? 'active' : ''}`} 
-                      href="/Gate" 
-                      onClick={handleSidebarLinkClick}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="9" y1="9" x2="9" y2="9.01"></line>
-                        <line x1="15" y1="9" x2="15" y2="9.01"></line>
-                        <line x1="9" y1="15" x2="9" y2="15.01"></line>
-                        <line x1="15" y1="15" x2="15" y2="15.01"></line>
-                        <line x1="9" y1="12" x2="15" y2="12"></line>
-                      </svg>
-                      <span>Bảng điều khiển</span>
-                    </Link>
-                    <Link 
-                      className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Gate/History' ? 'active' : ''}`} 
-                      href="/Gate/History" 
-                      onClick={handleSidebarLinkClick}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 4h13l3 7-3 7H3V4z"></path>
-                        <path d="M8 11l2 2 4-4"></path>
-                      </svg>
-                      <span>Lịch sử ra vào</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
+                </Link>
             )}
 
             {/* Yard Module */}
@@ -811,40 +782,6 @@ export default function Header() {
                   </svg>
                   <span>{t('sidebar.containerManagement')}</span>
                 </Link>
-            )}
-
-            {/* Lower Container Module with Submenu */}
-            {(() => {
-              const allow = canManageContainers(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'containers.manage')
-                : allow;
-              return ok;
-            })() && (
-              <ContainerSubmenu 
-                isExpanded={lowerContainerSubmenuOpen} 
-                onToggle={() => setLowerContainerSubmenuOpen(!lowerContainerSubmenuOpen)}
-                containerType="lower"
-                onSidebarLinkClick={handleSidebarLinkClick}
-                onSubmenuLinkClick={handleSubmenuLinkClick}
-              />
-            )}
-
-            {/* Lift Container Module with Submenu */}
-            {(() => {
-              const allow = canManageContainers(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'containers.manage')
-                : allow;
-              return ok;
-            })() && (
-              <ContainerSubmenu 
-                isExpanded={liftContainerSubmenuOpen} 
-                onToggle={() => setLiftContainerSubmenuOpen(!liftContainerSubmenuOpen)}
-                containerType="lift"
-                onSidebarLinkClick={handleSidebarLinkClick}
-                onSubmenuLinkClick={handleSubmenuLinkClick}
-              />
             )}
 
             {/* Forklift Module - Xe nâng */}
@@ -927,7 +864,7 @@ export default function Header() {
 
             {/* Setup */}
             {(() => {
-              const allow = me?.role === 'SystemAdmin' || me?.role === 'SaleAdmin';
+              const allow = me?.role === 'SystemAdmin' || me?.role === 'TechnicalDepartment';
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'setup.manage')
                 : allow;

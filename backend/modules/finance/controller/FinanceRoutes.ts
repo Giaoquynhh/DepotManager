@@ -147,7 +147,7 @@ router.get('/eir/container/:container_no', authenticate, async (req: any, res: a
 });
 
 // Middleware authentication và RBAC cho các route khácnnanày đoiđoi
-router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin'));
+router.use(authenticate, requireRoles('TechnicalDepartment','SystemAdmin'));
 
 // Routes hiện tại
 router.get('/invoices', (req, res) => invoiceCtrl.list(req as any, res));

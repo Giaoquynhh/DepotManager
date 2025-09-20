@@ -6,7 +6,7 @@ import reportsService from '../../reports/service/ReportsService';
 import { containerListQuerySchema } from '../../reports/dto/ReportDtos';
 
 const router = Router();
-router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin','Accountant'));
+router.use(authenticate, requireRoles('TechnicalDepartment','SystemAdmin','Accountant'));
 
 // Route để lấy danh sách containers (forward đến ReportsService)
 router.get('/', async (req: AuthRequest, res) => {

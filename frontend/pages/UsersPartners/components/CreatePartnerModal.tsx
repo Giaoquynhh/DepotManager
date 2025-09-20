@@ -16,11 +16,18 @@ interface CreatePartnerModalProps {
   setAddress: (v: string) => void;
   taxCode: string;
   setTaxCode: (v: string) => void;
+  email: string;
+  setEmail: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
   note: string;
   setNote: (v: string) => void;
   errorText: string;
+  // validation errors
+  codeError?: string;
+  emailError?: string;
+  phoneError?: string;
+  taxCodeError?: string;
 }
 
 export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
@@ -36,17 +43,30 @@ export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
   setAddress,
   taxCode,
   setTaxCode,
+  email,
+  setEmail,
   phone,
   setPhone,
   note,
   setNote,
-  errorText
+  errorText,
+  codeError,
+  emailError,
+  phoneError,
+  taxCodeError
 }) => {
   return (
     <Modal title={title || 'Tạo đối tác'} visible={visible} onCancel={onCancel} size="sm">
       <div className="grid" style={{ gap: 12 }}>
         <div>
-          <input type="text" value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="Mã khách hàng *" />
+          <input 
+            type="text" 
+            value={customerCode} 
+            onChange={e => setCustomerCode(e.target.value)} 
+            placeholder="Mã khách hàng *" 
+            style={{ borderColor: codeError ? '#ef4444' : undefined }}
+          />
+          {codeError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{codeError}</div>}
         </div>
         <div>
           <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Tên khách hàng *" />
@@ -56,11 +76,35 @@ export const CreatePartnerModal: React.FC<CreatePartnerModalProps> = ({
         </div>
         <div className="grid grid-cols-2" style={{ gap: 12 }}>
           <div>
-            <input type="text" value={taxCode} onChange={e => setTaxCode(e.target.value)} placeholder="MST (tùy chọn)" />
+            <input 
+              type="text" 
+              value={taxCode} 
+              onChange={e => setTaxCode(e.target.value)} 
+              placeholder="MST (tùy chọn)" 
+              style={{ borderColor: taxCodeError ? '#ef4444' : undefined }}
+            />
+            {taxCodeError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{taxCodeError}</div>}
           </div>
           <div>
-            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="SDT (tùy chọn)" />
+            <input 
+              type="email" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              placeholder="Email (tùy chọn)" 
+              style={{ borderColor: emailError ? '#ef4444' : undefined }}
+            />
+            {emailError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{emailError}</div>}
           </div>
+        </div>
+        <div>
+          <input 
+            type="tel" 
+            value={phone} 
+            onChange={e => setPhone(e.target.value)} 
+            placeholder="Số điện thoại (tùy chọn)" 
+            style={{ borderColor: phoneError ? '#ef4444' : undefined }}
+          />
+          {phoneError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{phoneError}</div>}
         </div>
         <div>
           <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" rows={3} />

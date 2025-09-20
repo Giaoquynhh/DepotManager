@@ -76,6 +76,7 @@
     "transportCompanies": "Transport Companies",
     "containerTypes": "Container Types",
     "customers": "Customers",
+    "priceLists": "Price Lists",
     "lowerContainer": "Lower Container",
     "liftContainer": "Lift Container",
     "account": "Account"

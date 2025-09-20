@@ -65,7 +65,7 @@ manageContainer/
 ### 1. Đăng nhập với role có quyền
 - `SystemAdmin` ✅
 - `BusinessAdmin` ✅  
-- `SaleAdmin` ✅
+- `TechnicalDepartment` ✅
 
 ### 2. Tìm yêu cầu EXPORT với status PICK_CONTAINER
 **⚠️ DEPRECATED - Tính năng này không còn khả dụng**
@@ -84,7 +84,7 @@ Tính năng upload chứng từ đã bị loại bỏ khỏi trang Depot. Cần 
 #### 1. RequestRoutes.ts
 ```typescript
 // ✅ Added SystemAdmin, BusinessAdmin roles
-router.post('/:id/docs', requireRoles('SaleAdmin','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
+router.post('/:id/docs', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
 ```
 
 #### 2. RequestDtos.ts  
@@ -106,7 +106,7 @@ if (type === 'EXPORT_DOC') {
     if (req.type !== 'EXPORT') {
         throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
     }
-    if (!['SaleAdmin', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
+    if (!['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
         throw new Error('Chỉ admin được upload chứng từ xuất');
     }
     
@@ -272,7 +272,7 @@ Tất cả test cases và manual testing steps đã không còn áp dụng vì t
 
 #### 1. Lỗi 403 Forbidden
 - **Nguyên nhân**: Role không có quyền upload
-- **Giải pháp**: Đăng nhập với role SystemAdmin, BusinessAdmin, hoặc SaleAdmin
+- **Giải pháp**: Đăng nhập với role SystemAdmin, BusinessAdmin, hoặc TechnicalDepartment
 
 #### 2. Lỗi 400 Bad Request
 - **Nguyên nhân**: File không hợp lệ hoặc validation fail

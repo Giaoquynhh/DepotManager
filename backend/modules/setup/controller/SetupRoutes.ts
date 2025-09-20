@@ -41,27 +41,44 @@ const router = Router();
 router.use(authenticate);
 
 // Shipping Lines Routes
-router.get('/shipping-lines', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getShippingLines);
-router.get('/shipping-lines/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getShippingLineById);
-router.post('/shipping-lines', requireRoles('SystemAdmin', 'SaleAdmin'), controller.createShippingLine);
-router.post('/shipping-lines/bulk', requireRoles('SystemAdmin', 'SaleAdmin'), controller.bulkCreateShippingLines);
-router.put('/shipping-lines/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.updateShippingLine);
-router.delete('/shipping-lines/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.deleteShippingLine);
+router.get('/shipping-lines', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getShippingLines);
+router.get('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getShippingLineById);
+router.post('/shipping-lines', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createShippingLine);
+router.post('/shipping-lines/bulk', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.bulkCreateShippingLines);
+router.put('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateShippingLine);
+router.delete('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteShippingLine);
 
 // Transport Companies Routes
-router.get('/transport-companies', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getTransportCompanies);
-router.get('/transport-companies/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getTransportCompanyById);
-router.post('/transport-companies', requireRoles('SystemAdmin', 'SaleAdmin'), controller.createTransportCompany);
-router.put('/transport-companies/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.updateTransportCompany);
-router.delete('/transport-companies/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.deleteTransportCompany);
-router.post('/transport-companies/upload-excel', requireRoles('SystemAdmin', 'SaleAdmin'), upload.single('file'), controller.uploadTransportCompanyExcel);
+router.get('/transport-companies', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getTransportCompanies);
+router.get('/transport-companies/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getTransportCompanyById);
+router.post('/transport-companies', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createTransportCompany);
+router.put('/transport-companies/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateTransportCompany);
+router.delete('/transport-companies/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteTransportCompany);
+router.post('/transport-companies/upload-excel', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadTransportCompanyExcel);
 
 // Container Types Routes
-router.get('/container-types', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getContainerTypes);
-router.get('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.getContainerTypeById);
-router.post('/container-types', requireRoles('SystemAdmin', 'SaleAdmin'), controller.createContainerType);
-router.put('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.updateContainerType);
-router.delete('/container-types/:id', requireRoles('SystemAdmin', 'SaleAdmin'), controller.deleteContainerType);
-router.post('/container-types/upload-excel', requireRoles('SystemAdmin', 'SaleAdmin'), upload.single('file'), controller.uploadContainerTypeExcel);
+router.get('/container-types', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getContainerTypes);
+router.get('/container-types/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getContainerTypeById);
+router.post('/container-types', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createContainerType);
+router.put('/container-types/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateContainerType);
+router.delete('/container-types/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteContainerType);
+router.post('/container-types/upload-excel', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadContainerTypeExcel);
+
+// Customers Routes
+router.get('/customers', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getCustomers);
+router.get('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getCustomerById);
+router.post('/customers', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createCustomer);
+router.put('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateCustomer);
+router.patch('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateCustomer);
+router.delete('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteCustomer);
+router.patch('/customers/:id/disable', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.disableCustomer);
+
+// PriceList Routes
+router.get('/price-lists', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getPriceLists);
+router.get('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getPriceListById);
+router.post('/price-lists', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createPriceList);
+router.put('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updatePriceList);
+router.delete('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deletePriceList);
+router.post('/price-lists/upload-excel', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadPriceListExcel);
 
 export default router;

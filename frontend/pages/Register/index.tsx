@@ -57,7 +57,7 @@ export default function Register(){
 								<h1>Kích hoạt tài khoản</h1>
 							</div>
 							<p className="register-description">
-								Bạn cần token mời do quản trị cấp. Một số vai trò (SystemAdmin/BusinessAdmin/HRManager/SaleAdmin) chỉ được tạo bởi hệ thống, không thể tự đăng ký nếu không có lời mời.
+								Bạn cần token mời do quản trị cấp. Một số vai trò (SystemAdmin/BusinessAdmin/HRManager/TechnicalDepartment) chỉ được tạo bởi hệ thống, không thể tự đăng ký nếu không có lời mời.
 							</p>
 						</div>
 						

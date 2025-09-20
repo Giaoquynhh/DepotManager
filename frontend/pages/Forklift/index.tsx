@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@components/Header';
 import { api } from '@services/api';
-import { isSaleAdmin, isYardManager, isSystemAdmin } from '@utils/rbac';
+import { isTechnicalDepartment, isYardManager, isSystemAdmin } from '@utils/rbac';
 import AssignDriverModal from '@components/Forklift/AssignDriverModal';
 import { useTranslation } from '@hooks/useTranslation';
 import { useToast } from '@hooks/useToastHook';
@@ -187,7 +187,7 @@ export default function Forklift() {
         setUserRole(role);
         
         // Kiểm tra quyền truy cập
-        if (!isSaleAdmin(role) && !isYardManager(role) && !isSystemAdmin(role)) {
+        if (!isTechnicalDepartment(role) && !isYardManager(role) && !isSystemAdmin(role)) {
           setError(t('pages.forklift.accessDenied'));
           return;
         }

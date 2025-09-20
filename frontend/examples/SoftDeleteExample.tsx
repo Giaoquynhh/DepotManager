@@ -34,7 +34,7 @@ export default function SoftDeleteExample() {
     }
   ]);
 
-  const [userRole, setUserRole] = useState('SaleAdmin'); // Demo user role
+  const [userRole, setUserRole] = useState('TechnicalDepartment'); // Demo user role
   const [currentView, setCurrentView] = useState('depot'); // 'depot' or 'customer'
 
   // Simulate API calls
@@ -93,7 +93,7 @@ export default function SoftDeleteExample() {
     const buttons = [];
     
     // Nút Reject (chỉ cho Kho)
-    if (['SaleAdmin', 'Accountant', 'SystemAdmin'].includes(userRole)) {
+    if (['TechnicalDepartment', 'Accountant', 'SystemAdmin'].includes(userRole)) {
       if (['PENDING', 'APPROVED', 'IN_PROGRESS'].includes(request.status)) {
         buttons.push(
           <button
@@ -108,7 +108,7 @@ export default function SoftDeleteExample() {
     }
     
     // Nút Delete theo scope
-    if (['SaleAdmin', 'Accountant', 'SystemAdmin'].includes(userRole)) {
+    if (['TechnicalDepartment', 'Accountant', 'SystemAdmin'].includes(userRole)) {
       // Kho có thể xóa REJECTED, CANCELLED, COMPLETED
       if (['REJECTED', 'CANCELLED', 'COMPLETED'].includes(request.status)) {
         buttons.push(
@@ -174,7 +174,7 @@ export default function SoftDeleteExample() {
               onChange={(e) => setUserRole(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
             >
-              <option value="SaleAdmin">SaleAdmin (Kho)</option>
+              <option value="TechnicalDepartment">TechnicalDepartment (Kho)</option>
               <option value="Accountant">Accountant (Kho)</option>
               <option value="CustomerAdmin">CustomerAdmin (Khách hàng)</option>
               <option value="CustomerUser">CustomerUser (Khách hàng)</option>

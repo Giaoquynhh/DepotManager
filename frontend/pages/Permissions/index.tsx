@@ -202,7 +202,7 @@ export default function PermissionsPage(){
   const { data: users } = useSWR(isAllowed ? ['/users?role=&page=1&limit=100'] : null, ([u]) => fetcher(u));
 
   const roleOptions: AppRole[] = useMemo(()=>[
-    'SaleAdmin','Accountant','Driver','Security','Dispatcher'
+    'TechnicalDepartment','Accountant','Driver','Security','Dispatcher'
   ], []);
 
   // Group catalog by group for rendering
@@ -237,7 +237,7 @@ export default function PermissionsPage(){
   const translateRoleName = (role: string) => {
     const roleTranslations: Record<string, Record<'vi' | 'en', string>> = {
       'SystemAdmin': { vi: 'Quản trị hệ thống', en: 'SystemAdmin' },
-      'SaleAdmin': { vi: 'Bộ phận kỹ thuật', en: 'Technical Department' },
+      'TechnicalDepartment': { vi: 'Bộ phận kỹ thuật', en: 'Technical Department' },
       'Accountant': { vi: 'Kế toán', en: 'Accountant' },
       'Driver': { vi: 'Tài xế', en: 'Driver' },
       'Security': { vi: 'Nhân viên bảo vệ', en: 'Security' },
@@ -273,7 +273,7 @@ export default function PermissionsPage(){
     const all = PERMISSION_CATALOG.map(i=>i.key) as PermissionKey[];
     return {
       SystemAdmin: all,
-      SaleAdmin: [
+      TechnicalDepartment: [
         'requests.depot',
         'yard.view',
         'containers.manage',
@@ -611,7 +611,7 @@ export default function PermissionsPage(){
            justify-content: center;
          }
         .role-badge.system-admin { background: #dc2626; }
-        .role-badge.sale-admin { background: #059669; }
+        .role-badge.technical-department { background: #059669; }
         .role-badge.accountant { background: #059669; }
         .role-badge.driver { background: #6b7280; }
         .role-badge.security { background: #7c3aed; }
@@ -858,7 +858,7 @@ export default function PermissionsPage(){
                   const getRoleBadgeClass = (role: string) => {
                     switch(role) {
                       case 'SystemAdmin': return 'role-badge system-admin';
-                      case 'SaleAdmin': return 'role-badge sale-admin';
+                      case 'TechnicalDepartment': return 'role-badge technical-department';
                       case 'Accountant': return 'role-badge accountant';
                       case 'Driver': return 'role-badge driver';
                       case 'Security': return 'role-badge security';
@@ -878,7 +878,7 @@ export default function PermissionsPage(){
                       <td>
                         <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                           {current === 'SystemAdmin' && '👑'}
-                          {current === 'SaleAdmin' && '🔧'}
+                          {current === 'TechnicalDepartment' && '🔧'}
                           {current === 'Accountant' && '📊'}
                           {current === 'Driver' && '🚗'}
                           {current === 'Security' && '🛡️'}
@@ -1102,7 +1102,7 @@ export default function PermissionsPage(){
               const getRoleBadgeClass = (role: string) => {
                 switch(role) {
                   case 'SystemAdmin': return 'role-badge system-admin';
-                  case 'SaleAdmin': return 'role-badge sale-admin';
+                      case 'TechnicalDepartment': return 'role-badge technical-department';
                   case 'Accountant': return 'role-badge accountant';
                   case 'Driver': return 'role-badge driver';
                   case 'Security': return 'role-badge security';
@@ -1120,7 +1120,7 @@ export default function PermissionsPage(){
                     </div>
                     <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                       {current === 'SystemAdmin' && '👑'}
-                      {current === 'SaleAdmin' && '🔧'}
+                      {current === 'TechnicalDepartment' && '🔧'}
                       {current === 'Accountant' && '📊'}
                       {current === 'Driver' && '🚗'}
                       {current === 'Security' && '🛡️'}

@@ -112,7 +112,7 @@ export default function InvoiceList(){
             </select>
           </div>
           {/* Chỉ hiển thị nút này cho admin - đặt sát bên phải */}
-          {(userRole === 'SaleAdmin' || userRole === 'SystemAdmin') && (
+          {(userRole === 'TechnicalDepartment' || userRole === 'SystemAdmin') && (
             <button 
               className="btn btn-outline containers-need-invoice-btn"
               onClick={() => setIsModalOpen(true)}

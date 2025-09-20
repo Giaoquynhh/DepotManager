@@ -167,7 +167,7 @@ modules/chat/
 const allowedRoles = [
   'CustomerAdmin',    // Customer admin users
   'CustomerUser',     // Customer regular users
-  'SaleAdmin',        // Depot staff admin
+  'TechnicalDepartment',        // Depot staff admin
   'SystemAdmin'       // System administrators
 ];
 ```
@@ -177,7 +177,7 @@ const allowedRoles = [
 |------|------------------|---------------|---------------|------------------|
 | CustomerAdmin | ✅ | ✅ | ✅ | ❌ (Tenant only) |
 | CustomerUser | ✅ | ✅ | ✅ | ❌ (Tenant only) |
-| SaleAdmin | ✅ | ✅ | ✅ | ✅ (Depot only) |
+| TechnicalDepartment | ✅ | ✅ | ✅ | ✅ (Depot only) |
 | SystemAdmin | ✅ | ✅ | ✅ | ✅ (All) |
 
 ### **Status-based Restrictions (Updated 2025-09)**
@@ -270,7 +270,7 @@ async createChatRoom(actor: any, request_id: string) {
   if (['CustomerAdmin', 'CustomerUser'].includes(actor.role)) {
     // Customer tạo chat room, thêm depot staff
     participants.push('system_depot');
-  } else if (['SaleAdmin', 'SystemAdmin'].includes(actor.role)) {
+  } else if (['TechnicalDepartment', 'SystemAdmin'].includes(actor.role)) {
     // Depot staff tạo chat room, thêm customer
     // Logic để tìm customer của request
   }

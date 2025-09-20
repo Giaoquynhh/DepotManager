@@ -3,6 +3,7 @@ import { api } from '@services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
 import { useDebounce } from '../../../hooks/useDebounce';
+import Link from 'next/link';
 
 interface GateHistoryItem {
   id: string;
@@ -131,6 +132,18 @@ export default function GateHistory({}: GateHistoryProps) {
         <div className="header-content">
           <div className="header-left">
             <h1 className="page-title gradient gradient-ultimate">Lịch sử ra vào cổng</h1>
+          </div>
+          <div className="header-right">
+            <Link 
+              href="/Gate" 
+              className="btn btn-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"></path>
+              </svg>
+              <span>Quay lại</span>
+            </Link>
           </div>
         </div>
       </div>

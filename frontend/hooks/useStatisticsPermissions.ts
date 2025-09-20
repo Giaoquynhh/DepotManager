@@ -43,7 +43,7 @@ const rolePermissions: Record<string, StatisticsPermissions> = {
     canViewOperational: true,
     canExport: true,
   },
-  SaleAdmin: {
+  TechnicalDepartment: {
     canViewOverview: true,
     canViewContainers: true,
     canViewCustomers: true,

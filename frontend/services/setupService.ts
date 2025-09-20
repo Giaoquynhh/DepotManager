@@ -38,8 +38,20 @@ export interface Customer {
   name: string;
   tax_code?: string;
   address?: string;
-  contact_email?: string;
+  email?: string;
+  phone?: string;
   status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PriceList {
+  id: string;
+  serviceCode: string;
+  serviceName: string;
+  type: string;
+  price: number;
+  note?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -411,7 +423,7 @@ class SetupService {
       if (query.limit) params.append('limit', query.limit.toString());
       if (query.status) params.append('status', query.status);
       
-      const response = await api.get(`/customers?${params.toString()}`);
+      const response = await api.get(`/api/setup/customers?${params.toString()}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching customers:', error);
@@ -428,12 +440,13 @@ class SetupService {
     name: string;
     tax_code?: string;
     address?: string;
-    contact_email?: string;
+    email?: string;
+    phone?: string;
   }): Promise<ApiResponse<Customer>> {
     console.log('Sending request to /customers with data:', data);
     
     try {
-      const response = await api.post('/customers', data);
+      const response = await api.post('/api/setup/customers', data);
       console.log('Response received:', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error: any) {
@@ -454,10 +467,11 @@ class SetupService {
   async updateCustomer(id: string, data: {
     name?: string;
     address?: string;
-    contact_email?: string;
+    email?: string;
+    phone?: string;
   }): Promise<ApiResponse<Customer>> {
     try {
-      const response = await api.patch(`/customers/${id}`, data);
+      const response = await api.patch(`/api/setup/customers/${id}`, data);
       return response.data;
     } catch (error: any) {
       console.error('Error updating customer:', error);
@@ -471,7 +485,7 @@ class SetupService {
 
   async disableCustomer(id: string): Promise<ApiResponse<null>> {
     try {
-      const response = await api.patch(`/customers/${id}/disable`);
+      const response = await api.patch(`/api/setup/customers/${id}/disable`);
       return response.data;
     } catch (error: any) {
       console.error('Error disabling customer:', error);
@@ -485,7 +499,7 @@ class SetupService {
 
   async deleteCustomer(id: string): Promise<ApiResponse<null>> {
     try {
-      const response = await api.delete(`/customers/${id}`);
+      const response = await api.delete(`/api/setup/customers/${id}`);
       return response.data;
     } catch (error: any) {
       console.error('Error deleting customer:', error);
@@ -493,6 +507,111 @@ class SetupService {
         success: false,
         error: 'DELETE_ERROR',
         message: error.response?.data?.message || 'Failed to delete customer'
+      };
+    }
+  }
+
+  // PriceList methods
+  async getPriceLists(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<PriceList>>> {
+    try {
+      const params = new URLSearchParams();
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.search) params.append('search', query.search);
+
+      const response = await api.get(`/api/setup/price-lists?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching price lists:', error);
+      return {
+        success: false,
+        error: 'FETCH_ERROR',
+        message: error.response?.data?.message || 'Failed to fetch price lists'
+      };
+    }
+  }
+
+  async getPriceListById(id: string): Promise<ApiResponse<PriceList>> {
+    try {
+      const response = await api.get(`/api/setup/price-lists/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching price list:', error);
+      return {
+        success: false,
+        error: 'FETCH_ERROR',
+        message: error.response?.data?.message || 'Failed to fetch price list'
+      };
+    }
+  }
+
+  async createPriceList(data: {
+    serviceCode: string;
+    serviceName: string;
+    type: string;
+    price: number;
+    note?: string;
+  }): Promise<ApiResponse<PriceList>> {
+    try {
+      const response = await api.post('/api/setup/price-lists', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating price list:', error);
+      return {
+        success: false,
+        error: 'CREATE_ERROR',
+        message: error.response?.data?.message || 'Failed to create price list',
+        details: error.response?.data?.details
+      };
+    }
+  }
+
+  async updatePriceList(id: string, data: {
+    serviceCode?: string;
+    serviceName?: string;
+    type?: string;
+    price?: number;
+    note?: string;
+  }): Promise<ApiResponse<PriceList>> {
+    try {
+      const response = await api.put(`/api/setup/price-lists/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating price list:', error);
+      return {
+        success: false,
+        error: 'UPDATE_ERROR',
+        message: error.response?.data?.message || 'Failed to update price list',
+        details: error.response?.data?.details
+      };
+    }
+  }
+
+  async deletePriceList(id: string): Promise<ApiResponse<null>> {
+    try {
+      const response = await api.delete(`/api/setup/price-lists/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting price list:', error);
+      return {
+        success: false,
+        error: 'DELETE_ERROR',
+        message: error.response?.data?.message || 'Failed to delete price list'
+      };
+    }
+  }
+
+  // Upload price list Excel file
+  async uploadPriceListExcel(file: FormData): Promise<ApiResponse<PriceList[]>> {
+    try {
+      const response = await api.post('/api/setup/price-lists/upload-excel', file);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error uploading price list Excel:', error);
+      return {
+        success: false,
+        error: 'UPLOAD_ERROR',
+        message: error.response?.data?.message || 'Failed to upload Excel file'
       };
     }
   }

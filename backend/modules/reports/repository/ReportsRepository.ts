@@ -165,8 +165,10 @@ export class ReportsRepository {
           p.service_status IS NULL OR
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'COMPLETED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          -- Lấy container đã CHECKED: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
+          (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'COMPLETED' AND (
+          (p.service_status NOT IN ('COMPLETED', 'CHECKED') AND (
             ls.service_status::text = p.service_status OR 
             (bc.source = 'YARD_PLACEMENT' AND p.service_status = 'SYSTEM_ADMIN_ADDED')
           ))
@@ -244,8 +246,10 @@ export class ReportsRepository {
           p.service_status IS NULL OR
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
           (p.service_status = 'COMPLETED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
+          -- Lấy container đã CHECKED: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
+          (p.service_status = 'CHECKED' AND (ls.gate_checked_at IS NOT NULL OR COALESCE(rt.repair_checked, FALSE) = TRUE)) OR
           -- Lấy container theo service_status khác
-          (p.service_status <> 'COMPLETED' AND (
+          (p.service_status NOT IN ('COMPLETED', 'CHECKED') AND (
             ls.service_status::text = p.service_status OR 
             (bc.source = 'YARD_PLACEMENT' AND p.service_status = 'SYSTEM_ADMIN_ADDED')
           ))

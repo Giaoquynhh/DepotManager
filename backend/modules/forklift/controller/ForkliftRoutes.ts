@@ -5,7 +5,7 @@ import { requireRoles } from '../../../shared/middlewares/rbac';
 
 const router = Router();
 
-router.use(authenticate, requireRoles('SaleAdmin','SystemAdmin','YardManager'));
+router.use(authenticate, requireRoles('TechnicalDepartment','SystemAdmin','YardManager'));
 
 // List all forklift jobs
 router.get('/jobs', (req, res) => controller.listJobs(req, res));

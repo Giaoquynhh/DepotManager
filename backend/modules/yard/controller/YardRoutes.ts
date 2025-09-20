@@ -19,13 +19,13 @@ router.get('/stack/slot/:slot_id', (req, res) => controller.stackDetails(req as 
 router.get('/stack/container/:container_no', (req, res) => controller.stackLookup(req as any, res));
 
 // Write endpoints — yêu cầu SaleAdmin/SystemAdmin
-router.get('/suggest-position', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.suggest(req as any, res));
-router.patch('/assign-position', requireRoles('SaleAdmin','SystemAdmin'), (req, res) => controller.assign(req as any, res));
+router.get('/suggest-position', requireRoles('TechnicalDepartment','SystemAdmin'), (req, res) => controller.suggest(req as any, res));
+router.patch('/assign-position', requireRoles('TechnicalDepartment','SystemAdmin'), (req, res) => controller.assign(req as any, res));
 
-router.post('/stack/hold', requireRoles('SaleAdmin','SystemAdmin'), validate(holdSchema), (req, res) => controller.hold(req as any, res));
-router.post('/stack/confirm', requireRoles('SaleAdmin','SystemAdmin'), validate(confirmSchema), (req, res) => controller.confirm(req as any, res));
-router.post('/stack/release', requireRoles('SaleAdmin','SystemAdmin'), validate(releaseSchema), (req, res) => controller.release(req as any, res));
-router.post('/stack/remove-by-container', requireRoles('SaleAdmin','SystemAdmin'), validate(removeByContainerSchema), (req, res) => controller.removeByContainer(req as any, res));
+router.post('/stack/hold', requireRoles('TechnicalDepartment','SystemAdmin'), validate(holdSchema), (req, res) => controller.hold(req as any, res));
+router.post('/stack/confirm', requireRoles('TechnicalDepartment','SystemAdmin'), validate(confirmSchema), (req, res) => controller.confirm(req as any, res));
+router.post('/stack/release', requireRoles('TechnicalDepartment','SystemAdmin'), validate(releaseSchema), (req, res) => controller.release(req as any, res));
+router.post('/stack/remove-by-container', requireRoles('TechnicalDepartment','SystemAdmin'), validate(removeByContainerSchema), (req, res) => controller.removeByContainer(req as any, res));
 
 // Yard Configuration routes - chỉ SystemAdmin
 router.get('/configuration', requireRoles('SystemAdmin'), (req, res) => controller.getConfiguration(req as any, res));

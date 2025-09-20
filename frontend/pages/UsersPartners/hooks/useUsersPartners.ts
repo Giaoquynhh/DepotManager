@@ -24,10 +24,10 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
   const [empFullName, setEmpFullName] = useState('');
   const [empEmail, setEmpEmail] = useState('');
   const [empPassword, setEmpPassword] = useState('');
-  const [empRole, setEmpRole] = useState('SaleAdmin');
+  const [empRole, setEmpRole] = useState('TechnicalDepartment');
   const [partnerFullName, setPartnerFullName] = useState('');
   const [partnerEmail, setPartnerEmail] = useState('');
-  const [partnerRole, setPartnerRole] = useState('SaleAdmin');
+  const [partnerRole, setPartnerRole] = useState('TechnicalDepartment');
   const [partnerTenantId, setPartnerTenantId] = useState('');
   const [partnerCompanyName, setPartnerCompanyName] = useState('');
   const [userCompanyMap, setUserCompanyMap] = useState<{[key: string]: string}>({});
@@ -47,7 +47,7 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
   // Functions
   const loadAvailableCompanies = async () => {
     try {
-      const response = await api.get('/customers?page=1&limit=100');
+      const response = await api.get('/api/setup/customers?page=1&limit=100');
       setAvailableCompanies(response.data?.data || []);
     } catch (error) {
       console.error('Error loading companies:', error);

@@ -3,7 +3,7 @@ import Card from '@components/Card';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@services/api';
-import { canViewUsersPartners, isCustomerRole, isSaleAdmin, isAccountant, canUseGate } from '@utils/rbac';
+import { canViewUsersPartners, isCustomerRole, isTechnicalDepartment, isAccountant, canUseGate } from '@utils/rbac';
 
 export default function Dashboard(){
 	const [me, setMe] = useState<any>(null);
@@ -17,9 +17,9 @@ export default function Dashboard(){
         const firstRoute = (()=>{
             if (canViewUsersPartners(role)) return '/UsersPartners';
             // (ĐÃ GỠ) Customer route không còn
-            if (isSaleAdmin(role) || isAccountant(role)) return '/Requests/Depot';
+            if (isTechnicalDepartment(role) || isAccountant(role)) return '/Requests/Depot';
             if (canUseGate(role)) return '/Gate';
-            if (isSaleAdmin(role)) return '/Yard';
+            if (isTechnicalDepartment(role)) return '/Yard';
             return '/Account';
         })();
         if (window.location.pathname === '/Dashboard') {
@@ -54,7 +54,7 @@ export default function Dashboard(){
 							</Card>
 						)}
                         {/* (ĐÃ GỠ) Thẻ Khách hàng đã bị loại bỏ */}
-						{(isSaleAdmin(role) || isAccountant(role)) && (
+						{(isTechnicalDepartment(role) || isAccountant(role)) && (
 							<Card title="Yêu cầu dịch vụ (Depot)" actions={<Link className="btn" href="/Requests/Depot">Mở</Link>}>
 								Tiếp nhận/từ chối, upload chứng từ, gửi yêu cầu thanh toán.
 							</Card>
@@ -64,17 +64,17 @@ export default function Dashboard(){
 							Quét/đối chiếu, check-in, check-out, in phiếu.
 						</Card>
 					)}
-					{isSaleAdmin(role) && (
+					{isTechnicalDepartment(role) && (
 						<Card title="Điều độ bãi" actions={<Link className="btn" href="/Yard">Mở</Link>}>
 							Sơ đồ bãi, gợi ý & gán vị trí, quản lý container.
 						</Card>
 					)}
-					{isSaleAdmin(role) && (
+					{isTechnicalDepartment(role) && (
 						<Card title="Quản lý Xe nâng" actions={<Link className="btn" href="/Forklift">Mở</Link>}>
 							Theo dõi và quản lý công việc xe nâng, gán xe cho công việc.
 						</Card>
 					)}
-					{isSaleAdmin(role) && (
+					{isTechnicalDepartment(role) && (
                         <Card title="Bảo trì & Vật tư" actions={<div style={{display:'flex',gap:8}}>
 							<Link className="btn" href="/Maintenance/Repairs">Phiếu sửa chữa</Link>
 							<Link className="btn" href="/Maintenance/Inventory">Tồn kho</Link>
@@ -82,7 +82,7 @@ export default function Dashboard(){
 							Tạo/duyệt phiếu sửa chữa; quản lý tồn kho vật tư.
 						</Card>
 					)}
-					{isSaleAdmin(role) && (
+					{isTechnicalDepartment(role) && (
                         <Card title="Tài chính & Hóa đơn" actions={<div style={{display:'flex',gap:8}}>
 							<Link className="btn" href="/finance/invoices">Danh sách Hóa đơn</Link>
 							</div>}>

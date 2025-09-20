@@ -6,11 +6,17 @@ import {
   UpdateTransportCompanyDto,
   CreateContainerTypeDto,
   UpdateContainerTypeDto,
+  CreateCustomerDto,
+  UpdateCustomerDto,
+  CreatePriceListDto,
+  UpdatePriceListDto,
   PaginationQuery,
   ApiResponse,
   ShippingLineResponse,
   TransportCompanyResponse,
   ContainerTypeResponse,
+  CustomerResponse,
+  PriceListResponse,
   PaginatedResponse
 } from '../dto/SetupDtos';
 import * as XLSX from 'xlsx';
@@ -714,6 +720,571 @@ export class SetupService {
         success: false,
         error: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to delete container type'
+      };
+    }
+  }
+
+  // Customers
+  async getCustomers(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<CustomerResponse>>> {
+    try {
+      const result = await repo.getCustomers(query);
+      return {
+        success: true,
+        data: {
+          data: result.customers,
+          pagination: result.pagination
+        }
+      };
+    } catch (error) {
+      console.error('Error getting customers:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get customers'
+      };
+    }
+  }
+
+  async getCustomerById(id: string): Promise<ApiResponse<CustomerResponse>> {
+    try {
+      const customer = await repo.getCustomerById(id);
+      if (!customer) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Customer not found'
+        };
+      }
+      return {
+        success: true,
+        data: customer
+      };
+    } catch (error) {
+      console.error('Error getting customer:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get customer'
+      };
+    }
+  }
+
+  async createCustomer(data: CreateCustomerDto): Promise<ApiResponse<CustomerResponse>> {
+    try {
+      // Validation
+      if (!data.code?.trim()) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Customer code is required',
+          details: [{ field: 'code', message: 'Code is required' }]
+        };
+      }
+      if (!data.name?.trim()) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Customer name is required',
+          details: [{ field: 'name', message: 'Name is required' }]
+        };
+      }
+
+      // Check for duplicate code
+      const existing = await repo.getCustomerByCode(data.code.trim());
+      if (existing) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Customer code already exists',
+          details: [{ field: 'code', message: 'Code already exists' }]
+        };
+      }
+
+      // Check for duplicate tax code if provided
+      if (data.tax_code?.trim()) {
+        const existingTax = await repo.getCustomerByTaxCode(data.tax_code.trim());
+        if (existingTax) {
+          return {
+            success: false,
+            error: 'VALIDATION_ERROR',
+            message: 'Tax code already exists',
+            details: [{ field: 'tax_code', message: 'Tax code already exists' }]
+          };
+        }
+      }
+
+      // Validate email format if provided
+      if (data.email?.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email.trim())) {
+          return {
+            success: false,
+            error: 'VALIDATION_ERROR',
+            message: 'Email format is invalid',
+            details: [{ field: 'email', message: 'Please enter a valid email address' }]
+          };
+        }
+      }
+
+      const customer = await repo.createCustomer({
+        code: data.code.trim(),
+        name: data.name.trim(),
+        tax_code: data.tax_code?.trim(),
+        address: data.address?.trim(),
+        email: data.email?.trim(),
+        phone: data.phone?.trim()
+      });
+
+      return {
+        success: true,
+        data: customer,
+        message: 'Customer created successfully'
+      };
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create customer'
+      };
+    }
+  }
+
+  async updateCustomer(id: string, data: UpdateCustomerDto): Promise<ApiResponse<CustomerResponse>> {
+    try {
+      // Check if customer exists
+      const existing = await repo.getCustomerById(id);
+      if (!existing) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Customer not found'
+        };
+      }
+
+      // Validate email format if provided
+      if (data.email !== undefined && data.email?.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email.trim())) {
+          return {
+            success: false,
+            error: 'VALIDATION_ERROR',
+            message: 'Email format is invalid',
+            details: [{ field: 'email', message: 'Please enter a valid email address' }]
+          };
+        }
+      }
+
+      const updateData: any = {};
+      if (data.name) updateData.name = data.name.trim();
+      if (data.address !== undefined) updateData.address = data.address?.trim() || null;
+      if (data.email !== undefined) updateData.email = data.email?.trim() || null;
+      if (data.phone !== undefined) updateData.phone = data.phone?.trim() || null;
+
+      const customer = await repo.updateCustomer(id, updateData);
+
+      return {
+        success: true,
+        data: customer,
+        message: 'Customer updated successfully'
+      };
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update customer'
+      };
+    }
+  }
+
+  async deleteCustomer(id: string): Promise<ApiResponse<null>> {
+    try {
+      const existing = await repo.getCustomerById(id);
+      if (!existing) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Customer not found'
+        };
+      }
+
+      await repo.deleteCustomer(id);
+
+      return {
+        success: true,
+        message: 'Customer deleted successfully'
+      };
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete customer'
+      };
+    }
+  }
+
+  async disableCustomer(id: string): Promise<ApiResponse<CustomerResponse>> {
+    try {
+      const existing = await repo.getCustomerById(id);
+      if (!existing) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Customer not found'
+        };
+      }
+
+      const customer = await repo.updateCustomer(id, { status: 'INACTIVE' });
+
+      return {
+        success: true,
+        data: customer,
+        message: 'Customer disabled successfully'
+      };
+    } catch (error) {
+      console.error('Error disabling customer:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to disable customer'
+      };
+    }
+  }
+
+  // PriceList
+  async getPriceLists(query: PaginationQuery = {}): Promise<ApiResponse<PaginatedResponse<PriceListResponse>>> {
+    try {
+      const result = await repo.getPriceLists(query);
+      return {
+        success: true,
+        data: {
+          data: result.priceLists,
+          pagination: result.pagination
+        }
+      };
+    } catch (error) {
+      console.error('Error getting price lists:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get price lists'
+      };
+    }
+  }
+
+  async getPriceListById(id: string): Promise<ApiResponse<PriceListResponse>> {
+    try {
+      const priceList = await repo.getPriceListById(id);
+      if (!priceList) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Price list not found'
+        };
+      }
+      return {
+        success: true,
+        data: priceList
+      };
+    } catch (error) {
+      console.error('Error getting price list:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get price list'
+      };
+    }
+  }
+
+  async createPriceList(data: CreatePriceListDto): Promise<ApiResponse<PriceListResponse>> {
+    try {
+      // Validation
+      if (!data.serviceCode?.trim()) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Service code is required',
+          details: [{ field: 'serviceCode', message: 'Service code is required' }]
+        };
+      }
+      if (!data.serviceName?.trim()) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Service name is required',
+          details: [{ field: 'serviceName', message: 'Service name is required' }]
+        };
+      }
+      if (!data.type?.trim()) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Type is required',
+          details: [{ field: 'type', message: 'Type is required' }]
+        };
+      }
+      if (!data.price || data.price <= 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Price must be greater than 0',
+          details: [{ field: 'price', message: 'Price must be greater than 0' }]
+        };
+      }
+
+      // Validate type values
+      const validTypes = ['Nâng', 'Hạ', 'Tồn kho'];
+      if (!validTypes.includes(data.type)) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Type must be one of: Nâng, Hạ, Tồn kho',
+          details: [{ field: 'type', message: 'Type must be one of: Nâng, Hạ, Tồn kho' }]
+        };
+      }
+
+      // Check for duplicate service code
+      const existing = await repo.getPriceListByServiceCode(data.serviceCode.trim());
+      if (existing) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Service code already exists',
+          details: [{ field: 'serviceCode', message: 'Service code already exists' }]
+        };
+      }
+
+      const priceList = await repo.createPriceList({
+        serviceCode: data.serviceCode.trim(),
+        serviceName: data.serviceName.trim(),
+        type: data.type.trim(),
+        price: data.price,
+        note: data.note?.trim()
+      });
+
+      return {
+        success: true,
+        data: priceList,
+        message: 'Price list created successfully'
+      };
+    } catch (error) {
+      console.error('Error creating price list:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create price list'
+      };
+    }
+  }
+
+  async updatePriceList(id: string, data: UpdatePriceListDto): Promise<ApiResponse<PriceListResponse>> {
+    try {
+      // Check if price list exists
+      const existing = await repo.getPriceListById(id);
+      if (!existing) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Price list not found'
+        };
+      }
+
+      // Validate type if provided
+      if (data.type && data.type.trim()) {
+        const validTypes = ['Nâng', 'Hạ', 'Tôn'];
+        if (!validTypes.includes(data.type.trim())) {
+          return {
+            success: false,
+            error: 'VALIDATION_ERROR',
+            message: 'Type must be one of: Nâng, Hạ, Tôn',
+            details: [{ field: 'type', message: 'Type must be one of: Nâng, Hạ, Tồn kho' }]
+          };
+        }
+      }
+
+      // Validate price if provided
+      if (data.price !== undefined && data.price <= 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Price must be greater than 0',
+          details: [{ field: 'price', message: 'Price must be greater than 0' }]
+        };
+      }
+
+      // Check for duplicate service code if code is being updated
+      if (data.serviceCode && data.serviceCode !== existing.serviceCode) {
+        const duplicate = await repo.getPriceListByServiceCode(data.serviceCode.trim());
+        if (duplicate) {
+          return {
+            success: false,
+            error: 'VALIDATION_ERROR',
+            message: 'Service code already exists',
+            details: [{ field: 'serviceCode', message: 'Service code already exists' }]
+          };
+        }
+      }
+
+      const updateData: any = {};
+      if (data.serviceCode) updateData.serviceCode = data.serviceCode.trim();
+      if (data.serviceName) updateData.serviceName = data.serviceName.trim();
+      if (data.type) updateData.type = data.type.trim();
+      if (data.price !== undefined) updateData.price = data.price;
+      if (data.note !== undefined) updateData.note = data.note?.trim() || null;
+
+      const priceList = await repo.updatePriceList(id, updateData);
+
+      return {
+        success: true,
+        data: priceList,
+        message: 'Price list updated successfully'
+      };
+    } catch (error) {
+      console.error('Error updating price list:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update price list'
+      };
+    }
+  }
+
+  async deletePriceList(id: string): Promise<ApiResponse<null>> {
+    try {
+      const existing = await repo.getPriceListById(id);
+      if (!existing) {
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Price list not found'
+        };
+      }
+
+      const deleted = await repo.deletePriceList(id);
+      if (!deleted) {
+        return {
+          success: false,
+          error: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete price list'
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Price list deleted successfully'
+      };
+    } catch (error) {
+      console.error('Error deleting price list:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete price list'
+      };
+    }
+  }
+
+  // Upload price list Excel file
+  async uploadPriceListExcel(file: Express.Multer.File): Promise<ApiResponse<PriceListResponse[]>> {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Expect columns: ServiceCode, ServiceName, Type, Price, Note
+      const rows = jsonData.slice(1) as string[][];
+      const priceLists: PriceListResponse[] = [];
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0 || !row.some(cell => cell && cell.toString().trim())) {
+          continue;
+        }
+
+        if (row.length < 4 || !row[0] || !row[1] || !row[2] || !row[3]) {
+          errors.push(`Row ${i + 2}: Missing required fields (ServiceCode, ServiceName, Type, Price)`);
+          continue;
+        }
+
+        const serviceCode = row[0].toString().trim();
+        const serviceName = row[1].toString().trim();
+        const type = row[2].toString().trim();
+        const priceStr = row[3].toString().trim();
+        const note = row[4] ? row[4].toString().trim() : '';
+
+        // Validate type
+        const validTypes = ['Nâng', 'Hạ', 'Tôn'];
+        if (!validTypes.includes(type)) {
+          errors.push(`Row ${i + 2}: Type must be one of: Nâng, Hạ, Tôn`);
+          continue;
+        }
+
+        // Validate price
+        const price = parseFloat(priceStr);
+        if (isNaN(price) || price <= 0) {
+          errors.push(`Row ${i + 2}: Price must be a valid number greater than 0`);
+          continue;
+        }
+
+        // Check duplicate in current batch
+        const isDuplicate = priceLists.some(pl => pl.serviceCode.toLowerCase() === serviceCode.toLowerCase());
+        if (isDuplicate) {
+          errors.push(`Row ${i + 2}: Duplicate service code "${serviceCode}"`);
+          continue;
+        }
+
+        const createData: CreatePriceListDto = {
+          serviceCode,
+          serviceName,
+          type,
+          price,
+          note: note || undefined
+        };
+
+        try {
+          const result = await this.createPriceList(createData);
+          if (result.success && result.data) {
+            priceLists.push(result.data);
+          } else {
+            errors.push(`Row ${i + 2}: ${result.message || 'Failed to create'}`);
+          }
+        } catch (error) {
+          errors.push(`Row ${i + 2}: Failed to create price list`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Some rows failed to process',
+          details: errors
+        };
+      }
+
+      if (priceLists.length === 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No valid data found in Excel file'
+        };
+      }
+
+      return {
+        success: true,
+        data: priceLists,
+        message: `Successfully uploaded ${priceLists.length} price lists`
+      };
+    } catch (error) {
+      console.error('Error uploading price list Excel:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process Excel file'
       };
     }
   }

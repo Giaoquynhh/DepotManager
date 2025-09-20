@@ -12,7 +12,7 @@ import { ChatWebSocket } from './modules/chat/websocket/ChatWebSocket';
 // Routes
 import authRoutes from './modules/auth/controller/authRoutes';
 import userRoutes from './modules/users/controller/userRoutes';
-import customerRoutes from './modules/customers/controller/customerRoutes';
+// import customerRoutes from './modules/customers/controller/customerRoutes'; // Moved to setup module
 import partnerRoutes from './modules/partners/controller/partnerRoutes';
 import auditRoutes from './modules/audit/controller/auditRoutes';
 import chatRoutes from './modules/chat/controller/ChatRoutes';
@@ -83,7 +83,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/auth', authRoutes);
 app.use('/users', authenticate, userRoutes);
-app.use('/customers', authenticate, customerRoutes);
+// app.use('/customers', authenticate, customerRoutes); // Moved to /api/setup/customers
 app.use('/partners', authenticate, partnerRoutes);
 app.use('/audit', authenticate, auditRoutes);
 
