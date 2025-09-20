@@ -24,7 +24,7 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
   const [empFullName, setEmpFullName] = useState('');
   const [empEmail, setEmpEmail] = useState('');
   const [empPassword, setEmpPassword] = useState('');
-  const [empRole, setEmpRole] = useState('HRManager');
+  const [empRole, setEmpRole] = useState('SaleAdmin');
   const [partnerFullName, setPartnerFullName] = useState('');
   const [partnerEmail, setPartnerEmail] = useState('');
   const [partnerRole, setPartnerRole] = useState('SaleAdmin');
@@ -71,11 +71,13 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
     try{
       if (action === 'delete') {
         await api.delete(`/users/${id}`);
-        setMessage(`Đã ${action} user`);
+        const actionText = translations[language][action] || action;
+        setMessage(translations[language].userActionSuccess.replace('{action}', actionText));
         setTimeout(() => setMessage(''), 3000);
       } else {
         await api.patch(`/users/${id}/${action}`);
-        setMessage(`Đã ${action} user`);
+        const actionText = translations[language][action] || action;
+        setMessage(translations[language].userActionSuccess.replace('{action}', actionText));
         setTimeout(() => setMessage(''), 3000);
       }
       
@@ -83,7 +85,8 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
       mutate(['/users?role=&page=1&limit=50']);
       // partners đã tạm gỡ
     }catch(e:any){ 
-      setMessage(e?.response?.data?.message || `Lỗi ${action}`); 
+      const actionText = translations[language][action] || action;
+      setMessage(e?.response?.data?.message || translations[language].userActionError.replace('{action}', actionText)); 
     }
   };
 
@@ -93,16 +96,19 @@ export const useUsersPartners = (role: string, currentUser: any, language: Langu
     try{
       if (action === 'delete') {
         await api.delete(`/users/${id}`);
-        setMessage(`Đã ${action} user`);
+        const actionText = translations[language][action] || action;
+        setMessage(translations[language].userActionSuccess.replace('{action}', actionText));
       } else {
         await api.patch(`/users/${id}/${action}`);
-        setMessage(`Đã ${action} user`);
+        const actionText = translations[language][action] || action;
+        setMessage(translations[language].userActionSuccess.replace('{action}', actionText));
       }
       // Refresh users
       mutate(['/users?role=&page=1&limit=50']);
       // partners đã tạm gỡ
     }catch(e:any){ 
-      setMessage(e?.response?.data?.message || `Lỗi ${action}`); 
+      const actionText = translations[language][action] || action;
+      setMessage(e?.response?.data?.message || translations[language].userActionError.replace('{action}', actionText)); 
     }
   };
 

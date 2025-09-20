@@ -9,12 +9,7 @@ const nextConfig = {
 	},
 	// Tắt error overlay trong development
 	devIndicators: {
-		buildActivity: false,
-		buildActivityPosition: 'bottom-right',
-	},
-	// Tắt error overlay
-	experimental: {
-		esmExternals: false,
+		position: 'bottom-right',
 	},
 	rewrites: async () => ([
 		{

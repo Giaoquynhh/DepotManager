@@ -6,9 +6,10 @@ import { useTranslation } from '../hooks/useTranslation';
 interface SetupSubmenuProps {
   isExpanded: boolean;
   onToggle: () => void;
+  onSubmenuLinkClick?: (e: React.MouseEvent) => void;
 }
 
-export const SetupSubmenu: React.FC<SetupSubmenuProps> = ({ isExpanded, onToggle }) => {
+export const SetupSubmenu: React.FC<SetupSubmenuProps> = ({ isExpanded, onToggle, onSubmenuLinkClick }) => {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -100,6 +101,7 @@ export const SetupSubmenu: React.FC<SetupSubmenuProps> = ({ isExpanded, onToggle
               key={item.key}
               className={`sidebar-link sidebar-submenu-link ${router.pathname === item.href ? 'active' : ''}`}
               href={item.href}
+              onClick={onSubmenuLinkClick}
             >
               {item.icon}
               <span>{item.label}</span>

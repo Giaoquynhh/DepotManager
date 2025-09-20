@@ -2,7 +2,7 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: calc(var(--header-clearance) - 4px);
+  top: calc(var(--header-clearance) - 4.8px);
   bottom: 0;
   width: 240px;
   background: linear-gradient(180deg, 

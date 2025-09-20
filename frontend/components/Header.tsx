@@ -130,6 +130,24 @@ export default function Header() {
     }
   }, [router.pathname]);
 
+  // Auto-open HR submenu when on HR pages
+  useEffect(() => {
+    if (router.pathname === '/UsersPartners' || router.pathname === '/Permissions') {
+      setHrSubmenuOpen(true);
+    }
+  }, [router.pathname]);
+
+  // Auto-open Setup submenu when on Setup pages
+  useEffect(() => {
+    if (router.pathname === '/Setup' || 
+        router.pathname === '/Setup/ShippingLines' || 
+        router.pathname === '/Setup/TransportCompanies' || 
+        router.pathname === '/Setup/ContainerTypes' || 
+        router.pathname === '/Setup/Customers') {
+      setSetupSubmenuOpen(true);
+    }
+  }, [router.pathname]);
+
   // Auto-open Container submenus when on Container pages
   useEffect(() => {
     if (router.pathname === '/LiftContainer') {
@@ -138,7 +156,7 @@ export default function Header() {
       setLiftContainerSubmenuOpen(false);
     }
 
-    if (router.pathname === '/LowerContainer') {
+    if (router.pathname === '/LowerContainer' || router.pathname === '/Maintenance/Repairs') {
       setLowerContainerSubmenuOpen(true);
     } else {
       setLowerContainerSubmenuOpen(false);
@@ -282,6 +300,12 @@ export default function Header() {
       }
     }
     // Không preventDefault để cho phép chuyển trang bình thường
+  };
+
+  // Handle submenu link clicks - don't close sidebar on mobile
+  const handleSubmenuLinkClick = (e: React.MouseEvent) => {
+    // Không đóng sidebar khi click vào submenu items
+    // Chỉ cho phép chuyển trang bình thường
   };
 
   const toggleAccountDropdown = () => {
@@ -646,7 +670,7 @@ export default function Header() {
                       <Link 
                         className={`sidebar-link sidebar-submenu-link ${router.pathname === '/UsersPartners' ? 'active' : ''}`} 
                         href="/UsersPartners" 
-                        onClick={handleSidebarLinkClick}
+                        onClick={handleSubmenuLinkClick}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -667,7 +691,7 @@ export default function Header() {
                       <Link 
                         className={`sidebar-link sidebar-submenu-link ${router.pathname === '/Permissions' ? 'active' : ''}`} 
                         href="/Permissions" 
-                        onClick={handleSidebarLinkClick}
+                        onClick={handleSubmenuLinkClick}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -802,6 +826,7 @@ export default function Header() {
                 onToggle={() => setLowerContainerSubmenuOpen(!lowerContainerSubmenuOpen)}
                 containerType="lower"
                 onSidebarLinkClick={handleSidebarLinkClick}
+                onSubmenuLinkClick={handleSubmenuLinkClick}
               />
             )}
 
@@ -818,6 +843,7 @@ export default function Header() {
                 onToggle={() => setLiftContainerSubmenuOpen(!liftContainerSubmenuOpen)}
                 containerType="lift"
                 onSidebarLinkClick={handleSidebarLinkClick}
+                onSubmenuLinkClick={handleSubmenuLinkClick}
               />
             )}
 
@@ -856,21 +882,6 @@ export default function Header() {
                 </svg>
                                  <span>{t('sidebar.dashboard')}</span>
               </Link>
-            )}
-            {/* Maintenance - Repairs */}
-            {(() => {
-              const allow = canManageMaintenance(me?.role);
-              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
-                ? hasPermission(me?.permissions, 'maintenance.repairs')
-                : allow;
-              return ok;
-            })() && (
-                <Link className={`sidebar-link ${router.pathname === '/Maintenance/Repairs' ? 'active' : ''}`} href="/Maintenance/Repairs" onClick={handleSidebarLinkClick}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                  </svg>
-                                     <span>{t('sidebar.repairTickets')}</span>
-                </Link>
             )}
 
             {/* Maintenance - Inventory */}
@@ -924,7 +935,8 @@ export default function Header() {
             })() && (
               <SetupSubmenu 
                 isExpanded={setupSubmenuOpen} 
-                onToggle={() => setSetupSubmenuOpen(!setupSubmenuOpen)} 
+                onToggle={() => setSetupSubmenuOpen(!setupSubmenuOpen)}
+                onSubmenuLinkClick={handleSubmenuLinkClick}
               />
             )}
 

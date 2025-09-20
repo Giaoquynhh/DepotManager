@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Header from '@components/Header';
 import Card from '@components/Card';
 import { api } from '@services/api';
-import { AppRole, isBusinessAdmin, isSystemAdmin } from '@utils/rbac';
+import { AppRole,isSystemAdmin } from '@utils/rbac';
 import { PERMISSION_CATALOG, PermissionKey } from '@utils/permissionsCatalog';
 
 const fetcher = (url: string) => api.get(url).then(r => r.data);
@@ -198,11 +198,11 @@ export default function PermissionsPage(){
     }
   },[]);
 
-  const isAllowed = isSystemAdmin(myRole) || isBusinessAdmin(myRole);
+  const isAllowed = isSystemAdmin(myRole);
   const { data: users } = useSWR(isAllowed ? ['/users?role=&page=1&limit=100'] : null, ([u]) => fetcher(u));
 
   const roleOptions: AppRole[] = useMemo(()=>[
-    'SystemAdmin','BusinessAdmin','SaleAdmin','CustomerAdmin','CustomerUser','Accountant','Driver'
+    'SaleAdmin','Accountant','Driver','Security','Dispatcher'
   ], []);
 
   // Group catalog by group for rendering
@@ -237,12 +237,11 @@ export default function PermissionsPage(){
   const translateRoleName = (role: string) => {
     const roleTranslations: Record<string, Record<'vi' | 'en', string>> = {
       'SystemAdmin': { vi: 'Quản trị hệ thống', en: 'SystemAdmin' },
-      'BusinessAdmin': { vi: 'Quản trị kinh doanh', en: 'BusinessAdmin' },
-      'SaleAdmin': { vi: 'Quản trị bán hàng', en: 'SaleAdmin' },
-      'CustomerAdmin': { vi: 'Quản trị khách hàng', en: 'CustomerAdmin' },
-      'CustomerUser': { vi: 'Người dùng khách hàng', en: 'CustomerUser' },
+      'SaleAdmin': { vi: 'Bộ phận kỹ thuật', en: 'Technical Department' },
       'Accountant': { vi: 'Kế toán', en: 'Accountant' },
-      'Driver': { vi: 'Tài xế', en: 'Driver' }
+      'Driver': { vi: 'Tài xế', en: 'Driver' },
+      'Security': { vi: 'Nhân viên bảo vệ', en: 'Security' },
+      'Dispatcher': { vi: 'Nhân viên điều độ', en: 'Dispatcher' }
     };
     
     return roleTranslations[role]?.[language] || role;
@@ -274,12 +273,6 @@ export default function PermissionsPage(){
     const all = PERMISSION_CATALOG.map(i=>i.key) as PermissionKey[];
     return {
       SystemAdmin: all,
-      BusinessAdmin: [
-        'users_partners.view',
-        'permissions.manage',
-        'requests.depot',
-        'account.view',
-      ],
       SaleAdmin: [
         'requests.depot',
         'yard.view',
@@ -290,15 +283,6 @@ export default function PermissionsPage(){
         'finance.invoices',
         'account.view',
       ],
-      CustomerAdmin: [
-        'users_partners.view', // nếu muốn cho CustomerAdmin xem người dùng/đối tác, có thể gỡ nếu không cần
-        'requests.customer',
-        'account.view',
-      ],
-      CustomerUser: [
-        'requests.customer',
-        'account.view',
-      ],
       Accountant: [
         'requests.depot',
         'finance.invoices',
@@ -306,6 +290,15 @@ export default function PermissionsPage(){
       ],
       Driver: [
         'driver.dashboard',
+        'account.view',
+      ],
+      Security: [
+        'gate.use',
+        'account.view',
+      ],
+      Dispatcher: [
+        'yard.view',
+        'containers.manage',
         'account.view',
       ],
     };
@@ -618,11 +611,11 @@ export default function PermissionsPage(){
            justify-content: center;
          }
         .role-badge.system-admin { background: #dc2626; }
-        .role-badge.business-admin { background: #7c3aed; }
-        .role-badge.sale-admin { background: #ea580c; }
-        .role-badge.customer-admin { background: #0891b2; }
+        .role-badge.sale-admin { background: #059669; }
         .role-badge.accountant { background: #059669; }
         .role-badge.driver { background: #6b7280; }
+        .role-badge.security { background: #7c3aed; }
+        .role-badge.dispatcher { background: #0891b2; }
         .role-badge.default { background: #6b7280; }
         
         /* Enhanced Function Groups */
@@ -865,11 +858,11 @@ export default function PermissionsPage(){
                   const getRoleBadgeClass = (role: string) => {
                     switch(role) {
                       case 'SystemAdmin': return 'role-badge system-admin';
-                      case 'BusinessAdmin': return 'role-badge business-admin';
                       case 'SaleAdmin': return 'role-badge sale-admin';
-                      case 'CustomerAdmin': return 'role-badge customer-admin';
                       case 'Accountant': return 'role-badge accountant';
                       case 'Driver': return 'role-badge driver';
+                      case 'Security': return 'role-badge security';
+                      case 'Dispatcher': return 'role-badge dispatcher';
                       default: return 'role-badge default';
                     }
                   };
@@ -885,11 +878,11 @@ export default function PermissionsPage(){
                       <td>
                         <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                           {current === 'SystemAdmin' && '👑'}
-                          {current === 'BusinessAdmin' && '💼'}
-                          {current === 'SaleAdmin' && '💰'}
-                          {current === 'CustomerAdmin' && '👥'}
+                          {current === 'SaleAdmin' && '🔧'}
                           {current === 'Accountant' && '📊'}
                           {current === 'Driver' && '🚗'}
+                          {current === 'Security' && '🛡️'}
+                          {current === 'Dispatcher' && '📡'}
                           {translateRoleName(current)}
                         </span>
                       </td>
@@ -1109,11 +1102,11 @@ export default function PermissionsPage(){
               const getRoleBadgeClass = (role: string) => {
                 switch(role) {
                   case 'SystemAdmin': return 'role-badge system-admin';
-                  case 'BusinessAdmin': return 'role-badge business-admin';
                   case 'SaleAdmin': return 'role-badge sale-admin';
-                  case 'CustomerAdmin': return 'role-badge customer-admin';
                   case 'Accountant': return 'role-badge accountant';
                   case 'Driver': return 'role-badge driver';
+                  case 'Security': return 'role-badge security';
+                  case 'Dispatcher': return 'role-badge dispatcher';
                   default: return 'role-badge default';
                 }
               };
@@ -1127,11 +1120,11 @@ export default function PermissionsPage(){
                     </div>
                     <span className={getRoleBadgeClass(current)} title={language === 'vi' ? `Vai trò hiện tại: ${translateRoleName(current)}` : `Current Role: ${current}`}>
                       {current === 'SystemAdmin' && '👑'}
-                      {current === 'BusinessAdmin' && '💼'}
-                      {current === 'SaleAdmin' && '💰'}
-                      {current === 'CustomerAdmin' && '👥'}
+                      {current === 'SaleAdmin' && '🔧'}
                       {current === 'Accountant' && '📊'}
                       {current === 'Driver' && '🚗'}
+                      {current === 'Security' && '🛡️'}
+                      {current === 'Dispatcher' && '📡'}
                       {translateRoleName(current)}
                     </span>
                   </div>
@@ -1379,4 +1372,3 @@ export default function PermissionsPage(){
      </>
    );
 }
-

@@ -104,11 +104,11 @@ export default function InvoiceList(){
               className="filter-select"
             >
               <option value="">{t('pages.finance.invoices.allStatuses')}</option>
-              <option value="DRAFT">DRAFT</option>
-              <option value="UNPAID">UNPAID</option>
-              <option value="PARTIALLY_PAID">PARTIALLY_PAID</option>
-              <option value="PAID">PAID</option>
-              <option value="CANCELLED">CANCELLED</option>
+              <option value="DRAFT">{t('pages.finance.invoices.statusOptions.draft')}</option>
+              <option value="UNPAID">{t('pages.finance.invoices.statusOptions.unpaid')}</option>
+              <option value="PARTIALLY_PAID">{t('pages.finance.invoices.statusOptions.partiallyPaid')}</option>
+              <option value="PAID">{t('pages.finance.invoices.statusOptions.paid')}</option>
+              <option value="CANCELLED">{t('pages.finance.invoices.statusOptions.cancelled')}</option>
             </select>
           </div>
           {/* Chỉ hiển thị nút này cho admin - đặt sát bên phải */}
@@ -129,13 +129,13 @@ export default function InvoiceList(){
               <table className="table" style={{minWidth:'1000px'}}>
                 <thead>
                   <tr>
-                    <th>{t('pages.finance.invoices.tableHeaders.type')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.containerNo')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.invoiceNumber')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.requestNumber')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.requestType')}</th>
                     <th>{t('pages.finance.invoices.tableHeaders.customer')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.companyCode')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.status')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.cost')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.eir')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.taxCode')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.phoneNumber')}</th>
+                    <th>{t('pages.finance.invoices.tableHeaders.totalAmount')}</th>
                     <th>{t('pages.finance.invoices.tableHeaders.actions')}</th>
                   </tr>
                 </thead>
@@ -150,6 +150,8 @@ export default function InvoiceList(){
                     
                     return (
                     <tr key={invoice.id}>
+                      <td>{invoice.invoice_number || invoice.id || '-'}</td>
+                      <td>{invoice.serviceRequest?.request_id || '-'}</td>
                       <td>
                         <span style={{
                           padding: '4px 8px',
@@ -162,43 +164,10 @@ export default function InvoiceList(){
                           {getTypeLabel(invoice.serviceRequest?.type)}
                         </span>
                       </td>
-                      <td>{invoice.serviceRequest?.container_no || '-'}</td>
                       <td>{invoice.customer?.name || invoice.customer_id || '-'}</td>
                       <td>{invoice.customer?.tax_code || '-'}</td>
-                      <td>
-                        <span className={getStatusClass(invoice)} style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          backgroundColor: invoice.serviceRequest?.is_paid ? '#e8f5e8' : '#fff3e0',
-                          color: invoice.serviceRequest?.is_paid ? '#2e7d32' : '#f57c00'
-                        }}>
-                          {getStatusLabel(invoice)}
-                        </span>
-                      </td>
+                      <td>{invoice.customer?.phone || '-'}</td>
                       <td>{Number(invoice.total_amount||0).toLocaleString('vi-VN')} VND</td>
-                      <td>
-                        {invoice.serviceRequest?.container_no ? (
-                          <button 
-                            onClick={() => {
-                              const eirUrl = `http://localhost:5002/finance/eir/container/${encodeURIComponent(invoice.serviceRequest.container_no)}`;
-                              window.open(eirUrl, '_blank', 'noopener,noreferrer');
-                            }}
-                            style={{
-                              color: '#1976d2',
-                              textDecoration: 'none',
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: 0,
-                              font: 'inherit'
-                            }}
-                          >
-                            {t('pages.finance.invoices.actions.viewEIR')}
-                          </button>
-                        ) : '-'}
-                      </td>
                       <td style={{display:'flex', gap:6}}>
                         <Link className="btn" href={`/finance/invoices/${invoice.id}`} style={{padding:'4px 8px', fontSize:'12px'}}>
                           {t('pages.finance.invoices.actions.view')}

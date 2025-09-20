@@ -1,7 +1,7 @@
 // Constants cho UsersPartners module
 export const ROLE_COLORS = {
   SystemAdmin: '#dc2626',
-  SaleAdmin: '#ea580c',
+  SaleAdmin: '#059669',
   Driver: '#0891b2',
   Security: '#334155',
   Dispatcher: '#0ea5e9'

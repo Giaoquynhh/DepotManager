@@ -8,13 +8,15 @@ interface ContainerSubmenuProps {
   onToggle: () => void;
   containerType: 'lift' | 'lower';
   onSidebarLinkClick?: (e: React.MouseEvent) => void;
+  onSubmenuLinkClick?: (e: React.MouseEvent) => void;
 }
 
 export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({ 
   isExpanded, 
   onToggle, 
   containerType,
-  onSidebarLinkClick
+  onSidebarLinkClick,
+  onSubmenuLinkClick
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -39,7 +41,21 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
     }
   ];
 
-  const isContainerPage = router.pathname === mainHref;
+  // Add inspection area only for lower container
+  if (!isLift) {
+    submenuItems.push({
+      key: 'inspection',
+      href: '/Maintenance/Repairs', // Using the actual inspection/repairs page route
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      ),
+      label: 'Khu vực kiểm tra'
+    });
+  }
+
+  const isContainerPage = router.pathname === mainHref || (!isLift && router.pathname === '/Maintenance/Repairs');
 
   return (
     <div className="sidebar-group">
@@ -81,7 +97,7 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
               key={item.key}
               className={`sidebar-link sidebar-submenu-link ${router.pathname === item.href ? 'active' : ''}`} 
               href={item.href}
-              onClick={onSidebarLinkClick}
+              onClick={onSubmenuLinkClick || onSidebarLinkClick}
             >
               {item.icon}
               <span>{item.label}</span>

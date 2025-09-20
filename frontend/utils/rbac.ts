@@ -1,4 +1,4 @@
-export type AppRole = 'SystemAdmin' | 'SaleAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver' | 'admin';
+export type AppRole = 'SystemAdmin' | 'SaleAdmin' | 'Security' | 'YardManager' | 'MaintenanceManager' | 'Accountant' | 'Driver' | 'Dispatcher' | 'admin';
 
 export function homeFor(role: AppRole): string {
     if (canViewUsersPartners(role)) return '/UsersPartners';

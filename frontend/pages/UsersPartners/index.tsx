@@ -86,13 +86,14 @@ export default function UsersPartners() {
       // Form placeholders
       fullNamePlaceholder: 'Họ tên',
       emailPlaceholder: 'Email',
+      passwordPlaceholder: 'Mật khẩu',
       tenantIdPlaceholder: 'Mã công ty (ID khách hàng)',
       companyNamePlaceholder: 'Tên công ty',
       // Form labels
       driverLabel: 'Tài xế',
       // Role labels
       systemAdminLabel: 'Quản trị hệ thống',
-      saleAdminLabel: 'Quản lý bán hàng',
+      saleAdminLabel: 'Bộ phận kỹ thuật',
       customerAdminLabel: 'Quản lý khách hàng',
       customerUserLabel: 'Người dùng khách hàng',
       partnerAdminLabel: 'Quản lý đối tác',
@@ -106,10 +107,16 @@ export default function UsersPartners() {
       pleaseEnterCompanyName: 'Vui lòng nhập tên công ty',
       employeeCreated: 'Tạo nhân sự nội bộ thành công.',
       partnerCreated: 'Tạo đối tác thành công.',
-      userActionSuccess: 'Đã {action} user',
+      userActionSuccess: 'Đã {action} người dùng',
       createEmployeeError: 'Lỗi tạo nhân sự',
       createPartnerError: 'Lỗi tạo đối tác',
       userActionError: 'Lỗi {action}',
+      // Action translations
+      disable: 'vô hiệu hóa',
+      enable: 'kích hoạt',
+      lock: 'khóa',
+      unlock: 'mở khóa',
+      delete: 'xóa',
       // Info text
       tenantIdInfo: 'Lấy mã công ty từ danh sách Customers hoặc tạo khách mới bên module Customers.',
       // Token section
@@ -161,13 +168,14 @@ export default function UsersPartners() {
       // Form placeholders
       fullNamePlaceholder: 'Full Name',
       emailPlaceholder: 'Email',
+      passwordPlaceholder: 'Password',
       tenantIdPlaceholder: 'Company Code (Customer ID)',
       companyNamePlaceholder: 'Company Name',
       // Form labels
       driverLabel: 'Driver',
       // Role labels
       systemAdminLabel: 'System Administrator',
-      saleAdminLabel: 'Sales Administrator',
+      saleAdminLabel: 'Technical Department',
       customerAdminLabel: 'Customer Administrator',
       customerUserLabel: 'Customer User',
       partnerAdminLabel: 'Partner Administrator',
@@ -185,6 +193,12 @@ export default function UsersPartners() {
       createEmployeeError: 'Error creating staff',
       createPartnerError: 'Error creating partner',
       userActionError: 'Error {action}',
+      // Action translations
+      disable: 'disabled',
+      enable: 'enabled',
+      lock: 'locked',
+      unlock: 'unlocked',
+      delete: 'deleted',
       // Info text
       tenantIdInfo: 'Get mã công ty from Customers list or create new customer in Customers module.',
       // Token section

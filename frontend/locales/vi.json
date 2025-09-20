@@ -761,13 +761,13 @@
         "allStatuses": "Tất cả trạng thái",
         "containersNeedInvoice": "Danh sách container cần tạo hóa đơn",
         "tableHeaders": {
-          "type": "Loại",
-          "containerNo": "Container No",
+          "invoiceNumber": "Số hóa đơn",
+          "requestNumber": "Số yêu cầu",
+          "requestType": "Loại yêu cầu",
           "customer": "Khách hàng",
-          "companyCode": "Mã Công ty",
-          "status": "Trạng thái",
-          "cost": "Chi phí",
-          "eir": "EIR",
+          "taxCode": "Mã số thuế",
+          "phoneNumber": "Số điện thoại",
+          "totalAmount": "Tổng tiền",
           "actions": "Hành động"
         },
         "types": {
@@ -778,6 +778,13 @@
         "status": {
           "paid": "Đã thanh toán",
           "unpaid": "Chưa thanh toán"
+        },
+        "statusOptions": {
+          "draft": "Bản nháp",
+          "unpaid": "Chưa thanh toán",
+          "partiallyPaid": "Thanh toán một phần",
+          "paid": "Đã thanh toán",
+          "cancelled": "Đã hủy"
         },
         "actions": {
           "view": "Xem",

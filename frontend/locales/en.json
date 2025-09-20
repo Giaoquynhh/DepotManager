@@ -758,13 +758,13 @@
         "allStatuses": "All statuses",
         "containersNeedInvoice": "List of containers needing invoice creation",
         "tableHeaders": {
-          "type": "Type",
-          "containerNo": "Container No",
+          "invoiceNumber": "Invoice Number",
+          "requestNumber": "Request Number",
+          "requestType": "Request Type",
           "customer": "Customer",
-          "companyCode": "Company Code",
-          "status": "Status",
-          "cost": "Cost",
-          "eir": "EIR",
+          "taxCode": "Tax Code",
+          "phoneNumber": "Phone Number",
+          "totalAmount": "Total Amount",
           "actions": "Actions"
         },
         "types": {
@@ -775,6 +775,13 @@
         "status": {
           "paid": "Paid",
           "unpaid": "Unpaid"
+        },
+        "statusOptions": {
+          "draft": "Draft",
+          "unpaid": "Unpaid",
+          "partiallyPaid": "Partially Paid",
+          "paid": "Paid",
+          "cancelled": "Cancelled"
         },
         "actions": {
           "view": "View",

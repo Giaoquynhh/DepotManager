@@ -152,7 +152,6 @@ html::-webkit-scrollbar {
 .invoice-page .modern-header {
   background: linear-gradient(135deg, #1e3a8a, #1e40af);
   border: 2px solid #3b82f6;
-  box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
 }
 
 .invoice-page .containers-need-invoice-btn {
