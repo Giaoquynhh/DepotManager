@@ -125,9 +125,13 @@ export default function PriceLists() {
     }
 
     try {
+      // Find the price list to get its name before deleting
+      const priceListToDelete = priceLists.find(pl => pl.id === id);
+      const serviceName = priceListToDelete?.serviceName || '';
+
       const response = await setupService.deletePriceList(id);
       if (response.success) {
-        setSuccessMessage(translations[language].deleteSuccess);
+        setSuccessMessage(`Đã xóa bảng giá "${serviceName}" thành công!`);
         loadPriceLists(pagination.page, searchTerm);
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
@@ -152,7 +156,7 @@ export default function PriceLists() {
 
       if (response.success) {
         setShowAddModal(false);
-        setSuccessMessage(translations[language].createSuccess);
+        setSuccessMessage(`Đã thêm bảng giá "${response.data.serviceName}" thành công!`);
         loadPriceLists(pagination.page, searchTerm);
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
@@ -179,7 +183,7 @@ export default function PriceLists() {
 
       if (response.success) {
         setShowEditModal(false);
-        setSuccessMessage(translations[language].updateSuccess);
+        setSuccessMessage(`Đã cập nhật bảng giá "${response.data.serviceName}" thành công!`);
         loadPriceLists(pagination.page, searchTerm);
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
@@ -206,7 +210,8 @@ export default function PriceLists() {
       const response = await setupService.uploadPriceListExcel(formData);
       if (response.success) {
         setShowUploadModal(false);
-        setSuccessMessage(translations[language].uploadSuccess);
+        const importedCount = response.data?.length || 0;
+        setSuccessMessage(`Đã upload ${importedCount} bảng giá thành công!`);
         loadPriceLists(pagination.page, searchTerm);
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
@@ -259,26 +264,29 @@ export default function PriceLists() {
       </main>
 
       {/* Modals */}
-      <AddPriceListModal
-        visible={showAddModal}
-        onCancel={() => setShowAddModal(false)}
-        onSubmit={handleSubmitPriceList}
-        formData={formData}
-        setFormData={setFormData}
-        errorText={errorText}
-        language={language}
-        translations={translations}
-      />
+            <AddPriceListModal
+              visible={showAddModal}
+              onCancel={() => setShowAddModal(false)}
+              onSubmit={handleSubmitPriceList}
+              formData={formData}
+              setFormData={setFormData}
+              errorText={errorText}
+              language={language}
+              translations={translations}
+              existingPriceLists={priceLists}
+            />
 
       <EditPriceListModal
         visible={showEditModal}
         onCancel={() => setShowEditModal(false)}
         onSubmit={handleUpdatePriceList}
-        formData={formData}
-        setFormData={setFormData}
+        formData={editingPriceList}
+        setFormData={setEditingPriceList}
         errorText={errorText}
         language={language}
         translations={translations}
+        existingPriceLists={priceLists}
+        currentId={editingPriceList?.id}
       />
 
       <UploadPriceListExcelModal

@@ -95,7 +95,7 @@ export class RequestBaseService {
 		
 		const [data, total] = await Promise.all([
 			repo.list(filter, skip, limit, actorType, includeHidden), 
-			repo.count(filter, actorType, includeHidden)
+			repo.count(filter)
 		]);
 		
 		// Gắn thông tin payment mới nhất, documents và viewquote để FE hiển thị

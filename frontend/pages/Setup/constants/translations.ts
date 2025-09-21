@@ -197,6 +197,20 @@ export const translations = {
     optional: 'optional',
     clickToUploadOrDragAndDrop: 'Click to upload or drag and drop file',
     excelFilesOnly: 'Excel files only (.xlsx, .xls)',
-    noDataFound: 'No data found'
+    noDataFound: 'No data found',
+    // Success messages
+    createSuccess: 'Tạo bảng giá thành công!',
+    updateSuccess: 'Cập nhật bảng giá thành công!',
+    deleteSuccess: 'Xóa bảng giá thành công!',
+    uploadSuccess: 'Upload Excel thành công!'
+  },
+  en: {
+    // ... existing translations ...
+    noDataFound: 'No data found',
+    // Success messages
+    createSuccess: 'Price list created successfully!',
+    updateSuccess: 'Price list updated successfully!',
+    deleteSuccess: 'Price list deleted successfully!',
+    uploadSuccess: 'Excel uploaded successfully!'
   }
 };

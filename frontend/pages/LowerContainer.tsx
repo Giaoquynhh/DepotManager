@@ -42,14 +42,6 @@ export default function LowerContainer() {
               <h1 className="page-title gradient gradient-ultimate">
                 Yêu cầu hạ container
               </h1>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                color: '#64748b', 
-                fontSize: '14px',
-                fontWeight: '400'
-              }}>
-                Quản lý các yêu cầu xuất khẩu container (hạ container từ bãi lên xe)
-              </p>
             </div>
             <div className="header-actions">
               <button 

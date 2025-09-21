@@ -18,6 +18,8 @@ interface EditPriceListModalProps {
   errorText: string;
   language: 'vi' | 'en';
   translations: any;
+  existingPriceLists?: Array<{ serviceCode: string }>;
+  currentId?: string;
 }
 
 export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
@@ -28,12 +30,22 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
   setFormData,
   errorText,
   language,
-  translations
+  translations,
+  existingPriceLists = [],
+  currentId
 }) => {
+  const [duplicateCodeError, setDuplicateCodeError] = React.useState<string>('');
+  
   if (!visible) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate service code
+    if (duplicateCodeError) {
+      return;
+    }
+    
     onSubmit(formData);
   };
 
@@ -42,6 +54,19 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
       ...formData,
       [field]: value
     });
+    
+    // Check for duplicate service code (exclude current item)
+    if (field === 'serviceCode') {
+      setDuplicateCodeError('');
+      if (value.trim()) {
+        const isDuplicate = existingPriceLists.some(
+          pl => pl.serviceCode.toLowerCase() === value.toLowerCase() && pl.id !== currentId
+        );
+        if (isDuplicate) {
+          setDuplicateCodeError('Mã dịch vụ này đã tồn tại');
+        }
+      }
+    }
   };
 
   const typeOptions = [
@@ -68,6 +93,11 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
           {errorText && (
             <div className="error-message mb-4">
               {errorText}
+            </div>
+          )}
+          {duplicateCodeError && (
+            <div className="error-message mb-4" style={{color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '8px 12px'}}>
+              {duplicateCodeError}
             </div>
           )}
 

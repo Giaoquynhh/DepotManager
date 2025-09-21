@@ -45,15 +45,19 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
 
   return (
     <div style={{ overflow: 'auto' }}>
-      <table className="table" style={{ width: '100%', minWidth: '900px' }}>
+      <table className="table" style={{ width: '100%', minWidth: '1200px' }}>
         <thead>
           <tr>
             <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.code')}</th>
             <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.containerNo')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.containerType')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.vehicleNumber')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.driver')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.driverPhone')}</th>
             <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.status')}</th>
-            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.description')}</th>
-            <th style={{ padding: '12px 8px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.cost')}</th>
-            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.invoice')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.startTime')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.endTime')}</th>
+            <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.image')}</th>
             <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>{t('pages.maintenance.repairs.tableHeaders.actions')}</th>
           </tr>
         </thead>
@@ -62,6 +66,10 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
             <tr key={r.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
               <td style={{ padding: '12px 8px' }}>{r.code}</td>
               <td style={{ padding: '12px 8px' }}>{r.container_no || r.equipment?.code || '-'}</td>
+              <td style={{ padding: '12px 8px' }}>{r.equipment?.type || r.container_type || '-'}</td>
+              <td style={{ padding: '12px 8px' }}>{r.vehicle_number || r.equipment?.vehicle_number || '-'}</td>
+              <td style={{ padding: '12px 8px' }}>{r.driver_name || r.equipment?.driver_name || '-'}</td>
+              <td style={{ padding: '12px 8px' }}>{r.driver_phone || r.equipment?.driver_phone || '-'}</td>
               <td style={{ padding: '12px 8px' }}>
                 <span style={{
                   padding: '4px 8px',
@@ -89,35 +97,29 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
                     r.status === 'REJECTED' ? t('pages.maintenance.repairs.status.rejected') : t('pages.maintenance.repairs.status.unknown')}
                 </span>
               </td>
-              <td style={{ padding: '12px 8px', maxWidth: '200px' }} title={r.problem_description}>
-                {r.problem_description || '-'}
+              <td style={{ padding: '12px 8px' }}>
+                {r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : '-'}
               </td>
-              <td style={{ padding: '12px 8px', textAlign: 'right' }}>{fmt(r.estimated_cost)}</td>
+              <td style={{ padding: '12px 8px' }}>
+                {r.updatedAt ? new Date(r.updatedAt).toLocaleString('vi-VN') : '-'}
+              </td>
               <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                {r.hasInvoice ? (
-                  <button 
-                    onClick={() => handleViewPDF(r.id)}
-                    style={{
-                      padding: '4px 8px',
-                      border: 'none',
+                {r.image_url ? (
+                  <img 
+                    src={r.image_url} 
+                    alt="Container image" 
+                    style={{ 
+                      width: '40px', 
+                      height: '40px', 
+                      objectFit: 'cover', 
                       borderRadius: '4px',
-                      background: '#3b82f6',
-                      color: 'white',
-                      cursor: 'pointer',
-                      fontSize: '12px'
+                      cursor: 'pointer'
                     }}
-                    title={t('pages.maintenance.repairs.actions.viewInvoicePDF')}
-                  >
-                    📄 {t('pages.maintenance.repairs.actions.viewInvoice')}
-                  </button>
+                    onClick={() => window.open(r.image_url, '_blank')}
+                    title="Xem hình ảnh"
+                  />
                 ) : (
-                  <span style={{ 
-                    color: '#6b7280', 
-                    fontSize: '12px',
-                    fontStyle: 'italic'
-                  }}>
-                    {t('pages.maintenance.repairs.invoice.hasInvoice')}
-                  </span>
+                  <span style={{ color: '#6b7280', fontSize: '12px' }}>-</span>
                 )}
               </td>
                              <td style={{ padding: '12px 8px', textAlign: 'center' }}>
@@ -265,7 +267,7 @@ export default function RepairTable({ repairs, onPassStandard, onFailStandard, o
           ))}
           {(!repairs || repairs.length === 0) && (
             <tr>
-              <td colSpan={7} style={{
+              <td colSpan={11} style={{
                 padding: '40px 8px',
                 textAlign: 'center',
                 color: '#6b7280',

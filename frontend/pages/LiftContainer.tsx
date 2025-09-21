@@ -42,14 +42,6 @@ export default function LiftContainer() {
               <h1 className="page-title gradient gradient-ultimate">
                 Yêu cầu nâng container
               </h1>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                color: '#64748b', 
-                fontSize: '14px',
-                fontWeight: '400'
-              }}>
-                Quản lý các yêu cầu nhập khẩu container (nâng container từ xe vào bãi)
-              </p>
             </div>
             <div className="header-actions">
               <button 

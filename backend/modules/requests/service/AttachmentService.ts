@@ -71,7 +71,14 @@ export class AttachmentService {
         // Temporary: return demo data
         const attachment: AttachmentResponseDto = {
             id: `temp_${Date.now()}`,
+            requestId: requestId,
             request_id: requestId,
+            fileName: fileData.file_name,
+            fileSize: fileData.file_size,
+            mimeType: fileData.file_type,
+            filePath: fileData.storage_url,
+            createdAt: new Date(),
+            updatedAt: new Date(),
             uploader_id: uploaderId,
             uploader_role: uploaderRole,
             file_name: fileData.file_name,

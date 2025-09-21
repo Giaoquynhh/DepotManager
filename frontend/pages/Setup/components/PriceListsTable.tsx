@@ -97,14 +97,17 @@ export const PriceListsTable: React.FC<PriceListsTableProps> = ({
                 <td>
                   <div className="flex space-x-2">
                     <button
+                      className="btn btn-xs" 
                       onClick={() => onEdit(priceList)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      title={translations[language].edit}
                     >
                       {translations[language].edit}
                     </button>
-                    <button
+                    <button 
+                      className="btn btn-xs btn-outline" 
                       onClick={() => onDelete(priceList.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      title={translations[language].delete}
+                      style={{color: '#dc2626', borderColor: '#dc2626'}}
                     >
                       {translations[language].delete}
                     </button>

@@ -551,13 +551,19 @@
         "statusRejected": "Đã từ chối",
         "pendingContainersList": "Danh sách container đang chờ",
         "tableHeaders": {
-          "code": "Mã",
-          "containerNo": "Container No",
+          "code": "Số yêu cầu",
+          "containerNo": "Số cont",
+          "containerType": "Loại cont",
+          "vehicleNumber": "Số xe",
+          "driver": "Tài xế",
+          "driverPhone": "SDT tài xế",
           "status": "Trạng thái",
-          "description": "Mô tả",
+          "startTime": "Thời gian tạo",
+          "endTime": "Thời gian cập nhật",
+          "image": "Hình ảnh",
           "cost": "Chi phí (đ)",
           "invoice": "Hóa đơn",
-          "actions": "Hành động"
+          "actions": "Action"
         },
         "actions": {
           "passStandard": "Đạt chuẩn",
