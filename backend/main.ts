@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -26,6 +27,7 @@ import financeRoutes from './modules/finance/controller/FinanceRoutes';
 import reportsRoutes from './modules/reports/controller/ReportsRoutes';
 import setupRoutes from './modules/setup/controller/SetupRoutes';
 import requestRoutes from './modules/requests/controller/RequestRoutes';
+import sealRoutes from './modules/seal/controller/SealRoutes';
 
 const app = express();
 const server = createServer(app);
@@ -70,14 +72,6 @@ app.use(express.json());
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Debug middleware for ngrok
-app.use((req, res, next) => {
-	console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-	console.log('Headers:', req.headers);
-	console.log('Origin:', req.headers.origin);
-	console.log('User-Agent:', req.headers['user-agent']);
-	next();
-});
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -99,6 +93,7 @@ app.use('/finance', financeRoutes);
 app.use('/reports', authenticate, reportsRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/requests', requestRoutes);
+app.use('/seals', authenticate, sealRoutes);
 
 const start = async () => {
 	await connectDatabase();

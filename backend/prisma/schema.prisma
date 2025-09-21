@@ -677,3 +677,29 @@ model PriceList {
 
   @@map("price_lists")
 }
+
+// =====================
+// Module Seal Management
+// =====================
+
+model Seal {
+  id                String   @id @default(cuid())
+  shipping_company  String   // Hãng tàu
+  purchase_date     DateTime // Ngày mua
+  quantity_purchased Int     // Số lượng mua
+  quantity_exported  Int     @default(0) // Số lượng đã xuất
+  quantity_remaining Int     // Số lượng còn lại (calculated)
+  unit_price        Decimal  @db.Decimal(18, 2) // Đơn giá
+  total_amount      Decimal  @db.Decimal(18, 2) // Tổng tiền (calculated)
+  pickup_location   String   // Nơi lấy
+  status            String   @default("ACTIVE") // ACTIVE | INACTIVE
+  created_by        String
+  updated_by        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shipping_company])
+  @@index([purchase_date])
+  @@index([status])
+  @@map("seals")
+}

@@ -42,6 +42,14 @@
     "optional": "optional",
     "characters": "characters"
   },
+  "seal": {
+    "createdSuccessfully": "Seal created successfully",
+    "updatedSuccessfully": "Seal updated successfully",
+    "deletedSuccessfully": "Seal deleted successfully",
+    "createFailed": "Failed to create seal",
+    "updateFailed": "Failed to update seal",
+    "deleteFailed": "Failed to delete seal"
+  },
   "header": {
     "brand": "Smartlog Depot Management",
     "account": "Account",

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
-import { canViewUsersPartners, canUseGate, isSystemAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance } from '@utils/rbac';
+import { canViewUsersPartners, canUseGate, isSystemAdmin, isYardManager, isMaintenanceManager, isSecurity, isCustomerRole, isDriver, canManageYard, canManageContainers, canManageForklift, canManageMaintenance, canManageFinance, canManageSeals } from '@utils/rbac';
 import { hasPermission } from '@utils/permissionsCatalog';
 import { api } from '@services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -336,18 +336,6 @@ export default function Header() {
   const showSidebar = router.pathname !== '/Login' && router.pathname !== '/Register'; // Luôn hiển thị sidebar trừ trang Login/Register
   const isAuthPage = router.pathname === '/Login' || router.pathname === '/Register';
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Debug Header State:', {
-      hasToken,
-      showSidebar,
-      navOpen,
-      userRole: me?.role,
-      pathname: router.pathname,
-      canUseGate: canUseGate(me?.role),
-      isSecurity: isSecurity(me?.role)
-    });
-  }, [hasToken, showSidebar, navOpen, me?.role, router.pathname]);
 
   return (
     <header className="header">
@@ -797,6 +785,24 @@ export default function Header() {
                   <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
                 </svg>
                 <span>{t('sidebar.forkliftManagement')}</span>
+              </Link>
+            )}
+
+            {/* Seal Management Module */}
+            {(() => {
+              const allow = canManageSeals(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'seals.manage')
+                : allow;
+              return ok;
+            })() && (
+              <Link className={`sidebar-link ${router.pathname === '/SealManagement' ? 'active' : ''}`} href="/SealManagement" onClick={handleSidebarLinkClick}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <path d="M9 9h6v6H9z"></path>
+                  <path d="M9 1v6M15 1v6M9 17v6M15 17v6M1 9h6M17 9h6M1 15h6M17 15h6"></path>
+                </svg>
+                <span>Quản lý Seal</span>
               </Link>
             )}
 

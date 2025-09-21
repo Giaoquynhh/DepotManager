@@ -13,6 +13,8 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "noImplicitAny": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "baseUrl": "./",
     "paths": {
       "@shared/*": ["shared/*"],

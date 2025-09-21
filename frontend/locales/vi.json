@@ -43,6 +43,14 @@
     "optional": "tùy chọn",
     "characters": "ký tự"
   },
+  "seal": {
+    "createdSuccessfully": "Seal đã được tạo thành công",
+    "updatedSuccessfully": "Seal đã được cập nhật thành công",
+    "deletedSuccessfully": "Seal đã được xóa thành công",
+    "createFailed": "Tạo seal thất bại",
+    "updateFailed": "Cập nhật seal thất bại",
+    "deleteFailed": "Xóa seal thất bại"
+  },
   "header": {
     "brand": "Smartlog Depot Management",
     "account": "Tài khoản",

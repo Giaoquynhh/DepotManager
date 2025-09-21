@@ -66,6 +66,10 @@ export function canManageFinance(role?: string): boolean {
 	return ['SystemAdmin','Accountant'].includes(String(role));
 }
 
+export function canManageSeals(role?: string): boolean {
+	return ['SystemAdmin','YardManager','TechnicalDepartment'].includes(String(role));
+}
+
 // Extra helpers for sidebar mapping
 export function isSystemAdmin(role?: string): boolean { return String(role) === 'SystemAdmin'; }
 export function isSecurity(role?: string): boolean { return String(role) === 'Security'; }
