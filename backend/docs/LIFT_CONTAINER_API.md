@@ -100,3 +100,4 @@ API này tương ứng với nút "Gỡ bỏ" (Remove) trong UI "Chi tiết ngă
 - Khi user click nút "Gỡ bỏ" cho container SA111
 - System sẽ gọi API này để thực hiện thao tác nâng container
 - Container sẽ được remove khỏi stack và slot sẽ được cập nhật tương ứng
+

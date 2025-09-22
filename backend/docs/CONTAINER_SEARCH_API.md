@@ -127,3 +127,4 @@ Tính năng này được tích hợp vào form "Tạo yêu cầu nâng containe
 - System sẽ gọi API search và hiển thị gợi ý
 - User có thể click để chọn container từ danh sách gợi ý
 - Hiển thị thông tin chi tiết về vị trí và trạng thái container
+

@@ -31,6 +31,7 @@ export default function DocumentViewer({
     setLoading(true);
     setError(null);
     
+    console.log('🔍 Generating file URL for:', {
       requestId,
       documentId,
       fileName,
@@ -148,4 +149,4 @@ export default function DocumentViewer({
       </div>
     </div>
   );
-}
+};

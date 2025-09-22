@@ -273,16 +273,24 @@ export class YardService {
 			
 			if (isSystemAdmin) {
 				// SystemAdmin: Logic mới - chỉ tạo ForkliftTask khi container có trạng thái "Đang chờ sắp xếp"
+				console.log(`🔍 [SystemAdmin] Processing container ${container_no} for forklift task creation`);
 				
 				const latestRequest = await tx.serviceRequest.findFirst({
 					where: { container_no },
 					orderBy: { createdAt: 'desc' }
 				});
 
+				console.log(`🔍 [SystemAdmin] Latest request for ${container_no}:`, latestRequest ? {
+					id: latestRequest.id,
+					status: latestRequest.status,
+					container_no: latestRequest.container_no,
+					createdAt: latestRequest.createdAt
+				} : 'No request found');
 
 				// Kiểm tra xem container có trạng thái "Đang chờ sắp xếp" không
 				// Container đang chờ sắp xếp nếu có ServiceRequest với status = 'COMPLETED'
 				const isWaitingForPlacement = latestRequest && latestRequest.status === 'COMPLETED';
+				console.log(`🔍 [SystemAdmin] Is waiting for placement (ServiceRequest): ${isWaitingForPlacement}`);
 				
 				// Nếu không có ServiceRequest COMPLETED, kiểm tra RepairTicket
 				let isWaitingFromRepair = false;
@@ -295,9 +303,11 @@ export class YardService {
 						orderBy: { updatedAt: 'desc' }
 					});
 					isWaitingFromRepair = !!repairTicket;
+					console.log(`🔍 [SystemAdmin] Is waiting for placement (RepairTicket): ${isWaitingFromRepair}`);
 				}
 				
 				const shouldCreateForkliftTask = isWaitingForPlacement || isWaitingFromRepair;
+				console.log(`🔍 [SystemAdmin] Should create forklift task: ${shouldCreateForkliftTask}`);
 
 				if (shouldCreateForkliftTask) {
 					// Container có trạng thái "Đang chờ sắp xếp" - tạo ForkliftTask
@@ -470,193 +480,6 @@ export class YardService {
 		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 		await audit(actor._id, 'YARD.REMOVE', 'YARD_SLOT', updated.slot_id, { tier: updated.tier, container_no });
 		return updated;
-	}
-
-	async liftContainer(actor: any, container_no: string) {
-		// Kiểm tra container có tồn tại trong bãi không
-		const containerLocation = await this.findContainerLocation(container_no);
-		if (!containerLocation) {
-			throw new Error(`Container ${container_no} không tồn tại trong bãi`);
-		}
-
-		// Kiểm tra container có đang ở trạng thái OCCUPIED không
-		if (containerLocation.status !== 'OCCUPIED') {
-			throw new Error(`Container ${container_no} không ở trạng thái OCCUPIED (hiện tại: ${containerLocation.status})`);
-		}
-
-		// Thực hiện remove container (sử dụng logic tương tự removeByContainer)
-		const now = new Date();
-		const updated = await prisma.$transaction(async (tx) => {
-			const placement = await tx.yardPlacement.findFirst({ 
-				where: { 
-					container_no, 
-					status: 'OCCUPIED',
-					removed_at: null
-				} 
-			});
-			
-			if (!placement) {
-				throw new Error('Container không ở trạng thái OCCUPIED');
-			}
-
-			// Kiểm tra LIFO constraint - không thể remove nếu có container ở tier cao hơn
-			const higher = await tx.yardPlacement.findFirst({
-				where: {
-					slot_id: placement.slot_id,
-					tier: { gt: placement.tier },
-					OR: [
-						{ status: 'OCCUPIED', removed_at: null },
-						{ status: 'HOLD', hold_expires_at: { gt: now } }
-					]
-				}
-			});
-			
-			if (higher) {
-				throw new Error('Vi phạm LIFO: Tồn tại container ở tier cao hơn, không thể nâng container này');
-			}
-
-			// Cập nhật placement thành REMOVED
-			const updatedPlacement = await tx.yardPlacement.update({
-				where: { slot_tier_unique: { slot_id: placement.slot_id, tier: placement.tier } },
-				data: { status: 'REMOVED', removed_at: new Date() }
-			});
-
-			// Cập nhật YardSlot.occupant_container_no nếu cần
-			const remainingPlacements = await tx.yardPlacement.findMany({
-				where: {
-					slot_id: placement.slot_id,
-					status: 'OCCUPIED',
-					removed_at: null
-				},
-				orderBy: { tier: 'desc' }
-			});
-
-			if (remainingPlacements.length > 0) {
-				// Cập nhật occupant_container_no cho container ở tier cao nhất còn lại
-				const topContainer = remainingPlacements[0];
-				await tx.yardSlot.update({
-					where: { id: placement.slot_id },
-					data: { occupant_container_no: topContainer.container_no }
-				});
-			} else {
-				// Không còn container nào trong slot
-				await tx.yardSlot.update({
-					where: { id: placement.slot_id },
-					data: { 
-						occupant_container_no: null,
-						status: 'EMPTY'
-					}
-				});
-			}
-
-			return updatedPlacement;
-		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-
-		await audit(actor._id, 'YARD.LIFT_CONTAINER', 'YARD_SLOT', updated.slot_id, { 
-			tier: updated.tier, 
-			container_no,
-			action: 'LIFT_CONTAINER'
-		});
-
-		return {
-			message: `Container ${container_no} đã được nâng thành công`,
-			container_no,
-			slot_id: updated.slot_id,
-			tier: updated.tier,
-			removed_at: updated.removed_at
-		};
-	}
-
-	async searchContainers(query: string, limit: number = 10) {
-		// Tìm kiếm container trong bãi theo pattern
-		const searchPattern = `%${query.toUpperCase()}%`;
-		
-		// Tìm container từ YardPlacement (container đang trong bãi)
-		const yardContainers = await prisma.yardPlacement.findMany({
-			where: {
-				container_no: {
-					contains: query.toUpperCase(),
-					mode: 'insensitive'
-				},
-				status: 'OCCUPIED',
-				removed_at: null
-			},
-			select: {
-				container_no: true,
-				slot: {
-					select: {
-						code: true,
-						block: {
-							select: {
-								code: true,
-								yard: {
-									select: {
-										name: true
-									}
-								}
-							}
-						}
-					}
-				},
-				tier: true
-			},
-			take: limit,
-			orderBy: {
-				container_no: 'asc'
-			}
-		});
-
-		// Tìm container từ ServiceRequest (container có thể được nâng)
-		const serviceContainers = await prisma.serviceRequest.findMany({
-			where: {
-				container_no: {
-					contains: query.toUpperCase(),
-					mode: 'insensitive'
-				},
-				status: {
-					in: ['COMPLETED', 'POSITIONED', 'IN_CAR']
-				}
-			},
-			select: {
-				container_no: true,
-				status: true,
-				createdAt: true
-			},
-			take: Math.max(0, limit - yardContainers.length),
-			orderBy: {
-				createdAt: 'desc'
-			}
-		});
-
-		// Format kết quả
-		const results = [];
-
-		// Thêm container từ bãi
-		for (const container of yardContainers) {
-			results.push({
-				container_no: container.container_no,
-				location: `${container.slot.block.yard.name} - ${container.slot.block.code} - ${container.slot.code}`,
-				tier: container.tier,
-				status: 'IN_YARD',
-				type: 'yard'
-			});
-		}
-
-		// Thêm container từ service request
-		for (const container of serviceContainers) {
-			// Chỉ thêm nếu chưa có trong kết quả bãi
-			if (!results.find(r => r.container_no === container.container_no)) {
-				results.push({
-					container_no: container.container_no,
-					location: 'Chưa đặt vào bãi',
-					tier: null,
-					status: container.status,
-					type: 'service'
-				});
-			}
-		}
-
-		return results.slice(0, limit);
 	}
 
 	// ==========================
@@ -833,6 +656,117 @@ export class YardService {
 			slotsPerDepot: 20,
 			tiersPerSlot: 5
 		};
+	}
+
+	// ==========================
+	// Additional Yard APIs
+	// ==========================
+
+	async liftContainer(actor: any, container_no: string) {
+		// Tìm container trong yard
+		const placement = await prisma.yardPlacement.findFirst({
+			where: { 
+				container_no, 
+				status: 'OCCUPIED',
+				removed_at: null
+			},
+			include: { slot: { include: { block: { include: { yard: true } } } } }
+		});
+
+		if (!placement) {
+			throw new Error('Container không tồn tại trong bãi');
+		}
+
+		// Kiểm tra có container ở tier cao hơn không (vi phạm LIFO)
+		const now = new Date();
+		const higherPlacement = await prisma.yardPlacement.findFirst({
+			where: {
+				slot_id: placement.slot_id,
+				tier: { gt: placement.tier },
+				OR: [
+					{ status: 'OCCUPIED', removed_at: null },
+					{ status: 'HOLD', hold_expires_at: { gt: now } }
+				]
+			}
+		});
+
+		if (higherPlacement) {
+			throw new Error('Vi phạm LIFO: Tồn tại container ở tier cao hơn');
+		}
+
+		// Xóa container khỏi yard
+		const updated = await prisma.yardPlacement.update({
+			where: { slot_tier_unique: { slot_id: placement.slot_id, tier: placement.tier } },
+			data: { 
+				status: 'REMOVED', 
+				removed_at: new Date(),
+				container_no: null
+			}
+		});
+
+		// Cập nhật YardSlot.occupant_container_no nếu cần
+		const remainingPlacements = await prisma.yardPlacement.findMany({
+			where: {
+				slot_id: placement.slot_id,
+				status: 'OCCUPIED',
+				removed_at: null
+			},
+			orderBy: { tier: 'desc' }
+		});
+
+		const topContainer = remainingPlacements.length > 0 ? remainingPlacements[0].container_no : null;
+		await prisma.yardSlot.update({
+			where: { id: placement.slot_id },
+			data: { occupant_container_no: topContainer }
+		});
+
+		await audit(actor._id, 'YARD.LIFT', 'YARD_SLOT', placement.slot_id, { 
+			container_no, 
+			tier: placement.tier 
+		});
+
+		return {
+			message: 'Container đã được nâng khỏi bãi',
+			container_no,
+			slot_code: placement.slot.code,
+			tier: placement.tier
+		};
+	}
+
+	async searchContainers(query: string, limit: number = 10) {
+		// Tìm kiếm container trong yard theo container_no
+		const containers = await prisma.yardPlacement.findMany({
+			where: {
+				container_no: {
+					contains: query,
+					mode: 'insensitive'
+				},
+				status: 'OCCUPIED',
+				removed_at: null
+			},
+			include: {
+				slot: {
+					include: {
+						block: {
+							include: {
+								yard: true
+							}
+						}
+					}
+				}
+			},
+			orderBy: { container_no: 'asc' },
+			take: limit
+		});
+
+		return containers.map(placement => ({
+			container_no: placement.container_no,
+			slot_code: placement.slot.code,
+			block_code: placement.slot.block.code,
+			yard_name: placement.slot.block.yard.name,
+			tier: placement.tier,
+			placed_at: placement.placed_at
+		}));
 	}
 }
 

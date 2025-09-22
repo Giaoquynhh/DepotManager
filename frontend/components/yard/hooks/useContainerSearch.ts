@@ -45,6 +45,7 @@ export const useContainerSearch = () => {
       const searchResponse = await api.get(`/gate/requests/search?container_no=${encodeURIComponent(containerNo.trim())}&limit=100`);
       
       // Debug: Kiểm tra cấu trúc response
+      console.log({
         hasData: !!searchResponse.data,
         dataKeys: searchResponse.data ? Object.keys(searchResponse.data) : [],
         hasDataArray: !!searchResponse.data?.data,
@@ -84,6 +85,7 @@ export const useContainerSearch = () => {
                              foundContainer.status === 'Gate In' ||
                              foundContainer.status?.toUpperCase() === 'GATE_IN';
       
+      console.log({
         status: foundContainer.status,
         statusEqualsGATE_IN: foundContainer.status === 'GATE_IN',
         statusEqualsGateIn: foundContainer.status === 'Gate In',
