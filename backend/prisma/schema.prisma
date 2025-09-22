@@ -110,6 +110,7 @@ model ServiceRequest {
   gate_checked_by           String?
   gate_reason               String?
   driver_name               String?
+  driver_phone              String?
   license_plate             String?
   has_invoice               Boolean             @default(false)
   is_paid                   Boolean             @default(false)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import Header from '../../components/Header';
 import Card from '../../components/Card';
+import { formatNumberWithDots } from '../../utils/numberFormat';
 
 // Import components
 import { PriceListsTable } from './components/PriceListsTable';
@@ -110,7 +111,7 @@ export default function PriceLists() {
       serviceCode: priceList.serviceCode,
       serviceName: priceList.serviceName,
       type: priceList.type,
-      price: priceList.price.toString(),
+      price: formatNumberWithDots(priceList.price),
       note: priceList.note || ''
     });
     setEditingPriceList(priceList);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { requestService } from '../../../services/requests';
+import { EditLiftRequestModal, EditLiftRequestData } from './EditLiftRequestModal';
 
 interface ImportRequestProps {
 	localSearch: string;
@@ -49,9 +50,16 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 
     // Dữ liệu thực tế từ API (khởi tạo rỗng)
     const [rows, setRows] = React.useState<LiftRequestRow[]>([]);
+    const [loading, setLoading] = React.useState(false);
+    const [processingIds, setProcessingIds] = React.useState<Set<string>>(new Set());
+    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [deleteRequestId, setDeleteRequestId] = React.useState<string | null>(null);
+    const [showEditModal, setShowEditModal] = React.useState(false);
+    const [editRequestData, setEditRequestData] = React.useState<any>(null);
 
     // Function để fetch requests từ API
     const fetchRequests = async () => {
+        setLoading(true);
         try {
             const response = await requestService.getRequests('IMPORT');
             if (response.data.success) {
@@ -85,6 +93,8 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             }
         } catch (error) {
             console.error('Error fetching import requests:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -99,6 +109,164 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             fetchRequests();
         }
     }, [refreshTrigger]);
+
+    // Function để mở modal chỉnh sửa
+    const handleUpdateClick = async (requestId: string) => {
+        setProcessingIds(prev => new Set(prev).add(requestId));
+        try {
+            console.log('Loading request details:', requestId);
+            
+            // Check if user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Bạn cần đăng nhập để thực hiện hành động này');
+                setProcessingIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(requestId);
+                    return newSet;
+                });
+                return;
+            }
+            
+            // Lấy thông tin chi tiết của request
+            const response = await requestService.getRequest(requestId);
+            if (response.data.success) {
+                const requestData = response.data.data;
+                setEditRequestData(requestData);
+                setShowEditModal(true);
+            }
+        } catch (error: any) {
+            console.error('Error fetching request details:', error);
+            if (error.response?.status === 401) {
+                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/login';
+            } else {
+                alert('Có lỗi xảy ra khi tải thông tin yêu cầu: ' + (error.response?.data?.message || error.message));
+            }
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(requestId);
+                return newSet;
+            });
+        }
+    };
+
+    // Function để xử lý cập nhật yêu cầu
+    const handleUpdateRequest = async (data: EditLiftRequestData) => {
+        try {
+            // Show success message
+            const successModal = document.createElement('div');
+            successModal.innerHTML = `
+                <div style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.5); z-index: 10000; display: flex; 
+                    align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                ">
+                    <div style="
+                        background: white; padding: 24px; border-radius: 12px; 
+                        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                        max-width: 400px; text-align: center;
+                    ">
+                        <div style="color: #10b981; font-size: 48px; margin-bottom: 16px;">✓</div>
+                        <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Cập nhật thành công!</h3>
+                        <p style="margin: 0; color: #6b7280; font-size: 14px;">Yêu cầu đã được cập nhật thành công.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            setTimeout(() => {
+                document.body.removeChild(successModal);
+            }, 2000);
+            
+            // Refresh data after update
+            fetchRequests();
+        } catch (error) {
+            console.error('Error updating request:', error);
+            alert('Có lỗi xảy ra khi cập nhật yêu cầu');
+        }
+    };
+
+    // Function để mở modal xóa
+    const handleDeleteClick = (requestId: string) => {
+        setDeleteRequestId(requestId);
+        setShowDeleteModal(true);
+    };
+
+    // Function để xử lý xóa yêu cầu
+    const handleDeleteRequest = async () => {
+        if (!deleteRequestId) return;
+        
+        setProcessingIds(prev => new Set(prev).add(deleteRequestId));
+        try {
+            console.log('Deleting request:', deleteRequestId);
+            
+            // Check if user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Bạn cần đăng nhập để thực hiện hành động này');
+                setProcessingIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(deleteRequestId);
+                    return newSet;
+                });
+                setShowDeleteModal(false);
+                return;
+            }
+            
+            const response = await requestService.deleteRequest(deleteRequestId);
+            if (response.data.success) {
+                // Show success message
+                const successModal = document.createElement('div');
+                successModal.innerHTML = `
+                    <div style="
+                        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                        background: rgba(0,0,0,0.5); z-index: 10000; display: flex; 
+                        align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    ">
+                        <div style="
+                            background: white; padding: 24px; border-radius: 12px; 
+                            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                            max-width: 400px; text-align: center;
+                        ">
+                            <div style="color: #10b981; font-size: 48px; margin-bottom: 16px;">✓</div>
+                            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Xóa thành công!</h3>
+                            <p style="margin: 0; color: #6b7280; font-size: 14px;">Yêu cầu đã được xóa khỏi hệ thống.</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(successModal);
+                setTimeout(() => {
+                    document.body.removeChild(successModal);
+                }, 2000);
+                
+                // Refresh data after deletion
+                fetchRequests();
+            } else {
+                alert('Có lỗi xảy ra khi xóa yêu cầu: ' + (response.data.message || 'Unknown error'));
+            }
+        } catch (error: any) {
+            console.error('Error deleting request:', error);
+            if (error.response?.status === 401) {
+                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/login';
+            } else {
+                alert('Có lỗi xảy ra khi xóa yêu cầu: ' + (error.response?.data?.message || error.message));
+            }
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(deleteRequestId);
+                return newSet;
+            });
+            setShowDeleteModal(false);
+            setDeleteRequestId(null);
+        }
+    };
 
 
 	return (
@@ -181,63 +349,75 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                         scrollbarWidth: 'auto',
                         msOverflowStyle: 'scrollbar'
                     }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1200 }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1800 }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
-                                    <th style={thStyle}>Hãng tàu</th>
-                                    <th style={thStyle}>Số yêu cầu</th>
-                                    <th style={thStyle}>Số Cont</th>
-                                    <th style={thStyle}>Loại cont</th>
-                                    <th style={thStyle}>Số Booking/Bill</th>
-                                    <th style={thStyle}>Loại dịch vụ</th>
-                                    <th style={thStyle}>Trạng thái</th>
-                                    <th style={thStyle}>Khách hàng</th>
-                                    <th style={thStyle}>Nhà xe</th>
-                                    <th style={thStyle}>Số xe</th>
-                                    <th style={thStyle}>Tài xế</th>
-                                    <th style={thStyle}>SDT Tài xế</th>
-                                    <th style={thStyle}>Thời gian hẹn</th>
-                                    <th style={thStyle}>Giờ vào thực tế</th>
-                                    <th style={thStyle}>Giờ ra thực tế</th>
-                                    <th style={thStyle}>Tổng tiền</th>
-                                    <th style={thStyle}>Trạng thái thanh toán</th>
-                                    <th style={thStyle}>Chứng từ</th>
-                                    <th style={thStyle}>Ghi chú</th>
-                                    <th style={thStyle}>Action</th>
+                                    <th style={{...thStyle, minWidth: '100px'}}>Hãng tàu</th>
+                                    <th style={{...thStyle, minWidth: '150px'}}>Số yêu cầu</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Số Cont</th>
+                                    <th style={{...thStyle, minWidth: '100px'}}>Loại cont</th>
+                                    <th style={{...thStyle, minWidth: '140px'}}>Số Booking/Bill</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
+                                    <th style={{...thStyle, minWidth: '100px'}}>Tài xế</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>SDT Tài xế</th>
+                                    <th style={{...thStyle, minWidth: '160px'}}>Thời gian hẹn</th>
+                                    <th style={{...thStyle, minWidth: '160px'}}>Giờ vào thực tế</th>
+                                    <th style={{...thStyle, minWidth: '160px'}}>Giờ ra thực tế</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Tổng tiền</th>
+                                    <th style={{...thStyle, minWidth: '150px'}}>Trạng thái thanh toán</th>
+                                    <th style={{...thStyle, minWidth: '100px'}}>Chứng từ</th>
+                                    <th style={{...thStyle, minWidth: '150px'}}>Ghi chú</th>
+                                    <th style={{...thStyle, minWidth: '200px'}}>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {rows.map((r) => (
                                     <tr key={r.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                                        <td style={tdStyle}>{r.shippingLine}</td>
-                                        <td style={tdStyle}>{r.requestNo}</td>
-                                        <td style={tdStyle}>{r.containerNo}</td>
-                                        <td style={tdStyle}>{r.containerType}</td>
-                                        <td style={tdStyle}>{r.bookingBill}</td>
-                                        <td style={tdStyle}>Nâng container</td>
-                                        <td style={tdStyle}>{r.status}</td>
-                                        <td style={tdStyle}>{r.customer}</td>
-                                        <td style={tdStyle}>{r.transportCompany}</td>
-                                        <td style={tdStyle}>{r.vehicleNumber}</td>
-                                        <td style={tdStyle}>{r.driverName}</td>
-                                        <td style={tdStyle}>{r.driverPhone}</td>
-                                        <td style={tdStyle}>{r.appointmentTime || '-'}</td>
-                                        <td style={tdStyle}>{r.timeIn || '-'}</td>
-                                        <td style={tdStyle}>{r.timeOut || '-'}</td>
-                                        <td style={tdStyle}>{typeof r.totalAmount === 'number' ? r.totalAmount.toLocaleString('vi-VN') : '-'}</td>
-                                        <td style={tdStyle}>{r.paymentStatus || '-'}</td>
-                                        <td style={tdStyle}>
+                                        <td style={{...tdStyle, minWidth: '100px'}}>{r.shippingLine}</td>
+                                        <td style={{...tdStyle, minWidth: '150px'}}>{r.requestNo}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.containerNo}</td>
+                                        <td style={{...tdStyle, minWidth: '100px'}}>{r.containerType}</td>
+                                        <td style={{...tdStyle, minWidth: '140px'}}>{r.bookingBill}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>Nâng container</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.status}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.customer}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.transportCompany}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.vehicleNumber}</td>
+                                        <td style={{...tdStyle, minWidth: '100px'}}>{r.driverName}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.driverPhone}</td>
+                                        <td style={{...tdStyle, minWidth: '160px'}}>{r.appointmentTime || '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '160px'}}>{r.timeIn || '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '160px'}}>{r.timeOut || '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{typeof r.totalAmount === 'number' ? r.totalAmount.toLocaleString('vi-VN') : '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '150px'}}>{r.paymentStatus || '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '100px'}}>
                                             <button type="button" className="btn btn-light" style={{ padding: '6px 10px', fontSize: 12 }}>
                                                 {r.documentsCount ?? 0} file
                                             </button>
                                         </td>
-                                        <td style={tdStyle}>{r.notes || ''}</td>
-                                        <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                                            <button type="button" className="btn btn-primary" style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}>
-                                                Cập nhật thông tin
+                                        <td style={{...tdStyle, minWidth: '150px'}}>{r.notes || ''}</td>
+                                        <td style={{ ...tdStyle, minWidth: '200px', whiteSpace: 'nowrap' }}>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-primary" 
+                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                                onClick={() => handleUpdateClick(r.id)}
+                                                disabled={processingIds.has(r.id) || loading}
+                                            >
+                                                {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                                             </button>
-                                            <button type="button" className="btn btn-danger" style={{ padding: '6px 10px', fontSize: 12 }}>
-                                                Hủy
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-danger" 
+                                                style={{ padding: '6px 10px', fontSize: 12 }}
+                                                onClick={() => handleDeleteClick(r.id)}
+                                                disabled={processingIds.has(r.id) || loading}
+                                            >
+                                                {processingIds.has(r.id) ? 'Đang xử lý...' : 'Xóa'}
                                             </button>
                                         </td>
                                     </tr>
@@ -247,6 +427,157 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        maxWidth: '400px',
+                        width: '90%',
+                        textAlign: 'center',
+                        animation: 'modalSlideIn 0.2s ease-out'
+                    }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: '#fef2f2',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 24px',
+                            fontSize: '32px',
+                            color: '#ef4444'
+                        }}>
+                            ⚠️
+                        </div>
+                        
+                        <h3 style={{
+                            margin: '0 0 12px 0',
+                            color: '#1f2937',
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            lineHeight: '1.2'
+                        }}>
+                            Xác nhận xóa yêu cầu
+                        </h3>
+                        
+                        <p style={{
+                            margin: '0 0 24px 0',
+                            color: '#6b7280',
+                            fontSize: '14px',
+                            lineHeight: '1.5'
+                        }}>
+                            Bạn có chắc chắn muốn xóa yêu cầu này?<br/>
+                            <strong style={{ color: '#ef4444' }}>Hành động này không thể hoàn tác.</strong>
+                        </p>
+                        
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            justifyContent: 'center'
+                        }}>
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteRequestId(null);
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #d1d5db',
+                                    background: 'white',
+                                    color: '#374151',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '80px'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.background = '#f9fafb';
+                                    e.currentTarget.style.borderColor = '#9ca3af';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.background = 'white';
+                                    e.currentTarget.style.borderColor = '#d1d5db';
+                                }}
+                            >
+                                Hủy
+                            </button>
+                            
+                            <button
+                                onClick={handleDeleteRequest}
+                                disabled={processingIds.has(deleteRequestId || '')}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: 'none',
+                                    background: processingIds.has(deleteRequestId || '') ? '#9ca3af' : '#ef4444',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: processingIds.has(deleteRequestId || '') ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '80px'
+                                }}
+                                onMouseOver={(e) => {
+                                    if (!processingIds.has(deleteRequestId || '')) {
+                                        e.currentTarget.style.background = '#dc2626';
+                                    }
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!processingIds.has(deleteRequestId || '')) {
+                                        e.currentTarget.style.background = '#ef4444';
+                                    }
+                                }}
+                            >
+                                {processingIds.has(deleteRequestId || '') ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            <EditLiftRequestModal
+                isOpen={showEditModal}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setEditRequestData(null);
+                }}
+                onSubmit={handleUpdateRequest}
+                requestData={editRequestData}
+            />
+
+            <style jsx>{`
+                @keyframes modalSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95) translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+            `}</style>
         </>
     );
 };
@@ -262,7 +593,9 @@ const thStyle: React.CSSProperties = {
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     padding: '12px 16px',
-    borderBottom: '1px solid #e2e8f0'
+    borderBottom: '1px solid #e2e8f0',
+    whiteSpace: 'nowrap',
+    minWidth: '120px'
 };
 
 const tdStyle: React.CSSProperties = {
@@ -271,5 +604,7 @@ const tdStyle: React.CSSProperties = {
     color: '#0f172a',
     verticalAlign: 'top',
     background: 'white',
-    borderTop: '1px solid #f1f5f9'
+    borderTop: '1px solid #f1f5f9',
+    whiteSpace: 'nowrap',
+    minWidth: '120px'
 };

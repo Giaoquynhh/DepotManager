@@ -1,5 +1,6 @@
 // Add Price List Modal component
 import React from 'react';
+import { formatVietnamesePriceInput, parseFormattedNumber } from '../../../utils/numberFormat';
 
 export interface PriceListFormData {
   serviceCode: string;
@@ -56,7 +57,8 @@ export const AddPriceListModal: React.FC<AddPriceListModalProps> = ({
       setFieldError('type');
       return;
     }
-    if (!formData.price || parseFloat(formData.price) <= 0) {
+    const cleanPrice = parseFormattedNumber(formData.price);
+    if (!cleanPrice || parseFloat(cleanPrice) <= 0) {
       setFieldError('price');
       return;
     }
@@ -66,13 +68,25 @@ export const AddPriceListModal: React.FC<AddPriceListModalProps> = ({
       return;
     }
     
-    onSubmit(formData);
+    // Submit with clean price data
+    const submitData = {
+      ...formData,
+      price: parseFormattedNumber(formData.price)
+    };
+    onSubmit(submitData);
   };
 
   const handleInputChange = (field: keyof PriceListFormData, value: string) => {
+    let processedValue = value;
+    
+    // Format price field with dots
+    if (field === 'price') {
+      processedValue = formatVietnamesePriceInput(value);
+    }
+    
     setFormData({
       ...formData,
-      [field]: value
+      [field]: processedValue
     });
     
     // Clear validation error when user starts typing
@@ -218,13 +232,11 @@ export const AddPriceListModal: React.FC<AddPriceListModalProps> = ({
             </label>
             <div className="form-input-wrapper">
               <input
-                type="number"
+                type="text"
                 className={`form-input ${fieldError === 'price' ? 'error' : ''}`}
                 value={formData.price}
                 onChange={(e) => handleInputChange('price', e.target.value)}
                 placeholder={translations[language].enterPrice}
-                min="0.01"
-                step="0.01"
                 required
               />
               <ValidationTooltip field="price" />
