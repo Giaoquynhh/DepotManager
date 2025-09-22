@@ -1,11 +1,13 @@
 import React from 'react';
 import Header from '@components/Header';
 import { useTranslation } from '../hooks/useTranslation';
+import { useToast } from '../hooks/useToastHook';
 import { ImportRequest } from './Requests/components/ImportRequest';
 import { CreateLiftRequestModal, LiftRequestData } from './Requests/components';
 
 export default function LiftContainer() {
 	const { t } = useTranslation();
+	const { showSuccess, ToastContainer } = useToast();
 	const [localSearch, setLocalSearch] = React.useState('');
 	const [localType, setLocalType] = React.useState('all');
 	const [localStatus, setLocalStatus] = React.useState('all');
@@ -20,7 +22,14 @@ export default function LiftContainer() {
 		console.log('Lift Request Data:', data);
 		console.log('Auto-generated Request Number:', data.requestNo);
 		// TODO: Implement API call to create lift request
-		alert(`Yêu cầu nâng container đã được tạo thành công!\nSố yêu cầu: ${data.requestNo}`);
+		
+		// Hiển thị thông báo thành công đơn giản
+		showSuccess(
+			'Yêu cầu nâng container đã được tạo thành công!',
+			`Số yêu cầu: ${data.requestNo}`,
+			4000 // Hiển thị trong 4 giây
+		);
+		
 		setIsCreateLiftModalOpen(false);
 		// Trigger refresh of the table
 		setRefreshTrigger(prev => prev + 1);
@@ -71,6 +80,9 @@ export default function LiftContainer() {
           onClose={() => setIsCreateLiftModalOpen(false)}
           onSubmit={handleSubmitLiftRequest}
         />
+        
+        {/* Toast Container */}
+        <ToastContainer />
       </main>
     </>
   );

@@ -67,5 +67,11 @@ router.delete('/:id',
     controller.deleteRequest
 );
 
+// Move request from PENDING to GATE_IN
+router.patch('/:id/move-to-gate', 
+    requireRoles('TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'),
+    controller.moveToGate
+);
+
 export default router;
 

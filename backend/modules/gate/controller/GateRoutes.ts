@@ -70,6 +70,20 @@ router.get(
   gateController.viewDocument.bind(gateController)
 );
 
+// Check-in - Xe vào cổng từ trạng thái NEW_REQUEST (YardManager, SystemAdmin)
+router.patch(
+  '/requests/:id/check-in',
+  requireRoles('YardManager', 'SystemAdmin'),
+  gateController.checkIn.bind(gateController)
+);
+
+// Check-out - Xe rời cổng từ trạng thái NEW_REQUEST (YardManager, SystemAdmin)
+router.patch(
+  '/requests/:id/check-out',
+  requireRoles('YardManager', 'SystemAdmin'),
+  gateController.checkOut.bind(gateController)
+);
+
 // Gate OUT - Xe rời kho (YardManager, SaleAdmin, SystemAdmin)
 router.patch(
   '/requests/:id/gate-out',

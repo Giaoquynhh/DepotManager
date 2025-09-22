@@ -10,15 +10,23 @@ import Link from 'next/link';
 
 interface GateRequest {
   id: string;
+  request_no?: string;        // Số yêu cầu
   container_no: string;
   type: string;
   status: string;
   eta?: string;
   forwarded_at?: string;
-  license_plate?: string; // Thêm trường biển số xe
-  driver_name?: string;   // Tên tài xế
-  time_in?: string;       // Thời gian vào
-  time_out?: string;      // Thời gian ra
+  license_plate?: string;     // Biển số xe
+  driver_name?: string;       // Tên tài xế
+  driver_phone?: string;      // SĐT tài xế
+  time_in?: string;           // Thời gian vào
+  time_out?: string;          // Thời gian ra
+  appointment_time?: string;  // Thời gian hẹn
+  booking_bill?: string;      // Số Booking
+  service_type?: string;      // Loại dịch vụ (từ container_type)
+  container_type?: {          // Thông tin loại container
+    code: string;
+  };
   docs: any[];
   attachments: any[];
 }

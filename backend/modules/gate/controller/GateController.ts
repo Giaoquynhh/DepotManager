@@ -287,6 +287,56 @@ export class GateController {
   }
 
   /**
+   * Check-in - Xe vào cổng từ trạng thái NEW_REQUEST
+   */
+  async checkIn(req: AuthRequest, res: Response) {
+    try {
+      const requestId = req.params.id;
+      const actorId = req.user?._id;
+
+      if (!actorId) {
+        return res.status(401).json({ message: 'Không có quyền truy cập' });
+      }
+
+      const result = await this.gateService.checkIn(requestId, actorId);
+      
+      res.json({
+        message: 'Check-in thành công',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({ 
+        message: error.message || 'Có lỗi xảy ra khi Check-in' 
+      });
+    }
+  }
+
+  /**
+   * Check-out - Xe rời cổng từ trạng thái NEW_REQUEST
+   */
+  async checkOut(req: AuthRequest, res: Response) {
+    try {
+      const requestId = req.params.id;
+      const actorId = req.user?._id;
+
+      if (!actorId) {
+        return res.status(401).json({ message: 'Không có quyền truy cập' });
+      }
+
+      const result = await this.gateService.checkOut(requestId, actorId);
+      
+      res.json({
+        message: 'Check-out thành công',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({ 
+        message: error.message || 'Có lỗi xảy ra khi Check-out' 
+      });
+    }
+  }
+
+  /**
    * Lấy lịch sử xe ra vào cổng
    */
   async getGateHistory(req: AuthRequest, res: Response) {

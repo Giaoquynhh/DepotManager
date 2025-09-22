@@ -230,13 +230,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				setIsUploading(true);
 				
 				// Generate request number automatically
-				const requestNumber = await generateNewRequestNumber('import');
+				const requestNumber = await generateNewRequestNumber('lift');
 				
             // Prepare data for API with auto-generated request number
             const requestData = {
-                type: 'IMPORT',
+                type: 'LIFT', // Thay đổi từ IMPORT thành LIFT cho yêu cầu nâng container
                 request_no: requestNumber, // Add auto-generated request number
-                status: 'PENDING', // Default status for new import requests
+                status: 'NEW_REQUEST', // Trạng thái ban đầu là NEW_REQUEST cho yêu cầu nâng container
                 container_no: formData.containerNumber,
                 eta: formData.appointmentTime,
                 shipping_line_id: formData.shippingLine || null,

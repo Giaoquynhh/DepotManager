@@ -420,6 +420,7 @@
       "statusOptions": {
         "scheduled": "Đã lên lịch",
         "forwarded": "Đã chuyển tới cổng",
+        "newRequest": "Thêm mới",
         "inYard": "Trong bãi",
         "inCar": "Trên xe",
         "gateIn": "Đã cho phép vào",
@@ -428,13 +429,19 @@
         "completed": "Hoàn tất"
       },
       "tableHeaders": {
-        "container": "Container",
-        "type": "Loại",
+        "requestNo": "Số yêu cầu",
+        "container": "Số container",
+        "containerType": "Loại container",
+        "booking": "Số Booking",
+        "serviceType": "Loại dịch vụ",
+        "vehicle": "Số xe",
+        "driverName": "Tài xế",
+        "driverPhone": "SĐT tài xế",
         "status": "Trạng thái",
-        "eta": "ETA",
-        "driverName": "Tên tài xế",
-        "licensePlate": "Biển số xe",
-        "documents": "Chứng từ",
+        "appointment": "Thời gian hẹn",
+        "timeIn": "Thời gian vào",
+        "timeOut": "Thời gian ra",
+        "images": "Hình ảnh",
         "actions": "Hành động"
       }
     },

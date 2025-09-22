@@ -327,8 +327,8 @@ export class GateService {
       const statusArray = statuses.split(',').map(s => s.trim());
       where.status = { in: statusArray };
     } else {
-      // Default: hiển thị 4 trạng thái cụ thể khi chọn "Tất cả trạng thái"
-      where.status = { in: ['FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
+      // Default: hiển thị 5 trạng thái cụ thể khi chọn "Tất cả trạng thái"
+      where.status = { in: ['NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
     }
 
     if (container_no && container_no.trim()) {
@@ -348,7 +348,12 @@ export class GateService {
         where,
         include: {
           docs: true,
-          attachments: true
+          attachments: true,
+          container_type: {
+            select: {
+              code: true
+            }
+          }
         },
         orderBy: { forwarded_at: 'desc' },
         skip,
@@ -362,7 +367,18 @@ export class GateService {
       // Ưu tiên sử dụng trường từ database, fallback về history nếu cần
       const licensePlate = r.license_plate || (r.history as any)?.gate_approve?.license_plate || null;
       const driverName = r.driver_name || (r.history as any)?.gate_approve?.driver_name || null;
-      return { ...r, license_plate: licensePlate, driver_name: driverName };
+      const driverPhone = r.driver_phone || null;
+      
+      return { 
+        ...r, 
+        license_plate: licensePlate, 
+        driver_name: driverName,
+        driver_phone: driverPhone,
+        service_type: 'Nâng', // Loại dịch vụ là "Nâng" theo yêu cầu
+        request_no: r.request_no || null,
+        booking_bill: r.booking_bill || null,
+        appointment_time: r.appointment_time || null
+      };
     });
 
     return {
@@ -566,6 +582,98 @@ export class GateService {
       default:
         return 'application/octet-stream';
     }
+  }
+
+  /**
+   * Check-in - Xe vào cổng từ trạng thái NEW_REQUEST
+   */
+  async checkIn(requestId: string, actorId: string): Promise<any> {
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      throw new Error('Request không tồn tại');
+    }
+
+    if (request.status !== 'NEW_REQUEST') {
+      throw new Error('Chỉ có thể Check-in từ trạng thái NEW_REQUEST');
+    }
+
+    const currentTime = new Date();
+    
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'GATE_IN',
+        gate_checked_at: currentTime,
+        gate_checked_by: actorId,
+        time_in: currentTime,
+        history: {
+          ...(request.history as any || {}),
+          check_in: {
+            checked_in_at: currentTime.toISOString(),
+            checked_in_by: actorId,
+            time_in: currentTime.toISOString()
+          }
+        }
+      }
+    });
+
+    // Audit log
+    await audit(actorId, 'REQUEST.CHECK_IN', 'ServiceRequest', requestId, {
+      previous_status: request.status,
+      new_status: 'GATE_IN',
+      request_type: request.type
+    });
+
+    return updatedRequest;
+  }
+
+  /**
+   * Check-out - Xe rời cổng từ trạng thái NEW_REQUEST
+   */
+  async checkOut(requestId: string, actorId: string): Promise<any> {
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      throw new Error('Request không tồn tại');
+    }
+
+    if (request.status !== 'NEW_REQUEST') {
+      throw new Error('Chỉ có thể Check-out từ trạng thái NEW_REQUEST');
+    }
+
+    const currentTime = new Date();
+    
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'GATE_OUT',
+        gate_checked_at: currentTime,
+        gate_checked_by: actorId,
+        time_out: currentTime,
+        history: {
+          ...(request.history as any || {}),
+          check_out: {
+            checked_out_at: currentTime.toISOString(),
+            checked_out_by: actorId,
+            time_out: currentTime.toISOString()
+          }
+        }
+      }
+    });
+
+    // Audit log
+    await audit(actorId, 'REQUEST.CHECK_OUT', 'ServiceRequest', requestId, {
+      previous_status: request.status,
+      new_status: 'GATE_OUT',
+      request_type: request.type
+    });
+
+    return updatedRequest;
   }
 
   /**

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useToast } from '../../../hooks/useToastHook';
 import { requestService } from '../../../services/requests';
 import { EditLiftRequestModal, EditLiftRequestData } from './EditLiftRequestModal';
 
@@ -23,6 +24,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 	refreshTrigger
 }) => {
 	const { t } = useTranslation();
+	const { showSuccess, showError, ToastContainer } = useToast();
 
     // Kiểu dữ liệu cho 1 dòng yêu cầu nâng container
     type LiftRequestRow = {
@@ -56,12 +58,39 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
     const [deleteRequestId, setDeleteRequestId] = React.useState<string | null>(null);
     const [showEditModal, setShowEditModal] = React.useState(false);
     const [editRequestData, setEditRequestData] = React.useState<any>(null);
+    const [showMoveToGateModal, setShowMoveToGateModal] = React.useState(false);
+    const [moveToGateRequestId, setMoveToGateRequestId] = React.useState<string | null>(null);
+    const [moveToGateRequestInfo, setMoveToGateRequestInfo] = React.useState<any>(null);
+
+    // Function để hiển thị trạng thái
+    const statusLabel = (status: string) => {
+        switch (status) {
+            case 'NEW_REQUEST':
+                return '🆕 Thêm mới';
+            case 'PENDING':
+                return '⏳ Chờ xử lý';
+            case 'SCHEDULED':
+                return '📅 Đã lên lịch';
+            case 'FORWARDED':
+                return '📤 Đã chuyển tiếp';
+            case 'GATE_IN':
+                return '🟢 Đã cho phép vào';
+            case 'GATE_OUT':
+                return '🟣 Đã cho phép ra';
+            case 'GATE_REJECTED':
+                return '⛔ Đã từ chối';
+            case 'COMPLETED':
+                return '✅ Hoàn tất';
+            default:
+                return status;
+        }
+    };
 
     // Function để fetch requests từ API
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const response = await requestService.getRequests('IMPORT');
+            const response = await requestService.getRequests('LIFT');
             if (response.data.success) {
                 // Transform data từ API thành format của table
                 // Debug log để kiểm tra API response
@@ -119,7 +148,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             // Check if user is authenticated
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('Bạn cần đăng nhập để thực hiện hành động này');
+                showError('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này', 3000);
                 setProcessingIds(prev => {
                     const newSet = new Set(prev);
                     newSet.delete(requestId);
@@ -138,12 +167,14 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         } catch (error: any) {
             console.error('Error fetching request details:', error);
             if (error.response?.status === 401) {
-                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                showError('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục', 4000);
                 localStorage.removeItem('token');
                 localStorage.removeItem('refresh_token');
-                window.location.href = '/login';
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
             } else {
-                alert('Có lỗi xảy ra khi tải thông tin yêu cầu: ' + (error.response?.data?.message || error.message));
+                showError('❌ Có lỗi xảy ra', 'Không thể tải thông tin yêu cầu: ' + (error.response?.data?.message || error.message), 4000);
             }
         } finally {
             setProcessingIds(prev => {
@@ -154,38 +185,85 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         }
     };
 
+    // Function để mở modal xác nhận chuyển đến cổng
+    const handleMoveToGateClick = (requestId: string) => {
+        const request = rows.find(r => r.id === requestId);
+        setMoveToGateRequestId(requestId);
+        setMoveToGateRequestInfo(request);
+        setShowMoveToGateModal(true);
+    };
+
+    // Function để thực hiện chuyển yêu cầu từ PENDING sang GATE_IN
+    const handleMoveToGateConfirm = async () => {
+        if (!moveToGateRequestId) return;
+
+        setProcessingIds(prev => new Set(prev).add(moveToGateRequestId));
+        setShowMoveToGateModal(false);
+        
+        try {
+            const response = await requestService.moveToGate(moveToGateRequestId);
+            if (response.data.success) {
+                // Hiển thị thông báo thành công với toast notification đẹp
+                showSuccess(
+                    '🚪 Yêu cầu đã được chuyển đến cổng thành công!',
+                    `📋 Mã yêu cầu: ${moveToGateRequestInfo?.requestNo || 'N/A'}\n📦 Container: ${moveToGateRequestInfo?.containerNo || 'N/A'}\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
+                    5000 // Hiển thị trong 5 giây
+                );
+                // Refresh data
+                await fetchRequests();
+            } else {
+                showError(
+                    '❌ Không thể chuyển yêu cầu đến cổng',
+                    response.data.message || 'Có lỗi xảy ra khi chuyển yêu cầu',
+                    4000
+                );
+            }
+        } catch (error: any) {
+            console.error('Error moving to gate:', error);
+            if (error.response?.status === 401) {
+                showError(
+                    '🔐 Phiên đăng nhập đã hết hạn',
+                    'Vui lòng đăng nhập lại để tiếp tục',
+                    5000
+                );
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else {
+                showError(
+                    '❌ Có lỗi xảy ra',
+                    error.response?.data?.message || error.message || 'Không thể chuyển yêu cầu đến cổng',
+                    4000
+                );
+            }
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(moveToGateRequestId);
+                return newSet;
+            });
+            setMoveToGateRequestId(null);
+            setMoveToGateRequestInfo(null);
+        }
+    };
+
     // Function để xử lý cập nhật yêu cầu
     const handleUpdateRequest = async (data: EditLiftRequestData) => {
         try {
-            // Show success message
-            const successModal = document.createElement('div');
-            successModal.innerHTML = `
-                <div style="
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                    background: rgba(0,0,0,0.5); z-index: 10000; display: flex; 
-                    align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                ">
-                    <div style="
-                        background: white; padding: 24px; border-radius: 12px; 
-                        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-                        max-width: 400px; text-align: center;
-                    ">
-                        <div style="color: #10b981; font-size: 48px; margin-bottom: 16px;">✓</div>
-                        <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Cập nhật thành công!</h3>
-                        <p style="margin: 0; color: #6b7280; font-size: 14px;">Yêu cầu đã được cập nhật thành công.</p>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(successModal);
-            setTimeout(() => {
-                document.body.removeChild(successModal);
-            }, 2000);
+            // Hiển thị thông báo thành công với toast notification
+            showSuccess(
+                '✅ Yêu cầu đã được cập nhật thành công!',
+                `Thông tin yêu cầu đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
+                4000
+            );
             
             // Refresh data after update
             fetchRequests();
         } catch (error) {
             console.error('Error updating request:', error);
-            alert('Có lỗi xảy ra khi cập nhật yêu cầu');
+            showError('❌ Có lỗi xảy ra', 'Không thể cập nhật thông tin yêu cầu', 3000);
         }
     };
 
@@ -206,7 +284,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             // Check if user is authenticated
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('Bạn cần đăng nhập để thực hiện hành động này');
+                showError('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này', 3000);
                 setProcessingIds(prev => {
                     const newSet = new Set(prev);
                     newSet.delete(deleteRequestId);
@@ -218,44 +296,29 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             
             const response = await requestService.deleteRequest(deleteRequestId);
             if (response.data.success) {
-                // Show success message
-                const successModal = document.createElement('div');
-                successModal.innerHTML = `
-                    <div style="
-                        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                        background: rgba(0,0,0,0.5); z-index: 10000; display: flex; 
-                        align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    ">
-                        <div style="
-                            background: white; padding: 24px; border-radius: 12px; 
-                            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-                            max-width: 400px; text-align: center;
-                        ">
-                            <div style="color: #10b981; font-size: 48px; margin-bottom: 16px;">✓</div>
-                            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Xóa thành công!</h3>
-                            <p style="margin: 0; color: #6b7280; font-size: 14px;">Yêu cầu đã được xóa khỏi hệ thống.</p>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(successModal);
-                setTimeout(() => {
-                    document.body.removeChild(successModal);
-                }, 2000);
+                // Hiển thị thông báo thành công với toast notification
+                showSuccess(
+                    '🗑️ Yêu cầu đã được xóa thành công!',
+                    `Yêu cầu đã được xóa khỏi hệ thống\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
+                    4000
+                );
                 
                 // Refresh data after deletion
                 fetchRequests();
             } else {
-                alert('Có lỗi xảy ra khi xóa yêu cầu: ' + (response.data.message || 'Unknown error'));
+                showError('❌ Không thể xóa yêu cầu', response.data.message || 'Có lỗi xảy ra khi xóa yêu cầu', 4000);
             }
         } catch (error: any) {
             console.error('Error deleting request:', error);
             if (error.response?.status === 401) {
-                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                showError('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục', 4000);
                 localStorage.removeItem('token');
                 localStorage.removeItem('refresh_token');
-                window.location.href = '/login';
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
             } else {
-                alert('Có lỗi xảy ra khi xóa yêu cầu: ' + (error.response?.data?.message || error.message));
+                showError('❌ Có lỗi xảy ra', 'Không thể xóa yêu cầu: ' + (error.response?.data?.message || error.message), 4000);
             }
         } finally {
             setProcessingIds(prev => {
@@ -342,13 +405,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                         <small>Không có yêu cầu nâng container nào để xử lý</small>
                     </div>
                 ) : (
-                    <div className="table-scroll-container" style={{ 
-                        overflowX: 'auto', 
-                        border: '1px solid #e2e8f0', 
-                        borderRadius: 8,
-                        scrollbarWidth: 'auto',
-                        msOverflowStyle: 'scrollbar'
-                    }}>
+                    <div className="table-scroll-container">
                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1800 }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
@@ -383,7 +440,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                         <td style={{...tdStyle, minWidth: '100px'}}>{r.containerType}</td>
                                         <td style={{...tdStyle, minWidth: '140px'}}>{r.bookingBill}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>Nâng container</td>
-                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.status}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>{statusLabel(r.status)}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.customer}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.transportCompany}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.vehicleNumber}</td>
@@ -403,7 +460,10 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                                     try {
                                                         const res = await requestService.getRequestFiles(r.id);
                                                         const files = res?.data?.data || [];
-                                                        if (!files.length) { alert('Chưa có chứng từ'); return; }
+                                                        if (!files.length) { 
+                                                            showError('📄 Chưa có chứng từ', 'Yêu cầu này chưa có file chứng từ nào được upload', 3000);
+                                                            return; 
+                                                        }
                                                         const html = `
                                                           <div style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;">
                                                             <div style="background:#fff;border-radius:12px;max-width:800px;width:90%;max-height:80vh;overflow:auto;padding:16px;">
@@ -426,7 +486,9 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                                         wrapper.innerHTML = html;
                                                         document.body.appendChild(wrapper);
                                                         wrapper.querySelector('#close-docs')?.addEventListener('click', () => document.body.removeChild(wrapper));
-                                                      } catch (e) { alert('Không tải được chứng từ'); }
+                                                      } catch (e) { 
+                                                        showError('❌ Không tải được chứng từ', 'Có lỗi xảy ra khi tải danh sách chứng từ', 3000);
+                                                      }
                                                 }}
                                             >
                                                 {r.documentsCount ?? 0} file
@@ -434,6 +496,18 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                         </td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.notes || ''}</td>
                                         <td style={{ ...tdStyle, minWidth: '200px', whiteSpace: 'nowrap' }}>
+                                            {/* Nút chuyển đến cổng - chỉ hiển thị khi status là NEW_REQUEST */}
+                                            {r.status === 'NEW_REQUEST' && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-success" 
+                                                    style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                                    onClick={() => handleMoveToGateClick(r.id)}
+                                                    disabled={processingIds.has(r.id) || loading}
+                                                >
+                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : 'Chuyển đến cổng'}
+                                                </button>
+                                            )}
                                             <button 
                                                 type="button" 
                                                 className="btn btn-primary" 
@@ -598,6 +672,170 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                 onSubmit={handleUpdateRequest}
                 requestData={editRequestData}
             />
+
+            {/* Modal xác nhận chuyển đến cổng */}
+            {showMoveToGateModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10000,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        animation: 'modalSlideIn 0.3s ease-out'
+                    }}>
+                        {/* Icon */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '64px',
+                            height: '64px',
+                            backgroundColor: '#fef3c7',
+                            borderRadius: '50%',
+                            margin: '0 auto 24px',
+                            fontSize: '32px'
+                        }}>
+                            🚪
+                        </div>
+                        
+                        {/* Title */}
+                        <h3 style={{
+                            margin: '0 0 16px 0',
+                            color: '#1f2937',
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            textAlign: 'center'
+                        }}>
+                            Xác nhận chuyển đến cổng
+                        </h3>
+                        
+                        {/* Content */}
+                        <div style={{
+                            marginBottom: '24px',
+                            textAlign: 'center'
+                        }}>
+                            <p style={{
+                                margin: '0 0 12px 0',
+                                color: '#6b7280',
+                                fontSize: '16px',
+                                lineHeight: '1.5'
+                            }}>
+                                Bạn có chắc chắn muốn chuyển yêu cầu này đến cổng không?
+                            </p>
+                            
+                            {moveToGateRequestInfo && (
+                                <div style={{
+                                    backgroundColor: '#f8fafc',
+                                    borderRadius: '12px',
+                                    padding: '16px',
+                                    margin: '16px 0',
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '8px'
+                                    }}>
+                                        <span style={{ color: '#64748b', fontWeight: '500' }}>Mã yêu cầu:</span>
+                                        <span style={{ color: '#1f2937', fontWeight: '600' }}>{moveToGateRequestInfo.requestNo}</span>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '8px'
+                                    }}>
+                                        <span style={{ color: '#64748b', fontWeight: '500' }}>Container:</span>
+                                        <span style={{ color: '#1f2937', fontWeight: '600' }}>{moveToGateRequestInfo.containerNo}</span>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between'
+                                    }}>
+                                        <span style={{ color: '#64748b', fontWeight: '500' }}>Khách hàng:</span>
+                                        <span style={{ color: '#1f2937', fontWeight: '600' }}>{moveToGateRequestInfo.customer}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Buttons */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            justifyContent: 'center'
+                        }}>
+                            <button
+                                onClick={() => setShowMoveToGateModal(false)}
+                                style={{
+                                    padding: '12px 24px',
+                                    backgroundColor: '#6b7280',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '100px'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#4b5563';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#6b7280';
+                                }}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleMoveToGateConfirm}
+                                disabled={processingIds.has(moveToGateRequestId || '')}
+                                style={{
+                                    padding: '12px 24px',
+                                    backgroundColor: processingIds.has(moveToGateRequestId || '') ? '#9ca3af' : '#10b981',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: processingIds.has(moveToGateRequestId || '') ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '100px'
+                                }}
+                                onMouseOver={(e) => {
+                                    if (!processingIds.has(moveToGateRequestId || '')) {
+                                        e.currentTarget.style.backgroundColor = '#059669';
+                                    }
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!processingIds.has(moveToGateRequestId || '')) {
+                                        e.currentTarget.style.backgroundColor = '#10b981';
+                                    }
+                                }}
+                            >
+                                {processingIds.has(moveToGateRequestId || '') ? 'Đang xử lý...' : 'Xác nhận'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Container */}
+            <ToastContainer />
 
             <style jsx>{`
                 @keyframes modalSlideIn {

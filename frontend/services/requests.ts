@@ -3,6 +3,7 @@ import { api } from './api';
 export interface CreateRequestData {
   type: string;
   request_no?: string; // Add request_no field
+  status?: string; // Add status field
   container_no?: string;
   eta?: string;
   shipping_line_id?: string;
@@ -38,6 +39,7 @@ export const requestService = {
     // Add text fields
     formData.append('type', data.type);
     if (data.request_no) formData.append('request_no', data.request_no); // Add request_no
+    if (data.status) formData.append('status', data.status); // Add status
     if (data.container_no) formData.append('container_no', data.container_no);
     if (data.eta) formData.append('eta', data.eta);
     if (data.shipping_line_id) formData.append('shipping_line_id', data.shipping_line_id);
@@ -153,5 +155,10 @@ export const requestService = {
   // Delete request
   async deleteRequest(requestId: string) {
     return api.delete(`/requests/${requestId}`);
+  },
+
+  // Move request from PENDING to GATE_IN
+  async moveToGate(requestId: string) {
+    return api.patch(`/requests/${requestId}/move-to-gate`);
   }
 };

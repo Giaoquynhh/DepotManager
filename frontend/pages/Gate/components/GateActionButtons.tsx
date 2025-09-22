@@ -32,6 +32,8 @@ export default function GateActionButtons({
         return t('pages.gate.statusOptions.scheduled');
       case 'FORWARDED':
         return t('pages.gate.statusOptions.forwarded');
+      case 'NEW_REQUEST':
+        return t('pages.gate.statusOptions.newRequest');
       case 'GATE_IN':
         return t('pages.gate.statusOptions.gateIn');
       case 'GATE_OUT':
@@ -146,6 +148,46 @@ export default function GateActionButtons({
     }
   };
 
+  const handleCheckIn = async () => {
+    try {
+      setIsLoading(true);
+      await api.patch(`/gate/requests/${requestId}/check-in`);
+      showSuccess(
+        '✅ Check-in thành công',
+        'Đã chuyển trạng thái: GATE_IN - Xe vào cổng.',
+        5000
+      );
+      onActionSuccess();
+    } catch (error: any) {
+      showError(
+        'Lỗi khi Check-in',
+        error.response?.data?.message || error.message
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      setIsLoading(true);
+      await api.patch(`/gate/requests/${requestId}/check-out`);
+      showSuccess(
+        '🚚 Check-out thành công',
+        'Đã chuyển trạng thái: GATE_OUT - Xe rời kho.',
+        5000
+      );
+      onActionSuccess();
+    } catch (error: any) {
+      showError(
+        'Lỗi khi Check-out',
+        error.response?.data?.message || error.message
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGateOut = async () => {
     try {
       setIsLoading(true);
@@ -165,6 +207,31 @@ export default function GateActionButtons({
       setIsLoading(false);
     }
   };
+
+  // Hiển thị action Check-in, Check-out cho NEW_REQUEST
+  if (currentStatus === 'NEW_REQUEST') {
+    return (
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        <button
+          onClick={handleCheckIn}
+          disabled={isLoading}
+          className="action-btn action-btn-success"
+          style={{ backgroundColor: 'var(--color-green-600)' }}
+        >
+          {isLoading ? 'Đang xử lý...' : 'Check-in'}
+        </button>
+        
+        <button
+          onClick={handleCheckOut}
+          disabled={isLoading}
+          className="action-btn action-btn-warning"
+          style={{ backgroundColor: 'var(--color-orange-600)' }}
+        >
+          {isLoading ? 'Đang xử lý...' : 'Check-out'}
+        </button>
+      </div>
+    );
+  }
 
   // Hiển thị action GATE_OUT cho IN_YARD và IN_CAR
   if (currentStatus === 'IN_YARD' || currentStatus === 'IN_CAR') {

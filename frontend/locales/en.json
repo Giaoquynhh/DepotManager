@@ -417,6 +417,7 @@
       "statusOptions": {
         "scheduled": "Scheduled",
         "forwarded": "Forwarded",
+        "newRequest": "New Request",
         "inYard": "In Yard",
         "inCar": "In Car",
         "gateIn": "Gate In",
@@ -425,13 +426,19 @@
         "completed": "Completed"
       },
       "tableHeaders": {
-        "container": "Container",
-        "type": "Type",
+        "requestNo": "Request No",
+        "container": "Container No",
+        "containerType": "Container Type",
+        "booking": "Booking No",
+        "serviceType": "Service Type",
+        "vehicle": "Vehicle No",
+        "driverName": "Driver",
+        "driverPhone": "Driver Phone",
         "status": "Status",
-        "eta": "ETA",
-        "driverName": "Driver Name",
-        "licensePlate": "License Plate",
-        "documents": "Documents",
+        "appointment": "Appointment Time",
+        "timeIn": "Time In",
+        "timeOut": "Time Out",
+        "images": "Images",
         "actions": "Actions"
       }
     },
