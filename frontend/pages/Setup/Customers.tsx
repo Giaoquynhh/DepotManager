@@ -4,6 +4,7 @@ import Header from '../../components/Header';
 import Card from '../../components/Card';
 import CreatePartnerModal from '../UsersPartners/components/CreatePartnerModal';
 import { setupService, Customer } from '../../services/setupService';
+import { Pagination } from '../../components/Pagination';
 
 // Import translations
 import { translations } from '../UsersPartners/translations';
@@ -14,6 +15,7 @@ export default function Customers() {
 
   // State for customers
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -38,8 +40,8 @@ export default function Customers() {
 
   // Load customers on component mount
   useEffect(() => {
-    loadCustomers();
-  }, []);
+    loadCustomers(pagination.page, pagination.limit);
+  }, [pagination.page, pagination.limit]);
 
   // Auto-hide message after 3 seconds
   useEffect(() => {
@@ -141,14 +143,24 @@ export default function Customers() {
     }
   };
 
-  const loadCustomers = async () => {
+  const loadCustomers = async (page = 1, limit = 10) => {
     setLoading(true);
     try {
       console.log('Loading customers...');
-      const response = await setupService.getCustomers({ page: 1, limit: 100 });
+      const response = await setupService.getCustomers({ page, limit });
       console.log('Load customers response:', JSON.stringify(response, null, 2));
       if (response && response.data) {
-        setCustomers(response.data.data || response.data || []);
+        const list = Array.isArray(response.data.data) ? response.data.data : (response.data as any);
+        setCustomers(list || []);
+        if ((response.data as any).pagination) {
+          const p = (response.data as any).pagination;
+          setPagination({ page: p.page, limit: p.limit, total: p.total, totalPages: p.totalPages });
+        } else {
+          // fallback if backend returns plain array
+          const total = Array.isArray(list) ? list.length : 0;
+          const totalPages = Math.max(1, Math.ceil(total / limit));
+          setPagination(prev => ({ ...prev, page, limit, total, totalPages }));
+        }
         setMessage(''); // Clear any previous error
       } else {
         setMessage(response.message || 'Lỗi khi tải danh sách khách hàng');
@@ -159,6 +171,10 @@ export default function Customers() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, page }));
   };
 
   // Validation and create/update function
@@ -491,6 +507,19 @@ export default function Customers() {
                     </tbody>
                   </table>
                 )}
+
+                {/* Pagination giống các trang Setup khác */}
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.total}
+                  itemsPerPage={pagination.limit}
+                  onPageChange={handlePageChange}
+                  language={language}
+                  translations={{
+                    common: { showing: 'Hiển thị', of: 'trong tổng số', items: 'mục', previous: 'Trước', next: 'Sau' }
+                  }}
+                />
               </div>
 
               {/* Modal */}

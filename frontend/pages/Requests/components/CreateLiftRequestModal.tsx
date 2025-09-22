@@ -1149,23 +1149,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 						paddingTop: '20px',
 						borderTop: '1px solid #e2e8f0'
 					}}>
-						<button 
-							type="button" 
-							style={{
-								padding: '12px 24px',
-								borderRadius: '8px',
-								fontSize: '14px',
-								fontWeight: '600',
-								cursor: 'pointer',
-								transition: 'all 0.2s ease',
-								background: '#f8fafc',
-								color: '#64748b',
-								border: '2px solid #e2e8f0'
-							}}
-							onClick={handleClose}
-						>
-							Hủy
-						</button>
+						{/* Cancel button removed per requirement */}
 						<button 
 							type="submit" 
 							disabled={isUploading}

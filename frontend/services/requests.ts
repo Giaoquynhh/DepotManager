@@ -135,6 +135,11 @@ export const requestService = {
     });
   },
 
+  // Fetch existing files for a request
+  async getRequestFiles(requestId: string) {
+    return api.get(`/requests/${requestId}/files`);
+  },
+
   // Cancel request
   async cancelRequest(requestId: string, reason?: string) {
     return api.patch(`/requests/${requestId}/cancel`, { reason });

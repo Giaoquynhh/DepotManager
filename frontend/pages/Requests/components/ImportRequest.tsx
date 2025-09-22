@@ -395,7 +395,40 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                         <td style={{...tdStyle, minWidth: '120px'}}>{typeof r.totalAmount === 'number' ? r.totalAmount.toLocaleString('vi-VN') : '-'}</td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.paymentStatus || '-'}</td>
                                         <td style={{...tdStyle, minWidth: '100px'}}>
-                                            <button type="button" className="btn btn-light" style={{ padding: '6px 10px', fontSize: 12 }}>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-light" 
+                                                style={{ padding: '6px 10px', fontSize: 12 }}
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await requestService.getRequestFiles(r.id);
+                                                        const files = res?.data?.data || [];
+                                                        if (!files.length) { alert('Chưa có chứng từ'); return; }
+                                                        const html = `
+                                                          <div style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;">
+                                                            <div style="background:#fff;border-radius:12px;max-width:800px;width:90%;max-height:80vh;overflow:auto;padding:16px;">
+                                                              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                                                <h3 style="margin:0;font-size:16px;color:#0f172a">Chứng từ (${files.length})</h3>
+                                                                <button id="close-docs" style="border:none;background:#ef4444;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">Đóng</button>
+                                                              </div>
+                                                              ${files.map((f:any) => `
+                                                                <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px;">
+                                                                  ${String(f.file_type||'').startsWith('image/') ? `<a href="${f.storage_url}" target="_blank"><img src="${f.storage_url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb" /></a>` : `<div style=\"width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:6px;color:#64748b\">PDF</div>`}
+                                                                  <div style="flex:1;min-width:0">
+                                                                    <a href="${f.storage_url}" target="_blank" style="color:#1d4ed8;text-decoration:none;word-break:break-all">${f.file_name}</a>
+                                                                    <div style="font-size:12px;color:#6b7280">${Math.round((f.file_size||0)/1024)} KB</div>
+                                                                  </div>
+                                                                </div>
+                                                              `).join('')}
+                                                            </div>
+                                                          </div>`;
+                                                        const wrapper = document.createElement('div');
+                                                        wrapper.innerHTML = html;
+                                                        document.body.appendChild(wrapper);
+                                                        wrapper.querySelector('#close-docs')?.addEventListener('click', () => document.body.removeChild(wrapper));
+                                                      } catch (e) { alert('Không tải được chứng từ'); }
+                                                }}
+                                            >
                                                 {r.documentsCount ?? 0} file
                                             </button>
                                         </td>

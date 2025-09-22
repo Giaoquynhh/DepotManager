@@ -1232,6 +1232,22 @@ html::-webkit-scrollbar {
   transform: translateY(-50%) scale(1.1);
 }
 
+/* Remove built-in password reveal icon inside password fields (Edge/IE/WebKit) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+.navy-input::-ms-reveal,
+.navy-input::-ms-clear {
+  display: none !important;
+}
+
+/* Some WebKit variants (Chromium/WebKit) */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-clear-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+}
+
 .navy-error {
   display: flex;
   align-items: center;

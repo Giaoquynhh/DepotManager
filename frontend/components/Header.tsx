@@ -134,7 +134,8 @@ export default function Header() {
         router.pathname === '/Setup/ShippingLines' || 
         router.pathname === '/Setup/TransportCompanies' || 
         router.pathname === '/Setup/ContainerTypes' || 
-        router.pathname === '/Setup/Customers') {
+        router.pathname === '/Setup/Customers' ||
+        router.pathname === '/Setup/PriceLists') {
       setSetupSubmenuOpen(true);
     }
   }, [router.pathname]);
