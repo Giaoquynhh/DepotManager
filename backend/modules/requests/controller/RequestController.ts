@@ -103,6 +103,7 @@ export const createRequest = async (req: Request, res: Response) => {
             driver_name,
             driver_phone,
             appointment_time,
+            booking_bill,
             notes
         } = req.body;
 
@@ -110,15 +111,6 @@ export const createRequest = async (req: Request, res: Response) => {
         const createdBy = (req as any).user?._id;
 
         // Debug logging
-        console.log('Request user:', (req as any).user);
-        console.log('CreatedBy:', createdBy);
-        console.log('Request headers:', req.headers);
-        console.log('Request body:', req.body);
-        console.log('request_no from body:', req.body.request_no);
-        console.log('shipping_line_id:', shipping_line_id);
-        console.log('container_type_id:', container_type_id);
-        console.log('customer_id:', customer_id);
-        console.log('vehicle_company_id:', vehicle_company_id);
 
         // Validate createdBy
         if (!createdBy) {
@@ -184,6 +176,7 @@ export const createRequest = async (req: Request, res: Response) => {
                 status: 'PENDING',
                 appointment_time: appointment_time ? new Date(appointment_time) : null,
                 appointment_note: notes,
+                booking_bill: booking_bill || null,
                 driver_name,
                 license_plate: vehicle_number,
                 // Thêm các field bắt buộc khác

@@ -216,7 +216,6 @@ export default function Forklift() {
       }
       
       const response = await api.get('/forklift/jobs');
-      console.log('🔍 Forklift jobs data:', response.data);
       const newTasks = response.data.data || [];
       
       // Chỉ cập nhật state nếu có thay đổi thực sự

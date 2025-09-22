@@ -21,6 +21,10 @@ export const removeByContainerSchema = Joi.object({
   container_no: Joi.string().required(),
 });
 
+export const liftContainerSchema = Joi.object({
+  container_no: Joi.string().required(),
+});
+
 export const validate = (schema: Joi.ObjectSchema) => (req: Request, res: Response, next: NextFunction) => {
   const options = { abortEarly: false, stripUnknown: true, convert: true } as const;
   const { error, value } = schema.validate(req.body, options);

@@ -56,28 +56,31 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             const response = await requestService.getRequests('IMPORT');
             if (response.data.success) {
                 // Transform data từ API thành format của table
-                const transformedData = response.data.data.map((request: any) => ({
-                    id: request.id,
-                    shippingLine: request.shipping_line?.name || '',
-                    requestNo: request.request_no || '',
-                    containerNo: request.container_no || '',
-                    containerType: request.container_type?.code || '',
-                    bookingBill: request.booking_bill || '',
-                    serviceType: 'Nâng container',
-                    status: request.status,
-                    customer: request.customer?.name || '',
-                    transportCompany: request.vehicle_company?.name || '',
-                    vehicleNumber: request.license_plate || '',
-                    driverName: request.driver_name || '',
-                    driverPhone: request.driver_phone || '',
-                    appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
-                    timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
-                    timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
-                    totalAmount: request.total_amount || '',
-                    paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
-                    documentsCount: request.attachments_count || 0,
-                    notes: request.appointment_note || ''
-                }));
+                // Debug log để kiểm tra API response
+                const transformedData = response.data.data.map((request: any) => {
+                    return {
+                        id: request.id,
+                        shippingLine: request.shipping_line?.name || '',
+                        requestNo: request.request_no || '',
+                        containerNo: request.container_no || '',
+                        containerType: request.container_type?.code || '',
+                        bookingBill: request.booking_bill || '',
+                        serviceType: 'Nâng container',
+                        status: request.status,
+                        customer: request.customer?.name || '',
+                        transportCompany: request.vehicle_company?.name || '',
+                        vehicleNumber: request.license_plate || '',
+                        driverName: request.driver_name || '',
+                        driverPhone: request.driver_phone || '',
+                        appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
+                        timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
+                        timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
+                        totalAmount: request.total_amount || '',
+                        paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+                        documentsCount: request.attachments_count || 0,
+                        notes: request.appointment_note || ''
+                    };
+                });
                 setRows(transformedData);
             }
         } catch (error) {

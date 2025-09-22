@@ -31,7 +31,6 @@ export default function DocumentViewer({
     setLoading(true);
     setError(null);
     
-    console.log('🔍 DocumentViewer Debug:', {
       requestId,
       documentId,
       fileName,

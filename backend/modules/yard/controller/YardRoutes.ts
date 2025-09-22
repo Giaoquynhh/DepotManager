@@ -2,7 +2,7 @@ import { Router } from 'express';
 import controller from './YardController';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { requireRoles } from '../../../shared/middlewares/rbac';
-import { validate, holdSchema, confirmSchema, releaseSchema, removeByContainerSchema } from '../validator/YardValidators';
+import { validate, holdSchema, confirmSchema, releaseSchema, removeByContainerSchema, liftContainerSchema } from '../validator/YardValidators';
 
 const router = Router();
 
@@ -12,6 +12,7 @@ router.use(authenticate);
 // Read-only endpoints cho mọi user đã xác thực
 router.get('/map', (req, res) => controller.map(req as any, res));
 router.get('/container/:container_no', (req, res) => controller.container(req as any, res));
+router.get('/search-containers', (req, res) => controller.searchContainers(req as any, res));
 
 // Stacking routes
 router.get('/stack/map', (req, res) => controller.stackMap(req as any, res));
@@ -26,6 +27,7 @@ router.post('/stack/hold', requireRoles('TechnicalDepartment','SystemAdmin'), va
 router.post('/stack/confirm', requireRoles('TechnicalDepartment','SystemAdmin'), validate(confirmSchema), (req, res) => controller.confirm(req as any, res));
 router.post('/stack/release', requireRoles('TechnicalDepartment','SystemAdmin'), validate(releaseSchema), (req, res) => controller.release(req as any, res));
 router.post('/stack/remove-by-container', requireRoles('TechnicalDepartment','SystemAdmin'), validate(removeByContainerSchema), (req, res) => controller.removeByContainer(req as any, res));
+router.post('/lift-container', requireRoles('TechnicalDepartment','SystemAdmin'), validate(liftContainerSchema), (req, res) => controller.liftContainer(req as any, res));
 
 // Yard Configuration routes - chỉ SystemAdmin
 router.get('/configuration', requireRoles('SystemAdmin'), (req, res) => controller.getConfiguration(req as any, res));

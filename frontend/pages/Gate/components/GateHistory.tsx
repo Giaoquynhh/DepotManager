@@ -61,7 +61,6 @@ export default function GateHistory({}: GateHistoryProps) {
       params.append('page', searchParams.page.toString());
       params.append('limit', searchParams.limit.toString());
 
-      console.log('🔍 Frontend: Calling API with params:', params.toString());
       const response = await api.get(`/gate/history?${params.toString()}`);
       console.log('📊 Frontend: API response:', response.data);
       
@@ -93,7 +92,6 @@ export default function GateHistory({}: GateHistoryProps) {
   }, [searchParams.page]);
 
   const handleSearch = () => {
-    console.log('🔍 Frontend: handleSearch called');
     setSearchParams(prev => ({ ...prev, page: 1 }));
   };
 
@@ -123,7 +121,6 @@ export default function GateHistory({}: GateHistoryProps) {
   };
 
   // Debug: Log current state
-  console.log('🔍 Frontend: Current state - history:', history.length, 'loading:', loading, 'pagination:', pagination);
 
   return (
     <div className="gate-dashboard">

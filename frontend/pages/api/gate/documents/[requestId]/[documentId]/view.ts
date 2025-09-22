@@ -18,7 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Debug logging
-    console.log('🔍 API Debug:', {
       requestId,
       documentId,
       hasToken: !!req.query.token,
@@ -33,17 +32,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: 'Unauthorized - No token provided' });
     }
 
-    // Debug token
-    console.log('🔐 Token Debug:', {
-      tokenLength: token.length,
-      tokenStart: token.substring(0, 20) + '...'
-    });
 
     // Gọi API backend để lấy file
          const backendUrl = process.env.BACKEND_URL || '/backend';
     const backendEndpoint = `${backendUrl}/gate/requests/${requestId}/documents/${documentId}/view`;
     
-    console.log('🚀 Backend Call:', {
       backendUrl,
       backendEndpoint,
       tokenLength: token.length
@@ -56,7 +49,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    console.log('📡 Backend Response:', {
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
@@ -83,7 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const contentDisposition = response.headers.get('content-disposition');
     const fileBuffer = await response.arrayBuffer();
 
-    console.log('✅ File loaded successfully:', {
       contentType,
       contentDisposition,
       fileSize: fileBuffer.byteLength

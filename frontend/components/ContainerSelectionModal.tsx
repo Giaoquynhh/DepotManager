@@ -34,9 +34,7 @@ export default function ContainerSelectionModal({
 
   // Chỉ load containers khi modal mở và request type là EXPORT
   useEffect(() => {
-    console.log('🔍 ContainerSelectionModal useEffect:', { visible, requestType, currentPage, searchQuery });
     if (visible && requestType === 'EXPORT') {
-      console.log('🔍 ContainerSelectionModal: Loading containers...');
       loadContainers();
     }
   }, [visible, requestType, currentPage, searchQuery]);
@@ -52,7 +50,6 @@ export default function ContainerSelectionModal({
       setTotalPages(1); // API mới không có pagination
       
       // Debug log
-      console.log('🔍 ContainerSelectionModal: Loaded available containers:', {
         count: containers.length,
         sampleItems: containers.slice(0, 3)
       });
@@ -70,20 +67,15 @@ export default function ContainerSelectionModal({
   };
 
   const handleContainerSelect = (containerNo: string) => {
-    console.log('🔍 ContainerSelectionModal: handleContainerSelect called with:', containerNo);
-    console.log('🔍 ContainerSelectionModal: onContainerSelected function:', onContainerSelected);
-    console.log('🔍 ContainerSelectionModal: onContainerSelected type:', typeof onContainerSelected);
     
     // Gọi callback để thông báo container đã được chọn
     try {
       onContainerSelected(containerNo);
-      console.log('🔍 ContainerSelectionModal: onContainerSelected called successfully');
     } catch (error) {
       console.error('❌ ContainerSelectionModal: Error calling onContainerSelected:', error);
     }
     
     // Không đóng modal ngay, để parent component xử lý
-    console.log('🔍 ContainerSelectionModal: handleContainerSelect completed');
   };
 
   if (!visible) return null;

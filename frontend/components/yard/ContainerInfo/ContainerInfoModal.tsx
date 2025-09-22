@@ -28,7 +28,6 @@ export const ContainerInfoModal: React.FC<ContainerInfoModalProps> = ({
   const [suggestions, setSuggestions] = useState<Array<{ slot: any; score: number }>>([]);
   const router = useRouter();
 
-  console.log('🔍 ContainerInfoModal render:', {
     isOpen,
     containerInfo: containerInfo ? 'Có data' : 'Không có data',
     isDuplicate,

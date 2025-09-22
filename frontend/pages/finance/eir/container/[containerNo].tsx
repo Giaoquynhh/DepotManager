@@ -20,24 +20,18 @@ export default function EIRViewer() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Fetching EIR for container:', containerNo);
       
       // Gọi API để lấy thông tin EIR với authentication
       const response = await api.get(`/finance/eir/container/${containerNo}`, {
         responseType: 'blob' // Để nhận file binary
       });
       
-      console.log('🔍 API Response:', response);
-      console.log('🔍 Response headers:', response.headers);
       
       // Lấy thông tin file từ response
       const contentType = response.headers['content-type'];
       const contentLength = response.headers['content-length'];
       const contentDisposition = response.headers['content-disposition'];
       
-      console.log('🔍 Content-Type:', contentType);
-      console.log('🔍 Content-Length:', contentLength);
-      console.log('🔍 Content-Disposition:', contentDisposition);
       
       // Lấy filename từ content-disposition header
       let filename = 'EIR';
@@ -60,7 +54,6 @@ export default function EIRViewer() {
         blob: blob
       });
 
-      console.log('🔍 EIR data set successfully');
 
     } catch (err: any) {
       console.error('🔍 Error fetching EIR:', err);

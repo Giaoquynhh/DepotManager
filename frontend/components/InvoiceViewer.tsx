@@ -53,19 +53,14 @@ export default function InvoiceViewer({ requestId, visible, onClose }: InvoiceVi
     setError(null);
     
     try {
-      console.log('🔍 Fetching invoice for requestId:', requestId);
       
       // Sử dụng endpoint cũ nhưng đã được sửa để cho phép customer truy cập
       const response = await api.get(`/finance/invoices/details?source_id=${requestId}`);
       
-      console.log('🔍 API Response:', response);
-      console.log('🔍 Response data:', response.data);
       
       if (response.data && response.data.length > 0) {
-        console.log('🔍 Found invoice:', response.data[0]);
         setInvoice(response.data[0]);
       } else {
-        console.log('🔍 No invoice found for request');
         setError('Không tìm thấy hóa đơn cho request này');
       }
     } catch (err: any) {

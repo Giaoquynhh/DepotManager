@@ -113,29 +113,15 @@ export default function AppointmentForm({
        
        
        // Debug logging
-       console.log('=== DEBUG APPOINTMENT SUBMISSION ===');
-       console.log('Mode:', mode);
-       console.log('Form data:', formData);
-       console.log('Request ID:', requestId);
-       console.log('Appointment data to send:', appointmentData);
-       console.log('Appointment time type:', typeof appointmentData.appointment_time);
-       console.log('Appointment time value:', appointmentData.appointment_time);
-       console.log('Appointment time instanceof Date:', appointmentData.appointment_time instanceof Date);
-       console.log('Appointment time toISOString:', appointmentData.appointment_time.toISOString());
-       console.log('Appointment time getTime:', appointmentData.appointment_time.getTime());
-       console.log('=====================================');
        
        // Chọn API endpoint dựa trên mode
        const endpoint = mode === 'change' ? 'update-appointment' : 'schedule';
-       console.log('Calling API endpoint:', `/requests/${requestId}/${endpoint}`);
        
        const response = await api.patch(`/requests/${requestId}/${endpoint}`, appointmentData);
-       console.log('API response:', response);
        
        // Backend đã tự động xử lý chuyển trạng thái:
        // - IMPORT: PENDING → SCHEDULED
        // - EXPORT: PENDING → PICK_CONTAINER
-       console.log('🔍 Appointment created successfully, backend handled status transition');
        
        onSuccess();
          } catch (error: any) {
@@ -171,7 +157,6 @@ export default function AppointmentForm({
     return now.toISOString().slice(0, 16);
   };
 
-  console.log('AppointmentForm rendering with:', { requestId, requestData, formData });
 
   return (
     <form className="appointment-form" onSubmit={handleSubmit}>

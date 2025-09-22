@@ -9,23 +9,16 @@ export class MaintenanceService {
     const where: any = {};
     if (query.status) where.status = query.status;
     if (query.container_no) {
-      console.log('🔍 Backend: Searching for container_no:', query.container_no);
       where.container_no = query.container_no;
     }
     
-    console.log('🔍 Backend: Final where clause:', where);
     const result = await prisma.repairTicket.findMany({ where, orderBy: { createdAt: 'desc' }, include: { items: true, equipment: true } });
-    console.log('🔍 Backend: Found repairs:', result.length, 'items');
     if (result.length > 0) {
-      console.log('🔍 Backend: First repair container_no:', result[0].container_no);
     }
     return result;
   }
 
   async createRepair(actor: any, payload: any) {
-    console.log('=== DEBUG: createRepair START ===');
-    console.log('Actor:', actor);
-    console.log('Payload:', payload);
     
     // Nếu có equipment_id thì kiểm tra equipment phải ACTIVE
     if (payload.equipment_id) {
@@ -44,15 +37,12 @@ export class MaintenanceService {
       items: payload.items ? { create: payload.items.map((it: any)=>({ inventory_item_id: it.inventory_item_id, quantity: it.quantity })) } : undefined
     };
     
-    console.log('Create data:', createData);
     
     const ticket = await prisma.repairTicket.create({ 
       data: createData, 
       include: { items: true } 
     });
     
-    console.log('Created ticket:', ticket);
-    console.log('=== DEBUG: createRepair END ===');
     
     await audit(actor._id, 'REPAIR.CREATED', 'REPAIR', ticket.id);
     return ticket;
@@ -90,16 +80,10 @@ export class MaintenanceService {
   }
 
   async updateRepairStatus(actor: any, id: string, status: string, manager_comment?: string) {
-    console.log('=== DEBUG: updateRepairStatus START ===');
-    console.log('Actor:', actor);
-    console.log('ID:', id);
-    console.log('New status:', status);
-    console.log('Manager comment:', manager_comment);
     
     const ticket = await prisma.repairTicket.findUnique({ where: { id } });
     if (!ticket) throw new Error('Phiếu không tồn tại');
     
-    console.log('Current ticket:', ticket);
     
     // Kiểm tra trạng thái hợp lệ
     const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -112,14 +96,12 @@ export class MaintenanceService {
       manager_comment: manager_comment || ticket.manager_comment 
     };
     
-    console.log('Update data:', updateData);
     
     const updated = await prisma.repairTicket.update({ 
       where: { id }, 
       data: updateData
     });
     
-    console.log('Updated ticket:', updated);
     
     // Cập nhật trạng thái request nếu cần
     if (ticket.container_no && (status === 'COMPLETED' || status === 'CANCELLED')) {
@@ -136,7 +118,6 @@ export class MaintenanceService {
       newStatus: status 
     });
     
-    console.log('=== DEBUG: updateRepairStatus END ===');
     return updated;
   }
 
@@ -196,7 +177,6 @@ export class MaintenanceService {
         return;
       }
 
-      console.log(`🔍 Tìm thấy ServiceRequest ${latestRequest.id} với status ${latestRequest.status}`);
 
       // Mapping repair status sang request status
       let newRequestStatus: string;
@@ -847,7 +827,6 @@ export class MaintenanceService {
         return null;
       }
 
-      console.log(`🔍 Tìm thấy RepairTicket ${latestRepairTicket.id} với status ${latestRepairTicket.status}`);
 
       // Đồng bộ với ServiceRequest
       await this.updateRequestStatusByContainer(containerNo, latestRepairTicket.status);

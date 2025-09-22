@@ -3,6 +3,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
 import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
+import { ContainerSearchInput } from '../../../components/ContainerSearchInput';
 
 interface CreateLiftRequestModalProps {
 	isOpen: boolean;
@@ -246,13 +247,12 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,
                 appointment_time: formData.appointmentTime,
+                booking_bill: formData.bookingBill, // Add booking/bill field
                 notes: formData.notes,
                 files: formData.documents || []
             };
 
 				// Debug logging
-				console.log('Creating import request with data:', requestData);
-				console.log('Token from localStorage:', localStorage.getItem('token'));
 
 				// Call API to create request with files
 				const response = await requestService.createRequest(requestData);
@@ -712,12 +712,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							<label style={formLabelStyle}>
 								Số container
 							</label>
-							<input
-								type="text"
-								style={formInputStyle}
-								value={formData.containerNumber}
-								onChange={(e) => handleInputChange('containerNumber', e.target.value)}
+							<ContainerSearchInput
+								value={formData.containerNumber || ''}
+								onChange={(value) => handleInputChange('containerNumber', value)}
 								placeholder="Nhập số container"
+								style={formInputStyle}
 							/>
 						</div>
 

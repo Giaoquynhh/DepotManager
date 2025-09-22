@@ -59,7 +59,6 @@ export default function GateDashboard() {
     const checkSidebarState = () => {
       // Kiểm tra sidebar có visible không bằng cách kiểm tra CSS hoặc DOM
       const sidebar = document.querySelector('.sidebar');
-      console.log('🔍 Checking sidebar state:', sidebar);
       
       if (sidebar) {
         // Sidebar đang sử dụng class 'closed' khi bị thu gọn (không phải 'hidden')

@@ -88,9 +88,6 @@ export default function PendingContainersModal({ isOpen, onClose, onRepairCreate
         return request.type === 'IMPORT';
       });
       
-      console.log('🔍 Total containers from API:', data.data?.length || 0);
-      console.log('🔍 Import containers after filtering:', importContainers.length);
-      console.log('🔍 Filtered containers:', importContainers);
       
       setRequests(importContainers);
       

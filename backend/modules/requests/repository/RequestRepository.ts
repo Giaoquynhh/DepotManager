@@ -39,7 +39,13 @@ export class RequestRepository {
       where: filter,
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: {
+        shipping_line: true,
+        container_type: true,
+        customer: true,
+        vehicle_company: true
+      }
     });
   }
 

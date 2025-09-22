@@ -58,8 +58,6 @@ router.get('/eir/container/:container_no', authenticate, async (req: any, res: a
   try {
     const { container_no } = req.params;
     
-    console.log('🔍 EIR request for container:', container_no);
-    console.log('🔍 User:', req.user);
     
     if (!container_no) {
       return res.status(400).json({ success: false, message: 'Container number là bắt buộc' });
@@ -81,21 +79,15 @@ router.get('/eir/container/:container_no', authenticate, async (req: any, res: a
       orderBy: { createdAt: 'desc' }
     });
 
-    console.log('🔍 Found request:', request);
-    console.log('🔍 Request docs:', request?.docs);
 
     if (!request || !request.docs.length) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy EIR cho container này' });
     }
 
     // Kiểm tra quyền: customer chỉ có thể xem EIR của container họ tạo
-    console.log('🔍 User role:', req.user.role);
-    console.log('🔍 Request created_by:', request.created_by);
-    console.log('🔍 User _id:', req.user._id);
     
     if (req.user.role === 'CustomerAdmin' || req.user.role === 'CustomerUser') {
       if (request.created_by !== req.user._id) {
-        console.log('🔍 Access denied: customer cannot view EIR of other users');
         return res.status(403).json({ success: false, message: 'Bạn không có quyền xem EIR của container này' });
       }
     }
@@ -104,17 +96,12 @@ router.get('/eir/container/:container_no', authenticate, async (req: any, res: a
     const filename = eirDoc.storage_key;
     const filePath = path.join('D:\\container35\\manageContainer\\backend\\uploads', filename);
     
-    console.log('🔍 EIR doc:', eirDoc);
-    console.log('🔍 Filename:', filename);
-    console.log('🔍 File path:', filePath);
     
     // Kiểm tra file có tồn tại không
     if (!fs.existsSync(filePath)) {
-      console.log('🔍 File not found at path:', filePath);
       return res.status(404).json({ success: false, message: 'File EIR không tồn tại trên server' });
     }
     
-    console.log('🔍 File exists, size:', fs.statSync(filePath).size);
 
     // Lấy thông tin file
     const stats = fs.statSync(filePath);
@@ -208,7 +195,6 @@ router.post('/upload/eir', upload.single('file'), async (req: any, res: any) => 
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
     
-    console.log('🔍 Tìm request với container_no:', container_no);
     
     const request = await prisma.serviceRequest.findFirst({
       where: { container_no: container_no },
