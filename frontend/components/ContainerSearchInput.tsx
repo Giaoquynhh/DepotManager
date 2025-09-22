@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 
 interface ContainerSearchResult {
   container_no: string;
-  location: string;
+  slot_code: string;
+  block_code: string;
+  yard_name: string;
   tier?: number;
-  status: string;
-  type: 'yard' | 'service';
+  placed_at: string;
 }
 
 interface ContainerSearchInputProps {
@@ -98,37 +99,6 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
     setIsOpen(false);
   };
 
-  const getStatusColor = (status: string, type: string) => {
-    if (type === 'yard') {
-      return '#10b981'; // Green for containers in yard
-    }
-    switch (status) {
-      case 'COMPLETED':
-        return '#3b82f6'; // Blue
-      case 'POSITIONED':
-        return '#8b5cf6'; // Purple
-      case 'IN_CAR':
-        return '#f59e0b'; // Orange
-      default:
-        return '#6b7280'; // Gray
-    }
-  };
-
-  const getStatusText = (status: string, type: string) => {
-    if (type === 'yard') {
-      return 'Trong bãi';
-    }
-    switch (status) {
-      case 'COMPLETED':
-        return 'Hoàn thành';
-      case 'POSITIONED':
-        return 'Đã đặt';
-      case 'IN_CAR':
-        return 'Trên xe';
-      default:
-        return status;
-    }
-  };
 
   const inputStyle: React.CSSProperties = {
     padding: '12px 16px',
@@ -227,14 +197,14 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
                     {container.container_no}
                   </span>
                   <span style={{
-                    fontSize: '12px',
-                    color: getStatusColor(container.status, container.type),
-                    fontWeight: '500',
-                    backgroundColor: `${getStatusColor(container.status, container.type)}20`,
-                    padding: '2px 8px',
-                    borderRadius: '12px'
+                    fontSize: '11px',
+                    color: '#64748b',
+                    backgroundColor: '#f1f5f9',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontWeight: '500'
                   }}>
-                    {getStatusText(container.status, container.type)}
+                    Trong bãi
                   </span>
                 </div>
                 <div style={{
@@ -244,7 +214,7 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>{container.location}</span>
+                  <span>{container.block_code}-{container.slot_code}</span>
                   {container.tier && (
                     <span style={{
                       backgroundColor: '#e2e8f0',

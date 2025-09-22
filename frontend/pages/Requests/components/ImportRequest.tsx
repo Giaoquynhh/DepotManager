@@ -103,6 +103,28 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 
 	return (
 		<>
+			<style>{`
+				.gate-table-container .table-scroll-container {
+					scrollbar-width: auto !important;
+					-ms-overflow-style: scrollbar !important;
+				}
+				.gate-table-container .table-scroll-container::-webkit-scrollbar {
+					display: block !important;
+					width: 8px !important;
+					height: 8px !important;
+				}
+				.gate-table-container .table-scroll-container::-webkit-scrollbar-track {
+					background: #f1f5f9;
+					border-radius: 4px;
+				}
+				.gate-table-container .table-scroll-container::-webkit-scrollbar-thumb {
+					background: #cbd5e1;
+					border-radius: 4px;
+				}
+				.gate-table-container .table-scroll-container::-webkit-scrollbar-thumb:hover {
+					background: #94a3b8;
+				}
+			`}</style>
 			<div className="gate-search-section">
 				<div className="search-row">
 					<div className="search-section">
@@ -152,7 +174,13 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                         <small>Không có yêu cầu nâng container nào để xử lý</small>
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                    <div className="table-scroll-container" style={{ 
+                        overflowX: 'auto', 
+                        border: '1px solid #e2e8f0', 
+                        borderRadius: 8,
+                        scrollbarWidth: 'auto',
+                        msOverflowStyle: 'scrollbar'
+                    }}>
                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1200 }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
