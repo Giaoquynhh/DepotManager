@@ -1,6 +1,7 @@
 // Price Lists Table component
 import React from 'react';
 import { Pagination } from '../../../components/Pagination';
+import { formatNumberWithDots } from '../../../utils/numberFormat';
 
 export interface PriceList {
   id: string;
@@ -39,10 +40,7 @@ export const PriceListsTable: React.FC<PriceListsTableProps> = ({
 }) => {
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
+    return `${formatNumberWithDots(price)} VNĐ`;
   };
 
   const getTypeColor = (type: string) => {

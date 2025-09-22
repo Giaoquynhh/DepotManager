@@ -1,5 +1,6 @@
 // Edit Price List Modal component
 import React from 'react';
+import { formatVietnamesePriceInput, parseFormattedNumber } from '../../../utils/numberFormat';
 
 export interface PriceListFormData {
   serviceCode: string;
@@ -46,13 +47,25 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
       return;
     }
     
-    onSubmit(formData);
+    // Submit with clean price data
+    const submitData = {
+      ...formData,
+      price: parseFormattedNumber(formData.price)
+    };
+    onSubmit(submitData);
   };
 
   const handleInputChange = (field: keyof PriceListFormData, value: string) => {
+    let processedValue = value;
+    
+    // Format price field with dots
+    if (field === 'price') {
+      processedValue = formatVietnamesePriceInput(value);
+    }
+    
     setFormData({
       ...formData,
-      [field]: value
+      [field]: processedValue
     });
     
     // Check for duplicate service code (exclude current item)
@@ -153,13 +166,11 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
               {translations[language].price} <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
+              type="text"
               className="form-input"
               value={formData.price}
               onChange={(e) => handleInputChange('price', e.target.value)}
               placeholder={translations[language].enterPrice}
-              min="0"
-              step="0.01"
               required
             />
           </div>

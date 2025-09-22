@@ -178,6 +178,7 @@ export const createRequest = async (req: Request, res: Response) => {
                 appointment_note: notes,
                 booking_bill: booking_bill || null,
                 driver_name,
+                driver_phone,
                 license_plate: vehicle_number,
                 // Thêm các field bắt buộc khác
                 tenant_id: null, // Có thể cần lấy từ user context
@@ -288,6 +289,308 @@ export const getRequests = async (req: any, res: any) => {
         res.status(500).json({
             success: false,
             message: error.message || 'Có lỗi xảy ra khi lấy danh sách yêu cầu'
+        });
+    }
+};
+
+// Get single request details
+export const getRequest = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // Get request with all relations
+        const request = await prisma.serviceRequest.findUnique({
+            where: { 
+                id,
+                depot_deleted_at: null // Only show non-deleted requests
+            },
+            include: {
+                shipping_line: {
+                    select: { id: true, name: true }
+                },
+                container_type: {
+                    select: { id: true, code: true }
+                },
+                customer: {
+                    select: { id: true, name: true }
+                },
+                vehicle_company: {
+                    select: { id: true, name: true }
+                },
+                attachments: {
+                    select: {
+                        id: true,
+                        file_name: true,
+                        file_type: true,
+                        file_size: true,
+                        storage_url: true,
+                        uploaded_at: true,
+                        uploader: {
+                            select: { id: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy yêu cầu'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: request,
+            message: 'Lấy thông tin yêu cầu thành công'
+        });
+
+    } catch (error: any) {
+        console.error('Get request error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi lấy thông tin yêu cầu'
+        });
+    }
+};
+
+// Cancel request
+export const cancelRequest = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const cancelledBy = (req as any).user?._id;
+
+        // Check if request exists
+        const request = await prisma.serviceRequest.findUnique({
+            where: { 
+                id,
+                depot_deleted_at: null
+            }
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy yêu cầu'
+            });
+        }
+
+        // Check if request can be cancelled
+        if (request.status === 'CANCELLED') {
+            return res.status(400).json({
+                success: false,
+                message: 'Yêu cầu đã được hủy trước đó'
+            });
+        }
+
+        if (request.status === 'COMPLETED') {
+            return res.status(400).json({
+                success: false,
+                message: 'Không thể hủy yêu cầu đã hoàn thành'
+            });
+        }
+
+        // Update request status to CANCELLED
+        const updatedRequest = await prisma.serviceRequest.update({
+            where: { id },
+            data: {
+                status: 'CANCELLED',
+                updatedAt: new Date(),
+                // Có thể thêm field cancelled_by và cancellation_reason nếu cần
+            }
+        });
+
+        res.json({
+            success: true,
+            data: updatedRequest,
+            message: 'Hủy yêu cầu thành công'
+        });
+
+    } catch (error: any) {
+        console.error('Cancel request error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi hủy yêu cầu'
+        });
+    }
+};
+
+// Delete request
+export const deleteRequest = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const deletedBy = (req as any).user?._id;
+
+        // Check if request exists
+        const request = await prisma.serviceRequest.findUnique({
+            where: { 
+                id,
+                depot_deleted_at: null
+            }
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy yêu cầu'
+            });
+        }
+
+        // Soft delete by setting depot_deleted_at
+        const deletedRequest = await prisma.serviceRequest.update({
+            where: { id },
+            data: {
+                depot_deleted_at: new Date(),
+                updatedAt: new Date()
+            }
+        });
+
+        res.json({
+            success: true,
+            data: deletedRequest,
+            message: 'Xóa yêu cầu thành công'
+        });
+
+    } catch (error: any) {
+        console.error('Delete request error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi xóa yêu cầu'
+        });
+    }
+};
+
+// Update request
+export const updateRequest = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const {
+            type,
+            container_no,
+            eta,
+            shipping_line_id,
+            container_type_id,
+            customer_id,
+            vehicle_company_id,
+            vehicle_number,
+            driver_name,
+            driver_phone,
+            appointment_time,
+            booking_bill,
+            notes
+        } = req.body;
+
+        const files = req.files as Express.Multer.File[];
+        const updatedBy = (req as any).user?._id;
+
+        // Check if request exists
+        const existingRequest = await prisma.serviceRequest.findUnique({
+            where: { 
+                id,
+                depot_deleted_at: null
+            }
+        });
+
+        if (!existingRequest) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy yêu cầu'
+            });
+        }
+
+        // Validate foreign keys exist
+        if (shipping_line_id) {
+            const shippingLine = await prisma.shippingLine.findUnique({ where: { id: shipping_line_id } });
+            if (!shippingLine) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Shipping line not found'
+                });
+            }
+        }
+
+        if (container_type_id) {
+            const containerType = await prisma.containerType.findUnique({ where: { id: container_type_id } });
+            if (!containerType) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Container type not found'
+                });
+            }
+        }
+
+        if (customer_id && customer_id !== 'null') {
+            const customer = await prisma.customer.findUnique({ where: { id: customer_id } });
+            if (!customer) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Customer not found'
+                });
+            }
+        }
+
+        if (vehicle_company_id) {
+            const vehicleCompany = await prisma.transportCompany.findUnique({ where: { id: vehicle_company_id } });
+            if (!vehicleCompany) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Vehicle company not found'
+                });
+            }
+        }
+
+        // Update request
+        const updatedRequest = await prisma.serviceRequest.update({
+            where: { id },
+            data: {
+                type: type || existingRequest.type,
+                container_no: container_no || existingRequest.container_no,
+                shipping_line_id: shipping_line_id || existingRequest.shipping_line_id,
+                container_type_id: container_type_id || existingRequest.container_type_id,
+                customer_id: customer_id || existingRequest.customer_id,
+                vehicle_company_id: vehicle_company_id || existingRequest.vehicle_company_id,
+                eta: eta ? new Date(eta) : existingRequest.eta,
+                appointment_time: appointment_time ? new Date(appointment_time) : existingRequest.appointment_time,
+                appointment_note: notes || existingRequest.appointment_note,
+                booking_bill: booking_bill || existingRequest.booking_bill,
+                driver_name: driver_name || existingRequest.driver_name,
+                driver_phone: driver_phone || existingRequest.driver_phone,
+                license_plate: vehicle_number || existingRequest.license_plate,
+                updatedAt: new Date(),
+                attachments_count: existingRequest.attachments_count + (files ? files.length : 0)
+            }
+        });
+
+        // Upload new files if any
+        if (files && files.length > 0) {
+            const uploadResult = await fileUploadService.uploadFiles(
+                id,
+                files,
+                updatedBy,
+                'depot'
+            );
+
+            if (!uploadResult.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: uploadResult.message
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            data: updatedRequest,
+            message: 'Cập nhật yêu cầu thành công'
+        });
+
+    } catch (error: any) {
+        console.error('Update request error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi cập nhật yêu cầu'
         });
     }
 };

@@ -42,5 +42,30 @@ router.get('/',
     controller.getRequests
 );
 
+// Get single request details
+router.get('/:id', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    controller.getRequest
+);
+
+// Cancel request
+router.patch('/:id/cancel', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    controller.cancelRequest
+);
+
+// Update request
+router.put('/:id', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    fileUploadService.getMulter().array('files', 10), // Tối đa 10 files
+    controller.updateRequest
+);
+
+// Delete request
+router.delete('/:id', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    controller.deleteRequest
+);
+
 export default router;
 

@@ -99,5 +99,54 @@ export const requestService = {
     if (status) params.append('status', status);
     
     return api.get(`/requests?${params.toString()}`);
+  },
+
+  // Update request
+  async updateRequest(requestId: string, data: Partial<CreateRequestData>) {
+    const formData = new FormData();
+    
+    // Add text fields
+    if (data.type) formData.append('type', data.type);
+    if (data.request_no) formData.append('request_no', data.request_no);
+    if (data.container_no) formData.append('container_no', data.container_no);
+    if (data.eta) formData.append('eta', data.eta);
+    if (data.shipping_line_id) formData.append('shipping_line_id', data.shipping_line_id);
+    if (data.container_type_id) formData.append('container_type_id', data.container_type_id);
+    if (data.customer_id) formData.append('customer_id', data.customer_id);
+    if (data.vehicle_company_id) formData.append('vehicle_company_id', data.vehicle_company_id);
+    if (data.vehicle_number) formData.append('vehicle_number', data.vehicle_number);
+    if (data.driver_name) formData.append('driver_name', data.driver_name);
+    if (data.driver_phone) formData.append('driver_phone', data.driver_phone);
+    if (data.appointment_time) formData.append('appointment_time', data.appointment_time);
+    if (data.booking_bill) formData.append('booking_bill', data.booking_bill);
+    if (data.notes) formData.append('notes', data.notes);
+    
+    // Add files if provided
+    if (data.files && data.files.length > 0) {
+      data.files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+
+    return api.put(`/requests/${requestId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // Cancel request
+  async cancelRequest(requestId: string, reason?: string) {
+    return api.patch(`/requests/${requestId}/cancel`, { reason });
+  },
+
+  // Get single request details
+  async getRequest(requestId: string) {
+    return api.get(`/requests/${requestId}`);
+  },
+
+  // Delete request
+  async deleteRequest(requestId: string) {
+    return api.delete(`/requests/${requestId}`);
   }
 };
