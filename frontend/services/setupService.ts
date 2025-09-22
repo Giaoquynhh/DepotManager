@@ -321,18 +321,36 @@ class SetupService {
     }
   }
 
+  // Upload customer Excel file
+  async uploadCustomerExcel(file: FormData): Promise<ApiResponse<Customer[]>> {
+    try {
+      const response = await api.post('/api/setup/customers/upload-excel', file);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error uploading customer Excel:', error);
+      return {
+        success: false,
+        error: 'UPLOAD_ERROR',
+        message: error.response?.data?.message || 'Failed to upload Excel file'
+      };
+    }
+  }
+
   // Upload container type Excel file
   async uploadContainerTypeExcel(file: FormData): Promise<ApiResponse<ContainerType[]>> {
     try {
-      // Let the browser set the correct multipart boundary automatically
-      const response = await api.post('/api/setup/container-types/upload-excel', file);
+      // Explicitly set multipart header to avoid any proxy issues
+      const response = await api.post('/api/setup/container-types/upload-excel', file, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return response.data;
     } catch (error: any) {
       console.error('Error uploading container type Excel:', error);
       return {
         success: false,
         error: 'UPLOAD_ERROR',
-        message: error.response?.data?.message || 'Failed to upload Excel file'
+        message: error.response?.data?.message || 'Failed to upload Excel file',
+        details: error.response?.data?.details
       };
     }
   }

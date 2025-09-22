@@ -53,10 +53,10 @@ interface SetupModalsProps {
   onCancelEditContainerTypeModal: () => void;
   onSubmitShippingLine: (data: ShippingLineFormData) => void;
   onUpdateShippingLine: (data: ShippingLineFormData) => void;
-  onFileUpload: (file: File) => void;
+  onFileUpload: (files: File[]) => void;
   onSubmitTransportCompany: (data: TransportCompanyFormData) => void;
   onUpdateTransportCompany: (data: TransportCompanyFormData) => void;
-  onTransportCompanyFileUpload: (file: File) => void;
+  onTransportCompanyFileUpload: (files: File[]) => void;
   onContainerTypeFileUpload?: (file: File) => void;
   onSubmitContainerType: (data: ContainerTypeFormData) => void;
   onUpdateContainerType: (data: ContainerTypeFormData) => void;

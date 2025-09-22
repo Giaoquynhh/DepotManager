@@ -481,6 +481,103 @@ export class SetupService {
     }
   }
 
+  // Upload customer Excel file
+  async uploadCustomerExcel(file: Express.Multer.File): Promise<ApiResponse<CustomerResponse[]>> {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Expected columns order:
+      // [STT?, Mã khách hàng, Tên khách hàng, Địa chỉ, MST, SĐT, Ghi chú]
+      const rows = (jsonData.slice(1) as any[][]);
+      const customers: CustomerResponse[] = [];
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0 || !row.some(cell => cell && cell.toString().trim())) {
+          continue;
+        }
+
+        // Some sheets may include STT at column A; shift if needed to ensure code at index 1
+        const hasSttFirst = row.length >= 2 && typeof row[0] !== 'undefined' && typeof row[1] !== 'undefined' && (row[1] + '').trim();
+        const colOffset = hasSttFirst && (row[0] + '').match(/^\d+$/) ? 1 : 0;
+
+        const code = (row[0 + colOffset] ?? '').toString().trim();
+        const name = (row[1 + colOffset] ?? '').toString().trim();
+        const address = (row[2 + colOffset] ?? '').toString().trim();
+        const tax_code = (row[3 + colOffset] ?? '').toString().trim();
+        const phone = (row[4 + colOffset] ?? '').toString().trim();
+        const note = (row[5 + colOffset] ?? '').toString().trim();
+
+        if (!code || !name) {
+          errors.push(`Row ${i + 2}: Missing required fields (Code and Name)`);
+          continue;
+        }
+
+        // Prevent duplicates within the same upload batch
+        const dupInBatch = customers.some(c => c.code.toLowerCase() === code.toLowerCase());
+        if (dupInBatch) {
+          errors.push(`Row ${i + 2}: Duplicate code in file "${code}"`);
+          continue;
+        }
+
+        const createData: CreateCustomerDto = {
+          code,
+          name,
+          address: address || undefined,
+          tax_code: tax_code || undefined,
+          email: undefined,
+          phone: phone || undefined
+        };
+
+        try {
+          const result = await this.createCustomer(createData);
+          if (result.success && result.data) {
+            customers.push(result.data);
+          } else {
+            errors.push(`Row ${i + 2}: ${result.message || 'Failed to create'}`);
+          }
+        } catch (err) {
+          errors.push(`Row ${i + 2}: Failed to create customer`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Some rows failed to process',
+          details: errors
+        };
+      }
+
+      if (customers.length === 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No valid data found in Excel file'
+        };
+      }
+
+      return {
+        success: true,
+        data: customers,
+        message: `Successfully uploaded ${customers.length} customers`
+      };
+    } catch (error) {
+      console.error('Error uploading customer Excel:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process Excel file'
+      };
+    }
+  }
+
   // Upload container type Excel file
   async uploadContainerTypeExcel(file: Express.Multer.File): Promise<ApiResponse<ContainerTypeResponse[]>> {
     try {

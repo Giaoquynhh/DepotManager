@@ -286,9 +286,23 @@ export const createShippingLineHandlers = (
       const newShippingLines: ShippingLine[] = [];
       const errors: string[] = [];
 
+      // Helper: robustly read ArrayBuffer in all browsers/environments
+      const readAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+        const possibleArrayBuffer: any = file as any;
+        if (typeof possibleArrayBuffer.arrayBuffer === 'function') {
+          return possibleArrayBuffer.arrayBuffer();
+        }
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsArrayBuffer(file);
+        });
+      };
+
       for (const file of files) {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data);
+        const data = await readAsArrayBuffer(file);
+        const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });

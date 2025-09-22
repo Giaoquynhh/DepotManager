@@ -148,7 +148,7 @@ export default function TransportCompanies() {
         onFileUpload={() => {}}
         onSubmitTransportCompany={transportCompanyHandlers.handleSubmitTransportCompany}
         onUpdateTransportCompany={(data) => transportCompanyHandlers.handleUpdateTransportCompany(data, editingTransportCompany)}
-        onTransportCompanyFileUpload={(file) => transportCompanyHandlers.handleTransportCompanyFileUpload([file])}
+        onTransportCompanyFileUpload={(files) => transportCompanyHandlers.handleTransportCompanyFileUpload(files)}
         onSubmitContainerType={() => {}}
         onUpdateContainerType={() => {}}
         onContainerTypeFileUpload={() => {}}

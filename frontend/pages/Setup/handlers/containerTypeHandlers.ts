@@ -129,9 +129,15 @@ export const createContainerTypeHandlers = (
         setShowUploadContainerTypeModal(false);
         setContainerTypeErrorText('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading container type Excel:', error);
-      setContainerTypeErrorText('Failed to upload Excel file');
+      const msg = error?.response?.data?.message || 'Failed to upload Excel file';
+      const details: any[] = error?.response?.data?.details || [];
+      if (Array.isArray(details) && details.length > 0) {
+        setContainerTypeErrorText(`${msg}:\n${details.join('\n')}`);
+      } else {
+        setContainerTypeErrorText(msg);
+      }
     }
   };
 

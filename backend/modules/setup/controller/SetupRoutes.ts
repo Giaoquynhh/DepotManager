@@ -68,6 +68,7 @@ router.post('/container-types/upload-excel', requireRoles('SystemAdmin', 'Techni
 router.get('/customers', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getCustomers);
 router.get('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getCustomerById);
 router.post('/customers', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createCustomer);
+router.post('/customers/upload-excel', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadCustomerExcel);
 router.put('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateCustomer);
 router.patch('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateCustomer);
 router.delete('/customers/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteCustomer);

@@ -49,6 +49,12 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 
     // Dữ liệu thực tế từ API (khởi tạo rỗng)
     const [rows, setRows] = React.useState<LowerRequestRow[]>([]);
+    // Documents modal state
+    const [isDocsOpen, setIsDocsOpen] = React.useState(false);
+    const [docsLoading, setDocsLoading] = React.useState(false);
+    const [docsError, setDocsError] = React.useState<string | null>(null);
+    const [selectedRequest, setSelectedRequest] = React.useState<{ id: string; containerNo: string } | null>(null);
+    const [attachments, setAttachments] = React.useState<Array<{ id: string; file_name: string; file_type: string; file_size: number; storage_url: string }>>([]);
 
     // Function để fetch requests từ API
     const fetchRequests = async () => {
@@ -56,7 +62,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
             const response = await requestService.getRequests('EXPORT');
             if (response.data.success) {
                 // Transform data từ API thành format của table
-                const transformedData = response.data.data.map((request: any) => ({
+                const transformedData: LowerRequestRow[] = response.data.data.map((request: any) => ({
                     id: request.id,
                     shippingLine: request.shipping_line?.name || '',
                     requestNo: request.request_no || '',
@@ -74,16 +80,68 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                     timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
                     totalAmount: request.total_amount || '',
                     paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
-                    documentsCount: request.attachments_count || 0,
+                    // Dùng attachments length nếu API trả về mảng, fallback sang attachments_count
+                    documentsCount: (Array.isArray(request.attachments) ? request.attachments.length : (request.attachments_count || 0)),
                     demDet: request.dem_det || '',
                     notes: request.appointment_note || ''
                 }));
                 setRows(transformedData);
+
+                // Đồng bộ lại documentsCount bằng cách gọi API đếm chính xác nếu cần
+                // Tránh gọi lại cho những dòng đã có attachments mảng trong response
+                const needsAccurateCount = transformedData.filter(r => typeof r.documentsCount !== 'number' || r.documentsCount < 0);
+                if (needsAccurateCount.length > 0) {
+                    try {
+                        const results = await Promise.all(
+                            transformedData.map(async (r) => {
+                                try {
+                                    const res = await requestService.getFiles(r.id);
+                                    const count = Array.isArray(res.data?.data) ? res.data.data.length : (res.data?.attachments?.length || 0);
+                                    return { id: r.id, count };
+                                } catch {
+                                    return { id: r.id, count: r.documentsCount ?? 0 };
+                                }
+                            })
+                        );
+                        setRows(prev => prev.map(row => {
+                            const found = results.find(x => x.id === row.id);
+                            return found ? { ...row, documentsCount: found.count } as LowerRequestRow : row;
+                        }));
+                    } catch {}
+                }
             }
         } catch (error) {
             console.error('Error fetching export requests:', error);
         }
     };
+
+  const openDocuments = async (row: LowerRequestRow) => {
+    try {
+      setSelectedRequest({ id: row.id, containerNo: row.containerNo });
+      setIsDocsOpen(true);
+      setDocsLoading(true);
+      setDocsError(null);
+      const res = await requestService.getFiles(row.id);
+      if (res.data?.success) {
+        setAttachments(res.data.data || res.data.attachments || []);
+      } else {
+        setAttachments([]);
+        setDocsError(res.data?.message || 'Không thể tải danh sách chứng từ');
+      }
+    } catch (err: any) {
+      setDocsError(err.response?.data?.message || err.message || 'Có lỗi xảy ra khi tải chứng từ');
+      setAttachments([]);
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  const closeDocuments = () => {
+    setIsDocsOpen(false);
+    setSelectedRequest(null);
+    setAttachments([]);
+    setDocsError(null);
+  };
 
     // Effect để fetch data khi component mount
     React.useEffect(() => {
@@ -194,11 +252,17 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 										<td style={tdStyle}>{r.timeOut || '-'}</td>
 										<td style={tdStyle}>{typeof r.totalAmount === 'number' ? r.totalAmount.toLocaleString('vi-VN') : '-'}</td>
 										<td style={tdStyle}>{r.paymentStatus || '-'}</td>
-										<td style={tdStyle}>
-											<button type="button" className="btn btn-light" style={{ padding: '6px 10px', fontSize: 12 }}>
-												{r.documentsCount ?? 0} file
-											</button>
-										</td>
+                    <td style={tdStyle}>
+                      <button
+                        type="button"
+                        className="btn btn-light"
+                        style={{ padding: '6px 10px', fontSize: 12 }}
+                        onClick={() => openDocuments(r)}
+                        title="Xem chứng từ"
+                      >
+                        {(r.documentsCount ?? 0)} file
+                      </button>
+                    </td>
 										<td style={tdStyle}>{r.demDet || '-'}</td>
 										<td style={tdStyle}>{r.notes || ''}</td>
 										<td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
@@ -215,6 +279,56 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 						</table>
 					</div>
 				)}
+    {/* Documents Modal */}
+    {isDocsOpen && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
+        }}
+        onClick={closeDocuments}
+      >
+        <div
+          style={{ background: '#fff', borderRadius: 12, width: '720px', maxWidth: '95vw', maxHeight: '85vh', overflow: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.25)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Chứng từ - {selectedRequest?.containerNo || ''}</h3>
+            <button onClick={closeDocuments} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ padding: 20 }}>
+            {docsLoading ? (
+              <div style={{ textAlign: 'center', color: '#64748b' }}>Đang tải...</div>
+            ) : docsError ? (
+              <div style={{ color: '#ef4444' }}>{docsError}</div>
+            ) : attachments.length === 0 ? (
+              <div style={{ color: '#64748b' }}>Không có chứng từ</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {attachments.map((f, idx) => (
+                  <div key={f.id || idx} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {f.file_type === 'image' ? (
+                      <img src={f.storage_url} alt={f.file_name} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+                    ) : (
+                      <div style={{ width: 64, height: 64, border: '1px solid #e5e7eb', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>PDF</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.file_name}</div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>{Math.round((f.file_size || 0) / 1024)} KB</div>
+                      <a href={f.storage_url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>Mở</a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-secondary" onClick={closeDocuments}>Đóng</button>
+          </div>
+        </div>
+      </div>
+    )}
 			</div>
 		</>
 	);

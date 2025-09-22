@@ -146,7 +146,7 @@ export default function ShippingLines() {
         onCancelUploadContainerTypeModal={() => {}}
         onSubmitShippingLine={shippingLineHandlers.handleSubmitShippingLine}
         onUpdateShippingLine={(data) => shippingLineHandlers.handleUpdateShippingLine(data, editingShippingLine)}
-        onFileUpload={(file) => shippingLineHandlers.handleFileUpload([file])}
+        onFileUpload={(files) => shippingLineHandlers.handleFileUpload(files)}
         onSubmitTransportCompany={() => {}}
         onUpdateTransportCompany={() => {}}
         onTransportCompanyFileUpload={() => {}}

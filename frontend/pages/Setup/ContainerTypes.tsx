@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import Header from '../../components/Header';
 import Card from '../../components/Card';
@@ -62,6 +62,20 @@ export default function ContainerTypes() {
     translations
   );
 
+  // File input ref for direct Excel upload (no modal)
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleOpenExcelPicker = () => {
+    if (fileInputRef.current) fileInputRef.current.value = '' as any;
+    fileInputRef.current?.click();
+  };
+
+  const handleExcelSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (!files.length) return;
+    await containerTypeHandlers.handleContainerTypeFileUpload(files);
+  };
+
   // Load data on component mount
   useEffect(() => {
     containerTypeHandlers.loadContainerTypes();
@@ -84,7 +98,16 @@ export default function ContainerTypes() {
                 onAddNewTransportCompany={() => {}}
                 onUploadTransportCompanyExcel={() => {}}
                 onAddNewContainerType={containerTypeHandlers.handleAddNewContainerType}
-                onUploadContainerTypeExcel={() => setShowUploadContainerTypeModal(true)}
+                onUploadContainerTypeExcel={handleOpenExcelPicker}
+              />
+
+              {/* Hidden file input for Excel upload */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                style={{ display: 'none' }}
+                onChange={handleExcelSelected}
               />
 
               {/* Success Message */}
@@ -128,7 +151,7 @@ export default function ContainerTypes() {
         // Container Types Modals
         showAddContainerTypeModal={showAddContainerTypeModal}
         showEditContainerTypeModal={showEditContainerTypeModal}
-        showUploadContainerTypeModal={showUploadContainerTypeModal}
+        showUploadContainerTypeModal={false}
         editingContainerType={editingContainerType}
         containerTypeFormData={containerTypeFormData}
         setContainerTypeFormData={setContainerTypeFormData}
@@ -143,7 +166,7 @@ export default function ContainerTypes() {
         onCancelUploadTransportCompanyModal={() => {}}
         onCancelAddContainerTypeModal={() => setShowAddContainerTypeModal(false)}
         onCancelEditContainerTypeModal={() => setShowEditContainerTypeModal(false)}
-        onCancelUploadContainerTypeModal={() => setShowUploadContainerTypeModal(false)}
+        onCancelUploadContainerTypeModal={() => {}}
         onSubmitShippingLine={() => {}}
         onUpdateShippingLine={() => {}}
         onFileUpload={() => {}}
@@ -152,7 +175,7 @@ export default function ContainerTypes() {
         onTransportCompanyFileUpload={() => {}}
         onSubmitContainerType={containerTypeHandlers.handleSubmitContainerType}
         onUpdateContainerType={(data) => containerTypeHandlers.handleUpdateContainerType(data, editingContainerType)}
-        onContainerTypeFileUpload={(file) => containerTypeHandlers.handleContainerTypeFileUpload([file])}
+        onContainerTypeFileUpload={() => {}}
         
         // Common
         language={language}

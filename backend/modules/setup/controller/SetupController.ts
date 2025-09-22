@@ -327,6 +327,35 @@ export class SetupController {
     }
   }
 
+  // Upload customer Excel file
+  async uploadCustomerExcel(req: Request, res: Response) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No file uploaded'
+        });
+      }
+
+      const result = await service.uploadCustomerExcel(req.file);
+
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
+        return res.status(statusCode).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error in uploadCustomerExcel controller:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
   // Upload container type Excel file
   async uploadContainerTypeExcel(req: Request, res: Response) {
     try {

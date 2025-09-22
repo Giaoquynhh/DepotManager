@@ -346,6 +346,37 @@ export default function Customers() {
                   >
                     {loading ? 'Đang tải...' : 'Tạo khách hàng'}
                   </button>
+                  <label className="btn" style={{background:'#0ea5e9', color:'#fff', cursor:'pointer'}}>
+                    Upload Excel
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      style={{display:'none'}}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setLoading(true);
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          const res = await setupService.uploadCustomerExcel(formData);
+                          if (res.success) {
+                            setMessage(res.message || 'Upload Excel thành công');
+                            setShowMessage(true);
+                            await loadCustomers();
+                          } else {
+                            const details = Array.isArray(res.details) ? `\n- ${res.details.join('\n- ')}` : '';
+                            alert((res.message || 'Upload thất bại') + details);
+                          }
+                        } catch (err) {
+                          alert('Có lỗi khi upload file');
+                        } finally {
+                          setLoading(false);
+                          if (e.target) e.target.value = '' as any;
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 
