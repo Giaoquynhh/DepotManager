@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { requestService } from '../../../services/requests';
+import { UpdateRequestModal } from './UpdateRequestModal';
+import { CancelRequestModal } from './CancelRequestModal';
 
 interface ExportRequestProps {
 	localSearch: string;
@@ -56,62 +58,88 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     const [selectedRequest, setSelectedRequest] = React.useState<{ id: string; containerNo: string } | null>(null);
     const [attachments, setAttachments] = React.useState<Array<{ id: string; file_name: string; file_type: string; file_size: number; storage_url: string }>>([]);
 
+    // Update modal state
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
+    const [selectedRequestForUpdate, setSelectedRequestForUpdate] = React.useState<LowerRequestRow | null>(null);
+    const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
+    const [selectedRequestForCancel, setSelectedRequestForCancel] = React.useState<LowerRequestRow | null>(null);
+
     // Function để fetch requests từ API
     const fetchRequests = async () => {
         try {
+            console.log('=== DEBUG FETCH REQUESTS ===');
+            console.log('Token in localStorage:', localStorage.getItem('token'));
+            console.log('API_BASE:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000');
             const response = await requestService.getRequests('EXPORT');
+            console.log('API Response:', response.data);
             if (response.data.success) {
                 // Transform data từ API thành format của table
-                const transformedData: LowerRequestRow[] = response.data.data.map((request: any) => ({
-                    id: request.id,
-                    shippingLine: request.shipping_line?.name || '',
-                    requestNo: request.request_no || '',
-                    containerNo: request.container_no || '',
-                    containerType: request.container_type?.code || '',
-                    serviceType: 'Hạ container',
-                    status: request.status,
-                    customer: request.customer?.name || '',
-                    transportCompany: request.vehicle_company?.name || '',
-                    vehicleNumber: request.license_plate || '',
-                    driverName: request.driver_name || '',
-                    driverPhone: request.driver_phone || '',
-                    appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
-                    timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
-                    timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
-                    totalAmount: request.total_amount || '',
-                    paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
-                    // Dùng attachments length nếu API trả về mảng, fallback sang attachments_count
-                    documentsCount: (Array.isArray(request.attachments) ? request.attachments.length : (request.attachments_count || 0)),
-                    demDet: request.dem_det || '',
-                    notes: request.appointment_note || ''
-                }));
+                const transformedData: LowerRequestRow[] = response.data.data.map((request: any) => {
+                    console.log('Processing request:', request.id, 'attachments:', request.attachments, 'attachments_count:', request.attachments_count);
+                    return {
+                        id: request.id,
+                        shippingLine: request.shipping_line?.name || '',
+                        requestNo: request.request_no || '',
+                        containerNo: request.container_no || '',
+                        containerType: request.container_type?.code || '',
+                        serviceType: 'Hạ container',
+                        status: request.status,
+                        customer: request.customer?.name || '',
+                        transportCompany: request.vehicle_company?.name || '',
+                        vehicleNumber: request.license_plate || '',
+                        driverName: request.driver_name || '',
+                        driverPhone: request.driver_phone || '',
+                        appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
+                        timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
+                        timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
+                        totalAmount: request.total_amount || '',
+                        paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+                        // Dùng attachments length nếu API trả về mảng, fallback sang attachments_count
+                        documentsCount: (() => {
+                            const count = Array.isArray(request.attachments) ? request.attachments.length : (request.attachments_count || 0);
+                            console.log('Calculated documentsCount for', request.id, ':', count, 'from attachments:', request.attachments, 'attachments_count:', request.attachments_count);
+                            return count;
+                        })(),
+                        demDet: request.dem_det || '',
+                        notes: request.rejected_reason || request.appointment_note || ''
+                    };
+                });
                 setRows(transformedData);
 
-                // Đồng bộ lại documentsCount bằng cách gọi API đếm chính xác nếu cần
-                // Tránh gọi lại cho những dòng đã có attachments mảng trong response
-                const needsAccurateCount = transformedData.filter(r => typeof r.documentsCount !== 'number' || r.documentsCount < 0);
+                // Chỉ gọi API đếm chính xác cho những request không có attachments array từ backend
+                const needsAccurateCount = transformedData.filter(r => r.documentsCount === 0 || r.documentsCount === undefined);
+                console.log('Requests needing accurate count:', needsAccurateCount);
                 if (needsAccurateCount.length > 0) {
                     try {
                         const results = await Promise.all(
-                            transformedData.map(async (r) => {
+                            needsAccurateCount.map(async (r) => {
                                 try {
                                     const res = await requestService.getFiles(r.id);
-                                    const count = Array.isArray(res.data?.data) ? res.data.data.length : (res.data?.attachments?.length || 0);
+                                    console.log('getFiles response for', r.id, ':', res.data);
+                                    const count = Array.isArray(res.data?.data) ? res.data.data.length : 0;
+                                    console.log('Count from getFiles for', r.id, ':', count);
                                     return { id: r.id, count };
                                 } catch {
-                                    return { id: r.id, count: r.documentsCount ?? 0 };
+                                    return { id: r.id, count: 0 };
                                 }
                             })
                         );
+                        console.log('Fallback results:', results);
                         setRows(prev => prev.map(row => {
                             const found = results.find(x => x.id === row.id);
-                            return found ? { ...row, documentsCount: found.count } as LowerRequestRow : row;
+                            const updatedRow = found ? { ...row, documentsCount: found.count } as LowerRequestRow : row;
+                            console.log('Updating row', row.id, 'from', row.documentsCount, 'to', updatedRow.documentsCount);
+                            return updatedRow;
                         }));
                     } catch {}
                 }
             }
-        } catch (error) {
-            console.error('Error fetching export requests:', error);
+        } catch (error: any) {
+            console.error('=== ERROR FETCHING EXPORT REQUESTS ===');
+            console.error('Error details:', error);
+            console.error('Error response:', error?.response?.data);
+            console.error('Error status:', error?.response?.status);
+            console.error('Error config:', error?.config);
         }
     };
 
@@ -143,6 +171,53 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     setDocsError(null);
   };
 
+  // Handle update request
+  const handleUpdateRequest = (row: LowerRequestRow) => {
+    setSelectedRequestForUpdate(row);
+    setIsUpdateModalOpen(true);
+  };
+
+  const closeUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    setSelectedRequestForUpdate(null);
+  };
+
+  const handleUpdateSuccess = () => {
+    // Refresh the table after successful update
+    fetchRequests();
+  };
+
+  // Handle cancel request
+  const handleCancelRequest = (row: LowerRequestRow) => {
+    setSelectedRequestForCancel(row);
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmCancelRequest = async (reason: string) => {
+    if (!selectedRequestForCancel) return;
+    try {
+      await requestService.cancelRequest(selectedRequestForCancel.id, reason);
+      setIsCancelModalOpen(false);
+      setSelectedRequestForCancel(null);
+      fetchRequests();
+    } catch (error: any) {
+      console.error('Cancel request error:', error);
+      alert('Có lỗi xảy ra khi hủy yêu cầu: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // Handle delete request (hard delete from table)
+  const handleDeleteRequest = async (row: LowerRequestRow) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa yêu cầu ${row.requestNo}?`)) return;
+    try {
+      await requestService.deleteRequest(row.id);
+      fetchRequests();
+    } catch (error: any) {
+      console.error('Delete request error:', error);
+      alert('Xóa yêu cầu thất bại: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
     // Effect để fetch data khi component mount
     React.useEffect(() => {
         fetchRequests();
@@ -151,6 +226,9 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     // Effect để refresh data khi refreshTrigger thay đổi
     React.useEffect(() => {
         if (refreshTrigger) {
+            console.log('Refresh triggered, clearing cache and fetching fresh data');
+            // Clear any cached data
+            setRows([]);
             fetchRequests();
         }
     }, [refreshTrigger]);
@@ -241,7 +319,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 										<td style={tdStyle}>{r.containerNo}</td>
 										<td style={tdStyle}>{r.containerType}</td>
 										<td style={tdStyle}>Hạ container</td>
-										<td style={tdStyle}>{r.status}</td>
+                    <td style={tdStyle}>{r.status === 'REJECTED' ? 'Đã từ chối' : r.status}</td>
 										<td style={tdStyle}>{r.customer}</td>
 										<td style={tdStyle}>{r.transportCompany}</td>
 										<td style={tdStyle}>{r.vehicleNumber}</td>
@@ -265,13 +343,46 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                     </td>
 										<td style={tdStyle}>{r.demDet || '-'}</td>
 										<td style={tdStyle}>{r.notes || ''}</td>
-										<td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-											<button type="button" className="btn btn-primary" style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}>
-												Cập nhật thông tin
-											</button>
-											<button type="button" className="btn btn-danger" style={{ padding: '6px 10px', fontSize: 12 }}>
-												Hủy
-											</button>
+                                        <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                                        {r.status !== 'REJECTED' && (
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-primary" 
+                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                                onClick={() => handleUpdateRequest(r)}
+                                            >
+                                                Cập nhật thông tin
+                                            </button>
+                                        )}
+                                        {r.status === 'REJECTED' ? (
+                                          <>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-light" 
+                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                                onClick={() => alert(r.notes || 'Không có lý do')}
+                                            >
+                                                Xem lý do
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-danger" 
+                                                style={{ padding: '6px 10px', fontSize: 12 }}
+                                                onClick={() => handleDeleteRequest(r)}
+                                            >
+                                                Xóa
+                                            </button>
+                                          </>
+                                        ) : (
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-danger" 
+                                                style={{ padding: '6px 10px', fontSize: 12 }}
+                                                onClick={() => handleCancelRequest(r)}
+                                            >
+                                                Hủy
+                                            </button>
+                                        )}
 										</td>
 									</tr>
 								))}
@@ -329,6 +440,34 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
         </div>
       </div>
     )}
+
+    {/* Update Request Modal */}
+    <UpdateRequestModal
+      isOpen={isUpdateModalOpen}
+      onClose={closeUpdateModal}
+      onUpdate={handleUpdateSuccess}
+      requestData={selectedRequestForUpdate ? {
+        id: selectedRequestForUpdate.id,
+        containerNo: selectedRequestForUpdate.containerNo,
+        requestNo: selectedRequestForUpdate.requestNo,
+        shippingLine: selectedRequestForUpdate.shippingLine,
+        containerType: selectedRequestForUpdate.containerType,
+        customer: selectedRequestForUpdate.customer,
+        transportCompany: selectedRequestForUpdate.transportCompany,
+        vehicleNumber: selectedRequestForUpdate.vehicleNumber,
+        driverName: selectedRequestForUpdate.driverName,
+        driverPhone: selectedRequestForUpdate.driverPhone,
+        appointmentTime: selectedRequestForUpdate.appointmentTime || '',
+        notes: selectedRequestForUpdate.notes || ''
+      } : null}
+    />
+
+    <CancelRequestModal
+      isOpen={isCancelModalOpen}
+      onClose={() => { setIsCancelModalOpen(false); setSelectedRequestForCancel(null); }}
+      onConfirm={confirmCancelRequest}
+      requestNo={selectedRequestForCancel?.requestNo}
+    />
 			</div>
 		</>
 	);

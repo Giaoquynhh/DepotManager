@@ -14,6 +14,7 @@ import '../styles/register.css';
 import '../styles/notification-badge.css';
 import '../styles/forklift.css';
 import '../styles/mobile-landscape.css';
+import '../styles/UpdateRequestModal.css';
 import DriverNotification from '@components/DriverNotification';
 import { Toaster } from 'sonner';
 

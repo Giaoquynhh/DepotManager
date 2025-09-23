@@ -55,9 +55,8 @@ router.patch('/:id/cancel',
 );
 
 // Update request
-router.put('/:id', 
+router.patch('/:id', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
-    fileUploadService.getMulter().array('files', 10), // Tối đa 10 files
     controller.updateRequest
 );
 

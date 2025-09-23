@@ -73,13 +73,11 @@ export class FileUploadService {
 
             // Xử lý từng file
             for (const file of files) {
-                // Tạo tên file unique
-                const timestamp = Date.now();
-                const fileExtension = path.extname(file.originalname);
-                const fileName = `request_${timestamp}_${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+                // Sử dụng tên file mà multer đã tạo
+                const fileName = file.filename;
                 
-                // Tạo storage URL (local path)
-                const storageUrl = `/uploads/requests/${fileName}`;
+                // Tạo storage URL (local path) - sử dụng /backend prefix để proxy qua Next.js
+                const storageUrl = `/backend/uploads/requests/${fileName}`;
 
                 // Lưu file vào database
                 const attachment = await this.prisma.requestAttachment.create({

@@ -40,3 +40,4 @@ Thumbs.db
 # Prisma local databases (keep migrations tracked)
 prisma/*.db
 prisma/*.sqlite
+backend/uploads/requests/**
