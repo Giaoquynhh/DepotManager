@@ -1,31 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useTranslation } from '../../../hooks/useTranslation';
+import React, { useEffect, useState } from 'react';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
-
-interface EditLiftRequestModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSubmit: (data: EditLiftRequestData) => void;
-	requestData: any; // Data from API
-}
-
-export interface EditLiftRequestData {
-	requestNo: string;
-	shippingLine: string;
-	bookingBill: string;
-	containerNumber?: string;
-	containerType: string;
-	serviceType: string;
-	customer: string;
-	vehicleCompany?: string;
-	vehicleNumber?: string;
-	driver?: string;
-	driverPhone?: string;
-	appointmentTime?: string;
-	documents?: File[];
-	notes?: string;
-}
+import type { EditLiftRequestModalProps, EditLiftRequestData, ExistingFile } from './EditLiftRequestModal.types';
+import { ModalHeader } from './ModalHeader';
+import { RequestFormFields } from './RequestFormFields';
+import { DocumentsUploader } from './DocumentsUploader';
 
 export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 	isOpen,
@@ -33,7 +12,6 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 	onSubmit,
 	requestData
 }) => {
-	const { t } = useTranslation();
 	const [formData, setFormData] = useState<EditLiftRequestData>({
 		requestNo: '',
 		shippingLine: '',
@@ -58,7 +36,6 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 	const [customers, setCustomers] = useState<Customer[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	// Load initial data
 	useEffect(() => {
@@ -191,40 +168,7 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 		}));
 	};
 
-	const formatFileSize = (bytes: number) => {
-		if (bytes === 0) return '0 Bytes';
-		const k = 1024;
-		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-	};
-
-	const isImage = (mimeOrName: string) => {
-		return mimeOrName.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp)$/i.test(mimeOrName);
-	};
-
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const incoming = Array.from(e.target.files || []);
-		const filtered = incoming.filter(file => {
-			const isValidType = file.type === 'application/pdf' || file.type.startsWith('image/');
-			const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
-			return isValidType && isValidSize;
-		});
-		if (!filtered.length) return;
-		setFormData(prev => ({
-			...prev,
-			documents: [...(prev.documents || []), ...filtered]
-		}));
-	};
-
-	const removeFile = (index: number) => {
-		setFormData(prev => ({
-			...prev,
-			documents: prev.documents?.filter((_, i) => i !== index) || []
-		}));
-	};
-
-	const [existingFiles, setExistingFiles] = useState<Array<{id:string; file_name:string; file_size:number; storage_url:string; file_type:string;}>>([]);
+	const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -291,46 +235,8 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 				overflow: 'auto',
 				animation: 'modalSlideIn 0.2s ease-out'
 			}}>
-				{/* Header */}
-				<div style={{
-					padding: '24px 32px 16px',
-					borderBottom: '1px solid #e5e7eb',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between'
-				}}>
-					<h2 style={{
-						margin: 0,
-						fontSize: '20px',
-						fontWeight: '600',
-						color: '#1f2937'
-					}}>
-						Chỉnh sửa yêu cầu nâng container
-					</h2>
-					<button
-						onClick={onClose}
-						style={{
-							background: 'none',
-							border: 'none',
-							fontSize: '24px',
-							cursor: 'pointer',
-							color: '#6b7280',
-							padding: '4px',
-							borderRadius: '4px',
-							transition: 'all 0.2s'
-						}}
-						onMouseOver={(e) => {
-							e.currentTarget.style.background = '#f3f4f6';
-							e.currentTarget.style.color = '#374151';
-						}}
-						onMouseOut={(e) => {
-							e.currentTarget.style.background = 'none';
-							e.currentTarget.style.color = '#6b7280';
-						}}
-					>
-						×
-					</button>
-				</div>
+			{/* Header */}
+				<ModalHeader title="Chỉnh sửa yêu cầu nâng container" onClose={onClose} />
 
 				{/* Form */}
 				<form onSubmit={handleSubmit} style={{ padding: '32px' }}>
@@ -340,376 +246,20 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 						</div>
 					) : (
 						<div style={{ display: 'grid', gap: '24px' }}>
-							{/* Row 1: Request Number & Shipping Line */}
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Số yêu cầu *
-									</label>
-									<input
-										type="text"
-										value={formData.requestNo}
-										onChange={(e) => handleInputChange('requestNo', e.target.value)}
-										required
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px',
-											background: '#f9fafb',
-											color: '#6b7280'
-										}}
-										readOnly
-									/>
-									<small style={{ color: '#6b7280', fontSize: '12px' }}>Số yêu cầu không thể thay đổi</small>
-								</div>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Hãng tàu *
-									</label>
-									<select
-										value={formData.shippingLine}
-										onChange={(e) => handleInputChange('shippingLine', e.target.value)}
-										required
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									>
-										<option value="">Chọn hãng tàu</option>
-										{Array.isArray(shippingLines) && shippingLines.map(line => (
-											<option key={line.id} value={line.name}>{line.name}</option>
-										))}
-									</select>
-								</div>
-							</div>
+							<RequestFormFields
+								formData={formData}
+								handleInputChange={handleInputChange}
+								shippingLines={shippingLines as ShippingLine[]}
+								transportCompanies={transportCompanies as TransportCompany[]}
+								containerTypes={containerTypes as ContainerType[]}
+								customers={customers as Customer[]}
+							/>
 
-							{/* Row 2: Container Number & Type */}
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Số container
-									</label>
-									<input
-										type="text"
-										value={formData.containerNumber}
-										onChange={(e) => handleInputChange('containerNumber', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									/>
-								</div>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Loại container *
-									</label>
-									<select
-										value={formData.containerType}
-										onChange={(e) => handleInputChange('containerType', e.target.value)}
-										required
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									>
-										<option value="">Chọn loại container</option>
-										{Array.isArray(containerTypes) && containerTypes.map(type => (
-											<option key={type.id} value={type.code}>{type.code} - {type.name}</option>
-										))}
-									</select>
-								</div>
-							</div>
-
-							{/* Row 3: Booking Bill & Customer */}
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Số Booking/Bill
-									</label>
-									<input
-										type="text"
-										value={formData.bookingBill}
-										onChange={(e) => handleInputChange('bookingBill', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									/>
-								</div>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Khách hàng *
-									</label>
-									<select
-										value={formData.customer}
-										onChange={(e) => handleInputChange('customer', e.target.value)}
-										required
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									>
-										<option value="">Chọn khách hàng</option>
-										{Array.isArray(customers) && customers.map(customer => (
-											<option key={customer.id} value={customer.name}>{customer.name}</option>
-										))}
-									</select>
-								</div>
-							</div>
-
-							{/* Row 4: Vehicle Company & Vehicle Number */}
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Nhà xe
-									</label>
-									<select
-										value={formData.vehicleCompany}
-										onChange={(e) => handleInputChange('vehicleCompany', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									>
-										<option value="">Chọn nhà xe</option>
-										{Array.isArray(transportCompanies) && transportCompanies.map(company => (
-											<option key={company.id} value={company.name}>{company.name}</option>
-										))}
-									</select>
-								</div>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Số xe
-									</label>
-									<input
-										type="text"
-										value={formData.vehicleNumber}
-										onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									/>
-								</div>
-							</div>
-
-							{/* Row 5: Driver & Driver Phone */}
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										Tài xế
-									</label>
-									<input
-										type="text"
-										value={formData.driver}
-										onChange={(e) => handleInputChange('driver', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									/>
-								</div>
-								<div>
-									<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-										SĐT tài xế
-									</label>
-									<input
-										type="tel"
-										value={formData.driverPhone}
-										onChange={(e) => handleInputChange('driverPhone', e.target.value)}
-										style={{
-											width: '100%',
-											padding: '12px',
-											border: '1px solid #d1d5db',
-											borderRadius: '8px',
-											fontSize: '14px'
-										}}
-									/>
-								</div>
-							</div>
-
-							{/* Row 6: Appointment Time */}
-							<div>
-								<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-									Thời gian hẹn
-								</label>
-								<input
-									type="datetime-local"
-									value={formData.appointmentTime}
-									onChange={(e) => handleInputChange('appointmentTime', e.target.value)}
-									style={{
-										width: '100%',
-										padding: '12px',
-										border: '1px solid #d1d5db',
-										borderRadius: '8px',
-										fontSize: '14px'
-									}}
-								/>
-							</div>
-
-							{/* Row 7: Notes */}
-							<div>
-								<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-									Ghi chú
-								</label>
-								<textarea
-									value={formData.notes}
-									onChange={(e) => handleInputChange('notes', e.target.value)}
-									rows={3}
-									style={{
-										width: '100%',
-										padding: '12px',
-										border: '1px solid #d1d5db',
-										borderRadius: '8px',
-										fontSize: '14px',
-										resize: 'vertical'
-									}}
-								/>
-							</div>
-
-					{/* Chứng từ */}
-					<div>
-						<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-							Chứng từ
-						</label>
-						<input
-							ref={fileInputRef}
-							type="file"
-							multiple
-							accept=".pdf,.jpg,.jpeg,.png"
-							onChange={handleFileChange}
-							style={{ display: 'none' }}
-							id="edit-documents"
-						/>
-						<label htmlFor="edit-documents" style={{
-							display: 'block',
-							textAlign: 'center',
-							padding: '16px',
-							border: '2px dashed #d1d5db',
-							borderRadius: '8px',
-							background: '#f9fafb',
-							color: '#64748b',
-							cursor: 'pointer'
-						}}>
-							<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'block', margin: '0 auto 8px' }}>
-								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-								<polyline points="14,2 14,8 20,8"></polyline>
-								<line x1="16" y1="13" x2="8" y2="13"></line>
-								<line x1="16" y1="17" x2="8" y2="17"></line>
-								<polyline points="10,9 9,9 8,9"></polyline>
-							</svg>
-							<div style={{ fontSize: '15px', fontWeight: 600, color: '#374151' }}>Kéo thả file vào đây hoặc click để chọn</div>
-							<div style={{ fontSize: '13px', color: '#64748b' }}>Hỗ trợ PDF, JPG, PNG (tối đa 10MB mỗi file)</div>
-						</label>
-
-					{(existingFiles?.length || 0) > 0 && (
-						<div style={{ marginTop: '12px' }}>
-							{existingFiles.map((f) => (
-								<div key={f.id} style={{
-									display: 'flex',
-									alignItems: 'center',
-									gap: '10px',
-									padding: '8px 12px',
-									background: '#eef2ff',
-									borderRadius: '6px',
-									marginBottom: '8px'
-								}}>
-									{isImage(f.file_type || f.file_name) ? (
-										<a href={f.storage_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}>
-											<img src={f.storage_url} alt={f.file_name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid #d1d5db' }} />
-										</a>
-									) : (
-										<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#64748b' }}>
-											<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-											<polyline points="14,2 14,8 20,8"></polyline>
-											<line x1="16" y1="13" x2="8" y2="13"></line>
-											<line x1="16" y1="17" x2="8" y2="17"></line>
-											<polyline points="10,9 9,9 8,9"></polyline>
-										</svg>
-									)}
-									<div style={{ display: 'flex', flexDirection: 'column' }}>
-										<a href={f.storage_url} target="_blank" rel="noreferrer" style={{ color: '#1d4ed8', textDecoration: 'none', fontSize: '14px' }}>
-											{f.file_name}
-										</a>
-										<span style={{ fontSize: '12px', color: '#6b7280' }}>{formatFileSize(f.file_size)}</span>
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-
-					{formData.documents && formData.documents.length > 0 && (
-							<div style={{ marginTop: '12px' }}>
-						{formData.documents.map((file, index) => (
-							<div key={index} style={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: '10px',
-								padding: '8px 12px',
-								background: '#f3f4f6',
-								borderRadius: '6px',
-								marginBottom: '8px'
-							}}>
-								{isImage((file as any).type || file.name) ? (
-									<img src={URL.createObjectURL(file)} alt={file.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid #d1d5db' }} />
-								) : (
-									<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#64748b' }}>
-										<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-										<polyline points="14,2 14,8 20,8"></polyline>
-										<line x1="16" y1="13" x2="8" y2="13"></line>
-										<line x1="16" y1="17" x2="8" y2="17"></line>
-										<polyline points="10,9 9,9 8,9"></polyline>
-									</svg>
-								)}
-								<div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-									<span style={{ fontSize: '14px', color: '#374151' }}>{file.name}</span>
-									<span style={{ fontSize: '12px', color: '#6b7280' }}>{typeof file.size === 'number' ? formatFileSize(file.size) : ''}</span>
-								</div>
-								<button
-									type="button"
-									onClick={() => removeFile(index)}
-									style={{
-										background: 'none',
-										border: 'none',
-										color: '#ef4444',
-										cursor: 'pointer',
-										fontSize: '16px',
-										padding: '4px'
-									}}
-								>
-									×
-								</button>
-							</div>
-						))}
-							</div>
-						)}
-					</div>
+							<DocumentsUploader
+								formData={formData}
+								setFormData={setFormData}
+								existingFiles={existingFiles}
+							/>
 						</div>
 					)}
 

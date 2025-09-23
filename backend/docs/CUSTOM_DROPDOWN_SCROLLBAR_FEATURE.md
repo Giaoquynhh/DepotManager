@@ -293,7 +293,8 @@ REDIS_URL=redis://...
 
 ### 2) File/Thư mục mã nguồn
 - Router: `backend/modules/requests/controller/RequestRoutes.ts`
-- Controller: `backend/modules/requests/controller/RequestController.ts`
+- Controller (barrel): `backend/modules/requests/controller/RequestController.ts`
+- Controllers con: `createController.ts`, `listController.ts`, `detailController.ts`, `updateController.ts`, `updateLegacyController.ts`, `cancelController.ts`, `deleteController.ts`, `filesController.ts`, `transitionController.ts`
 - Service: `backend/modules/requests/service/FileUploadService.ts`
 - Tích hợp route: `backend/main.ts` (đăng ký routes `/requests`)
 

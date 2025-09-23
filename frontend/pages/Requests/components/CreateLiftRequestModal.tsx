@@ -78,6 +78,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	
 	// File upload states
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+	// Preview URLs for image files to render thumbnails
+	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 
 	useEffect(() => {
@@ -151,7 +153,9 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
 				return isValidType && isValidSize;
 			});
-			
+			// Create preview URLs for image files
+			const newUrls = newFiles.map(f => f.type.startsWith('image/') ? URL.createObjectURL(f) : '');
+			setPreviewUrls(prev => [...prev, ...newUrls]);
 			setUploadedFiles(prev => [...prev, ...newFiles]);
 			setFormData(prev => ({
 				...prev,
@@ -161,6 +165,14 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	};
 
 	const handleFileRemove = (index: number) => {
+		// Revoke preview URL if exists
+		setPreviewUrls(prev => {
+			const url = prev[index];
+			if (url) {
+				try { URL.revokeObjectURL(url); } catch {}
+			}
+			return prev.filter((_, i) => i !== index);
+		});
 		setUploadedFiles(prev => prev.filter((_, i) => i !== index));
 		setFormData(prev => ({
 			...prev,
@@ -230,7 +242,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				setIsUploading(true);
 				
 				// Generate request number automatically
-				const requestNumber = await generateNewRequestNumber('lift');
+				const requestNumber = await generateNewRequestNumber('import');
 				
             // Prepare data for API with auto-generated request number
             const requestData = {
@@ -239,10 +251,10 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
                 status: 'NEW_REQUEST', // Trạng thái ban đầu là NEW_REQUEST cho yêu cầu nâng container
                 container_no: formData.containerNumber,
                 eta: formData.appointmentTime,
-                shipping_line_id: formData.shippingLine || null,
-                container_type_id: formData.containerType || null,
-                customer_id: formData.customer || null,
-                vehicle_company_id: formData.vehicleCompany || null,
+                shipping_line_id: formData.shippingLine || undefined,
+                container_type_id: formData.containerType || undefined,
+                customer_id: formData.customer || undefined,
+                vehicle_company_id: formData.vehicleCompany || undefined,
                 vehicle_number: formData.vehicleNumber,
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,
@@ -296,6 +308,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	};
 
 	const handleClose = () => {
+		// Revoke all preview URLs on close
+		previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
 		setErrors({});
 		setIsShippingLineOpen(false);
 		setIsContainerTypeOpen(false);
@@ -307,8 +321,17 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		setCustomerSearch('');
 		setSelectedCustomerName('');
 		setUploadedFiles([]);
+		setPreviewUrls([]);
 		onClose();
 	};
+
+	// Cleanup all preview URLs on unmount
+	useEffect(() => {
+		return () => {
+			previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
+		};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	if (!isOpen) return null;
 
@@ -1093,14 +1116,22 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 									{uploadedFiles.map((file, index) => (
 										<div key={index} className="file-item">
 											<div className="file-info">
-												<svg className="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-													{file.type === 'application/pdf' ? (
-														<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-													) : (
-														<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-													)}
-												</svg>
-												<div>
+												{file.type.startsWith('image/') && previewUrls[index] ? (
+													<img
+														src={previewUrls[index]}
+														alt={file.name}
+														style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 8, border: '1px solid #e2e8f0' }}
+													/>
+												) : (
+													<svg className="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+														{file.type === 'application/pdf' ? (
+															<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+														) : (
+															<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+														)}
+													</svg>
+												)}
+												<div style={{ marginLeft: 8 }}>
 													<div className="file-name">{file.name}</div>
 													<div className="file-size">{formatFileSize(file.size)}</div>
 												</div>

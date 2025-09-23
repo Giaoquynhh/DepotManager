@@ -46,10 +46,9 @@
 **File:** `manageContainer/backend/modules/requests/repository/RequestRepository.ts`
 - Cập nhật `listDocs` method để hỗ trợ filter theo type
 
-#### 1.6. RequestController
+#### 1.6. RequestController (barrel)
 **File:** `manageContainer/backend/modules/requests/controller/RequestController.ts`
-- Cập nhật `listDocs` để hỗ trợ query parameter `type`
-- Thêm `getAppointmentInfo` method
+- Re-export các handlers sau khi tách: `createRequest`, `getRequests`, `getRequest`, `updateRequest`, `updateRequestLegacy`, `cancelRequest`, `deleteRequest`, `uploadFiles`, `getFiles`, `deleteFile`, `moveToGate`
 
 #### 1.7. RequestRoutes
 **File:** `manageContainer/backend/modules/requests/controller/RequestRoutes.ts`
@@ -227,7 +226,7 @@ console.error('Error details:', {
 3. `modules/requests/dto/RequestDtos.ts` - Cập nhật schemas
 4. `modules/requests/service/RequestService.ts` - Upload logic
 5. `modules/requests/repository/RequestRepository.ts` - Filter support
-6. `modules/requests/controller/RequestController.ts` - New endpoints
+6. `modules/requests/controller/RequestController.ts` - Barrel exports endpoints
 7. `modules/requests/controller/RequestRoutes.ts` - New routes
 
 ### Frontend

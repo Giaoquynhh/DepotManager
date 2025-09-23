@@ -47,7 +47,7 @@ export interface GateRejectData {
 
 // DTO cho việc tìm kiếm requests ở Gate
 export const gateSearchSchema = Joi.object({
-  status: Joi.string().valid('FORWARDED', 'GATE_IN', 'IN_YARD', 'IN_CAR').allow('').optional(),
+  status: Joi.string().valid('PENDING', 'FORWARDED', 'GATE_IN', 'IN_YARD', 'IN_CAR').allow('').optional(),
   statuses: Joi.string().allow('').optional(), // Cho phép nhiều statuses (comma-separated)
   container_no: Joi.string().allow('').optional(),
   license_plate: Joi.string().allow('').optional(), // Thêm trường biển số xe

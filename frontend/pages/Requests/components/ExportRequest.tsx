@@ -64,6 +64,11 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
     const [selectedRequestForCancel, setSelectedRequestForCancel] = React.useState<LowerRequestRow | null>(null);
 
+    // View cancel reason modal state
+    const [isViewReasonOpen, setIsViewReasonOpen] = React.useState(false);
+    const [viewReasonText, setViewReasonText] = React.useState<string>('');
+    const [viewReasonRequestNo, setViewReasonRequestNo] = React.useState<string>('');
+
     // Function để fetch requests từ API
     const fetchRequests = async () => {
         try {
@@ -101,7 +106,10 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                             return count;
                         })(),
                         demDet: request.dem_det || '',
-                        notes: request.rejected_reason || request.appointment_note || ''
+                        // Không đưa lý do hủy vào cột ghi chú; chỉ hiển thị ghi chú cuộc hẹn
+                        notes: request.appointment_note || '',
+                        // Lưu tách riêng lý do hủy để hiển thị qua modal "Xem lý do"
+                        rejectedReason: request.rejected_reason || ''
                     };
                 });
                 setRows(transformedData);
@@ -216,6 +224,19 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
       console.error('Delete request error:', error);
       alert('Xóa yêu cầu thất bại: ' + (error.response?.data?.message || error.message));
     }
+  };
+
+  // View cancel reason
+  const openViewReason = (row: LowerRequestRow) => {
+    setViewReasonRequestNo(row.requestNo);
+    setViewReasonText(row.rejectedReason || 'Không có lý do');
+    setIsViewReasonOpen(true);
+  };
+
+  const closeViewReason = () => {
+    setIsViewReasonOpen(false);
+    setViewReasonText('');
+    setViewReasonRequestNo('');
   };
 
     // Effect để fetch data khi component mount
@@ -360,7 +381,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                 type="button" 
                                                 className="btn btn-light" 
                                                 style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                                onClick={() => alert(r.notes || 'Không có lý do')}
+                                                onClick={() => openViewReason(r)}
                                             >
                                                 Xem lý do
                                             </button>
@@ -383,6 +404,33 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                 Hủy
                                             </button>
                                         )}
+    {/* View Cancel Reason Modal */}
+    {isViewReasonOpen && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
+        }}
+        onClick={closeViewReason}
+      >
+        <div
+          style={{ background: '#fff', borderRadius: 12, width: '520px', maxWidth: '95vw', maxHeight: '70vh', overflow: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.25)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Lý do hủy - {viewReasonRequestNo}</h3>
+            <button onClick={closeViewReason} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ padding: 20 }}>
+            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, color: '#111827' }}>{viewReasonText}</div>
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-secondary" onClick={closeViewReason}>Đóng</button>
+          </div>
+        </div>
+      </div>
+    )}
 										</td>
 									</tr>
 								))}

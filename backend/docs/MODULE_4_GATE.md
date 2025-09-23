@@ -96,6 +96,24 @@ Role: TechnicalDepartment
 ```
 
 ### 3. Gate Reject
+### 3.1. Check-in (NEW_REQUEST/PENDING → GATE_IN)
+```http
+PATCH /gate/requests/:id/check-in
+Authorization: Bearer <token>
+Role: YardManager | SystemAdmin
+```
+
+Logic:
+- Cho phép Check-in từ 2 trạng thái: `NEW_REQUEST` hoặc `PENDING`.
+- Khi Check-in, backend ghi `status = GATE_IN`, `time_in = now()`, `gate_checked_at/gate_checked_by`.
+
+Ánh xạ code:
+```590:631:manageContainer/backend/modules/gate/service/GateService.ts
+if (request.status !== 'NEW_REQUEST' && request.status !== 'PENDING') {
+  throw new Error('Chỉ có thể Check-in từ trạng thái NEW_REQUEST hoặc PENDING');
+}
+// prisma.serviceRequest.update({ data: { status: 'GATE_IN', time_in: currentTime, gate_checked_at: currentTime, gate_checked_by: actorId }})
+```
 ```http
 PATCH /gate/requests/:id/reject
 Authorization: Bearer <token>
@@ -132,11 +150,45 @@ Role: YardManager | TechnicalDepartment
 ```
 
 **Query Parameters**:
-- `status`: FORWARDED | GATE_IN | GATE_REJECTED
+- `status`: PENDING | FORWARDED | GATE_IN | IN_YARD | IN_CAR | GATE_REJECTED
+- `statuses`: Danh sách nhiều trạng thái, phân tách bởi dấu phẩy (ví dụ: `PENDING,NEW_REQUEST`). Dùng khi muốn lọc nhóm trạng thái.
 - `container_no`: Tìm kiếm theo mã container
 - `type`: IMPORT | EXPORT | CONVERT
 - `page`: Số trang (default: 1)
 - `limit`: Số item mỗi trang (default: 20)
+
+Ghi chú hành vi mặc định:
+- Nếu không truyền `status` hoặc `statuses`, backend sẽ hiển thị nhóm trạng thái mặc định: `PENDING`, `NEW_REQUEST`, `FORWARDED`, `IN_YARD`, `IN_CAR`, `GATE_IN`.
+
+Ánh xạ code:
+```24:63:manageContainer/backend/modules/gate/dto/GateDtos.ts
+export const gateSearchSchema = Joi.object({
+  status: Joi.string().valid('PENDING', 'FORWARDED', 'GATE_IN', 'IN_YARD', 'IN_CAR').allow('').optional(),
+  statuses: Joi.string().allow('').optional(), // Cho phép nhiều statuses (comma-separated)
+  container_no: Joi.string().allow('').optional(),
+  license_plate: Joi.string().allow('').optional(),
+  type: Joi.string().valid('IMPORT', 'EXPORT').allow('').optional(),
+  page: Joi.alternatives().try(
+    Joi.number().integer().min(1),
+    Joi.string().pattern(/^\d+$/)
+  ).default(1),
+  limit: Joi.alternatives().try(
+    Joi.number().integer().min(1).max(100),
+    Joi.string().pattern(/^\d+$/)
+  ).default(20)
+});
+```
+```315:345:manageContainer/backend/modules/gate/service/GateService.ts
+if (status) {
+  where.status = status;
+} else if (statuses) {
+  const statusArray = statuses.split(',').map(s => s.trim());
+  where.status = { in: statusArray };
+} else {
+  // Default: bao gồm PENDING để thấy yêu cầu mới tạo
+  where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
+}
+```
 
 ### 5. Get Request Details
 ```http

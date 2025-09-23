@@ -242,19 +242,19 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 				setIsUploading(true);
 				
 				// Generate request number automatically
-				const requestNumber = await generateNewRequestNumber('export');
+                const requestNumber = await generateNewRequestNumber('import');
 				
             // Prepare data for API with auto-generated request number
             const requestData = {
-                type: 'EXPORT',
+                type: 'IMPORT',
                 request_no: requestNumber, // Add auto-generated request number
-                status: 'PENDING', // Default status for new export requests
+                status: 'PENDING', // Default status for new lower (import) requests
                 container_no: formData.containerNumber,
                 eta: formData.appointmentTime,
-                shipping_line_id: formData.shippingLine || null,
-                container_type_id: formData.containerType || null,
-                customer_id: formData.customer || null,
-                vehicle_company_id: formData.vehicleCompany || null,
+                shipping_line_id: formData.shippingLine || undefined,
+                container_type_id: formData.containerType || undefined,
+                customer_id: formData.customer || undefined,
+                vehicle_company_id: formData.vehicleCompany || undefined,
                 vehicle_number: formData.vehicleNumber,
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,

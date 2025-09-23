@@ -1,314 +1,103 @@
-# Tính năng Upload Chứng từ Xuất (EXPORT_DOC)
+# Upload chứng từ cho Yêu cầu (đã cập nhật)
 
 ## Tổng quan
 
-Tính năng này cho phép admin upload chứng từ cho yêu cầu xuất (EXPORT) khi trạng thái là `PICK_CONTAINER`. Sau khi upload thành công, hệ thống sẽ tự động chuyển trạng thái từ `PICK_CONTAINER` sang `SCHEDULED`.
+Tài liệu được cập nhật để khớp với logic hiện tại. Upload chứng từ áp dụng cho yêu cầu IMPORT/EXPORT, lưu file cục bộ trong `uploads/requests`, ghi nhận DB qua `requestAttachment`, không tự động chuyển trạng thái sau upload (trừ khi gọi endpoint nghiệp vụ riêng).
 
 ## Luồng hoạt động
 
 ### 1. Điều kiện upload
-- **Loại yêu cầu**: Chỉ áp dụng cho yêu cầu `EXPORT`
-- **Trạng thái hiện tại**: Phải là `PICK_CONTAINER`
-- **Quyền**: Chỉ `TechnicalDepartment`, `SystemAdmin`, `BusinessAdmin` được upload
+- Loại yêu cầu: IMPORT/EXPORT
+- Trạng thái: không cưỡng bức cố định; chỉ yêu cầu yêu cầu tồn tại
+- Quyền: `TechnicalDepartment`, `Accountant`, `CustomerAdmin`, `CustomerUser`, `SystemAdmin`, `BusinessAdmin`
 
 ### 2. Quy trình upload
 ```
-Admin → Click "Upload documents" → Chọn nhiều files → Upload → Tự động chuyển trạng thái
+Người dùng có quyền → Chọn nhiều files → Upload → Lưu disk + DB → Cập nhật attachments_count
 ```
 
-### 3. Chi tiết từng bước
-
-#### **Bước 1: Validation**
-- Kiểm tra request status = `PICK_CONTAINER`
-- Kiểm tra request type = `EXPORT`
-- Kiểm tra actor role có quyền upload
-- Kiểm tra file type và size (PDF, JPG, PNG, tối đa 10MB mỗi file)
-- Kiểm tra số lượng files (tối đa 10 files cùng lúc)
-
-#### **Bước 2: File Processing**
-- Lưu tất cả files vào thư mục `uploads/`
-- Tạo tên file unique cho mỗi file: `{timestamp}_{request_id}_{type}_{index}{extension}`
-- Lưu thông tin tất cả documents vào database
-
-#### **Bước 3: Auto Status Change**
-- Sử dụng `RequestStateMachine.canTransition()` để kiểm tra
-- Gọi `RequestStateMachine.executeTransition()` để validate
-- Cập nhật database với trạng thái mới `SCHEDULED`
-- Thêm entry vào history với action `SCHEDULED`
+### 3. Chi tiết
+- Validation: kiểm tra tồn tại request, giới hạn loại file (PDF, image/*), kích thước 10MB/file, tối đa 10 files
+- Lưu file: `uploads/requests` (tự tạo thư mục nếu thiếu), tên file do Multer sinh (`request_<timestamp-rand>.<ext>`)
+- DB: tạo bản ghi `requestAttachment`, cập nhật `attachments_count` của `serviceRequest`
+- Trạng thái: dùng endpoint chuyên biệt khi cần (ví dụ `move-to-gate`)
 
 ## Backend Implementation
 
-### 1. Routes (`RequestRoutes.ts`)
-```typescript
-// Documents - Single file upload
-router.post('/:id/docs', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.single('file'), (req, res) => controller.uploadDoc(req as any, res));
-
-// Documents - Multiple files upload
-router.post('/:id/docs/multiple', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), upload.array('files', 10), (req, res) => controller.uploadMultipleDocs(req as any, res));
-
-// Public serve documents (main.ts)
-app.use('/requests/documents', documentRoutes);
+### 1) Routes (RequestRoutes.ts)
+```13:18:manageContainer/backend/modules/requests/controller/RequestRoutes.ts
+// Upload multiple files for a request
+router.post('/:requestId/files', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    fileUploadService.getMulter().array('files', 10),
+    controller.uploadFiles
+);
 ```
 
-### 2. Controller (`RequestController.ts`)
-```typescript
-// Single file upload
-async uploadDoc(req: AuthRequest, res: Response) {
-    const { error, value } = uploadDocSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    try { 
-        return res.status(201).json(await service.uploadDocument(req.user!, req.params.id, value.type, (req as any).file)); 
-    } catch (e: any) { 
-        return res.status(400).json({ message: e.message }); 
-    }
-}
+```20:30:manageContainer/backend/modules/requests/controller/RequestRoutes.ts
+// Get files / Delete file
+router.get('/:requestId/files', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), controller.getFiles);
+router.delete('/files/:fileId', requireRoles('TechnicalDepartment','Accountant','CustomerAdmin','CustomerUser','SystemAdmin','BusinessAdmin'), controller.deleteFile);
+```
 
-// Multiple files upload
-async uploadMultipleDocs(req: AuthRequest, res: Response) {
-    const { error, value } = uploadDocSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
-    try { 
-        const files = (req as any).files || [];
-        if (files.length === 0) {
-            return res.status(400).json({ message: 'Không có file nào được upload' });
-        }
-        return res.status(201).json(await service.uploadMultipleDocuments(req.user!, req.params.id, value.type, files)); 
-    } catch (e: any) { 
-        return res.status(400).json({ message: e.message }); 
-    }
+### 2) Controller (đã tách nhỏ)
+```41:76:manageContainer/backend/modules/requests/controller/filesController.ts
+// Get files for a request
+export const getFiles = async (req: Request, res: Response) => { /* ... */ };
+
+// Delete a file
+export const deleteFile = async (req: Request, res: Response) => { /* ... */ };
+```
+
+```4:31:manageContainer/backend/modules/requests/controller/createController.ts
+// Create a new request with files
+export const createRequest = async (req: Request, res: Response) => { /* nhận files, tạo request, upload nếu có */ };
+```
+
+### 3) Service (FileUploadService.ts)
+```55:113:manageContainer/backend/modules/requests/service/FileUploadService.ts
+async uploadFiles(requestId: string, files: Express.Multer.File[], uploaderId: string, uploaderRole: 'customer' | 'depot' = 'depot') {
+  // Lưu file vào uploads/requests, tạo record requestAttachment, tăng attachments_count
 }
 ```
 
-### 3. Service (`RequestService.ts`)
+```123:147:manageContainer/backend/modules/requests/service/FileUploadService.ts
+async getFiles(requestId: string) { /* trả về danh sách file chưa xóa */ }
+```
+
+```150:191:manageContainer/backend/modules/requests/service/FileUploadService.ts
+async deleteFile(fileId: string, deletedBy: string, reason?: string) { /* xóa mềm + giảm attachments_count */ }
+```
+
+## Trạng thái & nghiệp vụ liên quan
+
+```4:20:manageContainer/backend/modules/requests/controller/transitionController.ts
+// Chuyển nhanh PENDING → GATE_IN, cập nhật gate_checked_* và history
+export const moveToGate = async (req: Request, res: Response) => { /* ... */ };
+```
+
+## Frontend tham chiếu
+
+- FE truy cập file qua rewrite: `/backend/uploads/requests/:fileName`
+- Gọi API upload: `POST /requests/:requestId/files` với FormData `files[]`
+
+Ví dụ service (rút gọn):
 ```typescript
-// Single file upload
-async uploadDocument(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT'|'EXPORT_DOC', file: Express.Multer.File) {
-    // Validation cho EXPORT_DOC
-    if (type === 'EXPORT_DOC') {
-        if (req.status !== 'PICK_CONTAINER') {
-            throw new Error('Chỉ upload chứng từ xuất khi yêu cầu đang ở trạng thái chọn container');
-        }
-        if (req.type !== 'EXPORT') {
-            throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
-        }
-        if (!['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
-            throw new Error('Chỉ admin được upload chứng từ xuất');
-        }
-    }
-    
-    // Auto status change logic
-    if (type === 'EXPORT_DOC') {
-        // ... existing logic
-    }
-}
-
-// Multiple files upload
-async uploadMultipleDocuments(actor: any, request_id: string, type: 'EIR'|'LOLO'|'INVOICE'|'SUPPLEMENT'|'EXPORT_DOC', files: Express.Multer.File[]) {
-    // Validation cho EXPORT_DOC
-    if (type === 'EXPORT_DOC') {
-        if (req.status !== 'PICK_CONTAINER') {
-            throw new Error('Chỉ upload chứng từ xuất khi yêu cầu đang ở trạng thái chọn container');
-        }
-        if (req.type !== 'EXPORT') {
-            throw new Error('Chỉ upload chứng từ xuất cho yêu cầu loại EXPORT');
-        }
-        if (!['TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'].includes(actor.role)) {
-            throw new Error('Chỉ admin được upload chứng từ xuất');
-        }
-    }
-    
-    // Process multiple files
-    return await RequestDocumentService.uploadMultipleDocuments(actor, request_id, type, files);
-}
+const form = new FormData();
+files.forEach(f => form.append('files', f));
+await api.post(`/requests/${requestId}/files`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
 ```
 
-### 4. Validation Schema (`RequestDtos.ts`)
-```typescript
-export const uploadDocSchema = Joi.object({
-    type: Joi.string().valid('EIR','LOLO','INVOICE','SUPPLEMENT','EXPORT_DOC').required()
-});
-```
+## Kiểm thử
 
-### 5. State Machine (`RequestStateMachine.ts`)
-```typescript
-// Transition từ PICK_CONTAINER sang SCHEDULED đã được định nghĩa
-// và hỗ trợ cho các role: TechnicalDepartment, SystemAdmin, BusinessAdmin
-```
+- ✅ Upload nhiều PDF/JPG/PNG cho IMPORT/EXPORT
+- ✅ Lấy danh sách file theo requestId
+- ✅ Xóa mềm 1 file và giảm attachments_count
+- ❌ Upload >10 files hoặc file không hợp lệ (txt, docx)
+- ❌ Không đủ quyền
 
-## Frontend Implementation
+## Bảo mật & Hiệu năng
 
-### 1. Component (`DepotRequestTable.tsx`)
-
-**⚠️ DEPRECATED - Component không còn được sử dụng**
-
-Component này đã bị loại bỏ khỏi trang Depot. Trang Depot hiện tại chỉ là khung tĩnh.
-
-#### Previous Implementation (Deprecated)
-```typescript
-// Hiển thị nút "Thêm chứng từ" cho yêu cầu EXPORT với trạng thái PICK_CONTAINER
-{item.type === 'EXPORT' && item.status === 'PICK_CONTAINER' && onAddDocument ? (
-    <button
-        className="btn btn-sm btn-primary"
-        onClick={() => onAddDocument(item.id, item.container_no || '')}
-        title="Thêm chứng từ cho container"
-    >
-        📎 Thêm chứng từ
-    </button>
-) : (
-    <span className="no-document">-</span>
-)}
-```
-
-**Lưu ý**: Component này vẫn tồn tại trong codebase nhưng không còn được sử dụng. Cần được tạo lại khi định nghĩa lại trang Depot.
-
-### 2. Hook (`useDepotActions.ts`)
-
-**⚠️ DEPRECATED - Hook đã bị loại bỏ**
-
-Hook này đã bị xóa khỏi trang Depot. Tất cả logic state management và API calls đã được loại bỏ.
-
-#### Previous Implementation (Deprecated)
-```typescript
-const handleAddDocument = async (requestId: string, containerNo: string) => {
-    setLoadingId(requestId + 'ADD_DOC');
-    try {
-        // Tạo file input ẩn
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.pdf,.jpg,.jpeg,.png';
-        
-        fileInput.onchange = async (event) => {
-            const file = (event.target as HTMLInputElement).files?.[0];
-            if (!file) return;
-            
-            // Validation file
-            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-            if (!allowedTypes.includes(file.type)) {
-                setMsg({ text: 'Chỉ chấp nhận file PDF hoặc ảnh (JPG, PNG)', ok: false });
-                return;
-            }
-            
-            // Tạo FormData
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', 'EXPORT_DOC');
-            
-            // Gọi API upload
-            const response = await api.post(`/requests/${requestId}/docs`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            // Hiển thị thông báo thành công
-            setMsg({ 
-                text: `✅ Đã upload chứng từ thành công cho container ${containerNo}! Trạng thái đã tự động chuyển từ PICK_CONTAINER sang SCHEDULED.`, 
-                ok: true 
-            });
-            
-            // Refresh data
-            mutate('/requests?page=1&limit=20');
-        };
-        
-        fileInput.click();
-        
-    } catch (e: any) {
-        setMsg({ text: `Không thể thêm chứng từ: ${e?.response?.data?.message || 'Lỗi'}`, ok: false });
-    } finally {
-        setLoadingId('');
-    }
-};
-```
-
-**Lưu ý**: Hook này vẫn tồn tại trong codebase nhưng không còn được sử dụng. Cần được tạo lại khi định nghĩa lại trang Depot.
-
-### 3. API Service
-```typescript
-// Sử dụng api.post với FormData
-const response = await api.post(`/requests/${requestId}/docs`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-});
-
-// Xem tài liệu trực tiếp (FE → BE rewrite)
-// next.config.js
-rewrites: [
-  { source: '/backend/:path*', destination: 'http://localhost:1000/:path*' }
-]
-
-// Truy cập file: `/backend/requests/documents/:storage_key`
-```
-
-## File Structure
-
-```
-manageContainer/
-├── backend/
-│   ├── modules/requests/
-│   │   ├── controller/
-│   │   │   ├── RequestRoutes.ts          # Route với middleware requireRoles
-│   │   │   └── RequestController.ts      # Controller method uploadDoc
-│   │   ├── service/
-│   │   │   └── RequestService.ts         # Logic upload và auto status change
-│   │   ├── dto/
-│   │   │   └── RequestDtos.ts            # Validation schema cho EXPORT_DOC
-│   │   └── service/
-│   │       └── RequestStateMachine.ts    # State transition logic
-│   └── shared/middlewares/
-│       ├── auth.ts                       # Authentication middleware
-│       └── rbac.ts                       # Role-based access control
-│   └── main.ts                           # Mount public documentRoutes
-└── frontend/
-    └── pages/Requests/
-        ├── components/
-        │   └── DepotRequestTable.tsx      # UI component với nút upload
-        ├── hooks/
-        │   └── useDepotActions.ts         # Logic xử lý upload
-        ├── Depot.tsx                      # Main page component
-        ├── Customer.tsx                   # Create Request modal (width 900)
-        └── ../../components/RequestForm.tsx # Preview tài liệu trong popup (không còn danh sách tên file; xóa file ngay trên preview)
-```
-
-## Error Handling
-
-### 1. Backend Errors
-- **403 Forbidden**: Role không có quyền upload
-- **400 Bad Request**: File không hợp lệ hoặc validation fail
-- **404 Not Found**: Request không tồn tại
-
-### 2. Frontend Errors
-- **File Type Error**: Chỉ chấp nhận PDF, JPG, PNG
-- **File Size Error**: Tối đa 10MB
-- **API Error**: Hiển thị message từ backend
-
-## Testing
-
-### 1. Test Cases
-- ✅ Upload multiple PDF files cho EXPORT request với status PICK_CONTAINER
-- ✅ Upload multiple JPG files cho EXPORT request với status PICK_CONTAINER  
-- ✅ Upload multiple PNG files cho EXPORT request với status PICK_CONTAINER
-- ✅ Upload mixed files (PDF + JPG + PNG) cho EXPORT request với status PICK_CONTAINER
-- ❌ Upload quá 10 files cùng lúc
-- ❌ Upload file không hợp lệ (txt, docx)
-- ❌ Upload cho IMPORT request
-- ❌ Upload cho request với status khác PICK_CONTAINER
-- ❌ Upload với role không có quyền
-
-### 2. Expected Results
-- Tất cả files được lưu vào thư mục uploads/
-- Document records được tạo trong database cho mỗi file
-- Request status tự động chuyển từ PICK_CONTAINER sang SCHEDULED
-- History được cập nhật với action SCHEDULED
-- Frontend hiển thị thông báo thành công với số lượng files và refresh data
-
-## Security Considerations
-
-1. **Role-based Access Control**: Chỉ admin roles mới có thể upload
-2. **File Type Validation**: Chỉ chấp nhận file types an toàn
-3. **File Size Limit**: Giới hạn 10MB để tránh DoS
-4. **Authentication**: JWT token validation
-5. **Audit Logging**: Ghi log tất cả actions
-
-## Performance Considerations
-
-1. **File Storage**: Sử dụng memory storage cho file processing
-2. **Database Updates**: Optimized với single update operation
-3. **State Machine**: Efficient transition validation
-4. **Frontend**: Debounced API calls và optimistic updates
+- RBAC qua `requireRoles`, xác thực qua `authenticate`
+- Giới hạn loại/kích thước file tại Multer
+- Tạo thư mục an toàn, ghi log lỗi server-side

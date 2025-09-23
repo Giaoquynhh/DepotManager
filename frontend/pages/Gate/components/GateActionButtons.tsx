@@ -8,13 +8,19 @@ interface GateActionButtonsProps {
   requestType: string;
   currentStatus: string;
   onActionSuccess: () => void;
+  initialLicensePlate?: string;
+  initialDriverName?: string;
+  initialDriverPhone?: string;
 }
 
 export default function GateActionButtons({ 
   requestId, 
   requestType, 
   currentStatus, 
-  onActionSuccess 
+  onActionSuccess,
+  initialLicensePlate,
+  initialDriverName,
+  initialDriverPhone
 }: GateActionButtonsProps) {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -24,6 +30,8 @@ export default function GateActionButtons({
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [plateNo, setPlateNo] = useState('');
   const [driverName, setDriverName] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   // Loại bỏ các state và effect cho thời gian vì sẽ tự động điền từ backend
 
   const statusLabel = (status: string) => {
@@ -148,21 +156,52 @@ export default function GateActionButtons({
     }
   };
 
-  const handleCheckIn = async () => {
+  const openCheckInModal = () => {
+    setPlateNo((initialLicensePlate || '').toUpperCase());
+    setDriverName(initialDriverName || '');
+    setDriverPhone(initialDriverPhone || '');
+    setIsCheckInModalOpen(true);
+  };
+
+  const confirmCheckIn = async () => {
     try {
+      const normalizedPlate = plateNo.trim().toUpperCase();
+      const normalizedDriver = driverName.trim();
+      const normalizedPhone = driverPhone.trim();
+
+      if (!/^[A-Z0-9\-\s\.]{5,20}$/.test(normalizedPlate)) {
+        showError('Biển số xe không hợp lệ', 'Biển số xe phải có 5-20 ký tự hợp lệ');
+        return;
+      }
+      if (normalizedDriver.length < 2) {
+        showError('Tên tài xế không hợp lệ', 'Tên tài xế phải có ít nhất 2 ký tự');
+        return;
+      }
+      if (normalizedPhone && !/^[0-9+\-\s]{8,20}$/.test(normalizedPhone)) {
+        showError('SĐT không hợp lệ', 'SĐT tài xế phải có 8-20 ký tự số');
+        return;
+      }
+
       setIsLoading(true);
-      await api.patch(`/gate/requests/${requestId}/check-in`);
-      showSuccess(
-        '✅ Check-in thành công',
-        'Đã chuyển trạng thái: GATE_IN - Xe vào cổng.',
-        5000
-      );
+
+      // 1) Cập nhật thông tin tài xế lên request
+      await api.patch(`/requests/${requestId}`, {
+        license_plate: normalizedPlate,
+        driver_name: normalizedDriver,
+        driver_phone: normalizedPhone || undefined
+      });
+
+      // 2) Thực hiện check-in
+      const res = await api.patch(`/gate/requests/${requestId}/check-in`);
+
+      showSuccess('✅ Check-in thành công', 'Đã chuyển trạng thái: GATE_IN - Xe vào cổng.', 5000);
+      setIsCheckInModalOpen(false);
+      setPlateNo('');
+      setDriverName('');
+      setDriverPhone('');
       onActionSuccess();
     } catch (error: any) {
-      showError(
-        'Lỗi khi Check-in',
-        error.response?.data?.message || error.message
-      );
+      showError('Lỗi khi Check-in', error.response?.data?.message || error.message);
     } finally {
       setIsLoading(false);
     }
@@ -208,28 +247,63 @@ export default function GateActionButtons({
     }
   };
 
-  // Hiển thị action Check-in, Check-out cho NEW_REQUEST
-  if (currentStatus === 'NEW_REQUEST') {
+  // Hiển thị action Check-in, Check-out cho NEW_REQUEST và PENDING
+  if (currentStatus === 'NEW_REQUEST' || currentStatus === 'PENDING') {
     return (
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-        <button
-          onClick={handleCheckIn}
-          disabled={isLoading}
-          className="action-btn action-btn-success"
-          style={{ backgroundColor: 'var(--color-green-600)' }}
-        >
-          {isLoading ? 'Đang xử lý...' : 'Check-in'}
-        </button>
-        
-        <button
-          onClick={handleCheckOut}
-          disabled={isLoading}
-          className="action-btn action-btn-warning"
-          style={{ backgroundColor: 'var(--color-orange-600)' }}
-        >
-          {isLoading ? 'Đang xử lý...' : 'Check-out'}
-        </button>
-      </div>
+      <>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          <button
+            onClick={openCheckInModal}
+            disabled={isLoading}
+            className="action-btn action-btn-success"
+            style={{ backgroundColor: 'var(--color-green-600)' }}
+          >
+            {isLoading ? 'Đang xử lý...' : 'Check-in'}
+          </button>
+          
+          <button
+            onClick={handleCheckOut}
+            disabled={isLoading}
+            className="action-btn action-btn-warning"
+            style={{ backgroundColor: 'var(--color-orange-600)' }}
+          >
+            {isLoading ? 'Đang xử lý...' : 'Check-out'}
+          </button>
+        </div>
+
+        {/* Check-in Modal (render trong nhánh này) */}
+        {isCheckInModalOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'white', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '420px', boxShadow: 'var(--shadow-xl)' }}>
+              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-4)' }}>Cập nhật thông tin trước khi Check-in</h3>
+
+              <div style={{ marginBottom: 'var(--space-3)' }}>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Số xe *</label>
+                <input type="text" value={plateNo} onChange={(e) => setPlateNo(e.target.value.toUpperCase())} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-3)' }}>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Tài xế *</label>
+                <input type="text" value={driverName} onChange={(e) => setDriverName(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-5)' }}>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>SDT tài xế</label>
+                <input type="text" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+                <button className="action-btn action-btn-secondary" disabled={isLoading} onClick={() => { setIsCheckInModalOpen(false); }}>
+                  Hủy
+                </button>
+                <button className="action-btn action-btn-primary" disabled={isLoading} onClick={confirmCheckIn}>
+                  {isLoading ? 'Đang xử lý...' : 'Xác nhận Check-in'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

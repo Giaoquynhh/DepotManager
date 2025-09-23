@@ -157,7 +157,7 @@ if (activeRequest) {
 | File | Mô tả | Vai trò |
 |------|-------|---------|
 | `modules/requests/service/RequestBaseService.ts` | Service chính xử lý request | Chứa logic validation `validateContainerNotExists()` |
-| `modules/requests/controller/RequestController.ts` | Controller xử lý API | Gọi service và trả về lỗi |
+| `modules/requests/controller/RequestController.ts` | Barrel controller | Re-export các handler |
 | `modules/requests/dto/RequestDtos.ts` | Schema validation | Validation cơ bản cho form data |
 | `prisma/schema.prisma` | Database schema | Định nghĩa cấu trúc ServiceRequest và YardPlacement |
 

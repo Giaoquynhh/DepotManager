@@ -327,8 +327,8 @@ export class GateService {
       const statusArray = statuses.split(',').map(s => s.trim());
       where.status = { in: statusArray };
     } else {
-      // Default: hiển thị 5 trạng thái cụ thể khi chọn "Tất cả trạng thái"
-      where.status = { in: ['NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
+      // Default: bao gồm PENDING để thấy yêu cầu mới tạo ở LowerContainer
+      where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
     }
 
     if (container_no && container_no.trim()) {
@@ -596,8 +596,8 @@ export class GateService {
       throw new Error('Request không tồn tại');
     }
 
-    if (request.status !== 'NEW_REQUEST') {
-      throw new Error('Chỉ có thể Check-in từ trạng thái NEW_REQUEST');
+    if (request.status !== 'NEW_REQUEST' && request.status !== 'PENDING') {
+      throw new Error('Chỉ có thể Check-in từ trạng thái NEW_REQUEST hoặc PENDING');
     }
 
     const currentTime = new Date();

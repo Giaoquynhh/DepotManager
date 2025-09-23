@@ -390,6 +390,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 							<option value="PENDING">Chờ xử lý</option>
 							<option value="SCHEDULED">Đã lên lịch</option>
 							<option value="IN_PROGRESS">Đang thực hiện</option>
+							<option value="GATE_IN">Gate-in</option>
 							<option value="COMPLETED">Hoàn thành</option>
 							<option value="CANCELLED">Đã hủy</option>
 						</select>
