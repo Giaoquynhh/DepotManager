@@ -278,3 +278,5 @@ flowchart TD
 - Configure image upload limits if needed
 - Set up proper CORS for file uploads
 - Monitor memory usage for image previews
+
+

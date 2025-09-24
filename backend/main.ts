@@ -28,6 +28,7 @@ import reportsRoutes from './modules/reports/controller/ReportsRoutes';
 import setupRoutes from './modules/setup/controller/SetupRoutes';
 import requestRoutes from './modules/requests/controller/RequestRoutes';
 import sealRoutes from './modules/seal/controller/SealRoutes';
+import maintenanceRoutes from './modules/maintenance/controller/RepairRoutes';
 
 const app = express();
 const server = createServer(app);
@@ -94,6 +95,7 @@ app.use('/reports', authenticate, reportsRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/requests', requestRoutes);
 app.use('/seals', authenticate, sealRoutes);
+app.use('/maintenance', authenticate, maintenanceRoutes);
 
 const start = async () => {
 	await connectDatabase();

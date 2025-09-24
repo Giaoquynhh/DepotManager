@@ -564,7 +564,6 @@
         "statusRepairing": "Đang sửa chữa",
         "statusChecked": "Đã kiểm tra",
         "statusRejected": "Đã từ chối",
-        "pendingContainersList": "Danh sách container đang chờ",
         "tableHeaders": {
           "code": "Số yêu cầu",
           "containerNo": "Số cont",
@@ -664,67 +663,6 @@
             "errorUpdatingInvoice": "Lỗi cập nhật hóa đơn",
             "errorCreatingPDF": "Lỗi tạo PDF",
             "errorUploadingPDF": "Lỗi upload PDF lên server"
-          }
-        },
-        "pendingContainers": {
-          "title": "Danh sách container đang chờ",
-          "defaultTitle": "Danh sách container đang chờ",
-          "tableHeaders": {
-            "containerNo": "Container No",
-            "type": "Loại",
-            "status": "Trạng thái",
-            "licensePlate": "Biển số xe",
-            "actions": "Hành động"
-          },
-          "types": {
-            "import": "Import",
-            "export": "Export"
-          },
-          "statuses": {
-            "gateIn": "Vào cổng",
-            "checking": "Đang kiểm tra",
-            "completed": "Hoàn thành",
-            "rejected": "Từ chối"
-          },
-          "actions": {
-            "startInspection": "Bắt đầu kiểm tra",
-            "passStandard": "Đạt chuẩn",
-            "failStandard": "Không đạt chuẩn",
-            "selectDamageType": "Chọn loại hỏng hóc:",
-            "unrepairable": "Không thể sửa",
-            "repairable": "Có thể sửa",
-            "underRepair": "Đang sửa chữa",
-            "repairTicketCreated": "Đã tạo phiếu sửa chữa",
-            "rejected": "Bị từ chối"
-          },
-          "messages": {
-            "noContainersWaiting": "Không có container nào đang chờ",
-            "inspectionStarted": "Đã bắt đầu kiểm tra container. Trạng thái đã chuyển sang CHECKING và đã tạo phiếu sửa chữa.",
-            "inspectionPassed": "Kết quả kiểm tra: Đạt chuẩn. Container đã được xóa khỏi danh sách chờ.",
-            "inspectionFailed": "Container không đạt chuẩn",
-            "repairCreated": "Đã tạo phiếu sửa chữa thành công cho container! Container đã được xóa khỏi danh sách chờ.",
-            "containerNotFound": "Không tìm thấy container",
-            "loginRequired": "Bạn chưa đăng nhập. Vui lòng đăng nhập lại.",
-            "requestTimeout": "Yêu cầu bị timeout. Vui lòng thử lại.",
-            "connectionError": "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và đảm bảo backend server đang chạy.",
-            "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-            "accessDenied": "Bạn không có quyền truy cập dữ liệu này.",
-            "apiNotFound": "API endpoint không tồn tại. Vui lòng liên hệ admin.",
-            "serverError": "Lỗi server. Vui lòng thử lại sau.",
-            "unknownError": "Có lỗi xảy ra khi tải dữ liệu",
-            "errorStartingInspection": "Lỗi khi bắt đầu kiểm tra container",
-            "errorProcessingResult": "Lỗi khi xử lý kết quả kiểm tra",
-            "errorProcessingOption": "Lỗi khi xử lý tùy chọn thất bại",
-            "errorCreatingRepair": "Lỗi khi tạo phiếu sửa chữa",
-            "dataError": "Lỗi dữ liệu",
-            "invalidData": "Dữ liệu không hợp lệ",
-            "noPermissionCreateRepair": "Bạn không có quyền tạo phiếu sửa chữa",
-            "serverErrorWithStatus": "Lỗi server",
-            "networkError": "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.",
-            "pleaseEnterErrorDescription": "Vui lòng nhập mô tả lỗi",
-            "costCannotBeNegative": "Chi phí dự toán không thể âm",
-            "confirmZeroCost": "Chi phí dự toán là 0. Bạn có chắc chắn muốn tiếp tục?",
-            "apiNoData": "API không trả về dữ liệu"
           }
         }
       },

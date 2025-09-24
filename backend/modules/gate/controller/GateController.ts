@@ -355,6 +355,34 @@ export class GateController {
       });
     }
   }
+
+  /**
+   * Cập nhật trạng thái kiểm tra container
+   */
+  async updateInspectionStatus(req: AuthRequest, res: Response) {
+    try {
+      const { requestId } = req.params;
+      const { isCheck, isRepair, inspectionStatus, images } = req.body;
+
+      const result = await this.gateService.updateInspectionStatus(
+        requestId, 
+        { isCheck, isRepair, inspectionStatus, images }
+      );
+
+      res.json({
+        success: true,
+        message: 'Cập nhật trạng thái kiểm tra thành công',
+        data: result
+      });
+    } catch (error) {
+      console.error('Error in updateInspectionStatus:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Lỗi khi cập nhật trạng thái kiểm tra',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }
 
 export default new GateController();

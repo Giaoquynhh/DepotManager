@@ -377,7 +377,9 @@ export class GateService {
         service_type: 'Nâng', // Loại dịch vụ là "Nâng" theo yêu cầu
         request_no: r.request_no || null,
         booking_bill: r.booking_bill || null,
-        appointment_time: r.appointment_time || null
+        appointment_time: r.appointment_time || null,
+        isCheck: r.isCheck || false,
+        isRepair: r.isRepair || false
       };
     });
 
@@ -763,6 +765,41 @@ export class GateService {
         pages: Math.ceil(total / limitNum)
       }
     };
+  }
+
+  /**
+   * Cập nhật trạng thái kiểm tra container
+   */
+  async updateInspectionStatus(requestId: string, data: {
+    isCheck: boolean;
+    isRepair: boolean;
+    inspectionStatus: string;
+    images?: File[];
+  }): Promise<any> {
+    const request = await prisma.serviceRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      throw new Error('Request không tồn tại');
+    }
+
+    const updatedRequest = await prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        isCheck: data.isCheck,
+        isRepair: data.isRepair,
+        updatedAt: new Date()
+      }
+    });
+
+    // TODO: Lưu hình ảnh nếu có
+    if (data.images && data.images.length > 0) {
+      // Logic để lưu hình ảnh vào storage
+      console.log('Saving inspection images:', data.images.length);
+    }
+
+    return updatedRequest;
   }
 }
 

@@ -115,6 +115,8 @@ model ServiceRequest {
   has_invoice               Boolean             @default(false)
   is_paid                   Boolean             @default(false)
   is_pick                   Boolean             @default(false)
+  isCheck                   Boolean             @default(false)
+  isRepair                  Boolean             @default(false)
   time_in                   DateTime?
   time_out                  DateTime?
   container_type_id         String?
@@ -333,7 +335,6 @@ model RepairTicket {
   code                String             @unique
   equipment_id        String?
   created_by          String
-  status              RepairStatus       @default(PENDING)
   problem_description String
   estimated_cost      Float?             @default(0)
   manager_comment     String?
@@ -634,9 +635,3 @@ enum InventoryMoveType {
   OUT
 }
 
-enum RepairStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}

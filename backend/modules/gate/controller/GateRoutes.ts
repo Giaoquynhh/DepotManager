@@ -98,6 +98,13 @@ router.get(
   gateController.getGateHistory.bind(gateController)
 );
 
+// Cập nhật trạng thái kiểm tra container (MaintenanceManager, SystemAdmin)
+router.patch(
+  '/requests/:requestId/inspection',
+  requireRoles('MaintenanceManager', 'SystemAdmin'),
+  gateController.updateInspectionStatus.bind(gateController)
+);
+
 export default router;
 
 
