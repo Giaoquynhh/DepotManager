@@ -80,11 +80,12 @@ export class RepairController {
         : null;
 
       // Cập nhật trạng thái RepairTicket theo yêu cầu:
-      // - ACCEPT: luôn chuyển thành COMPLETE (hoàn tất kiểm tra)
-      // - REJECT: chuyển thành REJECT
+      // - ACCEPT + canRepair = true  -> COMPLETE_NEEDREPAIR (chấp nhận nhưng cần sửa chữa)
+      // - ACCEPT + canRepair = false -> COMPLETE (container tốt)
+      // - REJECT                      -> REJECT
       let statusUpdate = ticket.status as any;
       if (decision === 'REJECT') statusUpdate = 'REJECT';
-      else if (decision === 'ACCEPT') statusUpdate = 'COMPLETE';
+      else if (decision === 'ACCEPT') statusUpdate = canRepair ? 'COMPLETE_NEEDREPAIR' : 'COMPLETE';
 
       const txCalls: any[] = [
         prisma.repairTicket.update({ where: { id }, data: { status: statusUpdate, updatedAt: new Date() } })
