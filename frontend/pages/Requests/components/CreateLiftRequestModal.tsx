@@ -255,7 +255,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
                 container_type_id: formData.containerType || undefined,
                 customer_id: formData.customer || undefined,
                 vehicle_company_id: formData.vehicleCompany || undefined,
-                vehicle_number: formData.vehicleNumber,
+                license_plate: formData.vehicleNumber,
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,
                 appointment_time: formData.appointmentTime,

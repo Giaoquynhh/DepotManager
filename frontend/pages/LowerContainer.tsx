@@ -3,6 +3,7 @@ import Header from '@components/Header';
 import { useTranslation } from '../hooks/useTranslation';
 import { ExportRequest } from './Requests/components/ExportRequest';
 import { CreateLowerRequestModal, LowerRequestData } from './Requests/components';
+import { requestService } from '../services/requests';
 
 export default function LowerContainer() {
 	const { t } = useTranslation();
@@ -16,14 +17,14 @@ export default function LowerContainer() {
     setIsCreateLowerModalOpen(true);
   };
 
-	const handleSubmitLowerRequest = (data: LowerRequestData) => {
-		console.log('Lower Request Data:', data);
+	const handleSubmitLowerRequest = async (data: LowerRequestData) => {
+		// Modal đã gọi API tạo request rồi, chỉ cần refresh table và đóng modal
+		console.log('Lower Request Data received:', data);
 		console.log('Auto-generated Request Number:', data.requestNo);
-		// TODO: Implement API call to create lower request
-		alert(`Yêu cầu hạ container đã được tạo thành công!\nSố yêu cầu: ${data.requestNo}`);
-		setIsCreateLowerModalOpen(false);
+		
 		// Trigger refresh of the table
 		setRefreshTrigger(prev => prev + 1);
+		setIsCreateLowerModalOpen(false);
 	};
 
   return (

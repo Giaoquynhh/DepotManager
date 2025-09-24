@@ -186,7 +186,7 @@ export default function GateActionButtons({
 
       // 1) Cập nhật thông tin tài xế lên request
       await api.patch(`/requests/${requestId}`, {
-        license_plate: normalizedPlate,
+        license_plate: normalizedPlate,  // Backend giờ nhận field license_plate trực tiếp
         driver_name: normalizedDriver,
         driver_phone: normalizedPhone || undefined
       });

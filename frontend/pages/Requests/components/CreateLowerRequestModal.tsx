@@ -255,7 +255,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
                 container_type_id: formData.containerType || undefined,
                 customer_id: formData.customer || undefined,
                 vehicle_company_id: formData.vehicleCompany || undefined,
-                vehicle_number: formData.vehicleNumber,
+                license_plate: formData.vehicleNumber,
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,
                 appointment_time: formData.appointmentTime,
@@ -294,7 +294,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 					});
 					setSelectedCustomerName('');
 					setUploadedFiles([]);
-					onClose();
+					// Don't call onClose() here, let parent handle it
 				} else {
 					alert('Có lỗi xảy ra: ' + response.data.message);
 				}

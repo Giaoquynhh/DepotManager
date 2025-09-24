@@ -189,7 +189,7 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 				container_type_id: containerTypeId,
 				customer_id: customerId,
 				vehicle_company_id: vehicleCompanyId,
-				vehicle_number: formData.vehicleNumber,
+				license_plate: formData.vehicleNumber,
 				driver_name: formData.driver,
 				driver_phone: formData.driverPhone,
 				appointment_time: formData.appointmentTime,

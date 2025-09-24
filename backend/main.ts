@@ -22,7 +22,7 @@ import yardRoutes from './modules/yard/controller/YardRoutes';
 import forkliftRoutes from './modules/forklift/controller/ForkliftRoutes';
 import driverDashboardRoutes from './modules/driver-dashboard/controller/DriverDashboardRoutes';
 import containerRoutes from './modules/containers/controller/ContainerRoutes';
-import maintenanceRoutes from './modules/maintenance/controller/MaintenanceRoutes';
+// Maintenance module removed - simplified structure
 import financeRoutes from './modules/finance/controller/FinanceRoutes';
 import reportsRoutes from './modules/reports/controller/ReportsRoutes';
 import setupRoutes from './modules/setup/controller/SetupRoutes';
@@ -88,7 +88,7 @@ app.use('/yard', yardRoutes);
 app.use('/forklift', forkliftRoutes);
 app.use('/driver-dashboard', driverDashboardRoutes);
 app.use('/containers', containerRoutes);
-app.use('/maintenance', maintenanceRoutes);
+// Maintenance routes removed - simplified structure
 app.use('/finance', financeRoutes);
 app.use('/reports', authenticate, reportsRoutes);
 app.use('/api/setup', setupRoutes);

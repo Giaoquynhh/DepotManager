@@ -200,7 +200,7 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
                 container_type_id: containerTypeId,
                 customer_id: customerId,
                 vehicle_company_id: transportCompanyId,
-                vehicle_number: formData.vehicleNumber,
+                license_plate: formData.vehicleNumber,
                 driver_name: formData.driverName,
                 driver_phone: formData.driverPhone,
                 appointment_time: formData.appointmentTime ? new Date(formData.appointmentTime).toISOString() : null,
