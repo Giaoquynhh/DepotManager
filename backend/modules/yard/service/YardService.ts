@@ -297,8 +297,7 @@ export class YardService {
 				if (!isWaitingForPlacement) {
 					const repairTicket = await tx.repairTicket.findFirst({
 						where: { 
-							container_no,
-							status: 'COMPLETED'
+							container_no
 						},
 						orderBy: { updatedAt: 'desc' }
 					});

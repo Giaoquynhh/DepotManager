@@ -339,15 +339,18 @@ model RepairTicket {
   estimated_cost      Float?             @default(0)
   manager_comment     String?
   createdAt           DateTime           @default(now())
+  status              RepairStatus       @default(PENDING)
   updatedAt           DateTime           @updatedAt
   container_no        String?
   labor_cost          Float?             @default(0)
   viewquote           Int                @default(0)
   equipment           Equipment?         @relation(fields: [equipment_id], references: [id])
   items               RepairTicketItem[]
+  images              RepairImage[]
 
   @@index([equipment_id])
   @@index([container_no])
+  @@index([status])
 }
 
 model RepairTicketItem {
@@ -360,6 +363,19 @@ model RepairTicketItem {
 
   @@index([repair_ticket_id])
   @@index([inventory_item_id])
+}
+
+model RepairImage {
+  id              String       @id @default(cuid())
+  repair_ticket_id String
+  file_name       String
+  file_type       String
+  file_size       Int
+  storage_url     String
+  createdAt       DateTime     @default(now())
+  ticket          RepairTicket @relation(fields: [repair_ticket_id], references: [id], onDelete: Cascade)
+
+  @@index([repair_ticket_id])
 }
 
 model Invoice {
@@ -633,5 +649,12 @@ enum EquipmentType {
 enum InventoryMoveType {
   IN
   OUT
+}
+
+enum RepairStatus {
+  PENDING
+  REJECT
+  COMPLETE
+  COMPLETE_NEEDREPAIR
 }
 

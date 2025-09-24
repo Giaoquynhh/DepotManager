@@ -362,8 +362,30 @@ export class GateService {
       prisma.serviceRequest.count({ where })
     ]);
 
-    // Bổ sung thông tin tài xế và biển số xe
-    const mapped = requests.map((r: any) => {
+    // Với các IMPORT đã GATE_IN, tự động tạo RepairTicket nếu chưa có và đính kèm thông tin vào payload trả về
+    const mapped = await Promise.all(requests.map(async (r: any) => {
+      let repairTicket: any = null;
+      if (r.type === 'IMPORT' && r.status === 'GATE_IN' && r.container_no) {
+        // Tìm repair ticket theo container_no
+        repairTicket = await prisma.repairTicket.findFirst({
+          where: { container_no: r.container_no },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        // Nếu chưa có thì tạo mới
+        if (!repairTicket) {
+          const code = `RT-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${Math.floor(Math.random()*1000)}`;
+          repairTicket = await prisma.repairTicket.create({
+            data: {
+              code,
+              container_no: r.container_no,
+              created_by: r.created_by || actorId,
+              problem_description: 'Auto-created from Gate (GATE_IN)'
+            }
+          });
+        }
+      }
+
       // Ưu tiên sử dụng trường từ database, fallback về history nếu cần
       const licensePlate = r.license_plate || (r.history as any)?.gate_approve?.license_plate || null;
       const driverName = r.driver_name || (r.history as any)?.gate_approve?.driver_name || null;
@@ -379,9 +401,12 @@ export class GateService {
         booking_bill: r.booking_bill || null,
         appointment_time: r.appointment_time || null,
         isCheck: r.isCheck || false,
-        isRepair: r.isRepair || false
+        isRepair: r.isRepair || false,
+        repair_ticket_id: repairTicket?.id || null,
+        repair_ticket_code: repairTicket?.code || null,
+        repair_ticket_status: repairTicket?.status || null
       };
-    });
+    }));
 
     return {
       data: mapped,

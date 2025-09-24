@@ -54,9 +54,13 @@ export class RepairController {
             });
           }
 
+          // Lấy số lượng ảnh của ticket
+          const imagesCount = await prisma.repairImage.count({ where: { repair_ticket_id: ticket.id } });
+
           return {
             ...ticket,
-            serviceRequest
+            serviceRequest,
+            imagesCount
           };
         })
       );

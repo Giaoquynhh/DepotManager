@@ -1,4 +1,4 @@
-import { PrismaClient, RepairStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -80,24 +80,23 @@ async function main(){
 			console.log('ServiceRequest (gate checked) exists:', containerA);
 		}
 
-		// B. Container đã Repair COMPLETED (RepairTicket.status = COMPLETED)
+    // B. Container đã Repair COMPLETE (RepairTicket.status = COMPLETE)
 		const containerB = 'MSCU7654321';
-		const existsB = await prisma.repairTicket.findFirst({
-			where: { container_no: containerB, status: RepairStatus.COMPLETED }
-		});
+    const existsB = await prisma.repairTicket.findFirst({
+        where: { container_no: containerB }
+    });
 		if (!existsB && admin) {
 			await prisma.repairTicket.create({
 				data: {
 					code: 'RT-DEMO-COMPLETED-1',
 					container_no: containerB,
 					created_by: admin.id,
-					status: RepairStatus.COMPLETED,
 					problem_description: 'Demo checked repair'
 				}
 			});
-			console.log('Seeded RepairTicket COMPLETED:', containerB);
+        console.log('Seeded RepairTicket COMPLETE:', containerB);
 		} else {
-			console.log('RepairTicket COMPLETED exists:', containerB);
+        console.log('RepairTicket COMPLETE exists:', containerB);
 		}
 	} catch (e) {
 		console.error('Seed demo data error:', e);

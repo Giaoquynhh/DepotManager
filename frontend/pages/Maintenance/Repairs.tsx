@@ -12,6 +12,7 @@ interface RepairTicket {
   estimated_cost?: number;
   labor_cost?: number;
   manager_comment?: string;
+  status?: string;
   createdAt: string;
   updatedAt: string;
   serviceRequest?: {
@@ -26,6 +27,7 @@ interface RepairTicket {
     };
     attachments: any[];
   };
+  imagesCount?: number;
 }
 
 export default function RepairsPage() {
@@ -67,6 +69,17 @@ export default function RepairsPage() {
       'COMPLETED': 'Hoàn thành'
     };
     return statusMap[serviceRequest.status] || serviceRequest.status || 'Không xác định';
+  };
+
+  const getTicketStatusLabel = (status?: string) => {
+    if (!status) return 'Không xác định';
+    const map: Record<string, string> = {
+      PENDING: 'Chờ xử lý',
+      REJECT: 'Từ chối',
+      COMPLETE: 'Chấp nhận',
+      COMPLETE_NEEDREPAIR: 'Chấp nhận - cần sửa'
+    };
+    return map[status] || status;
   };
 
 
@@ -157,7 +170,7 @@ export default function RepairsPage() {
                           backgroundColor: '#e0e7ff',
                           color: '#2563eb'
                         }}>
-                          Chưa định nghĩa
+                          {getTicketStatusLabel(repair.status)}
                         </span>
                       </td>
                       <td style={{ padding: '12px 8px' }}>
@@ -179,19 +192,63 @@ export default function RepairsPage() {
                         {new Date(repair.updatedAt).toLocaleString('vi-VN')}
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                        {repair.serviceRequest?.attachments && repair.serviceRequest.attachments.length > 0 ? (
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                          {/* Ảnh của RepairTicket */}
                           <span style={{
                             padding: '4px 8px',
-                            backgroundColor: '#e0e7ff',
-                            color: '#2563eb',
+                            backgroundColor: '#e0f2fe',
+                            color: '#0369a1',
                             borderRadius: '4px',
                             fontSize: '12px'
                           }}>
-                            {repair.serviceRequest.attachments.length} ảnh
+                            {(repair.imagesCount ?? 0)} ảnh kiểm tra
                           </span>
-                        ) : (
-                          <span style={{ color: '#9ca3af' }}>-</span>
-                        )}
+                          {/* Ảnh chứng từ của Request */}
+                          {repair.serviceRequest?.attachments && repair.serviceRequest.attachments.length > 0 ? (
+                            <span style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#e0e7ff',
+                              color: '#2563eb',
+                              borderRadius: '4px',
+                              fontSize: '12px'
+                            }}>
+                              {repair.serviceRequest.attachments.length} ảnh chứng từ
+                            </span>
+                          ) : (
+                            <span style={{ color: '#9ca3af', fontSize: '12px' }}>0 ảnh chứng từ</span>
+                          )}
+                          {/* Nút upload ảnh RepairTicket */}
+                          <label style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}>
+                            Tải ảnh
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              style={{ display: 'none' }}
+                              onChange={async (e) => {
+                                const files = e.target.files;
+                                if (!files || files.length === 0) return;
+                                const form = new FormData();
+                                Array.from(files).forEach(f => form.append('files', f));
+                                try {
+                                  await api.post(`/maintenance/repairs/${repair.id}/images`, form, {
+                                    headers: { 'Content-Type': 'multipart/form-data' }
+                                  });
+                                  fetchRepairs();
+                                } catch (err) {
+                                  console.error('Upload repair images error:', err);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
