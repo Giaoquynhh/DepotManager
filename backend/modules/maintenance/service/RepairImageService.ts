@@ -55,6 +55,11 @@ export class RepairImageService {
       orderBy: { createdAt: 'desc' }
     });
   }
+
+  async remove(imageId: string) {
+    // Xóa record; file lưu disk có thể giữ lại cho demo
+    return prisma.repairImage.delete({ where: { id: imageId } });
+  }
 }
 
 export const repairImageService = new RepairImageService();

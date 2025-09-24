@@ -89,8 +89,6 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
               <th data-column="vehicle">Số xe</th>
               <th data-column="driver">Tài xế</th>
               <th data-column="driver-phone">SDT tài xế</th>
-              <th data-column="ticket-code">Mã phiếu kiểm tra</th>
-              <th data-column="ticket-status">Trạng thái phiếu</th>
               <th data-column="status">Trạng thái cổng</th>
               <th data-column="appointment">Thời gian hẹn</th>
               <th data-column="time-in">Thời gian vào</th>
@@ -112,22 +110,6 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
                 <td>{request.license_plate || t('common.na')}</td>
                 <td>{request.driver_name || t('common.na')}</td>
                 <td>{request.driver_phone || t('common.na')}</td>
-                <td>
-                  {request.repair_ticket_code ? (
-                    <strong>{request.repair_ticket_code}</strong>
-                  ) : (
-                    <span style={{ color: '#9ca3af' }}>{t('common.na')}</span>
-                  )}
-                </td>
-                <td>
-                  {request.repair_ticket_status ? (
-                    <span className={`status-badge status-${request.repair_ticket_status.toLowerCase().replace(/_/g, '-')}`}>
-                      {request.repair_ticket_status === 'PENDING' ? 'Chờ xử lý' : request.repair_ticket_status}
-                    </span>
-                  ) : (
-                    <span style={{ color: '#9ca3af' }}>{t('common.na')}</span>
-                  )}
-                </td>
                 <td>
                   <span className={`status-badge status-${request.status.toLowerCase().replace(/_/g, '-')}`}>
                     {statusLabel(request.status)}

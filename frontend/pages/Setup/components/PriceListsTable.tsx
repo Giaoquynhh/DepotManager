@@ -126,6 +126,8 @@ export const PriceListsTable: React.FC<PriceListsTableProps> = ({
             showInfo={true}
             totalItems={pagination.total}
             itemsPerPage={pagination.limit}
+            language={language}
+            translations={translations}
           />
         </div>
       )}

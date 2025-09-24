@@ -169,16 +169,17 @@ export default function GateActionButtons({
       const normalizedDriver = driverName.trim();
       const normalizedPhone = driverPhone.trim();
 
-      if (!/^[A-Z0-9\-\s\.]{5,20}$/.test(normalizedPlate)) {
-        showError('Biển số xe không hợp lệ', 'Biển số xe phải có 5-20 ký tự hợp lệ');
+      // Nới lỏng validation để không chặn dữ liệu demo/ngắn
+      if (!/^[A-Z0-9\-\s\.]{1,20}$/.test(normalizedPlate)) {
+        showError('Biển số xe không hợp lệ', 'Biển số xe phải có 1-20 ký tự hợp lệ');
         return;
       }
-      if (normalizedDriver.length < 2) {
-        showError('Tên tài xế không hợp lệ', 'Tên tài xế phải có ít nhất 2 ký tự');
+      if (normalizedDriver.length < 1) {
+        showError('Tên tài xế không hợp lệ', 'Tên tài xế không được để trống');
         return;
       }
-      if (normalizedPhone && !/^[0-9+\-\s]{8,20}$/.test(normalizedPhone)) {
-        showError('SĐT không hợp lệ', 'SĐT tài xế phải có 8-20 ký tự số');
+      if (normalizedPhone && !/^[0-9+\-\s]{1,20}$/.test(normalizedPhone)) {
+        showError('SĐT không hợp lệ', 'SĐT tài xế chỉ chứa số/khoảng trắng/+/- và tối đa 20 ký tự');
         return;
       }
 

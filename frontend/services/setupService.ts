@@ -619,20 +619,7 @@ class SetupService {
     }
   }
 
-  // Upload price list Excel file
-  async uploadPriceListExcel(file: FormData): Promise<ApiResponse<PriceList[]>> {
-    try {
-      const response = await api.post('/api/setup/price-lists/upload-excel', file);
-      return response.data;
-    } catch (error: any) {
-      console.error('Error uploading price list Excel:', error);
-      return {
-        success: false,
-        error: 'UPLOAD_ERROR',
-        message: error.response?.data?.message || 'Failed to upload Excel file'
-      };
-    }
-  }
+  // Removed: uploadPriceListExcel
 }
 
 export const setupService = new SetupService();

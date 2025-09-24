@@ -742,34 +742,7 @@ export class SetupController {
     }
   }
 
-  // Upload price list Excel file
-  async uploadPriceListExcel(req: Request, res: Response) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: 'VALIDATION_ERROR',
-          message: 'No file uploaded'
-        });
-      }
-
-      const result = await service.uploadPriceListExcel(req.file);
-
-      if (!result.success) {
-        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 500;
-        return res.status(statusCode).json(result);
-      }
-
-      res.json(result);
-    } catch (error) {
-      console.error('Error in uploadPriceListExcel controller:', error);
-      res.status(500).json({
-        success: false,
-        error: 'INTERNAL_SERVER_ERROR',
-        message: 'An unexpected error occurred'
-      });
-    }
-  }
+  // Removed: uploadPriceListExcel
 }
 
 export default new SetupController();

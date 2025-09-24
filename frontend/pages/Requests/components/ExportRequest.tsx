@@ -3,6 +3,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { requestService } from '../../../services/requests';
 import { UpdateRequestModal } from './UpdateRequestModal';
 import { CancelRequestModal } from './CancelRequestModal';
+import { maintenanceApi } from '../../../services/maintenance';
 
 interface ExportRequestProps {
 	localSearch: string;
@@ -12,6 +13,7 @@ interface ExportRequestProps {
 	localStatus: string;
 	setLocalStatus: (status: string) => void;
 	refreshTrigger?: number;
+  isReject?: boolean;
 }
 
 export const ExportRequest: React.FC<ExportRequestProps> = ({
@@ -21,7 +23,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 	setLocalType,
 	localStatus,
 	setLocalStatus,
-	refreshTrigger
+	refreshTrigger,
+  isReject = false
 }) => {
 	const { t } = useTranslation();
 
@@ -48,6 +51,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 		demDet?: string; // DEM/DET
 		notes?: string; // Ghi chú
 		rejectedReason?: string; // Lý do từ chối
+      repairTicketId?: string; // Liên kết phiếu kiểm tra nếu có
+      isRepairRejected?: boolean; // Cờ từ trạng thái repairTicket
 	};
 
     // Dữ liệu thực tế từ API (khởi tạo rỗng)
@@ -113,7 +118,25 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                         rejectedReason: request.rejected_reason || ''
                     };
                 });
-                setRows(transformedData);
+                // Map thêm trạng thái từ repair tickets để xác định isReject theo phiếu
+                try {
+                  const repairsRes = await maintenanceApi.listRepairs({ page: 1, limit: 200 });
+                  const list = repairsRes?.data || [];
+                  const containerToRepair = new Map<string, { id: string; status: string }>();
+                  list.forEach((rt: any) => {
+                    if (rt.container_no) containerToRepair.set(rt.container_no, { id: rt.id, status: rt.status });
+                  });
+                  setRows(
+                    transformedData.map((row) => {
+                      const info = containerToRepair.get(row.containerNo);
+                      return info
+                        ? { ...row, repairTicketId: info.id, isRepairRejected: info.status === 'REJECT' }
+                        : row;
+                    })
+                  );
+                } catch {
+                  setRows(transformedData);
+                }
 
                 // Chỉ gọi API đếm chính xác cho những request không có attachments array từ backend
                 const needsAccurateCount = transformedData.filter(r => r.documentsCount === 0 || r.documentsCount === undefined);
@@ -196,7 +219,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     fetchRequests();
   };
 
-  // Handle cancel request
+  // Handle cancel/reject request
   const handleCancelRequest = (row: LowerRequestRow) => {
     setSelectedRequestForCancel(row);
     setIsCancelModalOpen(true);
@@ -205,13 +228,19 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
   const confirmCancelRequest = async (reason: string) => {
     if (!selectedRequestForCancel) return;
     try {
-      await requestService.cancelRequest(selectedRequestForCancel.id, reason);
+      if ((isReject || selectedRequestForCancel.isRepairRejected) && selectedRequestForCancel.status !== 'PENDING') {
+        // Yêu cầu: xác nhận từ chối sẽ chuyển trạng thái import request -> REJECTED
+        await requestService.cancelRequest(selectedRequestForCancel.id, reason);
+      } else {
+        // Hủy ImportRequest khi PENDING
+        await requestService.cancelRequest(selectedRequestForCancel.id, reason);
+      }
       setIsCancelModalOpen(false);
       setSelectedRequestForCancel(null);
       fetchRequests();
     } catch (error: any) {
-      console.error('Cancel request error:', error);
-      alert('Có lỗi xảy ra khi hủy yêu cầu: ' + (error.response?.data?.message || error.message));
+      console.error('Cancel/Reject request error:', error);
+      alert((isReject ? 'Có lỗi xảy ra khi từ chối yêu cầu: ' : 'Có lỗi xảy ra khi hủy yêu cầu: ') + (error.response?.data?.message || error.message));
     }
   };
 
@@ -366,73 +395,35 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 										<td style={tdStyle}>{r.demDet || '-'}</td>
 										<td style={tdStyle}>{r.notes || ''}</td>
                                         <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                                        {r.status !== 'REJECTED' && (
+                                          <button 
+                                            type="button" 
+                                            className="btn btn-primary" 
+                                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                            onClick={() => handleUpdateRequest(r)}
+                                          >
+                                            Cập nhật thông tin
+                                          </button>
+                                          {r.status === 'PENDING' && (
                                             <button 
-                                                type="button" 
-                                                className="btn btn-primary" 
-                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                                onClick={() => handleUpdateRequest(r)}
+                                              type="button" 
+                                              className="btn btn-danger" 
+                                              style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                              onClick={() => handleCancelRequest(r)}
                                             >
-                                                Cập nhật thông tin
+                                              Hủy
                                             </button>
-                                        )}
-                                        {r.status === 'REJECTED' ? (
-                                          <>
+                                          )}
+                                          {r.status !== 'PENDING' && (isReject || r.isRepairRejected) && (
                                             <button 
-                                                type="button" 
-                                                className="btn btn-light" 
-                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                                onClick={() => openViewReason(r)}
+                                              type="button" 
+                                              className="btn btn-danger" 
+                                              style={{ padding: '6px 10px', fontSize: 12 }}
+                                              onClick={() => handleCancelRequest(r)}
                                             >
-                                                Xem lý do
+                                              Từ chối yêu cầu
                                             </button>
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-danger" 
-                                                style={{ padding: '6px 10px', fontSize: 12 }}
-                                                onClick={() => handleDeleteRequest(r)}
-                                            >
-                                                Xóa
-                                            </button>
-                                          </>
-                                        ) : (
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-danger" 
-                                                style={{ padding: '6px 10px', fontSize: 12 }}
-                                                onClick={() => handleCancelRequest(r)}
-                                            >
-                                                Hủy
-                                            </button>
-                                        )}
-    {/* View Cancel Reason Modal */}
-    {isViewReasonOpen && (
-      <div
-        style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
-        }}
-        onClick={closeViewReason}
-      >
-        <div
-          style={{ background: '#fff', borderRadius: 12, width: '520px', maxWidth: '95vw', maxHeight: '70vh', overflow: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.25)' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Lý do hủy - {viewReasonRequestNo}</h3>
-            <button onClick={closeViewReason} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>×</button>
-          </div>
-          <div style={{ padding: 20 }}>
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, color: '#111827' }}>{viewReasonText}</div>
-          </div>
-          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="btn btn-secondary" onClick={closeViewReason}>Đóng</button>
-          </div>
-        </div>
-      </div>
-    )}
-										</td>
+                                          )}
+                                        </td>
 									</tr>
 								))}
 							</tbody>
@@ -516,6 +507,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
       onClose={() => { setIsCancelModalOpen(false); setSelectedRequestForCancel(null); }}
       onConfirm={confirmCancelRequest}
       requestNo={selectedRequestForCancel?.requestNo}
+      mode={(isReject || selectedRequestForCancel?.isRepairRejected) && selectedRequestForCancel?.status !== 'PENDING' ? 'reject' : 'cancel'}
+      defaultReason={(isReject || selectedRequestForCancel?.isRepairRejected) && selectedRequestForCancel?.status !== 'PENDING' ? 'Container xấu không thể sửa chữa' : ''}
     />
 			</div>
 		</>

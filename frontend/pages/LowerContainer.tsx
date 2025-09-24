@@ -12,6 +12,15 @@ export default function LowerContainer() {
 	const [localStatus, setLocalStatus] = React.useState('all');
 	const [isCreateLowerModalOpen, setIsCreateLowerModalOpen] = React.useState(false);
 	const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+  const [isReject, setIsReject] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const isRejectParam = params.get('isReject');
+      setIsReject(isRejectParam === 'true' || isRejectParam === '1');
+    }
+  }, []);
 
   const handleCreateRequest = () => {
     setIsCreateLowerModalOpen(true);
@@ -64,6 +73,7 @@ export default function LowerContainer() {
 				localStatus={localStatus}
 				setLocalStatus={setLocalStatus}
 				refreshTrigger={refreshTrigger}
+        isReject={isReject}
 			/>
 
         {/* Create Lower Request Modal */}

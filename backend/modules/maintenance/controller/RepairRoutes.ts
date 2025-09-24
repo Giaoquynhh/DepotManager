@@ -17,6 +17,20 @@ router.get(
   repairController.getRepairs.bind(repairController)
 );
 
+// Decide repair ticket (accept/reject)
+router.post(
+  '/repairs/:id/decide',
+  requireRoles('SystemAdmin', 'BusinessAdmin', 'TechnicalDepartment', 'MaintenanceManager'),
+  repairController.decide.bind(repairController)
+);
+
+// Delete a repair ticket
+router.delete(
+  '/repairs/:id',
+  requireRoles('SystemAdmin', 'BusinessAdmin', 'TechnicalDepartment', 'MaintenanceManager'),
+  repairController.remove.bind(repairController)
+);
+
 // Upload images for a repair ticket (images for RepairTicket, not Request documents)
 router.post(
   '/repairs/:id/images',
@@ -45,6 +59,21 @@ router.get(
       res.json({ success: true, data });
     } catch (e: any) {
       res.status(400).json({ success: false, message: e.message || 'List error' });
+    }
+  }
+);
+
+// Delete a repair image
+router.delete(
+  '/repairs/images/:imageId',
+  requireRoles('SystemAdmin', 'BusinessAdmin', 'TechnicalDepartment', 'MaintenanceManager'),
+  async (req, res) => {
+    try {
+      const { imageId } = (req as any).params;
+      const data = await repairImageService.remove(imageId);
+      res.json({ success: true, data });
+    } catch (e: any) {
+      res.status(400).json({ success: false, message: e.message || 'Delete error' });
     }
   }
 );

@@ -3,7 +3,6 @@ import { api } from '@services/api';
 import LowerGateRequestTable from './LowerGateRequestTable';
 import GateSearchBar from '../../Gate/components/GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { useToast } from '../../../hooks/useToastHook';
 
 interface GateRequest {
   id: string;
@@ -25,7 +24,6 @@ export default function LowerGateDashboard() {
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
-  const { ToastContainer } = useToast();
 
   const [searchParams, setSearchParams] = useState({
     status: '',
@@ -94,8 +92,6 @@ export default function LowerGateDashboard() {
         loading={loading}
         onRefresh={fetchRequests}
       />
-
-      <ToastContainer />
     </main>
   );
 }

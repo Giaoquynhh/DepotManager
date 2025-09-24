@@ -8,6 +8,7 @@ interface UploadExcelModalProps {
   onUpload: (files: File[]) => void;
   language: 'vi' | 'en';
   translations: any;
+  context?: 'shippingLines' | 'priceLists';
 }
 
 export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
@@ -15,7 +16,8 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
   onCancel,
   onUpload,
   language,
-  translations
+  translations,
+  context = 'shippingLines'
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -84,15 +86,20 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
   };
 
   const downloadTemplate = () => {
-    // Create sample Excel data
-    const sampleData = [
-      ['STT', 'Mã hãng tàu', 'Tên hãng tàu', 'EIR', 'Ghi chú'],
-      ['1', 'COSCO', 'COSCO SHIPPING Lines', 'EIR_COSCO_2024.xlsx', 'Hãng tàu lớn nhất Trung Quốc'],
-      ['2', 'MSC', 'Mediterranean Shipping Company', 'EIR_MSC_2024.xlsx', 'Hãng tàu lớn thứ 2 thế giới'],
-      ['3', 'MAEU', 'Maersk Line', 'EIR_MAEU_2024.xlsx', 'Tập đoàn logistics hàng đầu'],
-      ['4', 'OOLU', 'Orient Overseas Container Line', 'EIR_OOLU_2024.xlsx', 'Dịch vụ tốt, đúng hạn'],
-      ['5', 'EGLV', 'Evergreen Marine Corporation', 'EIR_EGLV_2024.xlsx', 'Container xanh đặc trưng']
-    ];
+    // Create sample Excel data based on context
+    const sampleData = context === 'priceLists'
+      ? [
+          ['STT', 'Mã dịch vụ', 'Tên dịch vụ', 'Loại hình', 'Giá', 'Ghi chú'],
+          ['1', 'DV001', 'Nâng container 20GP lên xe', 'Nâng', '350000', 'Thời gian thực hiện: 15-20 phút'],
+          ['2', 'DV002', 'Hạ container 40GP xuống bãi', 'Hạ', '450000', 'Bao gồm vận chuyển đến vị trí'],
+          ['3', 'DV003', 'Tôn sửa cửa container', 'Tồn kho', '800000', 'Sửa chữa cửa hỏng, thay thế bản lề']
+        ]
+      : [
+          ['STT', 'Mã hãng tàu', 'Tên hãng tàu', 'EIR', 'Ghi chú'],
+          ['1', 'COSCO', 'COSCO SHIPPING Lines', 'EIR_COSCO_2024.xlsx', 'Hãng tàu lớn nhất Trung Quốc'],
+          ['2', 'MSC', 'Mediterranean Shipping Company', 'EIR_MSC_2024.xlsx', 'Hãng tàu lớn thứ 2 thế giới'],
+          ['3', 'MAEU', 'Maersk Line', 'EIR_MAEU_2024.xlsx', 'Tập đoàn logistics hàng đầu']
+        ];
 
     // Convert to CSV format
     const csvContent = sampleData.map(row => row.join(',')).join('\n');
@@ -102,7 +109,7 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'mau_hang_tau.xlsx');
+    link.setAttribute('download', context === 'priceLists' ? 'mau_bang_gia.csv' : 'mau_hang_tau.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -300,11 +307,24 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
               {translations[language].code ? 'Lưu ý:' : 'Note:'}
             </p>
             <ul style={{margin: '0', paddingLeft: '20px'}}>
-              <li>{translations[language].code ? 'File phải có định dạng .xlsx hoặc .xls' : 'File must be in .xlsx or .xls format'}</li>
-              <li>{translations[language].code ? 'Cột đầu tiên phải là "Mã hãng tàu" (bắt buộc)' : 'First column must be "Shipping Line Code" (required)'}</li>
-              <li>{translations[language].code ? 'Cột thứ hai phải là "Tên hãng tàu" (bắt buộc)' : 'Second column must be "Shipping Line Name" (required)'}</li>
-              <li>{translations[language].code ? 'Cột thứ ba phải là "EIR" (bắt buộc)' : 'Third column must be "EIR" (required)'}</li>
-              <li>{translations[language].code ? 'Cột thứ tư là "Ghi chú" (tùy chọn)' : 'Fourth column is "Note" (optional)'}</li>
+              {context === 'priceLists' ? (
+                <>
+                  <li>{translations[language].code ? 'File phải có định dạng .xlsx hoặc .xls' : 'File must be in .xlsx or .xls format'}</li>
+                  <li>{translations[language].code ? 'Cột 1: "Mã dịch vụ" (bắt buộc, duy nhất)' : 'Column 1: "Service Code" (required, unique)'}</li>
+                  <li>{translations[language].code ? 'Cột 2: "Tên dịch vụ" (bắt buộc)' : 'Column 2: "Service Name" (required)'}</li>
+                  <li>{translations[language].code ? 'Cột 3: "Loại hình" (bắt buộc, ví dụ: Nâng/Hạ/Tồn kho)' : 'Column 3: "Type" (required, e.g., Nâng/Hạ/Tồn kho)'}</li>
+                  <li>{translations[language].code ? 'Cột 4: "Giá" (bắt buộc, số; có thể chứa dấu chấm/phẩy hoặc chữ VND)' : 'Column 4: "Price" (required, number; dots/commas or VND allowed)'}</li>
+                  <li>{translations[language].code ? 'Cột 5: "Ghi chú" (tùy chọn)' : 'Column 5: "Note" (optional)'}</li>
+                </>
+              ) : (
+                <>
+                  <li>{translations[language].code ? 'File phải có định dạng .xlsx hoặc .xls' : 'File must be in .xlsx or .xls format'}</li>
+                  <li>{translations[language].code ? 'Cột đầu tiên phải là "Mã hãng tàu" (bắt buộc)' : 'First column must be "Shipping Line Code" (required)'}</li>
+                  <li>{translations[language].code ? 'Cột thứ hai phải là "Tên hãng tàu" (bắt buộc)' : 'Second column must be "Shipping Line Name" (required)'}</li>
+                  <li>{translations[language].code ? 'Cột thứ ba phải là "EIR" (bắt buộc)' : 'Third column must be "EIR" (required)'}</li>
+                  <li>{translations[language].code ? 'Cột thứ tư là "Ghi chú" (tùy chọn)' : 'Fourth column is "Note" (optional)'}</li>
+                </>
+              )}
             </ul>
           </div>
         </div>

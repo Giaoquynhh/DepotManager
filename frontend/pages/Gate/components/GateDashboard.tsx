@@ -31,7 +31,11 @@ interface GateRequest {
   attachments: any[];
 }
 
-export default function GateDashboard() {
+interface GateDashboardProps {
+  title?: string;
+}
+
+export default function GateDashboard({ title }: GateDashboardProps) {
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true); // Thêm state cho sidebar
@@ -205,7 +209,7 @@ export default function GateDashboard() {
       <div className="page-header modern-header">
         <div className="header-content">
           <div className="header-left">
-            <h1 className="page-title gradient gradient-ultimate">{t('pages.gate.title')}</h1>
+            <h1 className="page-title gradient gradient-ultimate">{title || t('pages.gate.title')}</h1>
           </div>
           <div className="header-right">
             <Link 
