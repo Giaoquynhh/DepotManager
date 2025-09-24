@@ -47,6 +47,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 		documentsCount?: number; // Số chứng từ
 		demDet?: string; // DEM/DET
 		notes?: string; // Ghi chú
+		rejectedReason?: string; // Lý do từ chối
 	};
 
     // Dữ liệu thực tế từ API (khởi tạo rỗng)
@@ -75,7 +76,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
             console.log('=== DEBUG FETCH REQUESTS ===');
             console.log('Token in localStorage:', localStorage.getItem('token'));
             console.log('API_BASE:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000');
-            const response = await requestService.getRequests('EXPORT');
+            const response = await requestService.getRequests('IMPORT');
             console.log('API Response:', response.data);
             if (response.data.success) {
                 // Transform data từ API thành format của table
@@ -246,7 +247,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 
     // Effect để refresh data khi refreshTrigger thay đổi
     React.useEffect(() => {
-        if (refreshTrigger) {
+        if (refreshTrigger && refreshTrigger > 0) {
             console.log('Refresh triggered, clearing cache and fetching fresh data');
             // Clear any cached data
             setRows([]);
@@ -277,7 +278,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 							onChange={(e) => setLocalType(e.target.value)}
 						>
 							<option value="all">{t('pages.requests.allTypes')}</option>
-							<option value="EXPORT">Yêu cầu hạ container</option>
+							<option value="IMPORT">Yêu cầu hạ container</option>
 						</select>
 					</div>
 					<div className="filter-group">

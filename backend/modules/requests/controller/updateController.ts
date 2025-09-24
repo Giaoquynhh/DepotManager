@@ -13,7 +13,7 @@ export const updateRequest = async (req: Request, res: Response) => {
             container_type_id,
             customer_id,
             vehicle_company_id,
-            vehicle_number,
+            license_plate,
             driver_name,
             driver_phone,
             appointment_time,
@@ -78,7 +78,7 @@ export const updateRequest = async (req: Request, res: Response) => {
                 booking_bill: booking_bill || existingRequest.booking_bill,
                 driver_name: driver_name || existingRequest.driver_name,
                 driver_phone: driver_phone || existingRequest.driver_phone,
-                license_plate: vehicle_number || existingRequest.license_plate,
+                license_plate: license_plate || existingRequest.license_plate,
                 updatedAt: new Date(),
                 attachments_count: existingRequest.attachments_count + (files ? files.length : 0)
             }
