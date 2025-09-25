@@ -52,14 +52,6 @@ export default function LiftContainer() {
                 Yêu cầu nâng container
               </h1>
             </div>
-            <div className="header-actions">
-              <button 
-                className="btn btn-success"
-                onClick={handleCreateRequest}
-              >
-                Tạo yêu cầu nâng container
-              </button>
-            </div>
           </div>
         </div>
 
@@ -72,6 +64,7 @@ export default function LiftContainer() {
 				localStatus={localStatus}
 				setLocalStatus={setLocalStatus}
 				refreshTrigger={refreshTrigger}
+				onCreateRequest={handleCreateRequest}
 			/>
 
         {/* Create Lift Request Modal */}

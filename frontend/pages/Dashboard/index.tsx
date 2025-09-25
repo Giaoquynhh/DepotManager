@@ -74,14 +74,13 @@ export default function Dashboard(){
 							Theo dõi và quản lý công việc xe nâng, gán xe cho công việc.
 						</Card>
 					)}
-					{isTechnicalDepartment(role) && (
-                        <Card title="Bảo trì & Vật tư" actions={<div style={{display:'flex',gap:8}}>
-							<Link className="btn" href="/Maintenance/Repairs">Phiếu sửa chữa</Link>
-							<Link className="btn" href="/Maintenance/Inventory">Tồn kho</Link>
-						</div>}>
-							Tạo/duyệt phiếu sửa chữa; quản lý tồn kho vật tư.
-						</Card>
-					)}
+                    {isTechnicalDepartment(role) && (
+                        <Card title="Bảo trì" actions={<div style={{display:'flex',gap:8}}>
+                            <Link className="btn" href="/Maintenance/Repairs">Phiếu sửa chữa</Link>
+                        </div>}>
+                            Tạo/duyệt phiếu sửa chữa.
+                        </Card>
+                    )}
 					{isTechnicalDepartment(role) && (
                         <Card title="Tài chính & Hóa đơn" actions={<div style={{display:'flex',gap:8}}>
 							<Link className="btn" href="/finance/invoices">Danh sách Hóa đơn</Link>

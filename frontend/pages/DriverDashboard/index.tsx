@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@components/Header';
 import Card from '@components/Card';
 import { driverDashboardApi } from '@services/driverDashboard';
@@ -80,6 +80,7 @@ export default function DriverDashboard() {
   const { t, currentLanguage } = useTranslation();
   const { showSuccess, showError, ToastContainer } = useToast();
   const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
+  const hasShownInitialToast = useRef(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -97,7 +98,10 @@ export default function DriverDashboard() {
       setDashboardData(dashboard);
       setAssignedTasks(tasks);
       setTaskHistory(history);
-      showSuccess(t('pages.driverDashboard.messages.dataLoadedSuccessfully'));
+      if (!hasShownInitialToast.current) {
+        showSuccess(t('pages.driverDashboard.messages.dataLoadedSuccessfully'));
+        hasShownInitialToast.current = true;
+      }
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorLoading');
@@ -245,7 +249,7 @@ export default function DriverDashboard() {
           </div>
         </div>
 
-        <Card title="Điều hướng" padding="lg" className="driver-card">
+        <Card padding="lg" className="driver-card">
           <div className="quick-actions">
             {[
               { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊', className: 'pill-btn pill-primary' },

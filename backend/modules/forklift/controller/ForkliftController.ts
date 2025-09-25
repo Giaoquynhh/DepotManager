@@ -40,15 +40,20 @@ export class ForkliftController {
 					}
 
 					// Get container information including driver name and license plate
-					let containerInfo = null;
+                    let containerInfo = null;
 					try {
 						containerInfo = await prisma.serviceRequest.findFirst({
 							where: { container_no: job.container_no },
 							select: {
 								driver_name: true,
+                                driver_phone: true,
 								license_plate: true,
 								status: true,
-								type: true
+                                type: true,
+                                request_no: true,
+                                container_type: {
+                                    select: { code: true }
+                                }
 							},
 							orderBy: { createdAt: 'desc' }
 						});
@@ -498,12 +503,13 @@ export class ForkliftController {
 						orderBy: { createdAt: 'desc' }
 					});
 
-					if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+                    if (latestRequest && latestRequest.status === 'FORKLIFTING') {
 						// Logic mới: Phân biệt giữa IMPORT và EXPORT
 						let newStatus: string;
-						if (latestRequest.type === 'EXPORT') {
-							// Export request: FORKLIFTING → IN_CAR
-							newStatus = 'IN_CAR';
+                        if (latestRequest.type === 'EXPORT') {
+                            // Thay đổi yêu cầu: KHÔNG chuyển sang IN_CAR khi xe nâng hoàn thành.
+                            // Giữ ở trạng thái GATE_IN cho đến khi thanh toán thành công.
+                            newStatus = 'GATE_IN';
 							
 							// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
 							await tx.yardPlacement.updateMany({

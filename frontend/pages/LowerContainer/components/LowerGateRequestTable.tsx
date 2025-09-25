@@ -36,12 +36,31 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const { t, currentLanguage } = useTranslation();
 
+  // Đồng bộ mapping trạng thái với bảng Gate nâng container (kèm emoji)
   const statusLabel = (status: string) => {
-    // Chỉ 2 hiển thị theo yêu cầu: Pending và các trạng thái khác
-    if (status === 'PENDING' || status === 'NEW_REQUEST') {
-      return 'Đang tới';
+    switch (status) {
+      case 'SCHEDULED':
+        return t('pages.gate.statusOptions.scheduled');
+      case 'FORWARDED':
+        return t('pages.gate.statusOptions.forwarded');
+      case 'NEW_REQUEST':
+      case 'PENDING':
+        return `🆕 ${t('pages.gate.statusOptions.newRequest')}`;
+      case 'IN_YARD':
+        return `🏭 ${t('pages.gate.statusOptions.inYard')}`;
+      case 'IN_CAR':
+        return `🚛 ${t('pages.gate.statusOptions.inCar')}`;
+      case 'GATE_IN':
+        return `🟢 ${t('pages.gate.statusOptions.gateIn')}`;
+      case 'GATE_OUT':
+        return `🟣 ${t('pages.gate.statusOptions.gateOut')}`;
+      case 'GATE_REJECTED':
+        return `⛔ ${t('pages.gate.statusOptions.gateRejected')}`;
+      case 'COMPLETED':
+        return t('pages.gate.statusOptions.completed');
+      default:
+        return status;
     }
-    return 'Đã vào cổng';
   };
 
   const handleViewDocuments = (request: GateRequest) => {
@@ -102,27 +121,48 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
               <tr key={request.id}>
                 <td><strong>{request.request_no || t('common.na')}</strong></td>
                 <td><strong>{request.container_no}</strong></td>
-                <td>{request.container_type?.code || t('common.na')}</td>
                 <td>
-                  {request.service_type
-                    || (request.type === 'IMPORT' ? 'Hạ' : (request.type === 'EXPORT' ? 'Nâng' : t('common.na')))}
+                  <span className="container-type">
+                    {request.container_type?.code || t('common.na')}
+                  </span>
                 </td>
-                <td>{request.license_plate || t('common.na')}</td>
-                <td>{request.driver_name || t('common.na')}</td>
-                <td>{request.driver_phone || t('common.na')}</td>
+                <td>
+                  <span className="service-type-badge">🔧 Hạ</span>
+                </td>
+                <td>
+                  <span className="license-plate">
+                    {request.license_plate || t('common.na')}
+                  </span>
+                </td>
+                <td>
+                  <span className="driver-name">
+                    {request.driver_name || t('common.na')}
+                  </span>
+                </td>
+                <td>
+                  <span className="driver-phone">
+                    {request.driver_phone || t('common.na')}
+                  </span>
+                </td>
                 <td>
                   <span className={`status-badge status-${request.status.toLowerCase().replace(/_/g, '-')}`}>
                     {statusLabel(request.status)}
                   </span>
                 </td>
                 <td>
-                  {request.appointment_time ? new Date(request.appointment_time).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  <span className="appointment-time">
+                    {request.appointment_time ? new Date(request.appointment_time).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  </span>
                 </td>
                 <td>
-                  {request.time_in ? new Date(request.time_in).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  <span className="time-in">
+                    {request.time_in ? new Date(request.time_in).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  </span>
                 </td>
                 <td>
-                  {request.time_out ? new Date(request.time_out).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  <span className="time-out">
+                    {request.time_out ? new Date(request.time_out).toLocaleString(currentLanguage === 'vi' ? 'vi-VN' : 'en-US') : t('common.na')}
+                  </span>
                 </td>
                 <td>
                   <div className="images-cell">

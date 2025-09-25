@@ -96,10 +96,10 @@
 /* 🎯 Interactive Container Grid - Smart Tiles */
 .yard-slot-grid {
   display: grid;
-  grid-template-columns: repeat(20, 1fr); /* Cố định 20 cột để giữ nguyên vị trí */
-  gap: 8px; /* Giảm gap để có thêm không gian */
+  grid-template-columns: repeat(20, minmax(0, 1fr)); /* 20 cột linh hoạt */
+  gap: clamp(4px, 0.6vw, 8px);
   margin-top: 1.5rem;
-  padding: 1rem;
+  padding: clamp(0.5rem, 1.5vw, 1rem);
   background: rgba(248, 250, 252, 0.5);
   border-radius: 16px;
   border: 1px solid rgba(203, 213, 225, 0.3);
@@ -107,8 +107,8 @@
 }
 
 .yard-slot-tile {
-  width: 50px; /* Giảm kích thước để vừa 20 slot */
-  height: 50px;
+  width: 100%; /* Theo cột */
+  aspect-ratio: 1 / 1; /* Vuông tự co giãn */
   border-radius: 12px;
   cursor: pointer;
   position: relative;
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: clamp(9px, 1vw, 11px);
   font-weight: 700;
   transition: all var(--transition-normal);
   user-select: none;
@@ -546,15 +546,15 @@
   }
   
   .yard-slot-grid {
-    grid-template-columns: repeat(20, 1fr); /* Giữ nguyên 20 cột */
-    gap: 6px; /* Giảm gap hơn nữa */
-    overflow-x: auto; /* Cho phép scroll ngang */
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    gap: clamp(3px, 1vw, 6px);
+    overflow-x: auto;
   }
   
   .yard-slot-tile {
-    width: 45px; /* Giảm kích thước để vừa 20 slot */
-    height: 45px;
-    font-size: 10px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    font-size: clamp(8px, 2.5vw, 10px);
   }
   
   .yard-search-container {
@@ -578,15 +578,15 @@
 
 @media (max-width: 480px) {
   .yard-slot-grid {
-    grid-template-columns: repeat(20, 1fr); /* Giữ nguyên 20 cột */
-    gap: 4px; /* Giảm gap tối đa */
-    overflow-x: auto; /* Cho phép scroll ngang */
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    gap: clamp(2px, 1.5vw, 4px);
+    overflow-x: auto;
   }
   
   .yard-slot-tile {
-    width: 40px; /* Giảm kích thước tối đa */
-    height: 40px;
-    font-size: 9px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    font-size: clamp(7px, 3vw, 9px);
   }
   
   .yard-stats-bar {

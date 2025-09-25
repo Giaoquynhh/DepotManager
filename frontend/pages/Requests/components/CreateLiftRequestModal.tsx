@@ -241,12 +241,12 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			try {
 				setIsUploading(true);
 				
-				// Generate request number automatically
-				const requestNumber = await generateNewRequestNumber('import');
+                // Generate request number automatically for EXPORT (nâng container)
+                const requestNumber = await generateNewRequestNumber('export');
 				
             // Prepare data for API with auto-generated request number
             const requestData = {
-                type: 'LIFT', // Thay đổi từ IMPORT thành LIFT cho yêu cầu nâng container
+                type: 'EXPORT', // Yêu cầu nâng container phải là EXPORT
                 request_no: requestNumber, // Add auto-generated request number
                 status: 'NEW_REQUEST', // Trạng thái ban đầu là NEW_REQUEST cho yêu cầu nâng container
                 container_no: formData.containerNumber,
@@ -1081,6 +1081,25 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							/>
 						</div>
 
+						{/* Ghi chú - Optional */}
+						<div style={fullWidthStyle}>
+							<label style={formLabelStyle}>
+								Ghi chú
+							</label>
+							<textarea
+								style={{
+									...formInputStyle,
+									resize: 'vertical',
+									minHeight: '80px',
+									fontFamily: 'inherit'
+								}}
+								value={formData.notes}
+								onChange={(e) => handleInputChange('notes', e.target.value)}
+								placeholder="Nhập ghi chú (nếu có)"
+								rows={3}
+							/>
+						</div>
+
 						{/* Chứng từ - Optional */}
 						<div style={formGroupStyle}>
 							<label style={formLabelStyle}>
@@ -1150,25 +1169,6 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 									))}
 								</div>
 							)}
-						</div>
-
-						{/* Ghi chú - Optional */}
-						<div style={fullWidthStyle}>
-							<label style={formLabelStyle}>
-								Ghi chú
-							</label>
-							<textarea
-								style={{
-									...formInputStyle,
-									resize: 'vertical',
-									minHeight: '80px',
-									fontFamily: 'inherit'
-								}}
-								value={formData.notes}
-								onChange={(e) => handleInputChange('notes', e.target.value)}
-								placeholder="Nhập ghi chú (nếu có)"
-								rows={3}
-							/>
 						</div>
 					</div>
 

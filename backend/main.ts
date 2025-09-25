@@ -93,7 +93,7 @@ app.use('/containers', containerRoutes);
 app.use('/finance', financeRoutes);
 app.use('/reports', authenticate, reportsRoutes);
 app.use('/api/setup', setupRoutes);
-app.use('/requests', requestRoutes);
+app.use('/requests', authenticate, requestRoutes);
 app.use('/seals', authenticate, sealRoutes);
 app.use('/maintenance', authenticate, maintenanceRoutes);
 

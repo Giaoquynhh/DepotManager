@@ -4,14 +4,12 @@ import useSWR, { mutate } from 'swr';
 import Link from 'next/link';
 import { financeApi } from '@services/finance';
 import { useState, useEffect } from 'react';
-import ContainersNeedInvoiceModal from '@components/ContainersNeedInvoiceModal';
 import { api } from '@services/api';
 import { useTranslation } from '@hooks/useTranslation';
 
 export default function InvoiceList(){
   const { t } = useTranslation();
   const [status, setStatus] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   
@@ -30,41 +28,16 @@ export default function InvoiceList(){
     loadUserInfo();
   }, []);
   
-  const key = ['finance_invoices_details', status, userRole, userId].join(':');
-  const { data: invoices } = useSWR(key, async ()=> {
-    // Nếu là customer, chỉ lấy hóa đơn của họ
-    if (userRole === 'CustomerAdmin' || userRole === 'CustomerUser') {
-      return financeApi.listInvoicesWithDetails({ 
-        status: status || undefined,
-        created_by: userId 
-      });
-    }
-    // Nếu là admin, lấy tất cả hóa đơn
-    return financeApi.listInvoicesWithDetails({ status: status || undefined });
-  });
+  const key = ['finance_invoices_v2', status].join(':');
+  const { data: invoices } = useSWR(key, async ()=> financeApi.listInvoicesV2({ status: status || undefined }));
   
-  const getTypeLabel = (type: string) => {
-    switch(type) {
-      case 'IMPORT': return t('pages.finance.invoices.types.import');
-      case 'EXPORT': return t('pages.finance.invoices.types.export');
-      case 'CONVERT': return t('pages.finance.invoices.types.convert');
-      default: return type || '-';
-    }
+  const getTypeLabel = (_type: string) => {
+    return 'Nâng container';
   };
 
-  const getStatusLabel = (invoice: any) => {
-    if (invoice.serviceRequest?.is_paid) {
-      return t('pages.finance.invoices.status.paid');
-    }
-    return t('pages.finance.invoices.status.unpaid');
-  };
-
-  const getStatusClass = (invoice: any) => {
-    if (invoice.serviceRequest?.is_paid) {
-      return 'status-paid';
-    }
-    return 'status-unpaid';
-  };
+  // giữ lại nếu cần sau này
+  const getStatusLabel = (_invoice: any) => t('pages.finance.invoices.status.unpaid');
+  const getStatusClass = (_invoice: any) => 'status-unpaid';
 
   return (
     <>
@@ -111,16 +84,7 @@ export default function InvoiceList(){
               <option value="CANCELLED">{t('pages.finance.invoices.statusOptions.cancelled')}</option>
             </select>
           </div>
-          {/* Chỉ hiển thị nút này cho admin - đặt sát bên phải */}
-          {(userRole === 'TechnicalDepartment' || userRole === 'SystemAdmin') && (
-            <button 
-              className="btn btn-outline containers-need-invoice-btn"
-              onClick={() => setIsModalOpen(true)}
-              title={t('pages.finance.invoices.containersNeedInvoice')}
-            >
-              📋 {t('pages.finance.invoices.containersNeedInvoice')}
-            </button>
-          )}
+          
         </div>
 
         <Card>
@@ -140,42 +104,40 @@ export default function InvoiceList(){
                   </tr>
                 </thead>
                 <tbody>
-                  {(invoices||[]).map((invoice:any)=> {
-                    // Nếu là customer, chỉ hiển thị hóa đơn của họ
-                    if (userRole === 'CustomerAdmin' || userRole === 'CustomerUser') {
-                      if (invoice.serviceRequest?.created_by !== userId) {
-                        return null; // Không hiển thị hóa đơn không phải của họ
-                      }
-                    }
-                    
-                    return (
+                  {(invoices||[]).map((invoice:any)=> (
                     <tr key={invoice.id}>
-                      <td>{invoice.invoice_number || invoice.id || '-'}</td>
-                      <td>{invoice.serviceRequest?.request_id || '-'}</td>
+                      <td>{invoice.invoice_no || invoice.id || '-'}</td>
+                      <td>{invoice.request_no || '-'}</td>
                       <td>
                         <span style={{
                           padding: '4px 8px',
                           borderRadius: '4px',
                           fontSize: '12px',
                           fontWeight: '500',
-                          backgroundColor: invoice.serviceRequest?.type === 'IMPORT' ? '#e3f2fd' : '#f3e5f5',
-                          color: invoice.serviceRequest?.type === 'IMPORT' ? '#1976d2' : '#7b1fa2'
+                          backgroundColor: invoice.request_type === 'IMPORT' ? '#e3f2fd' : '#f3e5f5',
+                          color: invoice.request_type === 'IMPORT' ? '#1976d2' : '#7b1fa2'
                         }}>
-                          {getTypeLabel(invoice.serviceRequest?.type)}
+                          {getTypeLabel(invoice.request_type)}
                         </span>
                       </td>
-                      <td>{invoice.customer?.name || invoice.customer_id || '-'}</td>
-                      <td>{invoice.customer?.tax_code || '-'}</td>
-                      <td>{invoice.customer?.phone || '-'}</td>
+                      <td>{invoice.customer_name || '-'}</td>
+                      <td>{invoice.customer_tax_code || '-'}</td>
+                      <td>{(invoice.customer_phone || '').toString().replace(/\D/g,'') || '-'}</td>
                       <td>{Number(invoice.total_amount||0).toLocaleString('vi-VN')} VND</td>
                       <td style={{display:'flex', gap:6}}>
-                        <Link className="btn" href={`/finance/invoices/${invoice.id}`} style={{padding:'4px 8px', fontSize:'12px'}}>
-                          {t('pages.finance.invoices.actions.view')}
-                        </Link>
+                        <button className="btn" style={{padding:'4px 8px', fontSize:'12px'}} onClick={async()=>{
+                          try{
+                            const blob = await financeApi.getInvoicePdfBlob(invoice.id);
+                            const url = URL.createObjectURL(blob);
+                            const w = window.open('about:blank','_blank');
+                            if (w){ w.document.write(`<iframe src="${url}" style="width:100%;height:100%;border:0"></iframe>`); }
+                          }catch(e){ console.error(e); alert('Không thể tạo PDF hóa đơn'); }
+                        }}>
+                          Xuất hóa đơn
+                        </button>
                       </td>
                     </tr>
-                    );
-                  })}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -188,10 +150,7 @@ export default function InvoiceList(){
           </Card>
       </main>
       
-      <ContainersNeedInvoiceModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      
       
       <style jsx>{`
         .status-paid {

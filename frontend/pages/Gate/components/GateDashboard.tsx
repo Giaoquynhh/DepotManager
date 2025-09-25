@@ -33,9 +33,10 @@ interface GateRequest {
 
 interface GateDashboardProps {
   title?: string;
+  lockedType?: string; // Khóa loại yêu cầu (IMPORT/EXPORT)
 }
 
-export default function GateDashboard({ title }: GateDashboardProps) {
+export default function GateDashboard({ title, lockedType }: GateDashboardProps) {
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true); // Thêm state cho sidebar
@@ -46,7 +47,7 @@ export default function GateDashboard({ title }: GateDashboardProps) {
   const [searchParams, setSearchParams] = useState({
     status: '',
     container_no: '',
-    type: '',
+    type: lockedType ?? '',
     license_plate: '', // Thêm trường biển số xe
     page: 1,
     limit: 20
@@ -141,7 +142,10 @@ export default function GateDashboard({ title }: GateDashboardProps) {
       // Backend sẽ hiển thị FORWARDED, GATE_IN, IN_YARD, IN_CAR khi không có filter
 
       const params = new URLSearchParams();
-      Object.entries(effectiveSearchParams).forEach(([key, value]) => {
+      // Nếu có lockedType thì cưỡng bức type đó
+      const paramsSource: any = lockedType ? { ...effectiveSearchParams, type: lockedType } : effectiveSearchParams;
+
+      Object.entries(paramsSource).forEach(([key, value]) => {
         // Thêm tất cả tham số, backend sẽ xử lý logic mặc định
         if (key === 'page' || key === 'limit') {
           params.append(key, value.toString());
@@ -234,6 +238,7 @@ export default function GateDashboard({ title }: GateDashboardProps) {
           onSearch={handleSearch}
           onContainerSearch={handleContainerSearch}
           onLicensePlateChange={handleLicensePlateChange}
+          lockedType={lockedType}
         />
 
         <GateRequestTable

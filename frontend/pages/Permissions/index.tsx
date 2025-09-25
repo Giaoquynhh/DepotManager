@@ -129,7 +129,7 @@ export default function PermissionsPage(){
       containersManage: 'Quản lý container',
       forkliftView: 'Xe nâng',
       maintenanceRepairs: 'Bảo trì - Phiếu sửa chữa',
-      maintenanceInventory: 'Bảo trì - Tồn kho',
+      
       financeInvoices: 'Tài chính - Hóa đơn',
       driverDashboard: 'Bảng điều khiển tài xế',
       
@@ -182,7 +182,7 @@ export default function PermissionsPage(){
       containersManage: 'Container Management',
       forkliftView: 'Forklift',
       maintenanceRepairs: 'Maintenance - Repair Tickets',
-      maintenanceInventory: 'Maintenance - Inventory',
+      
       financeInvoices: 'Finance - Invoices',
       driverDashboard: 'Driver Dashboard',
       
@@ -260,7 +260,7 @@ export default function PermissionsPage(){
       'containers.manage': { vi: 'Quản lý container', en: 'Container Management' },
       'forklift.view': { vi: 'Xe nâng', en: 'Forklift' },
       'maintenance.repairs': { vi: 'Bảo trì - Phiếu sửa chữa', en: 'Maintenance - Repair Tickets' },
-      'maintenance.inventory': { vi: 'Bảo trì - Tồn kho', en: 'Maintenance - Inventory' },
+      
       'finance.invoices': { vi: 'Tài chính - Hóa đơn', en: 'Finance - Invoices' },
       'driver.dashboard': { vi: 'Bảng điều khiển tài xế', en: 'Driver Dashboard' }
     };
@@ -279,7 +279,7 @@ export default function PermissionsPage(){
         'containers.manage',
         'forklift.view',
         'maintenance.repairs',
-        'maintenance.inventory',
+        
         'finance.invoices',
         'account.view',
       ],

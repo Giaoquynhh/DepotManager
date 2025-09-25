@@ -17,8 +17,6 @@ export class RequestBaseService {
 				throw new Error('Chứng từ là bắt buộc cho yêu cầu nhập');
 			}
 			
-			// Kiểm tra container number đã tồn tại trong hệ thống chưa
-			await this.validateContainerNotExists(payload.container_no);
 		}
 
 		const data = {
@@ -121,117 +119,7 @@ export class RequestBaseService {
 		return { data: withPaymentAndDocs, total, page, totalPages: Math.ceil(total / limit) };
 	}
 
-	/**
-	 * Kiểm tra container number chưa tồn tại trong hệ thống
-	 * Chỉ cho phép tạo request import mới khi container thực sự không có trong depot
-	 * Kiểm tra tất cả nguồn: ServiceRequest, RepairTicket, YardPlacement
-	 */
-	private async validateContainerNotExists(container_no: string) {
-		// Sử dụng query tương tự như logic hiển thị container trong Yard/ContainersPage
-		const containerExists = await prisma.$queryRaw<any[]>`
-			WITH latest_sr AS (
-				SELECT DISTINCT ON (sr.container_no)
-					sr.container_no,
-					sr.status as service_status,
-					sr.gate_checked_at as gate_checked_at,
-					sr.type as request_type,
-					sr.id as request_id
-				FROM "ServiceRequest" sr
-				WHERE sr.container_no IS NOT NULL
-				ORDER BY sr.container_no, sr."createdAt" DESC
-			),
-			rt_checked AS (
-				SELECT DISTINCT ON (rt.container_no)
-					rt.container_no,
-					TRUE as repair_checked,
-					rt."updatedAt" as updated_at
-				FROM "RepairTicket" rt
-				WHERE rt.status::text = 'COMPLETED' AND rt.container_no IS NOT NULL
-				ORDER BY rt.container_no, rt."updatedAt" DESC
-			),
-			yard_placement AS (
-				SELECT DISTINCT ON (yp.container_no)
-					yp.container_no,
-					yp.status as placement_status,
-					yp.placed_at
-				FROM "YardPlacement" yp 
-				WHERE yp.status = 'OCCUPIED' 
-					AND yp.removed_at IS NULL
-					AND yp.container_no IS NOT NULL
-				ORDER BY yp.container_no, yp.placed_at DESC
-			)
-			SELECT 
-				COALESCE(sr.container_no, rt.container_no, yp.container_no) as container_no,
-				sr.service_status,
-				sr.gate_checked_at,
-				sr.request_type,
-				sr.request_id,
-				COALESCE(rt.repair_checked, FALSE) as repair_checked,
-				yp.placement_status,
-				yp.placed_at,
-				CASE 
-					WHEN sr.container_no IS NOT NULL THEN 'SERVICE_REQUEST'
-					WHEN rt.container_no IS NOT NULL THEN 'REPAIR_TICKET'
-					WHEN yp.container_no IS NOT NULL THEN 'YARD_PLACEMENT'
-				END as source
-			FROM latest_sr sr
-			FULL OUTER JOIN rt_checked rt ON rt.container_no = sr.container_no
-			FULL OUTER JOIN yard_placement yp ON yp.container_no = COALESCE(sr.container_no, rt.container_no)
-			WHERE sr.container_no = ${container_no} 
-				OR rt.container_no = ${container_no} 
-				OR yp.container_no = ${container_no}
-		`;
 
-		if (containerExists.length === 0) {
-			// Container không tồn tại trong hệ thống - cho phép tạo
-			return;
-		}
-
-		const container = containerExists[0];
-
-		// Kiểm tra từng nguồn và đưa ra thông báo lỗi phù hợp
-		if (container.source === 'SERVICE_REQUEST') {
-			// Kiểm tra status của ServiceRequest - cho phép tạo request mới nếu status là REJECTED hoặc GATE_REJECTED
-			const isCompleted = ['COMPLETED', 'REJECTED', 'GATE_REJECTED'].includes(container.service_status);
-			if (!isCompleted) {
-				throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã bị từ chối.`);
-			}
-			
-			// Nếu status là REJECTED hoặc GATE_REJECTED, cho phép tạo request mới với ID khác
-			if (['REJECTED', 'GATE_REJECTED'].includes(container.service_status)) {
-				console.log(`Cho phép tạo request mới cho container ${container_no} (request cũ ID: ${container.request_id} đã bị ${container.service_status})`);
-				return; // Cho phép tạo request mới
-			}
-		}
-
-		if (container.source === 'REPAIR_TICKET') {
-			// Container từ RepairTicket - không cho phép tạo request import
-			throw new Error(`Container ${container_no} đang trong quy trình sửa chữa. Không thể tạo request import mới.`);
-		}
-
-		if (container.source === 'YARD_PLACEMENT') {
-			// Container đã được đặt vào yard - không cho phép tạo request import
-			throw new Error(`Container ${container_no} đã được đặt vào yard và chưa được xuất. Không thể tạo request import mới.`);
-		}
-
-		// Kiểm tra trường hợp container có trong nhiều nguồn
-		const hasActiveServiceRequest = container.source === 'SERVICE_REQUEST' && 
-			!['COMPLETED', 'REJECTED', 'GATE_REJECTED'].includes(container.service_status);
-		const hasRepairTicket = container.source === 'REPAIR_TICKET';
-		const hasYardPlacement = container.source === 'YARD_PLACEMENT';
-
-		if (hasActiveServiceRequest) {
-			throw new Error(`Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${container.service_status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã bị từ chối.`);
-		}
-
-		if (hasRepairTicket) {
-			throw new Error(`Container ${container_no} đang trong quy trình sửa chữa. Không thể tạo request import mới.`);
-		}
-
-		if (hasYardPlacement) {
-			throw new Error(`Container ${container_no} đã được đặt vào yard và chưa được xuất. Không thể tạo request import mới.`);
-		}
-	}
 
 }
 

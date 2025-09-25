@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { api } from '@services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
@@ -24,6 +25,7 @@ export default function GateActionButtons({
 }: GateActionButtonsProps) {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
+  const router = useRouter();
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +110,10 @@ export default function GateActionButtons({
           'Dữ liệu đã được cập nhật trong bảng điều khiển',
           3000
         );
+        // Với yêu cầu Nâng (EXPORT), điều hướng sang trang quản lý xe nâng
+        if (requestType === 'EXPORT') {
+          router.push('/LiftContainer/Forklift');
+        }
       }, 1000);
     } catch (error: any) {
       showError(
@@ -117,6 +123,18 @@ export default function GateActionButtons({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Mở modal Check-in và auto-fill từ dữ liệu có sẵn của yêu cầu
+  const openCheckInModal = async () => {
+    try {
+      const res = await api.get(`/requests/${requestId}`);
+      const data = res?.data?.data || {};
+      setPlateNo((data.license_plate || '').toUpperCase());
+      setDriverName(data.driver_name || '');
+      setDriverPhone(data.driver_phone || '');
+    } catch {}
+    setIsCheckInModalOpen(true);
   };
 
   const handleApprove = () => {
@@ -156,12 +174,7 @@ export default function GateActionButtons({
     }
   };
 
-  const openCheckInModal = () => {
-    setPlateNo((initialLicensePlate || '').toUpperCase());
-    setDriverName(initialDriverName || '');
-    setDriverPhone(initialDriverPhone || '');
-    setIsCheckInModalOpen(true);
-  };
+  
 
   const confirmCheckIn = async () => {
     try {

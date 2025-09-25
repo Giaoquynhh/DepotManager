@@ -28,10 +28,6 @@ export const financeApi = {
     const { data } = await api.post(`/finance/invoices/${id}/issue`, payload);
     return data;
   },
-  async getInvoice(id: string) {
-    const { data } = await api.get(`/finance/invoices/${id}`);
-    return data;
-  },
   async patchInvoice(id: string, payload: { due_date?: string; notes?: string }) {
     const { data } = await api.patch(`/finance/invoices/${id}`, payload);
     return data;
@@ -42,6 +38,10 @@ export const financeApi = {
   },
   async listInvoicesWithDetails(params?: any) {
     const { data } = await api.get('/finance/invoices/details', { params });
+    return data as any[];
+  },
+  async listInvoicesV2(params?: any) {
+    const { data } = await api.get('/finance/invoices/v2', { params });
     return data as any[];
   },
   async getContainersNeedInvoice() {
@@ -56,6 +56,10 @@ export const financeApi = {
   async createPayment(payload: any, idempotencyKey?: string) {
     const { data } = await api.post('/finance/payments', payload, { headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {} });
     return data;
+  },
+  async getInvoicePdfBlob(id: string){
+    const resp = await api.get(`/finance/invoices/${id}/pdf`, { responseType: 'blob' });
+    return resp.data as Blob;
   }
 };
 

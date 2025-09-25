@@ -8,7 +8,6 @@ export type PermissionKey =
   | 'containers.manage'
   | 'forklift.view'
   | 'maintenance.repairs'
-  | 'maintenance.inventory'
   | 'finance.invoices'
   | 'account.view'
   | 'driver.dashboard'
@@ -33,7 +32,6 @@ export const PERMISSION_CATALOG: PermissionItem[] = [
   { key: 'containers.manage', label: 'Quản lý container', group: 'Vận hành' },
   { key: 'forklift.view', label: 'Xe nâng', group: 'Vận hành' },
   { key: 'maintenance.repairs', label: 'Bảo trì - Phiếu sửa chữa', group: 'Bảo trì' },
-  { key: 'maintenance.inventory', label: 'Bảo trì - Tồn kho', group: 'Bảo trì' },
   { key: 'finance.invoices', label: 'Tài chính - Hóa đơn', group: 'Tài chính' },
   { key: 'driver.dashboard', label: 'Bảng điều khiển tài xế', group: 'Vận hành' },
   { key: 'statistics.view', label: 'Thống kê tổng quan', group: 'Báo cáo' },

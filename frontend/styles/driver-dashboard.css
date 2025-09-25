@@ -2,6 +2,7 @@
 
 .driver-dashboard-modern {
   position: relative;
+  margin-top: 12px; /* Tạo khoảng cách với header chung phía trên */
 }
 
 /* Use exact same header style as Requests/Depot */

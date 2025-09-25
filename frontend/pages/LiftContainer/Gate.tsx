@@ -9,7 +9,7 @@ export default function LiftContainerGatePage() {
   return (
     <>
       <Header />
-      <GateDashboard title="bảng điều khiển cổng-nâng container" />
+      <GateDashboard title="bảng điều khiển cổng-nâng container" lockedType="EXPORT" />
       <ToastContainer />
     </>
   );

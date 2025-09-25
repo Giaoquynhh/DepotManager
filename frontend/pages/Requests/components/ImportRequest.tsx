@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
 import { requestService } from '../../../services/requests';
-import { EditLiftRequestModal, EditLiftRequestData } from './EditLiftRequestModal';
+import { setupService } from '../../../services/setupService';
+import { EditLiftRequestModal } from './EditLiftRequestModal';
 
 interface ImportRequestProps {
 	localSearch: string;
@@ -12,6 +13,7 @@ interface ImportRequestProps {
 	localStatus: string;
 	setLocalStatus: (status: string) => void;
 	refreshTrigger?: number;
+	onCreateRequest?: () => void;
 }
 
 export const ImportRequest: React.FC<ImportRequestProps> = ({
@@ -21,7 +23,8 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 	setLocalType,
 	localStatus,
 	setLocalStatus,
-	refreshTrigger
+	refreshTrigger,
+	onCreateRequest
 }) => {
 	const { t } = useTranslation();
 	const { showSuccess, showError, ToastContainer } = useToast();
@@ -61,6 +64,10 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
     const [showMoveToGateModal, setShowMoveToGateModal] = React.useState(false);
     const [moveToGateRequestId, setMoveToGateRequestId] = React.useState<string | null>(null);
     const [moveToGateRequestInfo, setMoveToGateRequestInfo] = React.useState<any>(null);
+    const [showPaymentModal, setShowPaymentModal] = React.useState(false);
+    const [paymentAmount, setPaymentAmount] = React.useState<number>(0);
+    const [paymentRequestInfo, setPaymentRequestInfo] = React.useState<{id:string; requestNo:string; containerNo:string} | null>(null);
+    const handleMoveToGateConfirm = () => { setShowMoveToGateModal(false); };
 
     // Function để hiển thị trạng thái
     const statusLabel = (status: string) => {
@@ -74,9 +81,12 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
             case 'FORWARDED':
                 return '📤 Đã chuyển tiếp';
             case 'GATE_IN':
-                return '🟢 Đã cho phép vào';
+                // Trên màn LiftContainer, hiển thị như "Nâng thành công" để cho phép thanh toán
+                return '✅ Nâng thành công';
             case 'GATE_OUT':
                 return '🟣 Đã cho phép ra';
+            case 'IN_CAR':
+                return '✅ Nâng thành công';
             case 'GATE_REJECTED':
                 return '⛔ Đã từ chối';
             case 'COMPLETED':
@@ -90,7 +100,19 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const response = await requestService.getRequests('LIFT');
+            // Tính tổng phí loại "Nâng" để hiển thị đồng nhất với popup
+            let liftTotalLocal = 0;
+            try {
+                const res = await setupService.getPriceLists({ page: 1, limit: 1000 });
+                const items = res.data?.data || [];
+                liftTotalLocal = items
+                    .filter((pl: any) => String(pl.type || '').toLowerCase() === 'nâng')
+                    .reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+            } catch {
+                liftTotalLocal = 0;
+            }
+
+            const response = await requestService.getRequests('EXPORT');
             if (response.data.success) {
                 // Transform data từ API thành format của table
                 // Debug log để kiểm tra API response
@@ -112,7 +134,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                         appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
                         timeIn: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
                         timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
-                        totalAmount: request.total_amount || '',
+                        totalAmount: Number.isFinite(liftTotalLocal) ? liftTotalLocal : 0,
                         paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
                         documentsCount: request.attachments_count || 0,
                         notes: request.appointment_note || ''
@@ -185,72 +207,10 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         }
     };
 
-    // Function để mở modal xác nhận chuyển đến cổng
-    const handleMoveToGateClick = (requestId: string) => {
-        const request = rows.find(r => r.id === requestId);
-        setMoveToGateRequestId(requestId);
-        setMoveToGateRequestInfo(request);
-        setShowMoveToGateModal(true);
-    };
-
-    // Function để thực hiện chuyển yêu cầu từ PENDING sang GATE_IN
-    const handleMoveToGateConfirm = async () => {
-        if (!moveToGateRequestId) return;
-
-        setProcessingIds(prev => new Set(prev).add(moveToGateRequestId));
-        setShowMoveToGateModal(false);
-        
-        try {
-            const response = await requestService.moveToGate(moveToGateRequestId);
-            if (response.data.success) {
-                // Hiển thị thông báo thành công với toast notification đẹp
-                showSuccess(
-                    '🚪 Yêu cầu đã được chuyển đến cổng thành công!',
-                    `📋 Mã yêu cầu: ${moveToGateRequestInfo?.requestNo || 'N/A'}\n📦 Container: ${moveToGateRequestInfo?.containerNo || 'N/A'}\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
-                    5000 // Hiển thị trong 5 giây
-                );
-                // Refresh data
-                await fetchRequests();
-            } else {
-                showError(
-                    '❌ Không thể chuyển yêu cầu đến cổng',
-                    response.data.message || 'Có lỗi xảy ra khi chuyển yêu cầu',
-                    4000
-                );
-            }
-        } catch (error: any) {
-            console.error('Error moving to gate:', error);
-            if (error.response?.status === 401) {
-                showError(
-                    '🔐 Phiên đăng nhập đã hết hạn',
-                    'Vui lòng đăng nhập lại để tiếp tục',
-                    5000
-                );
-                localStorage.removeItem('token');
-                localStorage.removeItem('refresh_token');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-            } else {
-                showError(
-                    '❌ Có lỗi xảy ra',
-                    error.response?.data?.message || error.message || 'Không thể chuyển yêu cầu đến cổng',
-                    4000
-                );
-            }
-        } finally {
-            setProcessingIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(moveToGateRequestId);
-                return newSet;
-            });
-            setMoveToGateRequestId(null);
-            setMoveToGateRequestInfo(null);
-        }
-    };
+    // Bỏ logic chuyển đến cổng vì yêu cầu mới tạo sẽ tự hiển thị ở cổng
 
     // Function để xử lý cập nhật yêu cầu
-    const handleUpdateRequest = async (data: EditLiftRequestData) => {
+    const handleUpdateRequest = async (data: any) => {
         try {
             // Hiển thị thông báo thành công với toast notification
             showSuccess(
@@ -335,6 +295,23 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 	return (
 		<>
 			<style>{`
+				.gate-search-section .search-row {
+					display: flex;
+					align-items: center;
+					justify-content: flex-start;
+					gap: 8px;
+				}
+				.gate-search-section .search-section { flex: 0 0 320px; max-width: 320px; }
+				.gate-search-section .filter-group { display: flex; gap: 4px; }
+				.gate-search-section .filter-group select { height: 40px; min-width: 140px; }
+				.gate-search-section .action-group { margin-left: 0; }
+				.gate-search-section .action-group .btn { height: 40px; }
+				@media (max-width: 1024px) {
+					.gate-search-section .search-row { flex-wrap: wrap; }
+					.gate-search-section .action-group { margin-left: 0; width: 100%; display: flex; justify-content: flex-end; }
+				}
+			`}</style>
+			<style>{`
 				.gate-table-container .table-scroll-container {
 					scrollbar-width: auto !important;
 					-ms-overflow-style: scrollbar !important;
@@ -370,17 +347,6 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 					</div>
 					<div className="filter-group">
 						<select
-							aria-label={t('pages.requests.typeLabel')}
-							className="filter-select"
-							value={localType}
-							onChange={(e) => setLocalType(e.target.value)}
-						>
-							<option value="all">{t('pages.requests.allTypes')}</option>
-							<option value="IMPORT">Yêu cầu nâng container</option>
-						</select>
-					</div>
-					<div className="filter-group">
-						<select
 							aria-label={t('pages.requests.statusLabel')}
 							className="filter-select"
 							value={localStatus}
@@ -395,6 +361,16 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
 							<option value="CANCELLED">Đã hủy</option>
 						</select>
 					</div>
+					{onCreateRequest && (
+						<div className="action-group">
+							<button 
+								className="btn btn-success"
+								onClick={onCreateRequest}
+							>
+								Tạo yêu cầu nâng container
+							</button>
+						</div>
+					)}
 				</div>
 			</div>
 
@@ -496,19 +472,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                             </button>
                                         </td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.notes || ''}</td>
-                                        <td style={{ ...tdStyle, minWidth: '200px', whiteSpace: 'nowrap' }}>
-                                            {/* Nút chuyển đến cổng - chỉ hiển thị khi status là NEW_REQUEST */}
-                                            {r.status === 'NEW_REQUEST' && (
-                                                <button 
-                                                    type="button" 
-                                                    className="btn btn-success" 
-                                                    style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                                    onClick={() => handleMoveToGateClick(r.id)}
-                                                    disabled={processingIds.has(r.id) || loading}
-                                                >
-                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : 'Chuyển đến cổng'}
-                                                </button>
-                                            )}
+                <td style={{ ...tdStyle, minWidth: '320px', whiteSpace: 'nowrap' }}>
                                             <button 
                                                 type="button" 
                                                 className="btn btn-primary" 
@@ -518,6 +482,34 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                             >
                                                 {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                                             </button>
+                    {(r.status === 'GATE_IN') && r.paymentStatus !== 'Đã thanh toán' && (
+                        <button
+                            type="button"
+                            className="btn btn-success"
+                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                            onClick={async () => {
+                                try {
+                                    setProcessingIds(prev => new Set(prev).add(r.id));
+                                    // Tải danh sách price list và tính tổng loại "Nâng"
+                                    const res = await setupService.getPriceLists({ page: 1, limit: 1000 });
+                                    const items = res.data?.data || [];
+                                    const total = items
+                                      .filter((pl: any) => (pl.type || '').toLowerCase() === 'nâng')
+                                      .reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+                                    setPaymentAmount(Number.isFinite(total) ? total : 0);
+                                    setPaymentRequestInfo({ id: r.id, requestNo: r.requestNo, containerNo: r.containerNo });
+                                    setShowPaymentModal(true);
+                                } catch (e) {
+                                    showError('Không lấy được bảng giá', 'Vui lòng kiểm tra lại PriceLists');
+                                } finally {
+                                    setProcessingIds(prev => { const s=new Set(prev); s.delete(r.id); return s; });
+                                }
+                            }}
+                            disabled={processingIds.has(r.id) || loading}
+                        >
+                            Tạo yêu cầu thanh toán
+                        </button>
+                    )}
                                             <button 
                                                 type="button" 
                                                 className="btn btn-danger" 
@@ -830,6 +822,74 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                             >
                                 {processingIds.has(moveToGateRequestId || '') ? 'Đang xử lý...' : 'Xác nhận'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Confirmation Modal */}
+            {showPaymentModal && paymentRequestInfo && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0,0,0,.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10000,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: 16,
+                        padding: 24,
+                        width: '92%',
+                        maxWidth: 520,
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,.25)'
+                    }}>
+                        <h3 style={{ margin: 0, fontSize: 18, color: '#111827', fontWeight: 700 }}>Xác nhận thanh toán</h3>
+                        <p style={{ margin: '8px 0 16px', color: '#6b7280' }}>
+                            Yêu cầu {paymentRequestInfo.requestNo} - Cont {paymentRequestInfo.containerNo}
+                        </p>
+                        <div style={{
+                            background: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: 12,
+                            padding: 16,
+                            marginBottom: 16
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16 }}>
+                                <span>Tổng phí (Nâng)</span>
+                                <strong>{paymentAmount.toLocaleString('vi-VN')} ₫</strong>
+                            </div>
+                            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>Tính theo tổng các mục trong Setup/PriceLists có loại "Nâng"</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => { setShowPaymentModal(false); setPaymentRequestInfo(null); }}
+                                style={{ padding: '10px 16px' }}
+                            >Hủy</button>
+                            <button
+                                className="btn btn-success"
+                                onClick={async () => {
+                                    // Cập nhật UI: đánh dấu đã thanh toán, đóng popup, giữ nguyên màn hình
+                                    try {
+                                        if (paymentRequestInfo?.id) {
+                                            await requestService.markPaid(paymentRequestInfo.id);
+                                        }
+                                        setShowPaymentModal(false);
+                                        if (paymentRequestInfo) {
+                                            setRows(prev => prev.map(r => r.id === paymentRequestInfo.id ? { ...r, paymentStatus: 'Đã thanh toán' } : r));
+                                        }
+                                        setPaymentRequestInfo(null);
+                                        showSuccess('Thanh toán thành công', 'Yêu cầu đã xuất hiện trong trang hóa đơn');
+                                    } catch (e:any) {
+                                        showError('Không thể xác nhận thanh toán', e?.response?.data?.message || 'Lỗi không xác định');
+                                    }
+                                }}
+                                style={{ padding: '10px 16px' }}
+                            >Xác nhận thanh toán</button>
                         </div>
                     </div>
                 </div>

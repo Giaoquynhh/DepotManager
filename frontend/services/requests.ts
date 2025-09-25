@@ -132,6 +132,11 @@ export const requestService = {
     return api.delete(`/requests/${requestId}`);
   },
 
+  // Mark as paid and advance status if applicable
+  async markPaid(requestId: string) {
+    return api.patch(`/requests/${requestId}/mark-paid`);
+  },
+
   // Move request from PENDING to GATE_IN
   async moveToGate(requestId: string) {
     return api.patch(`/requests/${requestId}/move-to-gate`);

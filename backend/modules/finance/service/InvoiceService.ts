@@ -70,27 +70,18 @@ export class InvoiceService {
             container_no: true,
             status: true,
             tenant_id: true,
-            created_by: true
+            created_by: true,
+            request_no: true,
+            customer_id: true
           }
         });
-        
-        // Lấy thông tin User tạo request (customer)
-        if (serviceRequest?.created_by) {
-          const user = await prisma.user.findUnique({
-            where: { id: serviceRequest.created_by },
-            select: {
-              id: true,
-              full_name: true,
-              email: true,
-              role: true
-            }
+
+        // Ưu tiên lấy khách hàng từ Setup/Customers theo customer_id của request
+        if (serviceRequest?.customer_id) {
+          customer = await prisma.customer.findUnique({
+            where: { id: serviceRequest.customer_id },
+            select: { id: true, name: true, tax_code: true, phone: true }
           });
-          
-          customer = {
-            id: user?.id,
-            name: user?.full_name || user?.email,
-            tax_code: serviceRequest.tenant_id?.toString()
-          };
         }
       }
       
@@ -101,14 +92,17 @@ export class InvoiceService {
           select: {
             id: true,
             name: true,
-            tax_code: true
+            tax_code: true,
+            phone: true
           }
         });
       }
 
       return {
         ...invoice,
-        serviceRequest,
+        // Alias giữ tương thích frontend
+        invoice_number: (invoice as any).invoice_no,
+        serviceRequest: serviceRequest ? { ...serviceRequest, request_id: serviceRequest.request_no } : null,
         customer
       };
     }));
@@ -241,6 +235,26 @@ export class InvoiceService {
 
   async create(actor: any, payload: any){
     const totals = this.calcTotals(payload.items);
+    // Phát sinh số hóa đơn dạng HDddmmyyyy00000 (tăng dần, tránh trùng)
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    const prefix = `HD${dd}${mm}${yyyy}`;
+    // Lấy hóa đơn gần nhất theo prefix và tăng suffix
+    const latest = await prisma.invoice.findFirst({
+      where: { invoice_no: { startsWith: prefix } },
+      orderBy: { invoice_no: 'desc' }
+    });
+    let nextSeqNumber = 1;
+    if (latest?.invoice_no && latest.invoice_no.startsWith(prefix)){
+      const suffix = latest.invoice_no.slice(prefix.length);
+      const parsed = parseInt(suffix, 10);
+      if (!Number.isNaN(parsed)) nextSeqNumber = parsed + 1;
+    }
+    const seq = String(nextSeqNumber).padStart(5, '0');
+    const invoiceNo = `${prefix}${seq}`;
+
     const inv = await prisma.invoice.create({ data: {
       org_id: actor.org_id || null,
       customer_id: payload.customer_id,
@@ -253,7 +267,8 @@ export class InvoiceService {
       notes: payload.notes || null,
       created_by: actor._id,
       source_module: payload.source_module || 'REQUESTS',
-      source_id: payload.source_id || null
+      source_id: payload.source_id || null,
+      invoice_no: invoiceNo
     }});
     for (const it of payload.items){
       const qty = r3(it.qty); const price = r4(it.unit_price);
@@ -281,21 +296,39 @@ export class InvoiceService {
     if (!inv) throw new Error('INVOICE_NOT_FOUND');
     if (inv.status !== 'DRAFT') throw new Error('INVALID_STATUS_TRANSITION');
     const issueDate = new Date(payload.issue_date);
-    const ym = `${issueDate.getFullYear()}${String(issueDate.getMonth()+1).padStart(2,'0')}`;
-    const seq = Date.now()%100000; // simple seq placeholder
-    const invoice_no = `INV-ORG-${ym}-${String(seq).padStart(5,'0')}`;
+    // Giữ nguyên invoice_no đã được tạo theo định dạng HDddmmyyyy00000 ở bước create
     const updated = await prisma.invoice.update({ where: { id }, data: {
       issue_date: issueDate,
       due_date: new Date(payload.due_date),
-      invoice_no,
       status: 'UNPAID'
     }});
-    await audit(actor._id, 'INVOICE.ISSUED', 'FINANCE', id, { invoice_no });
+    await audit(actor._id, 'INVOICE.ISSUED', 'FINANCE', id, { invoice_no: inv.invoice_no });
     return updated;
   }
 
-  async get(id: string){
-    return prisma.invoice.findUnique({ where: { id }, include: { items: true, allocations: true } });
+  // Đã loại bỏ method get theo yêu cầu bỏ chức năng xem chi tiết hóa đơn
+  async getForPdf(id: string){
+    const inv = await prisma.invoice.findUnique({ 
+      where: { id }, 
+      include: { items: true }
+    });
+    if (!inv) return null;
+    let serviceRequest: any = null;
+    let customer: any = null;
+    if (inv.source_module === 'REQUESTS' && inv.source_id){
+      serviceRequest = await prisma.serviceRequest.findUnique({
+        where: { id: inv.source_id },
+        select: { id: true, request_no: true, type: true, customer_id: true }
+      });
+    }
+    const customerId = serviceRequest?.customer_id || inv.customer_id;
+    if (customerId){
+      customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true, name: true, tax_code: true, phone: true }
+      });
+    }
+    return { ...inv, serviceRequest, customer } as any;
   }
 
   async patch(actor: any, id: string, payload: any){
@@ -314,6 +347,75 @@ export class InvoiceService {
     const updated = await prisma.invoice.update({ where: { id }, data: { status: 'CANCELLED' } });
     await audit(actor._id, 'INVOICE.CANCELLED', 'FINANCE', id);
     return updated;
+  }
+
+  async cleanup(actor: any, params: { source_id?: string; status?: string; only_without_no?: boolean; created_from?: string; created_to?: string }){
+    const where: any = {};
+    if (params.source_id){ where.source_id = params.source_id; where.source_module = 'REQUESTS'; }
+    if (params.status) where.status = params.status;
+    if (params.only_without_no) where.invoice_no = null;
+    if (params.created_from || params.created_to){
+      where.createdAt = {
+        gte: params.created_from ? new Date(params.created_from) : undefined,
+        lte: params.created_to ? new Date(params.created_to) : undefined
+      };
+    }
+
+    // Chỉ cho phép xóa DRAFT hoặc UNPAID chưa thu tiền
+    const candidates = await prisma.invoice.findMany({ where });
+    const deletableIds = candidates
+      .filter(inv => (inv.status === 'DRAFT') || (inv.status === 'UNPAID' && Number(inv.paid_total as any) === 0))
+      .map(inv => inv.id);
+
+    const deleted = await prisma.invoice.deleteMany({ where: { id: { in: deletableIds } } });
+    return { requested: candidates.length, deleted: deleted.count };
+  }
+
+  // V2: trả về dữ liệu đã map đúng yêu cầu UI
+  async listV2(actor: any, query: any){
+    const where: any = {};
+    if (query.status) where.status = query.status;
+    if (query.customer_id) where.customer_id = query.customer_id;
+
+    const invoices = await prisma.invoice.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { items: true }
+    });
+
+    const result = await Promise.all(invoices.map(async inv => {
+      // Ưu tiên lấy ServiceRequest
+      let req: any = null;
+      if (inv.source_module === 'REQUESTS' && inv.source_id){
+        req = await prisma.serviceRequest.findUnique({
+          where: { id: inv.source_id },
+          select: { id: true, request_no: true, type: true, customer_id: true }
+        });
+      }
+
+      // Lấy khách hàng từ Setup/Customers theo customer_id của request; fallback invoice.customer_id
+      let customer: any = null;
+      const customerId = req?.customer_id || inv.customer_id;
+      if (customerId){
+        customer = await prisma.customer.findUnique({
+          where: { id: customerId },
+          select: { id: true, name: true, tax_code: true, phone: true }
+        });
+      }
+
+      return {
+        id: inv.id,
+        invoice_no: inv.invoice_no, // đã phát sinh theo HDddmmyyyy00000
+        request_no: req?.request_no || null,
+        request_type: req?.type || null,
+        customer_name: customer?.name || null,
+        customer_tax_code: customer?.tax_code || null,
+        customer_phone: customer?.phone || null,
+        total_amount: inv.total_amount
+      };
+    }));
+
+    return result;
   }
 }
 

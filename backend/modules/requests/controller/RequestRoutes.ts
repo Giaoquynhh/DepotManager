@@ -57,7 +57,14 @@ router.patch('/:id/cancel',
 // Update request
 router.patch('/:id', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    fileUploadService.getMulter().array('files', 10), // Tối đa 10 files
     controller.updateRequest
+);
+
+// Mark as paid and set IN_CAR for EXPORT flow
+router.patch('/:id/mark-paid',
+    requireRoles('TechnicalDepartment', 'Accountant', 'SystemAdmin', 'BusinessAdmin'),
+    controller.markPaid
 );
 
 // Delete request

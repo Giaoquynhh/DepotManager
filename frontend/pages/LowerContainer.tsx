@@ -4,9 +4,11 @@ import { useTranslation } from '../hooks/useTranslation';
 import { ExportRequest } from './Requests/components/ExportRequest';
 import { CreateLowerRequestModal, LowerRequestData } from './Requests/components';
 import { requestService } from '../services/requests';
+import { useToast } from '../hooks/useToastHook';
 
 export default function LowerContainer() {
 	const { t } = useTranslation();
+	const { showSuccess, ToastContainer } = useToast();
 	const [localSearch, setLocalSearch] = React.useState('');
 	const [localType, setLocalType] = React.useState('all');
 	const [localStatus, setLocalStatus] = React.useState('all');
@@ -30,6 +32,13 @@ export default function LowerContainer() {
 		// Modal đã gọi API tạo request rồi, chỉ cần refresh table và đóng modal
 		console.log('Lower Request Data received:', data);
 		console.log('Auto-generated Request Number:', data.requestNo);
+
+		// Hiển thị thông báo thành công giống trang Nâng container
+		showSuccess(
+			'Yêu cầu hạ container đã được tạo thành công!',
+			`Số yêu cầu: ${data.requestNo}`,
+			4000
+		);
 		
 		// Trigger refresh of the table
 		setRefreshTrigger(prev => prev + 1);
@@ -53,14 +62,6 @@ export default function LowerContainer() {
                 Yêu cầu hạ container
               </h1>
             </div>
-            <div className="header-actions">
-              <button 
-                className="btn btn-success"
-                onClick={handleCreateRequest}
-              >
-                Tạo yêu cầu hạ container
-              </button>
-            </div>
           </div>
         </div>
 
@@ -74,6 +75,7 @@ export default function LowerContainer() {
 				setLocalStatus={setLocalStatus}
 				refreshTrigger={refreshTrigger}
         isReject={isReject}
+				onCreateRequest={handleCreateRequest}
 			/>
 
         {/* Create Lower Request Modal */}
@@ -82,6 +84,9 @@ export default function LowerContainer() {
           onClose={() => setIsCreateLowerModalOpen(false)}
           onSubmit={handleSubmitLowerRequest}
         />
+
+			{/* Toast Container */}
+			<ToastContainer />
       </main>
     </>
   );

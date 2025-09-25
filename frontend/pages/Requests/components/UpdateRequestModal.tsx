@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { requestService } from '../../../services/requests';
 import { setupService } from '../../../services/setupService';
+import { api } from '../../../services/api';
 
 interface UpdateRequestModalProps {
     isOpen: boolean;
@@ -68,6 +69,12 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
 
+    // File upload states
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [existingFiles, setExistingFiles] = useState<Array<{ id: string; file_name: string; file_type: string; file_size: number; storage_url: string }>>([]);
+    const [filesToDelete, setFilesToDelete] = useState<string[]>([]);
+
     // Dropdown data
     const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
     const [transportCompanies, setTransportCompanies] = useState<TransportCompany[]>([]);
@@ -128,6 +135,22 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
         }
     }, [requestData]);
 
+    // Reset file states when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setUploadedFiles([]);
+            setPreviewUrls([]);
+            setExistingFiles([]);
+            setFilesToDelete([]);
+            // Clean up preview URLs
+            previewUrls.forEach(url => {
+                if (url) {
+                    URL.revokeObjectURL(url);
+                }
+            });
+        }
+    }, [isOpen, previewUrls]);
+
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -145,6 +168,70 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    // Load existing files when modal opens
+    useEffect(() => {
+        const loadExistingFiles = async () => {
+            if (isOpen && requestData?.id) {
+                try {
+                    const response = await requestService.getFiles(requestData.id);
+                    if (response.data?.success) {
+                        setExistingFiles(response.data.data || []);
+                    }
+                } catch (error) {
+                    console.error('Error loading existing files:', error);
+                }
+            }
+        };
+
+        loadExistingFiles();
+    }, [isOpen, requestData?.id]);
+
+    // File upload handlers
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const validFiles = files.filter(file => {
+            const isValidType = file.type === 'application/pdf' || file.type.startsWith('image/');
+            const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+            return isValidType && isValidSize;
+        });
+
+        setUploadedFiles(prev => [...prev, ...validFiles]);
+
+        // Generate preview URLs for images
+        validFiles.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                setPreviewUrls(prev => [...prev, url]);
+            } else {
+                setPreviewUrls(prev => [...prev, '']);
+            }
+        });
+    };
+
+    const handleFileRemove = (index: number) => {
+        setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+        setPreviewUrls(prev => {
+            const newUrls = [...prev];
+            if (newUrls[index]) {
+                URL.revokeObjectURL(newUrls[index]);
+            }
+            return newUrls.filter((_, i) => i !== index);
+        });
+    };
+
+    const handleExistingFileRemove = (fileId: string) => {
+        setFilesToDelete(prev => [...prev, fileId]);
+        setExistingFiles(prev => prev.filter(file => file.id !== fileId));
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
     // Filter data based on search terms
     const filteredShippingLines = shippingLines.filter(sl => 
@@ -194,20 +281,49 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
             const customerId = customers.find(c => c.name === formData.customer)?.id || null;
             const transportCompanyId = transportCompanies.find(tc => tc.name === formData.transportCompany)?.id || null;
 
-            const updateData = {
-                container_no: formData.containerType, // This should be container number, not type
-                shipping_line_id: shippingLineId,
-                container_type_id: containerTypeId,
-                customer_id: customerId,
-                vehicle_company_id: transportCompanyId,
-                license_plate: formData.vehicleNumber,
-                driver_name: formData.driverName,
-                driver_phone: formData.driverPhone,
-                appointment_time: formData.appointmentTime ? new Date(formData.appointmentTime).toISOString() : null,
-                appointment_note: formData.notes
-            };
+            // First, delete files that need to be removed
+            if (filesToDelete.length > 0) {
+                console.log('Deleting files:', filesToDelete);
+                for (const fileId of filesToDelete) {
+                    try {
+                        console.log('Deleting file:', fileId);
+                        const result = await requestService.deleteFile(fileId);
+                        console.log('Delete result:', result);
+                    } catch (error) {
+                        console.error('Error deleting file:', error);
+                        // Continue with other operations even if one file deletion fails
+                    }
+                }
+            }
 
-            await requestService.updateRequest(requestData.id, updateData);
+            // Update request with new data and files using FormData
+            const updateFormData = new FormData();
+            
+            // Add text fields
+            updateFormData.append('container_no', requestData.containerNo);
+            if (shippingLineId) updateFormData.append('shipping_line_id', shippingLineId);
+            if (containerTypeId) updateFormData.append('container_type_id', containerTypeId);
+            if (customerId) updateFormData.append('customer_id', customerId);
+            if (transportCompanyId) updateFormData.append('vehicle_company_id', transportCompanyId);
+            if (formData.vehicleNumber) updateFormData.append('license_plate', formData.vehicleNumber);
+            if (formData.driverName) updateFormData.append('driver_name', formData.driverName);
+            if (formData.driverPhone) updateFormData.append('driver_phone', formData.driverPhone);
+            if (formData.appointmentTime) updateFormData.append('appointment_time', new Date(formData.appointmentTime).toISOString());
+            if (formData.notes) updateFormData.append('notes', formData.notes);
+            
+            // Add new files
+            if (uploadedFiles.length > 0) {
+                uploadedFiles.forEach((file) => {
+                    updateFormData.append('files', file);
+                });
+            }
+
+            // Use direct API call with FormData
+            const response = await api.patch(`/requests/${requestData.id}`, updateFormData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
             
             alert('Cập nhật thông tin thành công!');
             onUpdate();
@@ -450,6 +566,219 @@ export const UpdateRequestModal: React.FC<UpdateRequestModalProps> = ({
                             placeholder="Nhập ghi chú (nếu có)"
                             rows={3}
                         />
+                    </div>
+
+                    {/* Chứng từ */}
+                    <div className="form-group">
+                        <label>Chứng từ:</label>
+                        
+                        {/* Existing files */}
+                        {existingFiles.length > 0 && (
+                            <div style={{ marginBottom: '16px' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>
+                                    Chứng từ hiện có:
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                                    {existingFiles.map((file) => (
+                                        <div key={file.id} style={{ 
+                                            border: '1px solid #e5e7eb', 
+                                            borderRadius: '8px', 
+                                            padding: '12px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '12px',
+                                            backgroundColor: '#f9fafb'
+                                        }}>
+                                            {file.file_type === 'image' ? (
+                                                <img 
+                                                    src={file.storage_url} 
+                                                    alt={file.file_name} 
+                                                    style={{ 
+                                                        width: 48, 
+                                                        height: 48, 
+                                                        objectFit: 'cover', 
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #e5e7eb'
+                                                    }} 
+                                                />
+                                            ) : (
+                                                <div style={{ 
+                                                    width: 48, 
+                                                    height: 48, 
+                                                    border: '1px solid #e5e7eb', 
+                                                    borderRadius: '6px', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center', 
+                                                    color: '#64748b',
+                                                    backgroundColor: '#fff'
+                                                }}>
+                                                    PDF
+                                                </div>
+                                            )}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ 
+                                                    fontWeight: '600', 
+                                                    color: '#111827', 
+                                                    overflow: 'hidden', 
+                                                    textOverflow: 'ellipsis', 
+                                                    whiteSpace: 'nowrap',
+                                                    fontSize: '12px'
+                                                }}>
+                                                    {file.file_name}
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                    {formatFileSize(file.file_size)}
+                                                </div>
+                                                <a 
+                                                    href={file.storage_url} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    style={{ fontSize: '11px', color: '#3b82f6' }}
+                                                >
+                                                    Xem
+                                                </a>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleExistingFileRemove(file.id)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#ef4444',
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                title="Xóa file"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* File upload area */}
+                        <div className="file-upload-container" style={{
+                            border: '2px dashed #d1d5db',
+                            borderRadius: '8px',
+                            padding: '24px',
+                            textAlign: 'center',
+                            backgroundColor: '#fafafa',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <input
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                                id="file-upload-update"
+                            />
+                            <label htmlFor="file-upload-update" style={{ cursor: 'pointer', display: 'block' }}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ margin: '0 auto 12px', color: '#64748b' }}>
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                <div style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '4px' }}>
+                                    Thêm chứng từ mới
+                                </div>
+                                <div style={{ fontSize: '14px', color: '#64748b' }}>
+                                    Hỗ trợ PDF, JPG, PNG (tối đa 10MB mỗi file)
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* New uploaded files */}
+                        {uploadedFiles.length > 0 && (
+                            <div style={{ marginTop: '16px' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>
+                                    Chứng từ mới:
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                                    {uploadedFiles.map((file, index) => (
+                                        <div key={index} style={{ 
+                                            border: '1px solid #e5e7eb', 
+                                            borderRadius: '8px', 
+                                            padding: '12px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '12px',
+                                            backgroundColor: '#f0f9ff'
+                                        }}>
+                                            {file.type.startsWith('image/') && previewUrls[index] ? (
+                                                <img 
+                                                    src={previewUrls[index]} 
+                                                    alt={file.name} 
+                                                    style={{ 
+                                                        width: 48, 
+                                                        height: 48, 
+                                                        objectFit: 'cover', 
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #e5e7eb'
+                                                    }} 
+                                                />
+                                            ) : (
+                                                <div style={{ 
+                                                    width: 48, 
+                                                    height: 48, 
+                                                    border: '1px solid #e5e7eb', 
+                                                    borderRadius: '6px', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center', 
+                                                    color: '#64748b',
+                                                    backgroundColor: '#fff'
+                                                }}>
+                                                    PDF
+                                                </div>
+                                            )}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ 
+                                                    fontWeight: '600', 
+                                                    color: '#111827', 
+                                                    overflow: 'hidden', 
+                                                    textOverflow: 'ellipsis', 
+                                                    whiteSpace: 'nowrap',
+                                                    fontSize: '12px'
+                                                }}>
+                                                    {file.name}
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                    {formatFileSize(file.size)}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleFileRemove(index)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#ef4444',
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                title="Xóa file"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="modal-actions">

@@ -240,12 +240,12 @@ export class DriverDashboardService {
 					orderBy: { createdAt: 'desc' }
 				});
 
-				if (latestRequest && latestRequest.status === 'FORKLIFTING') {
+                if (latestRequest && latestRequest.status === 'FORKLIFTING') {
 					// Logic mới: Phân biệt giữa IMPORT và EXPORT
 					let newStatus: string;
-					if (latestRequest.type === 'EXPORT') {
-						// Export request: FORKLIFTING → IN_CAR
-						newStatus = 'IN_CAR';
+                    if (latestRequest.type === 'EXPORT') {
+                        // Theo yêu cầu: giữ ở GATE_IN cho đến khi thanh toán xong
+                        newStatus = 'GATE_IN';
 						
 						// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
 						await tx.yardPlacement.updateMany({

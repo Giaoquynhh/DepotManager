@@ -647,6 +647,15 @@ export class GateService {
       }
     });
 
+    // Nếu là yêu cầu Nâng (EXPORT), tự động tạo ForkliftTask khi xe đã vào cổng
+    if (request.type === 'EXPORT' && request.container_no) {
+      try {
+        await this.createForkliftTaskForExport(request.container_no, actorId);
+      } catch (error) {
+        console.error('Error auto-creating forklift task on check-in:', error);
+      }
+    }
+
     // Audit log
     await audit(actorId, 'REQUEST.CHECK_IN', 'ServiceRequest', requestId, {
       previous_status: request.status,

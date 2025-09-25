@@ -81,6 +81,39 @@ export const getNextSequenceNumber = async (requestType: 'import' | 'export'): P
 };
 
 /**
+ * Generate Lower Request number in format: HAddmmyyy00000
+ * @param date - Date object for the request creation date
+ * @param sequenceNumber - Sequence number for the day (1-based)
+ * @returns Formatted request number
+ */
+export const generateLowerRequestNumberFormat = (date: Date, sequenceNumber: number): string => {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
+  const sequence = sequenceNumber.toString().padStart(5, '0');
+  
+  return `HA${day}${month}${year}${sequence}`;
+};
+
+/**
+ * Get next sequence number for Lower requests (HA prefix)
+ * @returns Promise with next sequence number
+ */
+export const getNextLowerSequenceNumber = async (): Promise<number> => {
+  try {
+    const today = getCurrentDateString();
+    const key = `sequence_lower_${today}`;
+    const currentSequence = parseInt(localStorage.getItem(key) || '0');
+    const nextSequence = currentSequence + 1;
+    localStorage.setItem(key, nextSequence.toString());
+    return nextSequence;
+  } catch (error) {
+    console.error('Error getting next lower sequence number:', error);
+    return 1; // Fallback to 1
+  }
+};
+
+/**
  * Generate a complete request number for new requests
  * @param requestType - 'import' or 'export'
  * @returns Promise with complete request number
@@ -94,4 +127,14 @@ export const generateNewRequestNumber = async (requestType: 'import' | 'export')
   } else {
     return generateExportRequestNumber(now, sequenceNumber);
   }
+};
+
+/**
+ * Generate a complete request number for Lower Container requests (HA prefix)
+ * @returns Promise with complete request number
+ */
+export const generateLowerRequestNumber = async (): Promise<string> => {
+  const now = new Date();
+  const sequenceNumber = await getNextLowerSequenceNumber();
+  return generateLowerRequestNumberFormat(now, sequenceNumber);
 };

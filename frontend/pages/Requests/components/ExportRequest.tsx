@@ -14,6 +14,7 @@ interface ExportRequestProps {
 	setLocalStatus: (status: string) => void;
 	refreshTrigger?: number;
   isReject?: boolean;
+	onCreateRequest?: () => void;
 }
 
 export const ExportRequest: React.FC<ExportRequestProps> = ({
@@ -24,7 +25,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 	localStatus,
 	setLocalStatus,
 	refreshTrigger,
-  isReject = false
+  isReject = false,
+	onCreateRequest
 }) => {
 	const { t } = useTranslation();
 
@@ -269,6 +271,33 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     setViewReasonRequestNo('');
   };
 
+  // Hiển thị trạng thái với emoji (đồng bộ với bảng Nâng container)
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'NEW_REQUEST':
+        return '🆕 Thêm mới';
+      case 'PENDING':
+        // Với Yêu cầu Hạ container, trạng thái khởi tạo hiển thị là "Thêm mới"
+        return '🆕 Thêm mới';
+      case 'SCHEDULED':
+        return '📅 Đã lên lịch';
+      case 'FORWARDED':
+        return '📤 Đã chuyển tiếp';
+      case 'GATE_IN':
+        return '🟢 Đã cho phép vào';
+      case 'GATE_OUT':
+        return '🟣 Đã cho phép ra';
+      case 'GATE_REJECTED':
+        return '⛔ Đã từ chối';
+      case 'COMPLETED':
+        return '✅ Hoàn tất';
+      case 'REJECTED':
+        return '⛔ Đã từ chối';
+      default:
+        return status;
+    }
+  };
+
     // Effect để fetch data khi component mount
     React.useEffect(() => {
         fetchRequests();
@@ -287,6 +316,23 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 
 	return (
 		<>
+			<style>{`
+				.gate-search-section .search-row {
+					display: flex;
+					align-items: center;
+					justify-content: flex-start;
+					gap: 8px;
+				}
+				.gate-search-section .search-section { flex: 0 0 320px; max-width: 320px; }
+				.gate-search-section .filter-group { display: flex; gap: 4px; }
+				.gate-search-section .filter-group select { height: 40px; min-width: 140px; }
+				.gate-search-section .action-group { margin-left: 0; }
+				.gate-search-section .action-group .btn { height: 40px; }
+				@media (max-width: 1024px) {
+					.gate-search-section .search-row { flex-wrap: wrap; }
+					.gate-search-section .action-group { margin-left: 0; width: 100%; display: flex; justify-content: flex-end; }
+				}
+			`}</style>
 			<div className="gate-search-section">
 				<div className="search-row">
 					<div className="search-section">
@@ -298,17 +344,6 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 							value={localSearch}
 							onChange={(e) => setLocalSearch(e.target.value)}
 						/>
-					</div>
-					<div className="filter-group">
-						<select
-							aria-label={t('pages.requests.typeLabel')}
-							className="filter-select"
-							value={localType}
-							onChange={(e) => setLocalType(e.target.value)}
-						>
-							<option value="all">{t('pages.requests.allTypes')}</option>
-							<option value="IMPORT">Yêu cầu hạ container</option>
-						</select>
 					</div>
 					<div className="filter-group">
 						<select
@@ -325,6 +360,16 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 							<option value="CANCELLED">Đã hủy</option>
 						</select>
 					</div>
+					{onCreateRequest && (
+						<div className="action-group">
+							<button 
+								className="btn btn-success"
+								onClick={onCreateRequest}
+							>
+								Tạo yêu cầu hạ container
+							</button>
+						</div>
+					)}
 				</div>
 			</div>
 
@@ -359,7 +404,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 									<th style={thStyle}>Chứng từ</th>
 									<th style={thStyle}>DEM/DET</th>
 									<th style={thStyle}>Ghi chú</th>
-									<th style={thStyle}>Action</th>
+                                    <th style={thStyle}>Hành động</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -370,7 +415,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 										<td style={tdStyle}>{r.containerNo}</td>
 										<td style={tdStyle}>{r.containerType}</td>
 										<td style={tdStyle}>Hạ container</td>
-                    <td style={tdStyle}>{r.status === 'REJECTED' ? 'Đã từ chối' : r.status}</td>
+                    <td style={tdStyle}>{statusLabel(r.status)}</td>
 										<td style={tdStyle}>{r.customer}</td>
 										<td style={tdStyle}>{r.transportCompany}</td>
 										<td style={tdStyle}>{r.vehicleNumber}</td>
@@ -526,7 +571,8 @@ const thStyle: React.CSSProperties = {
 	textTransform: 'uppercase',
 	letterSpacing: 0.3,
 	padding: '12px 16px',
-	borderBottom: '1px solid #e2e8f0'
+	borderBottom: '1px solid #e2e8f0',
+	whiteSpace: 'nowrap'
 };
 
 const tdStyle: React.CSSProperties = {
@@ -535,5 +581,8 @@ const tdStyle: React.CSSProperties = {
 	color: '#0f172a',
 	verticalAlign: 'top',
 	background: 'white',
-	borderTop: '1px solid #f1f5f9'
+	borderTop: '1px solid #f1f5f9',
+	whiteSpace: 'nowrap',
+	overflow: 'hidden',
+	textOverflow: 'ellipsis',
 };

@@ -1506,3 +1506,57 @@ input[type="password"]::-webkit-clear-button {
     transform: scale(1);
   }
 }
+
+/* ===== Scrollbar policy: hide vertical UI, keep and animate horizontal UI ===== */
+/* Firefox: ẩn dọc toàn cục, sẽ bật lại ngang ở container cụ thể bằng thin */
+html, body {
+  scrollbar-width: none !important; /* Ẩn UI trong Firefox (cả 2 chiều) */
+  -ms-overflow-style: none !important; /* IE/Edge Legacy */
+}
+
+/* WebKit-based (Chrome/Edge/Safari): tách trục */
+*::-webkit-scrollbar {
+  background: transparent !important;
+}
+
+/* Ẩn thanh dọc */
+*::-webkit-scrollbar:vertical {
+  width: 0 !important;
+  background: transparent !important;
+}
+
+/* Hiển thị thanh ngang với chiều cao cố định */
+*::-webkit-scrollbar:horizontal {
+  height: 10px !important;
+}
+
+/* Track ngang */
+*::-webkit-scrollbar-track:horizontal {
+  background: rgba(148, 163, 184, 0.15) !important;
+  border-radius: 6px !important;
+}
+
+/* Thumb ngang với hoạt ảnh gradient */
+@keyframes horizontalScrollGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+*::-webkit-scrollbar-thumb:horizontal {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa, #60a5fa) !important;
+  background-size: 200% 100% !important;
+  animation: horizontalScrollGlow 3s linear infinite !important;
+  border-radius: 6px !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Bật lại UI scrollbar ngang cho các container có cuộn ngang (Firefox) */
+.table-container,
+.gate-table-container,
+.gate-history-scroll,
+.yard-slot-grid,
+.main-content,
+.container {
+  scrollbar-width: thin !important; /* Firefox sẽ hiện lại thanh (cả 2 chiều nếu có) */
+}

@@ -422,9 +422,9 @@
 /* 🎯 Enhanced Container Layout */
 .modern-yard-container {
   width: 100%;
-  max-width: 1400px;
+  max-width: none; /* Full-bleed như các trang khác */
   margin: 0 auto;
-  padding: 2rem;
+  padding: clamp(0.75rem, 2vw, 2rem);
   position: relative;
 }
 

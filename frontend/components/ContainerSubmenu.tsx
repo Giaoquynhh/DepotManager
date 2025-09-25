@@ -66,6 +66,21 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
       ),
       label: 'Khu vực kiểm tra'
     });
+
+    // Forklift management for Lower (IMPORT)
+    submenuItems.push({
+      key: 'forklift-lower',
+      href: '/LowerContainer/Forklift',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 3h10v8H3z"></path>
+          <path d="M13 11l4 0 2 4v4h-3"></path>
+          <circle cx="7" cy="19" r="2"></circle>
+          <circle cx="17" cy="19" r="2"></circle>
+        </svg>
+      ),
+      label: 'Quản lý xe nâng'
+    });
   } else {
     // Gate nâng container
     submenuItems.push({
@@ -78,6 +93,21 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
         </svg>
       ),
       label: 'Gate nâng container'
+    });
+
+    // Forklift management for Lift (EXPORT)
+    submenuItems.push({
+      key: 'forklift-lift',
+      href: '/LiftContainer/Forklift',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 3h10v8H3z"></path>
+          <path d="M13 11l4 0 2 4v4h-3"></path>
+          <circle cx="7" cy="19" r="2"></circle>
+          <circle cx="17" cy="19" r="2"></circle>
+        </svg>
+      ),
+      label: 'Quản lý xe nâng'
     });
   }
 

@@ -140,11 +140,16 @@ router.use(authenticate, requireRoles('TechnicalDepartment','SystemAdmin'));
 router.get('/invoices', (req, res) => invoiceCtrl.list(req as any, res));
 router.get('/invoices/details', (req, res) => invoiceCtrl.listWithDetails(req as any, res));
 router.get('/invoices/containers-need-invoice', (req, res) => invoiceCtrl.getContainersNeedInvoice(req as any, res));
-router.get('/invoices/:id', (req, res) => invoiceCtrl.get(req as any, res));
+// API V2: danh sách hóa đơn kèm dữ liệu chuẩn hóa cho UI
+router.get('/invoices/v2', (req, res) => invoiceCtrl.listV2(req as any, res));
+// Xuất PDF hóa đơn
+router.get('/invoices/:id/pdf', (req, res) => invoiceCtrl.exportPdf(req as any, res));
+// Đã bỏ endpoint xem chi tiết hóa đơn theo yêu cầu (loại bỏ nút Xem ở FE)
 router.post('/invoices', (req, res) => invoiceCtrl.create(req as any, res));
 router.patch('/invoices/:id', (req, res) => invoiceCtrl.patch(req as any, res));
 router.post('/invoices/:id/issue', (req, res) => invoiceCtrl.issue(req as any, res));
 router.post('/invoices/:id/cancel', (req, res) => invoiceCtrl.cancel(req as any, res));
+router.delete('/invoices/cleanup', (req, res) => invoiceCtrl.cleanup(req as any, res));
 
 
 

@@ -86,7 +86,7 @@ interface ForkliftTask {
   };
 }
 
-export default function Forklift() {
+export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPORT' } = {}) {
   const { t } = useTranslation();
   const { showSuccess, showError, ToastContainer } = useToast();
   const [tasks, setTasks] = useState<ForkliftTask[]>([]);
@@ -216,7 +216,10 @@ export default function Forklift() {
       }
       
       const response = await api.get('/forklift/jobs');
-      const newTasks = response.data.data || [];
+      const allTasks: ForkliftTask[] = response.data.data || [];
+      const newTasks = typeFilter 
+        ? allTasks.filter(task => task.container_info?.type === typeFilter)
+        : allTasks;
       
       // Chỉ cập nhật state nếu có thay đổi thực sự
       setTasks(prevTasks => {
@@ -459,106 +462,37 @@ export default function Forklift() {
             <table className="gate-table">
                   <thead>
                     <tr>
-                      <th data-column="container">{t('pages.forklift.tableHeaders.containerNo')}</th>
-                      <th data-column="pickup">{t('pages.forklift.tableHeaders.pickupLocation')}</th>
-                      <th data-column="dropoff">{t('pages.forklift.tableHeaders.dropoffLocation')}</th>
-                      <th data-column="status">{t('pages.forklift.tableHeaders.status')}</th>
-                      <th data-column="forklift">{t('pages.forklift.tableHeaders.forklift')}</th>
-                      <th data-column="created">{t('pages.forklift.tableHeaders.createdAt')}</th>
-                      <th data-column="actions">{t('pages.forklift.tableHeaders.actions')}</th>
+                      <th data-column="requestNo">Số yêu cầu</th>
+                      <th data-column="container">Số container</th>
+                      <th data-column="ctype">Loại container</th>
+                      <th data-column="vehicle">Số xe</th>
+                      <th data-column="driver">Tài xế</th>
+                      <th data-column="driverPhone">SĐT tài xế</th>
+                      <th data-column="location">Vị trí</th>
+                      <th data-column="status">Trạng Thái</th>
+                      <th data-column="forklift">Tài xế xe nâng</th>
+                      <th data-column="start">Thời gian bắt đầu</th>
+                      <th data-column="end">Thời gian kết thúc</th>
+                      <th data-column="image">Hình ảnh</th>
+                      <th data-column="actions">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
                     {tasks.map((task, index) => (
                       <tr key={task.id}>
-                        <td data-column="container">
-                          <strong>{task.container_no}</strong>
-                        </td>
-                        <td data-column="pickup">
-                          {task.container_info?.type === 'EXPORT' ? (
-                            task.actual_location ? (
-                              <span className="location-badge">
-                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                              </span>
-                            ) : (
-                              <span className="location-placeholder">
-                                {task.from_slot?.code || t('pages.forklift.location.outside')}
-                              </span>
-                            )
-                          ) : task.container_info?.type === 'IMPORT' ? (
-                            task.container_info?.driver_name && task.container_info?.license_plate ? (
-                              <div className="driver-info">
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
-                                  <span className="driver-value">{task.container_info.driver_name}</span>
-                                </div>
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
-                                  <span className="license-plate">{task.container_info.license_plate}</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="no-info">
-                                {t('pages.forklift.driver.noInfo')}
-                              </div>
-                            )
+                        <td data-column="requestNo">{task.container_info?.request_no || '-'}</td>
+                        <td data-column="container"><strong>{task.container_no}</strong></td>
+                        <td data-column="ctype">{task.container_info?.container_type?.code || '-'}</td>
+                        <td data-column="vehicle">{task.container_info?.license_plate || '-'}</td>
+                        <td data-column="driver">{task.container_info?.driver_name || '-'}</td>
+                        <td data-column="driverPhone">{task.container_info?.driver_phone || '-'}</td>
+                        <td data-column="location">
+                          {task.actual_location ? (
+                            <span className="location-badge">
+                              {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
+                            </span>
                           ) : (
-                            task.container_info?.driver_name && task.container_info?.license_plate ? (
-                              <div className="driver-info">
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
-                                  <span className="driver-value">{task.container_info.driver_name}</span>
-                                </div>
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
-                                  <span className="license-plate">{task.container_info.license_plate}</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="no-info">
-                                {t('pages.forklift.driver.noInfo')}
-                              </div>
-                            )
-                          )}
-                        </td>
-                        <td data-column="dropoff">
-                          {task.container_info?.type === 'EXPORT' ? (
-                            task.container_info?.driver_name && task.container_info?.license_plate ? (
-                              <div className="driver-info">
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.driverName')}</span>
-                                  <span className="driver-value">{task.container_info.driver_name}</span>
-                                </div>
-                                <div className="driver-row">
-                                  <span className="driver-label">{t('pages.forklift.driver.licensePlate')}</span>
-                                  <span className="license-plate">{task.container_info.license_plate}</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="no-info">
-                                {t('pages.forklift.driver.noInfo')}
-                              </div>
-                            )
-                          ) : task.container_info?.type === 'IMPORT' ? (
-                            task.actual_location ? (
-                              <span className="location-badge">
-                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                              </span>
-                            ) : (
-                              <span className="location-placeholder">
-                                {task.to_slot?.code || t('pages.forklift.location.outside')}
-                              </span>
-                            )
-                          ) : (
-                            task.actual_location ? (
-                              <span className="location-badge">
-                                {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
-                              </span>
-                            ) : (
-                              <span className="location-placeholder">
-                                {task.to_slot?.code || t('pages.forklift.location.outside')}
-                              </span>
-                            )
+                            <span className="location-placeholder">{task.from_slot?.code || task.to_slot?.code || t('pages.forklift.location.outside')}</span>
                           )}
                         </td>
                         <td data-column="status">
@@ -573,17 +507,17 @@ export default function Forklift() {
                               <span className="assigned-badge">{t('pages.forklift.driver.assigned')}</span>
                             </div>
                           ) : (
-                            <div className="driver-not-assigned">
-                              {t('pages.forklift.driver.notAssigned')}
-                            </div>
+                            <div className="driver-not-assigned">{t('pages.forklift.driver.notAssigned')}</div>
                           )}
                         </td>
-
-                        <td data-column="created">
-                          <div className="time-info">
-                            <span className="time-date">{formatDate(task.createdAt).split(',')[0]}</span>
-                            <span className="time-time">{formatDate(task.createdAt).split(',')[1]}</span>
-                          </div>
+                        <td data-column="start">{formatDate(task.createdAt)}</td>
+                        <td data-column="end">{task.status === 'COMPLETED' ? formatDate(task.updatedAt) : '-'}</td>
+                        <td data-column="image">
+                          {task as any && (task as any).report_image ? (
+                            <img src={(task as any).report_image as any} alt="report" style={{ maxWidth: '72px', maxHeight: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                          ) : (
+                            <span>-</span>
+                          )}
                         </td>
                         <td data-column="actions">
                           {task.status === 'IN_PROGRESS' ? (

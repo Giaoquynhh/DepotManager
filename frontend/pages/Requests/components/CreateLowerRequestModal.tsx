@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
-import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
+import { generateLowerRequestNumber } from '../../../utils/requestNumberGenerator';
 
 interface CreateLowerRequestModalProps {
 	isOpen: boolean;
@@ -241,8 +241,8 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			try {
 				setIsUploading(true);
 				
-				// Generate request number automatically
-                const requestNumber = await generateNewRequestNumber('import');
+				// Generate request number automatically for LOWER (hạ container) - use custom HA prefix
+                const requestNumber = await generateLowerRequestNumber();
 				
             // Prepare data for API with auto-generated request number
             const requestData = {
@@ -1064,6 +1064,25 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 							/>
 						</div>
 
+						{/* Ghi chú - Optional */}
+						<div style={fullWidthStyle}>
+							<label style={formLabelStyle}>
+								Ghi chú
+							</label>
+							<textarea
+								style={{
+									...formInputStyle,
+									resize: 'vertical',
+									minHeight: '80px',
+									fontFamily: 'inherit'
+								}}
+								value={formData.notes}
+								onChange={(e) => handleInputChange('notes', e.target.value)}
+								placeholder="Nhập ghi chú (nếu có)"
+								rows={3}
+							/>
+						</div>
+
 						{/* Chứng từ - Optional */}
 						<div style={formGroupStyle}>
 							<label style={formLabelStyle}>
@@ -1134,25 +1153,6 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 								</div>
 							)}
 						</div>
-
-						{/* Ghi chú - Optional */}
-						<div style={fullWidthStyle}>
-							<label style={formLabelStyle}>
-								Ghi chú
-							</label>
-							<textarea
-								style={{
-									...formInputStyle,
-									resize: 'vertical',
-									minHeight: '80px',
-									fontFamily: 'inherit'
-								}}
-								value={formData.notes}
-								onChange={(e) => handleInputChange('notes', e.target.value)}
-								placeholder="Nhập ghi chú (nếu có)"
-								rows={3}
-							/>
-						</div>
 					</div>
 
 					{/* Actions */}
@@ -1163,23 +1163,6 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 						paddingTop: '20px',
 						borderTop: '1px solid #e2e8f0'
 					}}>
-						<button 
-							type="button" 
-							style={{
-								padding: '12px 24px',
-								borderRadius: '8px',
-								fontSize: '14px',
-								fontWeight: '600',
-								cursor: 'pointer',
-								transition: 'all 0.2s ease',
-								background: '#f8fafc',
-								color: '#64748b',
-								border: '2px solid #e2e8f0'
-							}}
-							onClick={handleClose}
-						>
-							Hủy
-						</button>
 						<button 
 							type="submit" 
 							disabled={isUploading}
