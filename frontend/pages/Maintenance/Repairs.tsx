@@ -1,6 +1,7 @@
 import Header from '@components/Header';
 import Card from '@components/Card';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useTranslation } from '@hooks/useTranslation';
 import { api } from '@services/api';
 
@@ -15,6 +16,7 @@ interface RepairTicket {
   status?: string;
   createdAt: string;
   updatedAt: string;
+  endTime?: string;
   serviceRequest?: {
     id: string;
     request_no?: string;
@@ -31,6 +33,7 @@ interface RepairTicket {
 }
 
 export default function RepairsPage() {
+  const router = useRouter();
   const { t } = useTranslation();
   const [repairs, setRepairs] = useState<RepairTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,13 @@ export default function RepairsPage() {
   useEffect(() => {
     fetchRepairs();
   }, [page]);
+
+  // Refetch data when route changes (to handle navigation from other pages)
+  useEffect(() => {
+    if (router.isReady) {
+      fetchRepairs();
+    }
+  }, [router.pathname, router.isReady]);
 
   const fetchRepairServices = async () => {
     try {
@@ -205,8 +215,11 @@ export default function RepairsPage() {
   const submitAccept = async () => {
     if (!acceptModal.ticket) return;
     try {
+      // Map trạng thái container từ dropdown sang canRepair flag
       const canRepair = acceptModal.status === 'NEED_REPAIR';
       const payload: any = { decision: 'ACCEPT', canRepair };
+      
+      // Nếu cần sửa chữa, thêm thông tin dịch vụ sửa chữa
       if (canRepair) {
         payload.repairServices = selectedServices.map(s => {
           const quantity = serviceQuantities[s.id] ?? 1;
@@ -215,14 +228,18 @@ export default function RepairsPage() {
         });
         payload.totalCost = totalSelectedCost;
       }
+      
+      // Gọi API để cập nhật trạng thái repairTicket
       await api.post(`/maintenance/repairs/${acceptModal.ticket.id}/decide`, payload);
 
+      // Upload ảnh nếu có
       if (acceptModal.files.length > 0) {
         const form = new FormData();
         acceptModal.files.forEach(f => form.append('files', f));
         await api.post(`/maintenance/repairs/${acceptModal.ticket.id}/images`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
 
+      // Đóng modal và refresh danh sách
       setAcceptModal({ open: false, status: 'GOOD', files: [], previews: [] });
       fetchRepairs();
     } catch (e) {
@@ -337,7 +354,7 @@ export default function RepairsPage() {
                         {repair.status === 'PENDING' ? 'Chưa có' : new Date(repair.updatedAt).toLocaleString('vi-VN')}
                       </td>
                       <td style={{ padding: '12px 8px' }}>
-                        {repair.status === 'PENDING' ? 'Chưa có' : new Date(repair.updatedAt).toLocaleString('vi-VN')}
+                        {repair.endTime ? new Date(repair.endTime).toLocaleString('vi-VN') : 'Chưa có'}
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
@@ -350,7 +367,7 @@ export default function RepairsPage() {
                             {(repair.serviceRequest?.attachments?.length || 0)} ảnh chứng từ
                           </button>
                           {/* Nút upload ảnh RepairTicket */}
-                          {!(repair.status === 'COMPLETE' || repair.status === 'REJECT' || repair.status === 'REJECTED') && (
+                          {!(repair.status === 'COMPLETE' || repair.status === 'COMPLETE_NEEDREPAIR' || repair.status === 'COMPLETE_NEED_REPAIR' || repair.status === 'REJECT' || repair.status === 'REJECTED') && (
                             <button onClick={() => openUpload(repair)} style={{ padding: '4px 8px', backgroundColor: '#10b981', color: 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', border: 'none' }}>
                               Tải ảnh
                             </button>
@@ -359,7 +376,7 @@ export default function RepairsPage() {
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          {(repair.status === 'REJECT' || repair.status === 'REJECTED' || repair.status === 'COMPLETE') ? (
+                          {(repair.status === 'REJECT' || repair.status === 'REJECTED' || repair.status === 'COMPLETE' || repair.status === 'COMPLETE_NEEDREPAIR' || repair.status === 'COMPLETE_NEED_REPAIR') ? (
                             <button
                               style={{
                                 padding: '4px 8px',

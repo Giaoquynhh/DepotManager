@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { api } from '@services/api';
 import GateRequestTable from './GateRequestTable';
 import GateSearchBar from './GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
 import { useDebounce } from '../../../hooks/useDebounce';
+import { useDataRefresh } from '../../../hooks/useRouteRefresh';
 import Link from 'next/link';
 
 
@@ -37,11 +39,13 @@ interface GateDashboardProps {
 }
 
 export default function GateDashboard({ title, lockedType }: GateDashboardProps) {
+  const router = useRouter();
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true); // Thêm state cho sidebar
   const { t } = useTranslation();
   const { ToastContainer } = useToast();
+  const { shouldRefresh, resetRefresh } = useDataRefresh();
 
 
   const [searchParams, setSearchParams] = useState({
@@ -188,6 +192,13 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
     // Gọi API khi debounced values thay đổi
     fetchRequests();
   }, [debouncedContainerNo, debouncedLicensePlate, searchParams.status, searchParams.type, searchParams.page]);
+
+  // Refetch data when route changes (to handle navigation from other pages)
+  useEffect(() => {
+    if (router.isReady) {
+      fetchRequests();
+    }
+  }, [router.pathname, router.isReady]);
 
   const handleSearch = (newParams: Partial<typeof searchParams>) => {
     setSearchParams(prev => ({ ...prev, ...newParams, page: 1 }));

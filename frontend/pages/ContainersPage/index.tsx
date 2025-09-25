@@ -1,6 +1,8 @@
 import Header from '@components/Header';
 import Card from '@components/Card';
 import { useTranslation } from '@hooks/useTranslation';
+import UpdateContainerModal from '@components/UpdateContainerModal';
+import ContainerImagesModal from '@components/ContainerImagesModal';
 
 import useSWR from 'swr';
 import { useState, useEffect, useCallback } from 'react';
@@ -14,6 +16,13 @@ function ContainersList(){
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
+  const [selectedContainer, setSelectedContainer] = useState<any>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  
+  // Container images modal states
+  const [isImagesModalOpen, setIsImagesModalOpen] = useState(false);
+  const [selectedContainerForImages, setSelectedContainerForImages] = useState<any>(null);
+  const [imageModalType, setImageModalType] = useState<'inspection' | 'documents'>('inspection');
 
   // Debounce search query để giảm số lần gọi API
   useEffect(() => {
@@ -140,7 +149,18 @@ function ContainersList(){
     }
   }, [processedItems, status]);
   
+  // Handler cho việc mở modal hình ảnh
+  const handleOpenImagesModal = (container: any, type: 'inspection' | 'documents') => {
+    setSelectedContainerForImages(container);
+    setImageModalType(type);
+    setIsImagesModalOpen(true);
+  };
 
+  // Handler cho việc đóng modal hình ảnh
+  const handleCloseImagesModal = () => {
+    setIsImagesModalOpen(false);
+    setSelectedContainerForImages(null);
+  };
 
   return (
     <>
@@ -175,57 +195,46 @@ function ContainersList(){
         <table className="gate-table">
           <thead>
             <tr>
-              <th data-column="container">{t('pages.containers.tableHeaders.container')}</th>
-              <th data-column="yard">{t('pages.containers.tableHeaders.yard')}</th>
-              <th data-column="block">{t('pages.containers.tableHeaders.block')}</th>
-              <th data-column="slot">{t('pages.containers.tableHeaders.slot')}</th>
-              <th data-column="status">{t('pages.containers.tableHeaders.status')}</th>
-              <th data-column="checkInfo">{t('pages.containers.tableHeaders.checkInfo')}</th>
+              <th data-column="shippingLine">Hãng tàu</th>
+              <th data-column="container">Số cont</th>
+              <th data-column="containerType">Loại cont</th>
+              <th data-column="status">Trạng thái</th>
+              <th data-column="images">Hình ảnh</th>
+              <th data-column="position">Vị trí</th>
+              <th data-column="seal">Số seal</th>
+              <th data-column="customer">Khách hàng</th>
+              <th data-column="demDet">DEM/DET</th>
+              <th data-column="action">Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign:'center', color:'#64748b' }}>
+                <td colSpan={10} style={{ textAlign:'center', color:'#64748b' }}>
                   {data ? t('pages.containers.noDataSubtitle') : (error ? t('pages.containers.cannotLoadData') : t('common.loading'))}
                 </td>
               </tr>
             ) : filteredItems.map((it:any)=>(
               <tr key={it.container_no} className="table-row">
+                <td data-column="shippingLine">{it.shipping_line?.name || '-'}</td>
                 <td data-column="container" style={{fontWeight:700}}>{it.container_no}</td>
-                <td data-column="yard">{it.yard_name || '-'}</td>
-                <td data-column="block">{it.block_code || '-'}</td>
-                <td data-column="slot">{it.slot_code || '-'}</td>
+                <td data-column="containerType">{it.container_type?.code || '-'}</td>
                 <td data-column="status">
                    <div style={{display:'flex', flexDirection:'column'}}>
-                     {it.derived_status ? (
-                       <>
-                         <span
-                           style={{
-                             background: it.derived_status==='ASSIGNED' ? '#e0f2fe' : 
-                                        it.derived_status==='IN_YARD' ? '#dcfce7' :
-                                        it.derived_status==='IN_CAR' ? '#fef3c7' :
-                                        it.derived_status==='EMPTY_IN_YARD' ? '#fef3c7' : '#fff7e6',
-                             color: it.derived_status==='ASSIGNED' ? '#0c4a6e' : 
-                                   it.derived_status==='IN_YARD' ? '#166534' :
-                                   it.derived_status==='IN_CAR' ? '#92400e' :
-                                   it.derived_status==='EMPTY_IN_YARD' ? '#92400e' : '#664d03',
-                             padding:'4px 8px',
-                             borderRadius:8,
-                             fontWeight:700,
-                             width:'fit-content'
-                           }}
-                         >
-                           {it.derived_status==='ASSIGNED' ? t('pages.containers.statusAssigned') : 
-                            it.derived_status==='IN_YARD' ? t('pages.containers.statusInYard') :
-                            it.derived_status==='IN_CAR' ? t('pages.containers.statusInCar') :
-                            it.derived_status==='EMPTY_IN_YARD' ? t('pages.containers.statusEmptyInYard') : t('pages.containers.statusWaiting')}
-                         </span>
-                         {(it.derived_status==='ASSIGNED' || it.derived_status==='IN_YARD' || it.derived_status==='EMPTY_IN_YARD') && (
-                           <small className="muted" style={{marginTop:4}}>
-                             {t('pages.containers.position')}: {it.yard_name || '-'} / {it.block_code || '-'} / {it.slot_code || '-'}</small>
-                         )}
-                       </>
+                     {/* Hiển thị trạng thái dựa trên repairTicket */}
+                     {it.repair_ticket ? (
+                       <span
+                         style={{
+                           background: it.repair_ticket.status === 'COMPLETE' ? '#dcfce7' : '#fef2f2',
+                           color: it.repair_ticket.status === 'COMPLETE' ? '#166534' : '#dc2626',
+                           padding:'4px 8px',
+                           borderRadius:8,
+                           fontWeight:700,
+                           width:'fit-content'
+                         }}
+                       >
+                         {it.repair_ticket.status === 'COMPLETE' ? 'Cont tốt' : 'Cần sửa chữa'}
+                       </span>
                      ) : (
                        <span
                          style={{
@@ -237,28 +246,79 @@ function ContainersList(){
                            width:'fit-content'
                          }}
                        >
-                         {t('pages.containers.notChecked')}
+                         Chưa kiểm tra
                        </span>
                      )}
                    </div>
                  </td>
-                <td data-column="checkInfo">
+                <td data-column="images">
                    <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                     {it.service_gate_checked_at && (
-                       <small className="muted">
-                         {t('pages.containers.checkedAt')}: {new Date(it.service_gate_checked_at).toLocaleString()} | {t('pages.containers.licensePlate')}: {it.service_license_plate || '-'} | {t('pages.containers.driver')}: {it.service_driver_name || '-'}</small>
-                       )}
-                     {!it.service_gate_checked_at && it.repair_checked && (
-                       <small className="muted">
-                         {t('pages.containers.checkedAt')}: {new Date(it.repair_updated_at).toLocaleString()} | {t('pages.containers.checkedViaRepair')}
-                       </small>
-                     )}
-                     {it.derived_status === 'EMPTY_IN_YARD' && (
-                       <small className="muted" style={{color: '#92400e', fontStyle: 'italic'}}>
-                         {t('pages.containers.systemAdminAdded')}
-                       </small>
-                     )}
+                     <button 
+                       style={{
+                         background: '#e0f2fe',
+                         color: '#0369a1',
+                         border: '1px solid #bae6fd',
+                         borderRadius: '6px',
+                         padding: '4px 8px',
+                         fontSize: '12px',
+                         fontWeight: '500',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s'
+                       }}
+                       onMouseOver={(e) => {
+                         e.currentTarget.style.background = '#bae6fd';
+                       }}
+                       onMouseOut={(e) => {
+                         e.currentTarget.style.background = '#e0f2fe';
+                       }}
+                       onClick={() => handleOpenImagesModal(it, 'inspection')}
+                     >
+                       {it.attachments?.filter((att: any) => att.file_type?.startsWith('image/')).length || 0} ảnh kiểm tra
+                     </button>
+                     <button 
+                       style={{
+                         background: '#e0f2fe',
+                         color: '#0369a1',
+                         border: '1px solid #bae6fd',
+                         borderRadius: '6px',
+                         padding: '4px 8px',
+                         fontSize: '12px',
+                         fontWeight: '500',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s'
+                       }}
+                       onMouseOver={(e) => {
+                         e.currentTarget.style.background = '#bae6fd';
+                       }}
+                       onMouseOut={(e) => {
+                         e.currentTarget.style.background = '#e0f2fe';
+                       }}
+                       onClick={() => handleOpenImagesModal(it, 'documents')}
+                     >
+                       {it.attachments?.filter((att: any) => !att.file_type?.startsWith('image/')).length || 0} ảnh chứng từ
+                     </button>
                    </div>
+                 </td>
+                <td data-column="position">
+                   <div style={{display:'flex', flexDirection:'column'}}>
+                     <span>{it.yard_name || '-'}</span>
+                     <small className="muted">{it.block_code || '-'} / {it.slot_code || '-'}</small>
+                   </div>
+                 </td>
+                <td data-column="seal">{it.seal_number || '-'}</td>
+                <td data-column="customer">{it.customer?.name || '-'}</td>
+                <td data-column="demDet">{it.dem_det || '-'}</td>
+                <td data-column="action">
+                   <button 
+                     className="btn btn-sm" 
+                     style={{padding: '4px 8px', fontSize: '12px'}}
+                     onClick={() => {
+                       setSelectedContainer(it);
+                       setIsUpdateModalOpen(true);
+                     }}
+                   >
+                     Cập nhật
+                   </button>
                  </td>
               </tr>
             ))}
@@ -273,6 +333,39 @@ function ContainersList(){
           <button className="btn" disabled={(data?.page||1) >= Math.ceil((data?.total||0)/pageSize)} onClick={()=>{ setPage(p=>p+1); }}>{t('common.next')}</button>
         </div>
       </div>
+      
+      <UpdateContainerModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false);
+          setSelectedContainer(null);
+        }}
+        container={selectedContainer}
+        onUpdate={async (containerData) => {
+          try {
+            await containersApi.update(containerData.container_no, {
+              shipping_line_id: containerData.shipping_line_id,
+              container_type_id: containerData.container_type_id,
+              customer_id: containerData.customer_id,
+              vehicle_company_id: containerData.vehicle_company_id,
+              dem_det: containerData.dem_det,
+              seal_number: containerData.seal_number
+            });
+            // Refresh data after update
+            mutate();
+          } catch (error) {
+            console.error('Error updating container:', error);
+          }
+        }}
+      />
+
+      <ContainerImagesModal
+        isOpen={isImagesModalOpen}
+        onClose={handleCloseImagesModal}
+        containerNo={selectedContainerForImages?.container_no || ''}
+        attachments={selectedContainerForImages?.attachments || []}
+        imageType={imageModalType}
+      />
     </>
   );
 }

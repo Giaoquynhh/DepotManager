@@ -22,7 +22,7 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
   const router = useRouter();
 
   const isLift = containerType === 'lift';
-  const mainHref = isLift ? '/LiftContainer' : '/LowerContainer';
+  const mainHref = isLift ? '/LiftContainer' : '/LowerContainer/Request';
   
   const submenuItems = [
     {
@@ -43,6 +43,18 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
 
   // Add specific submenu items
   if (!isLift) {
+    // Thêm submenu mới ngay dưới Yêu cầu hạ container
+    submenuItems.push({
+      key: 'new-submenu',
+      href: '/LowerContainer/NewSubmenu',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+        </svg>
+      ),
+      label: 'Submenu mới'
+    });
+
     // Gate hạ container
     submenuItems.push({
       key: 'gate-lower',
@@ -153,7 +165,14 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
               key={item.key}
               className={`sidebar-link sidebar-submenu-link ${router.pathname === item.href ? 'active' : ''}`} 
               href={item.href}
-              onClick={onSubmenuLinkClick || onSidebarLinkClick}
+              onClick={(e) => {
+                console.log('Submenu link clicked:', item.href);
+                if (onSubmenuLinkClick) {
+                  onSubmenuLinkClick(e);
+                } else if (onSidebarLinkClick) {
+                  onSidebarLinkClick(e);
+                }
+              }}
             >
               {item.icon}
               <span>{item.label}</span>

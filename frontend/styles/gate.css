@@ -749,6 +749,22 @@
   color: var(--color-red-800);
 }
 
+/* Trạng thái mới cho debug */
+.status-pending {
+  background: var(--color-orange-100);
+  color: var(--color-orange-800);
+}
+
+.status-gate-out {
+  background: var(--color-purple-100);
+  color: var(--color-purple-800);
+}
+
+.status-other {
+  background: var(--color-blue-100);
+  color: var(--color-blue-800);
+}
+
 .status-in-yard {
   background: var(--color-indigo-100);
   color: var(--color-indigo-800);

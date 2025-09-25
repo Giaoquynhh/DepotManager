@@ -8,5 +8,6 @@ export { deleteRequest } from './deleteController';
 export { updateRequest } from './updateController';
 export { moveToGate } from './transitionController';
 export { markPaid } from './markPaidController';
+export { checkContainerExists } from './checkContainerController';
 
 

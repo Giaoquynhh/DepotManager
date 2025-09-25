@@ -14,7 +14,7 @@ Module Setup trong frontend cung cấp giao diện quản lý thông tin các h�
   - **Loại container** (Container Types) - `/Setup/ContainerTypes`
   - **Khách hàng** (Customers) - `/Setup/Customers`
 - **Hạ container** (Lower Container) - Menu chính có thể mở rộng/thu gọn
-  - **Yêu cầu hạ container** (Lower Container Requests) - `/LowerContainer`
+  - **Yêu cầu hạ container** (Lower Container Requests) - `/LowerContainer/Request`
 - **Nâng container** (Lift Container) - Menu chính có thể mở rộng/thu gọn
   - **Yêu cầu nâng container** (Lift Container Requests) - `/LiftContainer`
 
@@ -33,7 +33,7 @@ Module Setup trong frontend cung cấp giao diện quản lý thông tin các h�
 - `http://localhost:5002/Setup/TransportCompanies` - Quản lý nhà xe
 - `http://localhost:5002/Setup/ContainerTypes` - Quản lý loại container
 - `http://localhost:5002/Setup/Customers` - Quản lý khách hàng
-- `http://localhost:5002/LowerContainer` - Quản lý yêu cầu hạ container
+- `http://localhost:5002/LowerContainer/Request` - Quản lý yêu cầu hạ container
 - `http://localhost:5002/LiftContainer` - Quản lý yêu cầu nâng container
 
 ## Thay đổi chính (v2025-01-27)
@@ -261,7 +261,7 @@ const [errorText, setErrorText] = useState('');
 ```
 
 ### 7. Trang quản lý Hạ container
-**File:** `pages/LowerContainer.tsx`
+**File:** `pages/LowerContainer/Request/index.tsx`
 
 **Chức năng:**
 - Quản lý yêu cầu hạ container (chuyển từ Requests/Depot)
@@ -1069,7 +1069,7 @@ manageContainer/frontend/
 │       ├── ShippingLinesTable.tsx      # Shipping lines data table with pagination
 │       ├── AddShippingLineModal.tsx    # Add shipping line modal
 │       ├── EditShippingLineModal.tsx   # Edit shipping line modal
-├── pages/LowerContainer.tsx            # Lower container requests page
+├── pages/LowerContainer/Request/index.tsx  # Lower container requests page
 ├── pages/LiftContainer.tsx             # Lift container requests page
 ├── pages/Requests/components/
 │   ├── ImportRequest.tsx               # Import requests table component
@@ -1096,7 +1096,7 @@ manageContainer/frontend/
 │       ├── SetupHeader.tsx             # Header component for setup pages
 │       ├── SuccessMessage.tsx          # Success message component
 │       └── SetupModals.tsx             # Modal management component
-├── pages/LowerContainer.tsx            # Lower container requests management page
+├── pages/LowerContainer/Request/index.tsx  # Lower container requests management page
 ├── pages/LiftContainer.tsx             # Lift container requests management page
 ├── pages/Requests/components/          # Shared request components
 │   ├── ImportRequest.tsx               # Import request component (used by LiftContainer)
@@ -1267,7 +1267,7 @@ NEXT_PUBLIC_UPLOAD_MAX_SIZE=10485760
 - **Container Submenus**: Thêm Hạ container và Nâng container submenus vào sidebar
 - **Requests Integration**: Tích hợp yêu cầu hạ/nâng container trực tiếp vào submenu
 - **Sidebar Cleanup**: Xóa option "Yêu cầu" cũ khỏi sidebar để đơn giản hóa navigation
-- **New Pages**: Tạo pages LowerContainer.tsx và LiftContainer.tsx
+- **New Pages**: Tạo pages LowerContainer/Request/index.tsx và LiftContainer.tsx
 - **Component Reuse**: Tái sử dụng ImportRequest và ExportRequest components
 - **Header Updates**: Cập nhật Header.tsx với ContainerSubmenu component
 - **Translation Updates**: Thêm translations cho container submenus

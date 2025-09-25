@@ -32,5 +32,17 @@ export const containersApi = {
   }): Promise<PaginatedContainers> {
     const { data } = await api.get('/containers', { params });
     return data as PaginatedContainers;
+  },
+
+  async update(container_no: string, data: {
+    shipping_line_id?: string;
+    container_type_id?: string;
+    customer_id?: string;
+    vehicle_company_id?: string;
+    dem_det?: string;
+    seal_number?: string;
+  }) {
+    const { data: response } = await api.put(`/containers/${container_no}`, data);
+    return response;
   }
 };

@@ -1,12 +1,15 @@
 import React from 'react';
+import { useRouter } from 'next/router';
 import Header from '@components/Header';
-import { useTranslation } from '../hooks/useTranslation';
-import { ExportRequest } from './Requests/components/ExportRequest';
-import { CreateLowerRequestModal, LowerRequestData } from './Requests/components';
-import { requestService } from '../services/requests';
-import { useToast } from '../hooks/useToastHook';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { ExportRequest } from '../../Requests/components/ExportRequest';
+import { CreateLowerRequestModal, LowerRequestData } from '../../Requests/components';
+import { requestService } from '../../../services/requests';
+import { useToast } from '../../../hooks/useToastHook';
+import { useRouteRefresh } from '../../../hooks/useRouteRefresh';
 
 export default function LowerContainer() {
+	const router = useRouter();
 	const { t } = useTranslation();
 	const { showSuccess, ToastContainer } = useToast();
 	const [localSearch, setLocalSearch] = React.useState('');
@@ -15,6 +18,7 @@ export default function LowerContainer() {
 	const [isCreateLowerModalOpen, setIsCreateLowerModalOpen] = React.useState(false);
 	const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [isReject, setIsReject] = React.useState(false);
+  const routeRefreshKey = useRouteRefresh();
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -23,6 +27,18 @@ export default function LowerContainer() {
       setIsReject(isRejectParam === 'true' || isRejectParam === '1');
     }
   }, []);
+
+  // Force refresh when route changes to ensure fresh data
+  React.useEffect(() => {
+    if (router.isReady) {
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [router.pathname, router.isReady]);
+
+  // Additional refresh when route changes (using custom hook)
+  React.useEffect(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, [routeRefreshKey]);
 
   const handleCreateRequest = () => {
     setIsCreateLowerModalOpen(true);

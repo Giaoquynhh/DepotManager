@@ -140,5 +140,10 @@ export const requestService = {
   // Move request from PENDING to GATE_IN
   async moveToGate(requestId: string) {
     return api.patch(`/requests/${requestId}/move-to-gate`);
+  },
+
+  // Check if container number already exists
+  async checkContainerExists(containerNo: string) {
+    return api.get(`/requests/check-container?container_no=${encodeURIComponent(containerNo)}`);
   }
 };

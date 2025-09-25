@@ -36,6 +36,12 @@ router.post('/create',
     controller.createRequest
 );
 
+// Check if container number already exists
+router.get('/check-container', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    controller.checkContainerExists
+);
+
 // Get list of requests
 router.get('/', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),

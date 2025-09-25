@@ -48,6 +48,11 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	});
 
 	const [errors, setErrors] = useState<Partial<LowerRequestData>>({});
+	
+	// Container validation states
+	const [isCheckingContainer, setIsCheckingContainer] = useState(false);
+	const [containerValidationError, setContainerValidationError] = useState<string>('');
+	const containerCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Shipping lines (from Setup page)
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
@@ -212,7 +217,51 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 				[field]: undefined
 			}));
 		}
+
+		// Clear container validation error when user starts typing
+		if (field === 'containerNumber' && containerValidationError) {
+			setContainerValidationError('');
+		}
 	};
+
+	// Check if container number already exists
+	const checkContainerExists = React.useCallback(async (containerNo: string) => {
+		if (!containerNo.trim()) {
+			setContainerValidationError('');
+			return;
+		}
+
+		setIsCheckingContainer(true);
+		setContainerValidationError('');
+
+		try {
+			const response = await requestService.checkContainerExists(containerNo);
+			
+			if (response.data.success && response.data.exists) {
+				setContainerValidationError(response.data.message);
+			} else {
+				setContainerValidationError('');
+			}
+		} catch (error: any) {
+			console.error('Error checking container:', error);
+			setContainerValidationError('Lỗi khi kiểm tra container. Vui lòng thử lại.');
+		} finally {
+			setIsCheckingContainer(false);
+		}
+	}, []);
+
+	// Debounced container check
+	const debouncedCheckContainer = React.useCallback((containerNo: string) => {
+		// Clear previous timeout
+		if (containerCheckTimeoutRef.current) {
+			clearTimeout(containerCheckTimeoutRef.current);
+		}
+		
+		// Set new timeout
+		containerCheckTimeoutRef.current = setTimeout(() => {
+			checkContainerExists(containerNo);
+		}, 1000); // 1000ms delay - tăng delay để tránh check quá nhiều
+	}, [checkContainerExists]);
 
 	const validateForm = (): boolean => {
 		const newErrors: Partial<LowerRequestData> = {};
@@ -228,6 +277,16 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		}
 		if (!formData.customer.trim()) {
 			newErrors.customer = 'Khách hàng là bắt buộc';
+		}
+
+		// Check container validation error
+		if (containerValidationError) {
+			newErrors.containerNumber = containerValidationError;
+		}
+
+		// Check if container validation is still in progress
+		if (isCheckingContainer) {
+			newErrors.containerNumber = 'Đang kiểm tra container...';
 		}
 
 		setErrors(newErrors);
@@ -310,7 +369,13 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	const handleClose = () => {
 		// Revoke all preview URLs on close
 		previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
+		// Clear container check timeout
+		if (containerCheckTimeoutRef.current) {
+			clearTimeout(containerCheckTimeoutRef.current);
+		}
 		setErrors({});
+		setContainerValidationError('');
+		setIsCheckingContainer(false);
 		setIsShippingLineOpen(false);
 		setIsContainerTypeOpen(false);
 		setIsTransportCompanyOpen(false);
@@ -333,6 +398,15 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
 		};
 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Cleanup container check timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (containerCheckTimeoutRef.current) {
+				clearTimeout(containerCheckTimeoutRef.current);
+			}
+		};
 	}, []);
 
 	if (!isOpen) return null;
@@ -715,12 +789,22 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 						<div style={formGroupStyle}>
 							<label style={requiredLabelStyle}>
 								Số container <span style={requiredAsteriskStyle}>*</span>
+								{isCheckingContainer && (
+									<span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
+										(Đang kiểm tra...)
+									</span>
+								)}
 							</label>
 							<input
 								type="text"
 								style={errors.containerNumber ? formInputErrorStyle : formInputStyle}
 								value={formData.containerNumber}
 								onChange={(e) => handleInputChange('containerNumber', e.target.value)}
+								onBlur={() => {
+									if (formData.containerNumber.trim()) {
+										checkContainerExists(formData.containerNumber);
+									}
+								}}
 								placeholder="Nhập số container"
 							/>
 							{errors.containerNumber && <span style={errorMessageStyle}>{errors.containerNumber}</span>}

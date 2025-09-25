@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { api } from '@services/api';
 import LowerGateRequestTable from './LowerGateRequestTable';
 import GateSearchBar from '../../Gate/components/GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useDataRefresh } from '../../../hooks/useRouteRefresh';
 
 interface GateRequest {
   id: string;
@@ -21,9 +23,12 @@ interface GateRequest {
 }
 
 export default function LowerGateDashboard() {
+  const router = useRouter();
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
+  const { shouldRefresh, resetRefresh } = useDataRefresh();
+  const [componentKey, setComponentKey] = useState(0);
 
   const [searchParams, setSearchParams] = useState({
     status: '',
@@ -51,6 +56,39 @@ export default function LowerGateDashboard() {
       setLoading(false);
     }
   };
+
+  // Force refresh when route changes to ensure fresh data
+  useEffect(() => {
+    if (router.isReady) {
+      console.log('🔄 LowerGateDashboard: Route changed to', router.pathname);
+      // Reset state and fetch fresh data when route changes
+      setRequests([]);
+      setLoading(true);
+      setComponentKey(prev => prev + 1);
+      fetchRequests();
+    }
+  }, [router.pathname, router.isReady]);
+
+  // Additional refresh when shouldRefresh is true
+  useEffect(() => {
+    if (shouldRefresh) {
+      console.log('🔄 LowerGateDashboard: shouldRefresh triggered');
+      setRequests([]);
+      setLoading(true);
+      setComponentKey(prev => prev + 1);
+      fetchRequests();
+      resetRefresh();
+    }
+  }, [shouldRefresh, resetRefresh]);
+
+  // Force refresh when component mounts (to ensure fresh data)
+  useEffect(() => {
+    console.log('🔄 LowerGateDashboard: Component mounted');
+    setRequests([]);
+    setLoading(true);
+    setComponentKey(prev => prev + 1);
+    fetchRequests();
+  }, []);
 
   useEffect(() => {
     fetchRequests();
@@ -88,6 +126,7 @@ export default function LowerGateDashboard() {
       />
 
       <LowerGateRequestTable
+        key={`gate-table-${componentKey}`}
         requests={requests}
         loading={loading}
         onRefresh={fetchRequests}

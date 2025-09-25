@@ -316,6 +316,8 @@ export class GateService {
     const { status, statuses, container_no, license_plate, type, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
+    console.log('🔍 GateService.searchRequests - Input params:', params);
+
     const where: any = {};
 
     // Xử lý status filter
@@ -327,8 +329,8 @@ export class GateService {
       const statusArray = statuses.split(',').map(s => s.trim());
       where.status = { in: statusArray };
     } else {
-      // Default: bao gồm PENDING để thấy yêu cầu mới tạo ở LowerContainer
-      where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN'] };
+      // Default: bao gồm PENDING để thấy yêu cầu mới tạo ở LowerContainer và GATE_OUT để debug
+      where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN', 'GATE_OUT', 'CHECKED'] };
     }
 
     if (container_no && container_no.trim()) {
@@ -342,6 +344,9 @@ export class GateService {
     if (type && type.trim()) {
       where.type = type.trim();
     }
+
+    console.log('🔍 GateService.searchRequests - Final where clause:', where);
+    console.log('🔍 GateService.searchRequests - Pagination:', { skip, limit, page });
 
     const [requests, total] = await Promise.all([
       prisma.serviceRequest.findMany({
@@ -361,6 +366,9 @@ export class GateService {
       }),
       prisma.serviceRequest.count({ where })
     ]);
+
+    console.log('🔍 GateService.searchRequests - Found requests:', requests.length);
+    console.log('🔍 GateService.searchRequests - Total count:', total);
 
     // Với các IMPORT đã GATE_IN, tự động tạo RepairTicket nếu chưa có và đính kèm thông tin vào payload trả về
     const mapped = await Promise.all(requests.map(async (r: any) => {

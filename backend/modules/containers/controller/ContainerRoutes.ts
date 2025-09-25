@@ -22,6 +22,7 @@ router.get('/', async (req: AuthRequest, res) => {
 });
 
 router.get('/:container_no', (req, res) => controller.get(req as any, res));
+router.put('/:container_no', (req, res) => controller.updateContainer(req, res));
 router.get('/alerts/list', (req, res) => controller.alerts(req as any, res));
 
 export default router;

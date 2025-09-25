@@ -83,7 +83,14 @@ export class ReportsRepository {
           sr.driver_name as driver_name,
           sr.license_plate as license_plate,
           sr.gate_ref as gate_ref,
-          sr."createdAt" as created_at
+          sr."createdAt" as created_at,
+          sr.shipping_line_id,
+          sr.container_type_id,
+          sr.customer_id,
+          sr.vehicle_company_id,
+          sr.dem_det,
+          sr.seal_number,
+          sr.request_no
         FROM "ServiceRequest" sr
         WHERE sr.container_no IS NOT NULL
         ORDER BY sr.container_no, sr."createdAt" DESC
@@ -149,7 +156,15 @@ export class ReportsRepository {
         COALESCE(rt.repair_checked, FALSE) as repair_checked,
         rt.updated_at as repair_updated_at,
         yp.tier as placement_tier,
-        bc.source as data_source
+        bc.source as data_source,
+        -- Thông tin từ request
+        ls.shipping_line_id,
+        ls.container_type_id,
+        ls.customer_id,
+        ls.vehicle_company_id,
+        ls.dem_det,
+        ls.seal_number,
+        ls.request_no
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
@@ -176,6 +191,81 @@ export class ReportsRepository {
       ORDER BY bc.container_no, bc.priority
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
     `;
+    
+    // Lấy thông tin chi tiết từ các bảng liên quan
+    const containersWithDetails = await Promise.all(
+      raw.map(async (container: any) => {
+        const details: any = {};
+        
+        // Lấy thông tin shipping line
+        if (container.shipping_line_id) {
+          const shippingLine = await prisma.shippingLine.findUnique({
+            where: { id: container.shipping_line_id },
+            select: { name: true, code: true }
+          });
+          details.shipping_line = shippingLine;
+        }
+        
+        // Lấy thông tin container type
+        if (container.container_type_id) {
+          const containerType = await prisma.containerType.findUnique({
+            where: { id: container.container_type_id },
+            select: { code: true, description: true }
+          });
+          details.container_type = containerType;
+        }
+        
+        // Lấy thông tin customer
+        if (container.customer_id) {
+          const customer = await prisma.customer.findUnique({
+            where: { id: container.customer_id },
+            select: { name: true, code: true }
+          });
+          details.customer = customer;
+        }
+        
+        // Lấy thông tin transport company
+        if (container.vehicle_company_id) {
+          const transportCompany = await prisma.transportCompany.findUnique({
+            where: { id: container.vehicle_company_id },
+            select: { name: true, code: true }
+          });
+          details.transport_company = transportCompany;
+        }
+        
+        // Lấy thông tin repair ticket để xác định trạng thái
+        if (container.container_no) {
+          const repairTicket = await prisma.repairTicket.findFirst({
+            where: { container_no: container.container_no },
+            orderBy: { createdAt: 'desc' },
+            select: { status: true, id: true }
+          });
+          details.repair_ticket = repairTicket;
+        }
+        
+        // Lấy thông tin attachments từ request
+        if (container.request_no) {
+          const request = await prisma.serviceRequest.findFirst({
+            where: { request_no: container.request_no },
+            include: {
+              attachments: {
+                where: { deleted_at: null },
+                select: { 
+                  id: true, 
+                  file_name: true, 
+                  file_type: true, 
+                  storage_url: true,
+                  file_size: true
+                }
+              }
+            }
+          });
+          details.attachments = request?.attachments || [];
+        }
+        
+        return { ...container, ...details };
+      })
+    );
     
     const total = (await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
@@ -256,7 +346,7 @@ export class ReportsRepository {
         )
     `)[0]?.cnt || 0;
     
-    return { items: raw, total, page: params.page, pageSize: params.pageSize };
+    return { items: containersWithDetails, total, page: params.page, pageSize: params.pageSize };
   }
 }
 

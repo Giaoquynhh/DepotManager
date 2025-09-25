@@ -764,6 +764,25 @@ export default function Header() {
                 </Link>
             )}
 
+            {/* Container Manager Module */}
+            {(() => {
+              const allow = canManageContainers(me?.role);
+              const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
+                ? hasPermission(me?.permissions, 'containers.manage')
+                : allow;
+              return ok;
+            })() && (
+                <Link className={`sidebar-link ${router.pathname === '/ManagerCont' ? 'active' : ''}`} href="http://localhost:5002/ManagerCont" onClick={handleSidebarLinkClick}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                    <path d="M8 9h8M8 13h8"></path>
+                  </svg>
+                  <span>{t('sidebar.containerManager')}</span>
+                </Link>
+            )}
+
             {/* Forklift Module - Xe nâng */}
             {(() => {
               const allow = canManageForklift(me?.role);

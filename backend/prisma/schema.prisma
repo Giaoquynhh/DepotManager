@@ -110,13 +110,10 @@ model ServiceRequest {
   gate_checked_by           String?
   gate_reason               String?
   driver_name               String?
-  driver_phone              String?
   license_plate             String?
   has_invoice               Boolean             @default(false)
   is_paid                   Boolean             @default(false)
   is_pick                   Boolean             @default(false)
-  isCheck                   Boolean             @default(false)
-  isRepair                  Boolean             @default(false)
   time_in                   DateTime?
   time_out                  DateTime?
   container_type_id         String?
@@ -125,6 +122,11 @@ model ServiceRequest {
   shipping_line_id          String?
   vehicle_company_id        String?
   booking_bill              String?
+  driver_phone              String?
+  isCheck                   Boolean             @default(false)
+  isRepair                  Boolean             @default(false)
+  dem_det                   String?
+  seal_number               String?
   chatRoom                  ChatRoom?
   docs                      DocumentFile[]
   invoices                  Invoice[]
@@ -339,14 +341,15 @@ model RepairTicket {
   estimated_cost      Float?             @default(0)
   manager_comment     String?
   createdAt           DateTime           @default(now())
-  status              RepairStatus       @default(PENDING)
   updatedAt           DateTime           @updatedAt
   container_no        String?
   labor_cost          Float?             @default(0)
   viewquote           Int                @default(0)
+  status              RepairStatus       @default(PENDING)
+  endTime             DateTime?
+  images              RepairImage[]
   equipment           Equipment?         @relation(fields: [equipment_id], references: [id])
   items               RepairTicketItem[]
-  images              RepairImage[]
 
   @@index([equipment_id])
   @@index([container_no])
@@ -366,14 +369,14 @@ model RepairTicketItem {
 }
 
 model RepairImage {
-  id              String       @id @default(cuid())
+  id               String       @id @default(cuid())
   repair_ticket_id String
-  file_name       String
-  file_type       String
-  file_size       Int
-  storage_url     String
-  createdAt       DateTime     @default(now())
-  ticket          RepairTicket @relation(fields: [repair_ticket_id], references: [id], onDelete: Cascade)
+  file_name        String
+  file_type        String
+  file_size        Int
+  storage_url      String
+  createdAt        DateTime     @default(now())
+  ticket           RepairTicket @relation(fields: [repair_ticket_id], references: [id], onDelete: Cascade)
 
   @@index([repair_ticket_id])
 }
@@ -657,4 +660,3 @@ enum RepairStatus {
   COMPLETE
   COMPLETE_NEEDREPAIR
 }
-

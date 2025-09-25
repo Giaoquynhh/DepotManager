@@ -71,6 +71,7 @@
     "gate": "Gate",
     "yard": "Yard",
     "containerManagement": "Container Management",
+    "containerManager": "Container Manager",
     "forkliftManagement": "Forklift Management",
     "dashboard": "Dashboard",
     "statistics": "Statistics",

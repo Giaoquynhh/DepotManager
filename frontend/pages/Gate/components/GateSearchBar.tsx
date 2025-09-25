@@ -3,12 +3,12 @@ import { useTranslation } from '../../../hooks/useTranslation';
 
 type GateSearchParams = {
   status: string;
+  statuses: string; // Hỗ trợ lọc nhiều trạng thái
   container_no: string;
   type: string;
   license_plate: string; // Thêm trường biển số xe
   page: number;
   limit: number;
-  statuses?: string; // Hỗ trợ lọc nhiều trạng thái
 };
 
 interface GateSearchBarProps {
@@ -74,21 +74,23 @@ export default function GateSearchBar({
               <select
                 className="filter-select"
                 aria-label="Trạng thái"
-                value={searchParams.status || (searchParams.statuses ? 'PENDING_GROUP' : '')}
+                value={searchParams.status || (searchParams.statuses ? (searchParams.statuses.includes('PENDING,NEW_REQUEST') ? 'PENDING_GROUP' : 'ENTERED_GATE') : '')}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === '') {
                     onSearch({ status: '', statuses: '', page: 1 });
-                  } else if (val === 'GATE_IN') {
-                    onSearch({ status: 'GATE_IN', statuses: '', page: 1 });
                   } else if (val === 'PENDING_GROUP') {
+                    // PENDING = Đang tới
                     onSearch({ status: '', statuses: 'PENDING,NEW_REQUEST', page: 1 });
+                  } else if (val === 'ENTERED_GATE') {
+                    // Các trạng thái khác = Đã vào cổng
+                    onSearch({ status: '', statuses: 'FORWARDED,GATE_IN,IN_YARD,IN_CAR,COMPLETED', page: 1 });
                   }
                 }}
               >
                 <option value="">Tất cả trạng thái</option>
-                <option value="GATE_IN">Đã vào cổng</option>
                 <option value="PENDING_GROUP">Đang tới</option>
+                <option value="ENTERED_GATE">Đã vào cổng</option>
               </select>
             ) : (
               <select

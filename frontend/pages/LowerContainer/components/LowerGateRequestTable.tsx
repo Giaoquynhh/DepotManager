@@ -36,30 +36,38 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const { t, currentLanguage } = useTranslation();
 
-  // Đồng bộ mapping trạng thái với bảng Gate nâng container (kèm emoji)
+  // Logic hiển thị trạng thái theo yêu cầu debug
   const statusLabel = (status: string) => {
     switch (status) {
-      case 'SCHEDULED':
-        return t('pages.gate.statusOptions.scheduled');
-      case 'FORWARDED':
-        return t('pages.gate.statusOptions.forwarded');
-      case 'NEW_REQUEST':
       case 'PENDING':
-        return `🆕 ${t('pages.gate.statusOptions.newRequest')}`;
-      case 'IN_YARD':
-        return `🏭 ${t('pages.gate.statusOptions.inYard')}`;
-      case 'IN_CAR':
-        return `🚛 ${t('pages.gate.statusOptions.inCar')}`;
-      case 'GATE_IN':
-        return `🟢 ${t('pages.gate.statusOptions.gateIn')}`;
+        return 'Đang tới';
       case 'GATE_OUT':
-        return `🟣 ${t('pages.gate.statusOptions.gateOut')}`;
-      case 'GATE_REJECTED':
-        return `⛔ ${t('pages.gate.statusOptions.gateRejected')}`;
-      case 'COMPLETED':
-        return t('pages.gate.statusOptions.completed');
+        return 'Đã ra khỏi depot';
+      case 'CHECKED':
+      case 'GATE_IN':
+      case 'IN_YARD':
+      case 'FORWARDED':
+      case 'NEW_REQUEST':
       default:
-        return status;
+        // Tất cả trạng thái khác PENDING và GATE_OUT
+        return 'Đã vào cổng';
+    }
+  };
+
+  // Function để xác định CSS class cho trạng thái
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return 'status-pending';
+      case 'GATE_OUT':
+        return 'status-gate-out';
+      case 'CHECKED':
+      case 'GATE_IN':
+      case 'IN_YARD':
+      case 'FORWARDED':
+      case 'NEW_REQUEST':
+      default:
+        return 'status-other';
     }
   };
 
@@ -145,7 +153,7 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
                   </span>
                 </td>
                 <td>
-                  <span className={`status-badge status-${request.status.toLowerCase().replace(/_/g, '-')}`}>
+                  <span className={`status-badge ${getStatusClass(request.status)}`}>
                     {statusLabel(request.status)}
                   </span>
                 </td>

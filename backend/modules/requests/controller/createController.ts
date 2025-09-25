@@ -59,6 +59,27 @@ export const createRequest = async (req: Request, res: Response) => {
             }
         }
 
+        // Validation: Kiểm tra container number trùng lặp cho IMPORT requests
+        if (type === 'IMPORT' && container_no) {
+            const existingContainer = await prisma.serviceRequest.findFirst({
+                where: {
+                    container_no: container_no,
+                    type: 'IMPORT',
+                    status: {
+                        notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (existingContainer) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingContainer.status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống.` 
+                });
+            }
+        }
+
         const request = await prisma.serviceRequest.create({
             data: {
                 created_by: createdBy,
