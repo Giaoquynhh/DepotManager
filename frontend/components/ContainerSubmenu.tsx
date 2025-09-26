@@ -24,8 +24,11 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
   const isLift = containerType === 'lift';
   const mainHref = isLift ? '/LiftContainer' : '/LowerContainer/Request';
   
-  const submenuItems = [
-    {
+  const submenuItems: Array<{ key: string; href: string; icon: React.ReactNode; label: string; }> = [];
+
+  // Chỉ hiển thị mục "Yêu cầu" cho phần Nâng container
+  if (isLift) {
+    submenuItems.push({
       key: 'requests',
       href: mainHref,
       icon: (
@@ -37,9 +40,9 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
           <polyline points="10,9 9,9 8,9"/>
         </svg>
       ),
-      label: isLift ? 'Yêu cầu nâng container' : 'Yêu cầu hạ container'
-    }
-  ];
+      label: 'Yêu cầu nâng container'
+    });
+  }
 
   // Add specific submenu items
   if (!isLift) {
@@ -52,7 +55,7 @@ export const ContainerSubmenu: React.FC<ContainerSubmenuProps> = ({
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
         </svg>
       ),
-      label: 'Submenu mới'
+      label: 'Tạo yêu cầu hạ container'
     });
 
     // Gate hạ container

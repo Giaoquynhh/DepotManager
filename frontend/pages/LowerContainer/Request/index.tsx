@@ -91,7 +91,6 @@ export default function LowerContainer() {
 				setLocalStatus={setLocalStatus}
 				refreshTrigger={refreshTrigger}
         isReject={isReject}
-				onCreateRequest={handleCreateRequest}
 			/>
 
         {/* Create Lower Request Modal */}

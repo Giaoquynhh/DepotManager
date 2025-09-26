@@ -144,6 +144,7 @@ export default function NewSubmenu() {
     const normalized = String(status).toUpperCase();
     if (normalized === 'PENDING') return 'Thêm mới';
     if (normalized === 'CHECKED') return 'Chấp nhận';
+    if (normalized === 'GATE_IN') return 'Đã vào cổng';
     if (normalized === 'FORKLIFTING') return 'Đang hạ container';
     // Trạng thái mới cho Import: hiển thị ngay sau FORKLIFTING
     if (normalized === 'IN_YARD') return 'Đã hạ thành công';
@@ -529,7 +530,7 @@ export default function NewSubmenu() {
           <div className="header-content">
             <div className="header-left">
               <h1 className="page-title gradient gradient-ultimate">
-                Submenu mới
+                Tạo yêu cầu hạ container
               </h1>
             </div>
           </div>

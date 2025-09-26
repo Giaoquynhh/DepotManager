@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { requestService } from '../../../services/requests';
-import { UpdateRequestModal } from './UpdateRequestModal';
 import { CancelRequestModal } from './CancelRequestModal';
 import { maintenanceApi } from '../../../services/maintenance';
 
@@ -66,9 +65,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     const [selectedRequest, setSelectedRequest] = React.useState<{ id: string; containerNo: string } | null>(null);
     const [attachments, setAttachments] = React.useState<Array<{ id: string; file_name: string; file_type: string; file_size: number; storage_url: string }>>([]);
 
-    // Update modal state
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
-    const [selectedRequestForUpdate, setSelectedRequestForUpdate] = React.useState<LowerRequestRow | null>(null);
+    // Removed update modal state (button and logic deleted)
     const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
     const [selectedRequestForCancel, setSelectedRequestForCancel] = React.useState<LowerRequestRow | null>(null);
 
@@ -205,21 +202,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     setDocsError(null);
   };
 
-  // Handle update request
-  const handleUpdateRequest = (row: LowerRequestRow) => {
-    setSelectedRequestForUpdate(row);
-    setIsUpdateModalOpen(true);
-  };
-
-  const closeUpdateModal = () => {
-    setIsUpdateModalOpen(false);
-    setSelectedRequestForUpdate(null);
-  };
-
-  const handleUpdateSuccess = () => {
-    // Refresh the table after successful update
-    fetchRequests();
-  };
+  // Removed: update handlers
 
   // Handle cancel/reject request
   const handleCancelRequest = (row: LowerRequestRow) => {
@@ -440,14 +423,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 										<td style={tdStyle}>{r.demDet || '-'}</td>
 										<td style={tdStyle}>{r.notes || ''}</td>
                                         <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                                          <button 
-                                            type="button" 
-                                            className="btn btn-primary" 
-                                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                            onClick={() => handleUpdateRequest(r)}
-                                          >
-                                            Cập nhật thông tin
-                                          </button>
+                                          {/* Nút cập nhật thông tin đã bị xóa theo yêu cầu */}
                                           {r.status === 'PENDING' && (
                                             <button 
                                               type="button" 
@@ -526,26 +502,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
       </div>
     )}
 
-    {/* Update Request Modal */}
-    <UpdateRequestModal
-      isOpen={isUpdateModalOpen}
-      onClose={closeUpdateModal}
-      onUpdate={handleUpdateSuccess}
-      requestData={selectedRequestForUpdate ? {
-        id: selectedRequestForUpdate.id,
-        containerNo: selectedRequestForUpdate.containerNo,
-        requestNo: selectedRequestForUpdate.requestNo,
-        shippingLine: selectedRequestForUpdate.shippingLine,
-        containerType: selectedRequestForUpdate.containerType,
-        customer: selectedRequestForUpdate.customer,
-        transportCompany: selectedRequestForUpdate.transportCompany,
-        vehicleNumber: selectedRequestForUpdate.vehicleNumber,
-        driverName: selectedRequestForUpdate.driverName,
-        driverPhone: selectedRequestForUpdate.driverPhone,
-        appointmentTime: selectedRequestForUpdate.appointmentTime || '',
-        notes: selectedRequestForUpdate.notes || ''
-      } : null}
-    />
+    {/* Modal cập nhật đã bị gỡ bỏ */}
 
     <CancelRequestModal
       isOpen={isCancelModalOpen}

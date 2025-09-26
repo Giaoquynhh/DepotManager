@@ -237,9 +237,10 @@ export class ReportsRepository {
         
         // Lấy thông tin repair ticket để xác định trạng thái
         if (container.container_no) {
+          // Chọn ticket mới nhất theo updatedAt (ưu tiên chính xác trạng thái hiện hành)
           const repairTicket = await prisma.repairTicket.findFirst({
             where: { container_no: container.container_no },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { updatedAt: 'desc' },
             select: { status: true, id: true }
           });
           details.repair_ticket = repairTicket;
