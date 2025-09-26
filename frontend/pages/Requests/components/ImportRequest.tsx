@@ -80,8 +80,11 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                 return '📅 Đã lên lịch';
             case 'FORWARDED':
                 return '📤 Đã chuyển tiếp';
+            case 'FORKLIFTING':
+                return '🟡 Đang nâng hạ';
             case 'GATE_IN':
-                // Trên màn LiftContainer, hiển thị như "Nâng thành công" để cho phép thanh toán
+                return '🟢 Đã cho phép vào';
+            case 'DONE_LIFTING':
                 return '✅ Nâng thành công';
             case 'GATE_OUT':
                 return '🟣 Đã cho phép ra';
@@ -478,11 +481,12 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                                 className="btn btn-primary" 
                                                 style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
                                                 onClick={() => handleUpdateClick(r.id)}
-                                                disabled={processingIds.has(r.id) || loading}
+                                                disabled={processingIds.has(r.id) || loading || r.status !== 'NEW_REQUEST'}
+                                                title={r.status !== 'NEW_REQUEST' ? 'Chỉ cho phép cập nhật khi trạng thái là Thêm mới' : undefined}
                                             >
                                                 {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                                             </button>
-                    {(r.status === 'GATE_IN') && r.paymentStatus !== 'Đã thanh toán' && (
+                    {(r.status === 'DONE_LIFTING') && r.paymentStatus !== 'Đã thanh toán' && (
                         <button
                             type="button"
                             className="btn btn-success"

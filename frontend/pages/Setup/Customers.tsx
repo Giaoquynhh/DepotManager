@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import Header from '../../components/Header';
 import Card from '../../components/Card';
-import CreatePartnerModal from '../UsersPartners/components/CreatePartnerModal';
 import { setupService, Customer } from '../../services/setupService';
 import { Pagination } from '../../components/Pagination';
+import { UploadCustomerExcelModal } from './components/UploadCustomerExcelModal';
+import { AddCustomerModal, CustomerFormData } from './components/AddCustomerModal';
+import { EditCustomerModal } from './components/EditCustomerModal';
+import { SetupHeader } from './components/SetupHeader';
+import { SuccessMessage } from './components/SuccessMessage';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 
 // Import translations
-import { translations } from '../UsersPartners/translations';
+import { translations } from './constants/translations';
 
 export default function Customers() {
   const { t, currentLanguage } = useTranslation();
@@ -15,69 +20,58 @@ export default function Customers() {
 
   // State for customers
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState({ page: 1, limit: 14, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(false);
-  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [message, setMessage] = useState('');
-  const [showMessage, setShowMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
+  // Delete Modal States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Form states
-  const [customerCode, setCustomerCode] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [address, setAddress] = useState('');
-  const [taxCode, setTaxCode] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [note, setNote] = useState('');
+  const [customerFormData, setCustomerFormData] = useState<CustomerFormData>({
+    code: '',
+    name: '',
+    address: '',
+    taxCode: '',
+    email: '',
+    phone: '',
+    note: ''
+  });
   const [errorText, setErrorText] = useState('');
-  
-  // Validation error states
-  const [codeError, setCodeError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [taxCodeError, setTaxCodeError] = useState('');
 
   // Load customers on component mount
   useEffect(() => {
-    loadCustomers(pagination.page, pagination.limit);
-  }, [pagination.page, pagination.limit]);
+    loadCustomers(1, 14);
+  }, []);
 
-  // Auto-hide message after 3 seconds
+  // Auto-hide success message after 3 seconds
   useEffect(() => {
-    if (showMessage) {
-      console.log('showMessage is true, setting timer');
+    if (successMessage) {
       const timer = setTimeout(() => {
-        console.log('Timer expired, hiding message');
-        setShowMessage(false);
-        setMessage('');
+        setSuccessMessage('');
       }, 3000);
       
       return () => clearTimeout(timer);
     }
-  }, [showMessage]);
-
-  // Debug showMessage state
-  useEffect(() => {
-    console.log('showMessage state changed:', showMessage);
-    console.log('message state:', message);
-  }, [showMessage, message]);
+  }, [successMessage]);
 
   const resetForm = () => {
-    setCustomerCode('');
-    setCustomerName('');
-    setAddress('');
-    setTaxCode('');
-    setEmail('');
-    setPhone('');
-    setNote('');
+    setCustomerFormData({
+      code: '',
+      name: '',
+      address: '',
+      taxCode: '',
+      email: '',
+      phone: '',
+      note: ''
+    });
     setErrorText('');
-    setCodeError('');
-    setEmailError('');
-    setPhoneError('');
-    setTaxCodeError('');
-    setShowMessage(false);
-    setMessage('');
     setEditingCustomer(null);
   };
 
@@ -106,44 +100,8 @@ export default function Customers() {
     return taxCodeRegex.test(taxCode.trim()) && taxCode.trim().length >= 10;
   };
 
-  // Real-time validation handlers
-  const handleCodeChange = (value: string) => {
-    setCustomerCode(value);
-    if (value.trim() && !validateCode(value)) {
-      setCodeError('Mã khách hàng chỉ được chứa chữ cái, số và dấu gạch dưới');
-    } else {
-      setCodeError('');
-    }
-  };
 
-  const handleEmailChange = (value: string) => {
-    setEmail(value);
-    if (value.trim() && !validateEmail(value)) {
-      setEmailError('Định dạng email không hợp lệ');
-    } else {
-      setEmailError('');
-    }
-  };
-
-  const handlePhoneChange = (value: string) => {
-    setPhone(value);
-    if (value.trim() && !validatePhone(value)) {
-      setPhoneError('Số điện thoại không hợp lệ');
-    } else {
-      setPhoneError('');
-    }
-  };
-
-  const handleTaxCodeChange = (value: string) => {
-    setTaxCode(value);
-    if (value.trim() && !validateTaxCode(value)) {
-      setTaxCodeError('Mã số thuế phải là số và có ít nhất 10 chữ số');
-    } else {
-      setTaxCodeError('');
-    }
-  };
-
-  const loadCustomers = async (page = 1, limit = 10) => {
+  const loadCustomers = async (page = 1, limit = 14) => {
     setLoading(true);
     try {
       console.log('Loading customers...');
@@ -161,53 +119,53 @@ export default function Customers() {
           const totalPages = Math.max(1, Math.ceil(total / limit));
           setPagination(prev => ({ ...prev, page, limit, total, totalPages }));
         }
-        setMessage(''); // Clear any previous error
+        // Don't clear success message here to preserve it
       } else {
-        setMessage(response.message || 'Lỗi khi tải danh sách khách hàng');
+        setSuccessMessage(response.message || 'Lỗi khi tải danh sách khách hàng');
       }
     } catch (error) {
       console.error('Error loading customers:', error);
-      setMessage('Lỗi khi tải danh sách khách hàng');
+      setSuccessMessage('Lỗi khi tải danh sách khách hàng');
     } finally {
       setLoading(false);
     }
   };
 
   const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    loadCustomers(page, pagination.limit);
   };
 
   // Validation and create/update function
-  const validateAndCreate = async () => {
-    if (!customerCode.trim()) {
+  const validateAndCreate = async (formData: CustomerFormData) => {
+    if (!formData.code.trim()) {
       setErrorText('Mã khách hàng không được để trống');
       return;
     }
-    if (!customerName.trim()) {
+    if (!formData.name.trim()) {
       setErrorText('Tên khách hàng không được để trống');
       return;
     }
 
     // Validate customer code format
-    if (!validateCode(customerCode)) {
+    if (!validateCode(formData.code)) {
       setErrorText('Mã khách hàng chỉ được chứa chữ cái, số và dấu gạch dưới');
       return;
     }
 
     // Validate email format if provided
-    if (!validateEmail(email)) {
+    if (!validateEmail(formData.email)) {
       setErrorText('Định dạng email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: example@domain.com)');
       return;
     }
 
     // Validate phone format if provided
-    if (!validatePhone(phone)) {
+    if (!validatePhone(formData.phone)) {
       setErrorText('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại đúng định dạng');
       return;
     }
 
     // Validate tax code format if provided
-    if (!validateTaxCode(taxCode)) {
+    if (!validateTaxCode(formData.taxCode)) {
       setErrorText('Mã số thuế phải là số và có ít nhất 10 chữ số');
       return;
     }
@@ -219,34 +177,36 @@ export default function Customers() {
       if (editingCustomer) {
         // Update existing customer (tax_code is immutable, so we only update name, address, email, phone)
         const updateData: any = {
-          name: customerName.trim()
+          name: formData.name.trim()
         };
         
-        if (address.trim()) updateData.address = address.trim();
-        if (email.trim()) updateData.email = email.trim();
-        if (phone.trim()) updateData.phone = phone.trim();
+        if (formData.address.trim()) updateData.address = formData.address.trim();
+        if (formData.email.trim()) updateData.email = formData.email.trim();
+        if (formData.phone.trim()) updateData.phone = formData.phone.trim();
         
         console.log('Updating customer with data:', updateData);
         const response = await setupService.updateCustomer(editingCustomer.id, updateData);
 
         if (response && response.success && response.data) {
           // Refresh the entire list to ensure data consistency
-          await loadCustomers();
+          await loadCustomers(1, 14);
           console.log('Setting success message for update');
-          setMessage('Cập nhật khách hàng thành công');
-          setShowMessage(true);
+          setSuccessMessage('Cập nhật khách hàng thành công');
           
-          // Delay closing modal to show notification
-          setTimeout(() => {
-            setShowPartnerModal(false);
-            setEditingCustomer(null);
-          }, 1000);
+          // Close modal immediately
+          if (editingCustomer) {
+            setShowEditModal(false);
+          } else {
+            setShowAddModal(false);
+          }
+          setEditingCustomer(null);
+          resetForm();
         } else {
           // Kiểm tra lỗi cụ thể
           if (response.message && response.message.includes('Mã khách hàng đã tồn tại')) {
-            setErrorText(`Khách hàng có mã "${customerCode.trim()}" đã tồn tại. Vui lòng nhập mã khác`);
+            setErrorText(`Khách hàng có mã "${formData.code.trim()}" đã tồn tại. Vui lòng nhập mã khác`);
           } else if (response.message && response.message.includes('Mã số thuế đã tồn tại')) {
-            setErrorText(`Mã số thuế "${taxCode.trim()}" đã tồn tại. Vui lòng nhập mã số thuế khác`);
+            setErrorText(`Mã số thuế "${formData.taxCode.trim()}" đã tồn tại. Vui lòng nhập mã số thuế khác`);
           } else if (response.message && response.message.includes('Email format is invalid')) {
             setErrorText('Định dạng email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: example@domain.com)');
           } else if (response.message && response.message.includes('Please enter a valid email address')) {
@@ -259,27 +219,28 @@ export default function Customers() {
       } else {
         // Create new customer
         console.log('Creating customer with data:', {
-          code: customerCode.trim(),
-          name: customerName.trim(),
-          tax_code: taxCode.trim() ? taxCode.trim() : undefined,
-          address: address.trim() ? address.trim() : undefined,
-          email: email.trim() ? email.trim() : undefined,
-          phone: phone.trim() ? phone.trim() : undefined
+          code: formData.code.trim(),
+          name: formData.name.trim(),
+          tax_code: formData.taxCode.trim() ? formData.taxCode.trim() : undefined,
+          address: formData.address.trim() ? formData.address.trim() : undefined,
+          email: formData.email.trim() ? formData.email.trim() : undefined,
+          phone: formData.phone.trim() ? formData.phone.trim() : undefined
         });
         
         // Prepare data object, only include non-empty fields
         const customerData: any = {
-          code: customerCode.trim(),
-          name: customerName.trim()
+          code: formData.code.trim(),
+          name: formData.name.trim()
         };
         
-        if (taxCode.trim()) customerData.tax_code = taxCode.trim();
-        if (address.trim()) customerData.address = address.trim();
-        if (email.trim()) {
-          customerData.email = email.trim();
+        if (formData.taxCode.trim()) customerData.tax_code = formData.taxCode.trim();
+        if (formData.address.trim()) customerData.address = formData.address.trim();
+        if (formData.email.trim()) {
+          customerData.email = formData.email.trim();
           console.log('Email being sent:', customerData.email);
         }
-        if (phone.trim()) customerData.phone = phone.trim();
+        if (formData.phone.trim()) customerData.phone = formData.phone.trim();
+        if (formData.note.trim()) customerData.note = formData.note.trim();
         
         console.log('Sending customer data:', customerData);
         
@@ -292,22 +253,24 @@ export default function Customers() {
 
         if (response && response.success && response.data) {
           // Refresh the entire list to ensure data consistency
-          await loadCustomers();
+          await loadCustomers(1, 14);
           console.log('Setting success message for create');
-          setMessage('Tạo khách hàng thành công');
-          setShowMessage(true);
+          setSuccessMessage('Tạo khách hàng thành công');
           
-          // Delay closing modal to show notification
-          setTimeout(() => {
-            setShowPartnerModal(false);
-            setEditingCustomer(null);
-          }, 1000);
+          // Close modal immediately
+          if (editingCustomer) {
+            setShowEditModal(false);
+          } else {
+            setShowAddModal(false);
+          }
+          setEditingCustomer(null);
+          resetForm();
         } else {
           // Kiểm tra lỗi cụ thể
           if (response && response.message && response.message.includes('Mã khách hàng đã tồn tại')) {
-            setErrorText(`Khách hàng có mã "${customerCode.trim()}" đã tồn tại. Vui lòng nhập mã khác`);
+            setErrorText(`Khách hàng có mã "${formData.code.trim()}" đã tồn tại. Vui lòng nhập mã khác`);
           } else if (response && response.message && response.message.includes('Mã số thuế đã tồn tại')) {
-            setErrorText(`Mã số thuế "${taxCode.trim()}" đã tồn tại. Vui lòng nhập mã số thuế khác`);
+            setErrorText(`Mã số thuế "${formData.taxCode.trim()}" đã tồn tại. Vui lòng nhập mã số thuế khác`);
           } else if (response && response.message && response.message.includes('Email format is invalid')) {
             setErrorText('Định dạng email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: example@domain.com)');
           } else if (response && response.message && response.message.includes('Please enter a valid email address')) {
@@ -329,6 +292,33 @@ export default function Customers() {
     }
   };
 
+  // Delete customer function
+  const confirmDeleteCustomer = async () => {
+    if (!deletingCustomer) return;
+
+    setIsDeleting(true);
+    try {
+      console.log('Deleting customer with ID:', deletingCustomer.id);
+      const response = await setupService.deleteCustomer(deletingCustomer.id);
+      console.log('Delete response:', JSON.stringify(response, null, 2));
+      
+      if (response && response.success) {
+        setCustomers(prev => prev.filter(c => c.id !== deletingCustomer.id));
+        setSuccessMessage(`Đã xóa khách hàng "${deletingCustomer.name}" thành công`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+        setShowDeleteModal(false);
+        setDeletingCustomer(null);
+      } else {
+        setSuccessMessage(response.message || 'Lỗi khi xóa khách hàng');
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      setSuccessMessage('Lỗi khi xóa khách hàng');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -337,86 +327,35 @@ export default function Customers() {
           <div style={{gridColumn: 'span 3'}}>
             <Card title={undefined as any}>
               {/* Header with buttons */}
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
-                <h3 style={{margin:0, fontSize:18, fontWeight:700, color:'#0b2b6d'}}>
-                  Danh sách khách hàng
-                </h3>
-                <div style={{display:'flex', gap:8}}>
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      // open create modal
-                      setEditingCustomer(null);
-                      setCustomerCode('');
-                      setCustomerName('');
-                      setAddress('');
-                      setTaxCode('');
-                      setEmail('');
-                      setPhone('');
-                      setNote('');
-                      setErrorText('');
-                      setShowPartnerModal(true);
-                    }}
-                    style={{background:'#7c3aed', color:'#fff'}}
-                    disabled={loading}
-                  >
-                    {loading ? 'Đang tải...' : 'Tạo khách hàng'}
-                  </button>
-                  <label className="btn" style={{background:'#0ea5e9', color:'#fff', cursor:'pointer'}}>
-                    Upload Excel
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      style={{display:'none'}}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setLoading(true);
-                        try {
-                          const formData = new FormData();
-                          formData.append('file', file);
-                          const res = await setupService.uploadCustomerExcel(formData);
-                          if (res.success) {
-                            setMessage(res.message || 'Upload Excel thành công');
-                            setShowMessage(true);
-                            await loadCustomers();
-                          } else {
-                            const details = Array.isArray(res.details) ? `\n- ${res.details.join('\n- ')}` : '';
-                            alert((res.message || 'Upload thất bại') + details);
-                          }
-                        } catch (err) {
-                          alert('Có lỗi khi upload file');
-                        } finally {
-                          setLoading(false);
-                          if (e.target) e.target.value = '' as any;
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
+              <SetupHeader
+                activeTab="customers"
+                language={language}
+                translations={translations}
+                onAddNewShippingLine={() => {}}
+                onUploadExcel={() => {}}
+                onAddNewTransportCompany={() => {}}
+                onUploadTransportCompanyExcel={() => {}}
+                onAddNewContainerType={() => {}}
+                onUploadContainerTypeExcel={() => {}}
+                onAddNewCustomer={() => {
+                  setEditingCustomer(null);
+                  setCustomerFormData({
+                    code: '',
+                    name: '',
+                    address: '',
+                    taxCode: '',
+                    email: '',
+                    phone: '',
+                    note: ''
+                  });
+                  setErrorText('');
+                  setShowAddModal(true);
+                }}
+                onUploadCustomerExcel={() => setShowUploadModal(true)}
+              />
 
               {/* Success Message */}
-              {showMessage && message && (
-                <div style={{
-                  position: 'fixed',
-                  top: '20px',
-                  right: '20px',
-                  zIndex: 9999,
-                  padding: '12px 16px',
-                  background: '#ecfdf5',
-                  color: '#065f46',
-                  borderRadius: '8px',
-                  border: '1px solid #a7f3d0',
-                  fontSize: '14px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                  opacity: 1,
-                  transform: 'translateY(0)',
-                  transition: 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out'
-                }}>
-                  {message}
-                </div>
-              )}
+              <SuccessMessage message={successMessage} />
 
               {/* Table */}
               <div className="table-container">
@@ -460,40 +399,27 @@ export default function Customers() {
                                   onClick={() => {
                                     // open edit modal with existing values
                                     resetForm();
-                                    setCustomerCode(customer.code);
-                                    setCustomerName(customer.name);
-                                    setAddress(customer.address || '');
-                                    setTaxCode(customer.tax_code || '');
-                                    setEmail(customer.email || '');
-                                    setPhone(customer.phone || '');
+                                    setCustomerFormData({
+                                      code: customer.code,
+                                      name: customer.name,
+                                      address: customer.address || '',
+                                      taxCode: customer.tax_code || '',
+                                      email: customer.email || '',
+                                      phone: customer.phone || '',
+                                      note: customer.note || ''
+                                    });
                                     setEditingCustomer(customer);
-                                    setShowPartnerModal(true);
+                                    setShowEditModal(true);
                                   }}
                                   disabled={loading}
                                 >
-                                  Cập nhật
+                                  Sửa
                                 </button>
                                 <button 
                                   className="btn btn-xs btn-outline" 
-                                  onClick={async () => {
-                                    if (confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
-                                      setLoading(true);
-                                      try {
-                                        console.log('Deleting customer with ID:', customer.id);
-                                        const response = await setupService.deleteCustomer(customer.id);
-                                        console.log('Delete response:', JSON.stringify(response, null, 2));
-                                        if (response && response.success) {
-                                          setCustomers(prev => prev.filter(c => c.id !== customer.id));
-                                          setMessage('Xóa khách hàng thành công');
-                                        } else {
-                                          setMessage(response.message || 'Lỗi khi xóa khách hàng');
-                                        }
-                                      } catch (error) {
-                                        setMessage('Lỗi khi xóa khách hàng');
-                                      } finally {
-                                        setLoading(false);
-                                      }
-                                    }
+                                  onClick={() => {
+                                    setDeletingCustomer(customer);
+                                    setShowDeleteModal(true);
                                   }}
                                   disabled={loading}
                                 >
@@ -522,39 +448,101 @@ export default function Customers() {
                 />
               </div>
 
-              {/* Modal */}
-              <CreatePartnerModal
-                visible={showPartnerModal}
+              {/* Add Modal */}
+              <AddCustomerModal
+                visible={showAddModal}
                 onCancel={() => { 
-                  setShowPartnerModal(false); 
+                  setShowAddModal(false); 
+                  setEditingCustomer(null);
                   resetForm();
                 }}
                 onSubmit={validateAndCreate}
-                title={editingCustomer ? 'Cập nhật khách hàng' : 'Tạo khách hàng'}
-                customerCode={customerCode}
-                setCustomerCode={handleCodeChange}
-                customerName={customerName}
-                setCustomerName={setCustomerName}
-                address={address}
-                setAddress={setAddress}
-                taxCode={taxCode}
-                setTaxCode={handleTaxCodeChange}
-                email={email}
-                setEmail={handleEmailChange}
-                phone={phone}
-                setPhone={handlePhoneChange}
-                note={note}
-                setNote={setNote}
+                formData={customerFormData}
+                setFormData={setCustomerFormData}
                 errorText={errorText}
-                codeError={codeError}
-                emailError={emailError}
-                phoneError={phoneError}
-                taxCodeError={taxCodeError}
+                language={language}
+                translations={translations}
+              />
+
+              {/* Edit Modal */}
+              <EditCustomerModal
+                visible={showEditModal}
+                onCancel={() => { 
+                  setShowEditModal(false); 
+                  setEditingCustomer(null);
+                  resetForm();
+                }}
+                onSubmit={validateAndCreate}
+                formData={customerFormData}
+                setFormData={setCustomerFormData}
+                errorText={errorText}
+                language={language}
+                translations={translations}
+                originalCode={editingCustomer?.code || ''}
               />
             </Card>
           </div>
         </div>
       </main>
+
+      {/* Upload Excel Modal */}
+      <UploadCustomerExcelModal
+        visible={showUploadModal}
+        onCancel={() => setShowUploadModal(false)}
+        onUpload={async (files) => {
+          if (files.length === 0) return;
+          setLoading(true);
+          try {
+            const formData = new FormData();
+            formData.append('file', files[0]);
+            const res = await setupService.uploadCustomerExcel(formData);
+            if (res.success) {
+              setSuccessMessage(res.message || 'Upload Excel thành công');
+              await loadCustomers(1, 14);
+              setShowUploadModal(false);
+            } else {
+              const details = Array.isArray(res.details) ? `\n- ${res.details.join('\n- ')}` : '';
+              alert((res.message || 'Upload thất bại') + details);
+            }
+          } catch (err) {
+            alert('Có lỗi khi upload file');
+          } finally {
+            setLoading(false);
+          }
+        }}
+        language={language}
+        translations={{
+          vi: {
+            uploadExcel: 'Upload Excel',
+            uploadInstructions: 'Hướng dẫn upload file Excel',
+            downloadTemplate: 'Tải mẫu file Excel',
+            selectFile: 'Chọn file Excel',
+            upload: 'Tải lên',
+            code: true
+          },
+          en: {
+            uploadExcel: 'Upload Excel',
+            uploadInstructions: 'Excel file upload instructions',
+            downloadTemplate: 'Download template',
+            selectFile: 'Select Excel file',
+            upload: 'Upload',
+            code: false
+          }
+        }}
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeletingCustomer(null);
+        }}
+        onConfirm={confirmDeleteCustomer}
+        title="Xác nhận xóa khách hàng"
+        message="Bạn có chắc chắn muốn xóa khách hàng này không?"
+        itemName={deletingCustomer?.name || ''}
+        isDeleting={isDeleting}
+      />
     </>
   );
 }

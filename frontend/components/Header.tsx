@@ -743,15 +743,15 @@ export default function Header() {
                 </Link>
             )}
 
-            {/* Containers Module */}
-            {(() => {
+            {/* Containers Module - HIDDEN */}
+            {/* {(() => {
               const allow = canManageContainers(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'containers.manage')
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/ContainersPage' ? 'active' : ''}`} href="/ContainersPage" onClick={handleSidebarLinkClick}>
+                <Link className={`sidebar-link ${router.pathname === '/ContainersPage_2_hiden' ? 'active' : ''}`} href="/ContainersPage_2_hiden" onClick={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
@@ -762,10 +762,10 @@ export default function Header() {
                   </svg>
                   <span>{t('sidebar.containerManagement')}</span>
                 </Link>
-            )}
+            )} */}
 
-            {/* Container Manager Module */}
-            {(() => {
+            {/* Container Manager Module - HIDDEN */}
+            {/* {(() => {
               const allow = canManageContainers(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'containers.manage')
@@ -781,7 +781,7 @@ export default function Header() {
                   </svg>
                   <span>{t('sidebar.containerManager')}</span>
                 </Link>
-            )}
+            )} */}
 
             {/* Forklift Module - Xe nâng */}
             {(() => {

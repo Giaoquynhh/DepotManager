@@ -55,6 +55,7 @@ model Customer {
   email           String?
   phone           String?
   serviceRequests ServiceRequest[]
+  containers      Container[]
 }
 
 model Partner {
@@ -268,6 +269,30 @@ model YardPlacement {
   @@index([hold_expires_at])
   @@index([slot_id, status])
   @@index([status, hold_expires_at])
+}
+
+model Container {
+  id              String    @id @default(cuid())
+  container_no    String    @unique
+  status          String    @default("EMPTY_IN_YARD")
+  customer_id     String?
+  shipping_line_id String?
+  container_type_id String?
+  seal_number     String?
+  dem_det         String?
+  yard_name       String?
+  block_code      String?
+  slot_code       String?
+  created_by      String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  customer        Customer? @relation(fields: [customer_id], references: [id])
+  shipping_line   ShippingLine? @relation(fields: [shipping_line_id], references: [id])
+  container_type  ContainerType? @relation(fields: [container_type_id], references: [id])
+
+  @@index([container_no])
+  @@index([status])
+  @@index([customer_id])
 }
 
 model ContainerMeta {
@@ -578,6 +603,7 @@ model ShippingLine {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   serviceRequests ServiceRequest[]
+  containers      Container[]
 
   @@map("shipping_lines")
 }
@@ -605,6 +631,7 @@ model ContainerType {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   serviceRequests ServiceRequest[]
+  containers      Container[]
 
   @@map("container_types")
 }

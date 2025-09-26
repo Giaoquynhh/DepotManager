@@ -71,211 +71,219 @@ export const AddTransportCompanyModal: React.FC<AddTransportCompanyModalProps> =
     }
   };
 
+  // Normalize placeholder text to label by removing leading verbs like "Nhập" or "Enter"
+  const toLabel = (text: string) => {
+    if (!text) return '';
+    const normalized = text
+      .replace(/^\s*Nhập\s+/i, '')
+      .replace(/^\s*Enter\s+/i, '')
+      .trim();
+    return normalized
+      ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+      : '';
+  };
+
   if (!visible) return null;
 
   return (
-    <div className="modal-overlay" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div className="modal-content" style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '500px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '12px'
-        }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '18px',
-            fontWeight: '500',
-            color: '#111827'
-          }}>
-            {translations[language].addNewTransportCompany}
-          </h2>
-          <button
-            onClick={onCancel}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#6b7280',
-              padding: '4px'
-            }}
-          >
-            ×
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{width: '500px', maxWidth: '90vw'}}>
+        <div className="modal-header">
+          <h3 className="modal-title">{translations[language].addNewTransportCompany}</h3>
+          <button className="modal-close" onClick={onCancel} style={{color: 'white', outline: 'none'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Error Message */}
-          {(errorText || localError) && (
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px 16px',
-              background: '#fef2f2',
-              color: '#dc2626',
-              borderRadius: '8px',
-              border: '1px solid #fecaca',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              ⚠ {errorText || localError}
+          <div className="modal-body" style={{maxHeight: '60vh', overflowY: 'auto'}}>
+            {/* Error Message */}
+            {(errorText || localError) && (
+              <div style={{
+                padding: '12px 16px',
+                background: '#fef2f2',
+                color: '#dc2626',
+                borderRadius: '8px',
+                border: '1px solid #fecaca',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {errorText || localError}
+              </div>
+            )}
+
+            {/* Code Field - Required */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].transportCompanyCodePlaceholder)} <span style={{color: '#dc2626'}}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => handleInputChange('code', e.target.value)}
+                placeholder={`${translations[language].transportCompanyCodePlaceholder} *`}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400'
+                }}
+              />
             </div>
-          )}
 
-          {/* Code Field - Required */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.code}
-              onChange={(e) => handleInputChange('code', e.target.value)}
-              placeholder={`${translations[language].transportCompanyCodePlaceholder} *`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
+            {/* Name Field - Required */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].transportCompanyNamePlaceholder)} <span style={{color: '#dc2626'}}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder={`${translations[language].transportCompanyNamePlaceholder} *`}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400'
+                }}
+              />
+            </div>
+
+            {/* Address Field - Optional */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].addressPlaceholder)} <span style={{color: '#6b7280', fontWeight: '400'}}>({translations[language].optional})</span>
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder={`${translations[language].addressPlaceholder} (${translations[language].optional})`}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400'
+                }}
+              />
+            </div>
+
+            {/* MST Field - Optional */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].mstPlaceholder)} <span style={{color: '#6b7280', fontWeight: '400'}}>({translations[language].optional})</span>
+              </label>
+              <input
+                type="text"
+                value={formData.mst}
+                onChange={(e) => handleInputChange('mst', e.target.value)}
+                placeholder={`${translations[language].mstPlaceholder} (${translations[language].optional})`}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400'
+                }}
+              />
+            </div>
+
+            {/* Phone Field - Optional */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].phonePlaceholder)} <span style={{color: '#6b7280', fontWeight: '400'}}>({translations[language].optional})</span>
+              </label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder={`${translations[language].phonePlaceholder} (${translations[language].optional})`}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400'
+                }}
+              />
+            </div>
+
+            {/* Note Field - Optional */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].notePlaceholder)} <span style={{color: '#6b7280', fontWeight: '400'}}>({translations[language].optional})</span>
+              </label>
+              <textarea
+                value={formData.note}
+                onChange={(e) => handleInputChange('note', e.target.value)}
+                placeholder={`${translations[language].notePlaceholder} (${translations[language].optional})`}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '400',
+                  resize: 'vertical',
+                  minHeight: '80px'
+                }}
+              />
+            </div>
+
           </div>
 
-          {/* Name Field - Required */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={`${translations[language].transportCompanyNamePlaceholder} *`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* Address Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder={`${translations[language].addressPlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* MST Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.mst}
-              onChange={(e) => handleInputChange('mst', e.target.value)}
-              placeholder={`${translations[language].mstPlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* Phone Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder={`${translations[language].phonePlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* Note Field - Optional */}
-          <div style={{ marginBottom: '24px' }}>
-            <textarea
-              value={formData.note}
-              onChange={(e) => handleInputChange('note', e.target.value)}
-              placeholder={`${translations[language].notePlaceholder} (${translations[language].optional})`}
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400',
-                resize: 'vertical',
-                minHeight: '80px'
-              }}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            borderTop: '1px solid #e5e7eb',
-            paddingTop: '16px'
-          }}>
-            <button
-              type="submit"
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                borderRadius: '6px',
-                backgroundColor: '#059669',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '400',
-                cursor: 'pointer'
-              }}
-            >
-              {translations[language].save}
+          <div className="modal-footer">
+            <button type="submit" className="btn">
+              {translations[language].addNew}
             </button>
           </div>
         </form>

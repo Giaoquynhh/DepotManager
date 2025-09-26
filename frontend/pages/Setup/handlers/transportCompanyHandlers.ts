@@ -16,6 +16,9 @@ export const createTransportCompanyHandlers = (
   setTransportCompanyFormData: React.Dispatch<React.SetStateAction<TransportCompanyFormData>>,
   setTransportCompanyErrorText: React.Dispatch<React.SetStateAction<string>>,
   setSuccessMessage: React.Dispatch<React.SetStateAction<string>>,
+  setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setDeletingItem: React.Dispatch<React.SetStateAction<any>>,
+  setIsDeleting: React.Dispatch<React.SetStateAction<boolean>>,
   transportCompanies: TransportCompany[],
   transportCompaniesPagination: {
     page: number;
@@ -26,7 +29,7 @@ export const createTransportCompanyHandlers = (
   language: 'vi' | 'en',
   translations: any
 ) => {
-  const loadTransportCompanies = async (page: number = 1, limit: number = 10) => {
+  const loadTransportCompanies = async (page: number = 1, limit: number = 14) => {
     try {
       const response = await setupService.getTransportCompanies({ page, limit });
       if (response.success && response.data) {
@@ -61,30 +64,39 @@ export const createTransportCompanyHandlers = (
     setShowEditTransportCompanyModal(true);
   };
 
-  const handleDeleteTransportCompany = async (id: string) => {
-    if (window.confirm(
-      translations[language].code 
-        ? 'Bạn có chắc chắn muốn xóa nhà xe này?' 
-        : 'Are you sure you want to delete this transport company?'
-    )) {
-      try {
-        const response = await setupService.deleteTransportCompany(id);
+  const handleDeleteTransportCompany = (id: string) => {
+    const companyToDelete = transportCompanies.find(tc => tc.id === id);
+    if (companyToDelete) {
+      setDeletingItem(companyToDelete);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const confirmDeleteTransportCompany = async (deletingItem: TransportCompany) => {
+    if (!deletingItem) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await setupService.deleteTransportCompany(deletingItem.id);
       if (response.success) {
         // Reload current page to refresh data
         loadTransportCompanies(transportCompaniesPagination.page, transportCompaniesPagination.limit);
         setSuccessMessage(
           translations[language].code 
-            ? 'Đã xóa nhà xe thành công!'
-            : 'Transport company deleted successfully!'
+            ? `Đã xóa nhà xe "${deletingItem.name}" thành công!`
+            : `Successfully deleted transport company "${deletingItem.name}"!`
         );
         setTimeout(() => setSuccessMessage(''), 3000);
+        setShowDeleteModal(false);
+        setDeletingItem(null);
       } else {
-          setTransportCompanyErrorText(response.message || 'Failed to delete transport company');
-        }
-      } catch (error) {
-        console.error('Error deleting transport company:', error);
-        setTransportCompanyErrorText('Failed to delete transport company');
+        setTransportCompanyErrorText(response.message || 'Failed to delete transport company');
       }
+    } catch (error) {
+      console.error('Error deleting transport company:', error);
+      setTransportCompanyErrorText('Failed to delete transport company');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -371,6 +383,7 @@ export const createTransportCompanyHandlers = (
     handlePageChange,
     handleEditTransportCompany,
     handleDeleteTransportCompany,
+    confirmDeleteTransportCompany,
     handleAddNewTransportCompany,
     handleSubmitTransportCompany,
     handleUpdateTransportCompany,

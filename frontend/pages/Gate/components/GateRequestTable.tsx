@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import GateActionButtons from './GateActionButtons';
 import DocumentsModal from './DocumentsModal';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useToast } from '../../../hooks/useToastHook';
 
 interface GateRequest {
   id: string;
@@ -30,12 +31,17 @@ interface GateRequestTableProps {
   requests: GateRequest[];
   loading: boolean;
   onRefresh: () => void;
+  showSuccess?: (title: string, message?: string, duration?: number) => void;
+  showError?: (title: string, message?: string, duration?: number) => void;
 }
 
-export default function GateRequestTable({ requests, loading, onRefresh }: GateRequestTableProps) {
+export default function GateRequestTable({ requests, loading, onRefresh, showSuccess: injectedSuccess, showError: injectedError }: GateRequestTableProps) {
   const [selectedRequest, setSelectedRequest] = useState<GateRequest | null>(null);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const { t, currentLanguage } = useTranslation();
+  const { showSuccess: hookSuccess, showError: hookError, ToastContainer } = useToast();
+  const showSuccess = injectedSuccess || hookSuccess;
+  const showError = injectedError || hookError;
 
   // Helpers: map raw type/status codes to localized labels
   const typeLabel = (type: string) => {
@@ -57,6 +63,11 @@ export default function GateRequestTable({ requests, loading, onRefresh }: GateR
         return t('pages.gate.statusOptions.scheduled');
       case 'FORWARDED':
         return t('pages.gate.statusOptions.forwarded');
+      case 'DONE_LIFTING':
+        return `🟢 ${t('pages.gate.statusOptions.gateIn')}`;
+      case 'FORKLIFTING':
+        // Hiển thị như "Đã cho phép vào"
+        return `🟢 ${t('pages.gate.statusOptions.gateIn')}`;
       case 'NEW_REQUEST':
         return `🆕 ${t('pages.gate.statusOptions.newRequest')}`;
       case 'IN_YARD':
@@ -170,9 +181,14 @@ export default function GateRequestTable({ requests, loading, onRefresh }: GateR
                   </span>
                 </td>
                 <td>
-                  <span className={`status-badge status-${request.status.toLowerCase().replace(/_/g, '-')}`}>
-                    {statusLabel(request.status)}
-                  </span>
+                  {(() => {
+                    const visualStatus = (request.status === 'FORKLIFTING' || request.status === 'DONE_LIFTING') ? 'GATE_IN' : request.status;
+                    return (
+                      <span className={`status-badge status-${visualStatus.toLowerCase().replace(/_/g, '-')}`}>
+                        {statusLabel(request.status)}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td>
                   <span className="appointment-time">
@@ -238,6 +254,8 @@ export default function GateRequestTable({ requests, loading, onRefresh }: GateR
                     requestType={request.type}
                     currentStatus={request.status}
                     onActionSuccess={onRefresh}
+                    showSuccess={showSuccess}
+                    showError={showError}
                   />
                 </td>
               </tr>
@@ -255,6 +273,7 @@ export default function GateRequestTable({ requests, loading, onRefresh }: GateR
           containerNo={selectedRequest.container_no}
         />
       )}
+      <ToastContainer />
     </>
   );
 }

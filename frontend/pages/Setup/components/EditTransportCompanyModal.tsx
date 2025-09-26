@@ -1,284 +1,374 @@
-// Edit Transport Company Modal component
-import React, { useState, useEffect } from 'react';
-
-export interface TransportCompanyFormData {
-  code: string;
-  name: string;
-  address: string;
-  mst: string;
-  phone: string;
-  note: string;
-}
+import React from 'react';
+import { TransportCompany, TransportCompanyFormData } from '../../../services/setupService';
 
 interface EditTransportCompanyModalProps {
   visible: boolean;
   onCancel: () => void;
   onSubmit: (data: TransportCompanyFormData) => void;
+  transportCompany: TransportCompany | null;
   formData: TransportCompanyFormData;
   setFormData: (data: TransportCompanyFormData) => void;
   errorText: string;
   language: 'vi' | 'en';
   translations: any;
-  originalCode: string;
 }
 
 export const EditTransportCompanyModal: React.FC<EditTransportCompanyModalProps> = ({
   visible,
   onCancel,
   onSubmit,
+  transportCompany,
   formData,
   setFormData,
   errorText,
   language,
-  translations,
-  originalCode
+  translations
 }) => {
-  const [localError, setLocalError] = useState('');
-
-  // Clear local error when modal opens
-  useEffect(() => {
-    if (visible) {
-      setLocalError('');
-    }
-  }, [visible]);
+  if (!visible || !transportCompany) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.code.trim()) {
-      setLocalError(translations[language].code ? 'Vui lòng nhập mã nhà xe.' : 'Please enter transport company code.');
-      return;
-    }
-    if (!formData.name.trim()) {
-      setLocalError(translations[language].name ? 'Vui lòng nhập tên nhà xe.' : 'Please enter transport company name.');
-      return;
-    }
-
-    // Clear any previous errors
-    setLocalError('');
-    
-    // Submit the form
     onSubmit(formData);
   };
 
   const handleInputChange = (field: keyof TransportCompanyFormData, value: string) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [field]: value
-    });
-    // Clear error when user starts typing
-    if (localError) {
-      setLocalError('');
-    }
+    }));
   };
 
-  if (!visible) return null;
-
   return (
-    <div className="modal-overlay" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div className="modal-content" style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '500px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-      }}>
-        <div style={{
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-header" style={{
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: 'white',
+          padding: '20px 24px',
+          borderRadius: '12px 12px 0 0',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '12px'
+          alignItems: 'center'
         }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '18px',
-            fontWeight: '500',
-            color: '#111827'
-          }}>
-            {translations[language].editTransportCompany}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px'
+            }}>
+              ✏️
+            </div>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+              Cập nhật nhà xe
+            </h3>
+          </div>
           <button
+            className="modal-close"
             onClick={onCancel}
             style={{
               background: 'none',
               border: 'none',
+              color: 'white',
               fontSize: '24px',
               cursor: 'pointer',
-              color: '#6b7280',
-              padding: '4px'
+              padding: '4px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            ×
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Error Message */}
-          {(errorText || localError) && (
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px 16px',
-              background: '#fef2f2',
-              color: '#dc2626',
-              borderRadius: '8px',
-              border: '1px solid #fecaca',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              ⚠ {errorText || localError}
+        {/* Body */}
+        <div className="modal-body" style={{ padding: '24px' }}>
+          <form onSubmit={handleSubmit}>
+            {/* Mã nhà xe */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                Mã nhà xe <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => handleInputChange('code', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  fontFamily: 'monospace'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập mã nhà xe"
+                required
+              />
             </div>
-          )}
 
-          {/* Code Field - Required */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.code}
-              onChange={(e) => handleInputChange('code', e.target.value)}
-              placeholder={`${translations[language].transportCompanyCodePlaceholder} *`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* Name Field - Required */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={`${translations[language].transportCompanyNamePlaceholder} *`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}
-            />
-          </div>
-
-          {/* Address Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder={`${translations[language].addressPlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
+            {/* Tên nhà xe */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
                 fontSize: '14px'
-              }}
-            />
-          </div>
+              }}>
+                Tên nhà xe <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập tên nhà xe"
+                required
+              />
+            </div>
 
-          {/* MST Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.mst}
-              onChange={(e) => handleInputChange('mst', e.target.value)}
-              placeholder={`${translations[language].mstPlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400'
-              }}
-            />
-          </div>
-
-          {/* Phone Field - Optional */}
-          <div style={{ marginBottom: '16px' }}>
-            <input
-              type="text"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder={`${translations[language].phonePlaceholder} (${translations[language].optional})`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
+            {/* Địa chỉ */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
                 fontSize: '14px'
-              }}
-            />
-          </div>
+              }}>
+                Địa chỉ
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập địa chỉ"
+              />
+            </div>
 
-          {/* Note Field - Optional */}
-          <div style={{ marginBottom: '24px' }}>
-            <textarea
-              value={formData.note}
-              onChange={(e) => handleInputChange('note', e.target.value)}
-              placeholder={`${translations[language].notePlaceholder} (${translations[language].optional})`}
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '400',
-                resize: 'vertical',
-                minHeight: '80px'
-              }}
-            />
-          </div>
+            {/* MST */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                MST
+              </label>
+              <input
+                type="text"
+                value={formData.mst}
+                onChange={(e) => handleInputChange('mst', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập MST"
+              />
+            </div>
 
-          {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            borderTop: '1px solid #e5e7eb',
-            paddingTop: '16px'
-          }}>
-            <button
-              type="submit"
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                borderRadius: '6px',
-                backgroundColor: '#059669',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '400',
-                cursor: 'pointer'
-              }}
-            >
-              {translations[language].update}
-            </button>
-          </div>
-        </form>
+            {/* Số điện thoại */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                Số điện thoại
+              </label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập số điện thoại"
+              />
+            </div>
+
+            {/* Ghi chú */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                Ghi chú
+              </label>
+              <textarea
+                value={formData.note}
+                onChange={(e) => handleInputChange('note', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  minHeight: '80px',
+                  resize: 'vertical'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }}
+                placeholder="Nhập ghi chú"
+              />
+            </div>
+
+            {/* Error message */}
+            {errorText && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#dc2626',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                fontSize: '14px'
+              }}>
+                {errorText}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="modal-footer" style={{
+          padding: '20px 24px',
+          borderTop: '1px solid #e5e7eb',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '12px'
+        }}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'transform 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            Cập nhật
+          </button>
+        </div>
       </div>
     </div>
   );

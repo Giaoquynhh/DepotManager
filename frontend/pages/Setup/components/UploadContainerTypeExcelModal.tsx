@@ -51,72 +51,20 @@ export const UploadContainerTypeExcelModal: React.FC<UploadContainerTypeExcelMod
   };
 
   return (
-    <div 
-      className="modal-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        backdropFilter: 'blur(4px)'
-      }}
-    >
-      <div
-        className="modal"
-        style={{
-          width: '92%',
-          maxWidth: 640,
-          background: '#fff',
-          borderRadius: 16,
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-          animation: 'modalSlideIn 0.25s ease-out'
-        }}
-      >
-        {/* Header */}
-        <div
-          className="modal-header"
-          style={{
-            background: 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)',
-            color: '#fff',
-            padding: '20px 28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: 'rgba(255,255,255,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 20
-            }}>📤</div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>{translations[language].uploadExcel}</h3>
-          </div>
-          <button
-            onClick={onCancel}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              width: 36,
-              height: 32,
-              borderRadius: 8,
-              color: '#fff',
-              cursor: 'pointer'
-            }}
-          >✕</button>
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: 640, maxWidth: '95vw' }}>
+        <div className="modal-header">
+          <h3 className="modal-title">{translations[language].uploadExcel}</h3>
+          <button className="modal-close" onClick={onCancel} style={{ color: 'white', outline: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
         {/* Body */}
-        <div className="modal-body" style={{ padding: 28 }}>
+        <div className="modal-body" style={{ padding: 20, maxHeight: '60vh', overflowY: 'auto' }}>
           {/* Instructions */}
           <div style={{
             border: '1px solid #e5e7eb',
@@ -195,26 +143,12 @@ export const UploadContainerTypeExcelModal: React.FC<UploadContainerTypeExcelMod
         </div>
 
         {/* Footer */}
-        <div className="modal-footer" style={{ padding: '18px 28px', background: '#f9fafb', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-          <button className="btn btn-outline" onClick={onCancel}>{translations[language].cancel}</button>
-          <button
-            className="btn"
-            onClick={handleUpload}
-            disabled={selectedFiles.length===0}
-            style={{
-              background: selectedFiles.length? 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)' : '#9ca3af',
-              color: '#fff',
-              cursor: selectedFiles.length? 'pointer' : 'not-allowed'
-            }}
-          >
+        <div className="modal-footer">
+          <button className="btn" onClick={handleUpload} disabled={selectedFiles.length===0} style={{ opacity: selectedFiles.length? 1 : 0.7, cursor: selectedFiles.length? 'pointer' : 'not-allowed' }}>
             {translations[language].upload}
           </button>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes modalSlideIn { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-      `}</style>
     </div>
   );
 };

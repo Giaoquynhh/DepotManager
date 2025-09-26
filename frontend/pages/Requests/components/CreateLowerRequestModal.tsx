@@ -3,6 +3,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
 import { generateLowerRequestNumber } from '../../../utils/requestNumberGenerator';
+import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
 
 interface CreateLowerRequestModalProps {
 	isOpen: boolean;
@@ -83,6 +84,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	// Preview URLs for image files to render thumbnails
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
+	const [selectedContainerInfo, setSelectedContainerInfo] = useState<ContainerSearchResult | null>(null);
 
 	useEffect(() => {
 		(async () => {
@@ -795,18 +797,42 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 									</span>
 								)}
 							</label>
-							<input
-								type="text"
+							<ContainerSearchInput
+								value={formData.containerNumber || ''}
+								onChange={(value) => handleInputChange('containerNumber', value)}
+								placeholder="Nhập số container"
 								style={errors.containerNumber ? formInputErrorStyle : formInputStyle}
-								value={formData.containerNumber}
-								onChange={(e) => handleInputChange('containerNumber', e.target.value)}
-								onBlur={() => {
-									if (formData.containerNumber.trim()) {
-										checkContainerExists(formData.containerNumber);
+								error={!!errors.containerNumber}
+								onSelect={(c) => {
+									setSelectedContainerInfo(c);
+									
+									// Auto-fill thông tin từ Container model
+									if (c) {
+										// Auto-fill container type
+										if (c.container_type?.id) {
+											handleInputChange('containerType', c.container_type.id);
+										}
+										
+										// Auto-fill customer
+										if (c.customer?.id) {
+											handleInputChange('customer', c.customer.id);
+											setSelectedCustomerName(c.customer.name);
+										}
+										
+										// Auto-fill shipping line
+										if (c.shipping_line?.id) {
+											handleInputChange('shippingLine', c.shipping_line.id);
+											setSelectedShippingLineName(c.shipping_line.name);
+										}
 									}
 								}}
-								placeholder="Nhập số container"
 							/>
+							{selectedContainerInfo && (
+								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									<div>Vị trí: {selectedContainerInfo.block_code}-{selectedContainerInfo.slot_code}{selectedContainerInfo.tier ? `, Tầng ${selectedContainerInfo.tier}` : ''}</div>
+									{selectedContainerInfo.yard_name && <div>Bãi: {selectedContainerInfo.yard_name}</div>}
+								</div>
+							)}
 							{errors.containerNumber && <span style={errorMessageStyle}>{errors.containerNumber}</span>}
 						</div>
 

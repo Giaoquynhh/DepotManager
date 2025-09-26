@@ -732,41 +732,55 @@ export class YardService {
 		};
 	}
 
-	async searchContainers(query: string, limit: number = 10) {
-		// Tìm kiếm container trong yard theo container_no
-		const containers = await prisma.yardPlacement.findMany({
-			where: {
-				container_no: {
-					contains: query,
-					mode: 'insensitive'
-				},
-				status: 'OCCUPIED',
-				removed_at: null
-			},
-			include: {
-				slot: {
-					include: {
-						block: {
-							include: {
-								yard: true
-							}
-						}
-					}
-				}
-			},
-			orderBy: { container_no: 'asc' },
-			take: limit
-		});
+    async searchContainers(query: string, limit: number = 10, shippingLineId?: string) {
+        // Ưu tiên lấy từ ServiceRequest mới nhất để biết shipping_line_id và container_type_id
+        const results = await prisma.$queryRawUnsafe<any[]>(
+            `
+            WITH latest_sr AS (
+              SELECT DISTINCT ON (sr.container_no)
+                sr.container_no,
+                sr.shipping_line_id,
+                sr.container_type_id,
+                sr."createdAt"
+              FROM "ServiceRequest" sr
+              WHERE sr.container_no ILIKE $1
+              ORDER BY sr.container_no, sr."createdAt" DESC
+            )
+            SELECT 
+              yp.container_no,
+              ys.code as slot_code,
+              yb.code as block_code,
+              y.name as yard_name,
+              yp.tier,
+              yp.placed_at,
+              ls.shipping_line_id,
+              ls.container_type_id
+            FROM "YardPlacement" yp
+            LEFT JOIN "YardSlot" ys ON ys.id = yp.slot_id
+            LEFT JOIN "YardBlock" yb ON yb.id = ys.block_id
+            LEFT JOIN "Yard" y ON y.id = yb.yard_id
+            LEFT JOIN latest_sr ls ON ls.container_no = yp.container_no
+            WHERE yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
+              AND yp.container_no ILIKE $1
+              ${shippingLineId ? 'AND (ls.shipping_line_id = $2)' : ''}
+            ORDER BY yp.container_no ASC
+            LIMIT ${limit}
+            `,
+            `%${query}%`,
+            ...(shippingLineId ? [shippingLineId] as any : [])
+        );
 
-		return containers.map(placement => ({
-			container_no: placement.container_no,
-			slot_code: placement.slot.code,
-			block_code: placement.slot.block.code,
-			yard_name: placement.slot.block.yard.name,
-			tier: placement.tier,
-			placed_at: placement.placed_at
-		}));
-	}
+        return results.map(row => ({
+            container_no: row.container_no,
+            slot_code: row.slot_code,
+            block_code: row.block_code,
+            yard_name: row.yard_name,
+            tier: row.tier,
+            placed_at: row.placed_at,
+            shipping_line_id: row.shipping_line_id,
+            container_type_id: row.container_type_id
+        }));
+    }
 }
 
 export default new YardService();

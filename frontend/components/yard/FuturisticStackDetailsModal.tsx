@@ -61,7 +61,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalContainers, setTotalContainers] = useState(0);
-  const [pageSize] = useState(5); // Hiển thị 5 container mỗi trang
+  const [pageSize] = useState(4); // Hiển thị 4 container mỗi trang
   
   // State cho SystemAdmin
   const [isSystemAdmin, setIsSystemAdmin] = useState(false);
@@ -141,19 +141,12 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
       setFilterLoading(true);
       const data = await containersApi.list({
         service_status: 'CHECKED',
+        not_in_yard: true, // Lọc container chưa vào bãi ở backend
         page: page,
         pageSize: pageSize
       });
       
-      const waitingContainers = data.items.filter((item: any) => {
-        if (item.service_status === 'CHECKED' || item.repair_checked === true) {
-          const inYard = !!item.slot_code;
-          return !inYard;
-        }
-        return false;
-      });
-      
-      setAvailableContainers(waitingContainers);
+      setAvailableContainers(data.items);
       setTotalContainers(data.total || 0);
       setTotalPages(Math.ceil((data.total || 0) / pageSize));
       setCurrentPage(page);
@@ -174,14 +167,8 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
       return { isValid: true, message: '' };
     }
     
-    const isAvailable = availableContainers.some(container => 
-      container.container_no.toLowerCase() === containerNo.trim().toLowerCase()
-    );
-    
-    if (!isAvailable) {
-      return { isValid: false, message: 'Container không có trong danh sách đang chờ sắp xếp' };
-    }
-    
+    // SystemAdmin có thể nhập bất kỳ container nào, user thường chỉ có thể chọn từ danh sách
+    // Backend đã lọc sẵn container chưa vào bãi, nên không cần validate thêm ở đây
     return { isValid: true, message: '' };
   };
 
@@ -575,7 +562,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                               </div>
                             ) : (
                               <>
-                                {/* Container List Header */}
+                                {/* Container List Header with inline pager */}
                                 <div style={{
                                   display: 'flex',
                                   justifyContent: 'space-between',
@@ -587,11 +574,41 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                                   border: '1px solid rgba(255, 255, 255, 0.1)'
                                 }}>
                                   <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)' }}>
-                                    Hiển thị {availableContainers.length} / {totalContainers} container
+                                    Hiển thị {filterLoading ? '...' : availableContainers.length} / {totalContainers} container
                                   </span>
-                                  <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                    Trang {currentPage} / {totalPages}
-                                  </span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button
+                                      onClick={handlePrevPage}
+                                      disabled={currentPage <= 1 || filterLoading}
+                                      title="Trang trước"
+                                      style={{
+                                        width: '28px', height: '28px', borderRadius: '6px',
+                                        border: '1px solid rgba(255,255,255,0.3)',
+                                        background: (currentPage <= 1 || filterLoading) ? 'rgba(255,255,255,0.08)' : 'rgba(59, 130, 246, 0.25)',
+                                        color: (currentPage <= 1 || filterLoading) ? 'rgba(255,255,255,0.4)' : '#fff',
+                                        cursor: (currentPage <= 1 || filterLoading) ? 'not-allowed' : 'pointer'
+                                      }}
+                                    >
+                                      ←
+                                    </button>
+                                    <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', minWidth: 70, textAlign: 'center' }}>
+                                      Trang {currentPage} / {totalPages}
+                                    </span>
+                                    <button
+                                      onClick={handleNextPage}
+                                      disabled={currentPage >= totalPages || filterLoading}
+                                      title="Trang sau"
+                                      style={{
+                                        width: '28px', height: '28px', borderRadius: '6px',
+                                        border: '1px solid rgba(255,255,255,0.3)',
+                                        background: (currentPage >= totalPages || filterLoading) ? 'rgba(255,255,255,0.08)' : 'rgba(34, 197, 94, 0.25)',
+                                        color: (currentPage >= totalPages || filterLoading) ? 'rgba(255,255,255,0.4)' : '#fff',
+                                        cursor: (currentPage >= totalPages || filterLoading) ? 'not-allowed' : 'pointer'
+                                      }}
+                                    >
+                                      →
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* Container List */}
@@ -639,143 +656,6 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
                                   )}
                                 </div>
 
-                                {/* Pagination Controls */}
-                                {totalPages > 1 && (
-                                  <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '12px 16px',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    borderRadius: '8px',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    marginTop: '12px'
-                                  }}>
-                                    {/* Prev Button */}
-                                    <button
-                                      onClick={handlePrevPage}
-                                      disabled={currentPage <= 1}
-                                      style={{
-                                        padding: '8px 16px',
-                                        borderRadius: '6px',
-                                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                                        background: currentPage <= 1 
-                                          ? 'rgba(255, 255, 255, 0.1)' 
-                                          : 'rgba(59, 130, 246, 0.2)',
-                                        color: currentPage <= 1 
-                                          ? 'rgba(255, 255, 255, 0.4)' 
-                                          : 'white',
-                                        cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        transition: 'all 0.2s ease'
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        if (currentPage > 1) {
-                                          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                                          e.currentTarget.style.transform = 'translateY(-1px)';
-                                        }
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        if (currentPage > 1) {
-                                          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                                          e.currentTarget.style.transform = 'translateY(0)';
-                                        }
-                                      }}
-                                    >
-                                      ← Prev
-                                    </button>
-
-                                    {/* Page Info with Page Numbers */}
-                                    <div style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px',
-                                      fontSize: '12px',
-                                      color: 'rgba(255, 255, 255, 0.8)'
-                                    }}>
-                                      <span>Trang {currentPage} / {totalPages}</span>
-                                      <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                                        ({totalContainers} container)
-                                      </span>
-                                      
-                                      {/* Page Numbers for quick navigation */}
-                                      {totalPages <= 5 && (
-                                        <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                            <button
-                                              key={page}
-                                              onClick={() => handlePageChange(page)}
-                                              style={{
-                                                width: '24px',
-                                                height: '24px',
-                                                borderRadius: '4px',
-                                                border: '1px solid rgba(255, 255, 255, 0.3)',
-                                                background: page === currentPage 
-                                                  ? 'rgba(59, 130, 246, 0.4)' 
-                                                  : 'rgba(255, 255, 255, 0.1)',
-                                                color: page === currentPage 
-                                                  ? 'white' 
-                                                  : 'rgba(255, 255, 255, 0.7)',
-                                                cursor: 'pointer',
-                                                fontSize: '10px',
-                                                fontWeight: '600',
-                                                transition: 'all 0.2s ease'
-                                              }}
-                                              onMouseEnter={(e) => {
-                                                if (page !== currentPage) {
-                                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                                                }
-                                              }}
-                                              onMouseLeave={(e) => {
-                                                if (page !== currentPage) {
-                                                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                                }
-                                              }}
-                                            >
-                                              {page}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Next Button */}
-                                    <button
-                                      onClick={handleNextPage}
-                                      disabled={currentPage >= totalPages}
-                                      style={{
-                                        padding: '8px 16px',
-                                        borderRadius: '6px',
-                                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                                        background: currentPage >= totalPages 
-                                          ? 'rgba(255, 255, 255, 0.1)' 
-                                          : 'rgba(59, 130, 246, 0.2)',
-                                        color: currentPage >= totalPages 
-                                          ? 'rgba(255, 255, 255, 0.4)' 
-                                          : 'white',
-                                        cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        transition: 'all 0.2s ease'
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        if (currentPage < totalPages) {
-                                          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                                          e.currentTarget.style.transform = 'translateY(-1px)';
-                                        }
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        if (currentPage < totalPages) {
-                                          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                                          e.currentTarget.style.transform = 'translateY(0)';
-                                        }
-                                      }}
-                                    >
-                                      Next →
-                                    </button>
-                                  </div>
-                                )}
                               </>
                             )}
                           </div>

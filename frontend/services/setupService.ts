@@ -40,6 +40,7 @@ export interface Customer {
   address?: string;
   email?: string;
   phone?: string;
+  note?: string;
   status: string;
   createdAt: string;
   updatedAt: string;

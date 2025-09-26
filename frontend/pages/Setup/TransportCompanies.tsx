@@ -8,6 +8,8 @@ import { TransportCompaniesTable } from './components/TransportCompaniesTable';
 import { SetupHeader } from './components/SetupHeader';
 import { SuccessMessage } from './components/SuccessMessage';
 import { SetupModals } from './components/SetupModals';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
+import { EditTransportCompanyModal } from './components/EditTransportCompanyModal';
 
 // Import hooks and handlers
 import { useSetupState } from './hooks/useSetupState';
@@ -40,6 +42,14 @@ export default function TransportCompanies() {
     transportCompanyErrorText,
     setTransportCompanyErrorText,
 
+    // Delete Modal States
+    showDeleteModal,
+    setShowDeleteModal,
+    deletingItem,
+    setDeletingItem,
+    isDeleting,
+    setIsDeleting,
+
     // Common State
     successMessage,
     setSuccessMessage
@@ -56,6 +66,9 @@ export default function TransportCompanies() {
     setTransportCompanyFormData,
     setTransportCompanyErrorText,
     setSuccessMessage,
+    setShowDeleteModal,
+    setDeletingItem,
+    setIsDeleting,
     transportCompanies,
     transportCompaniesPagination,
     language,
@@ -64,7 +77,7 @@ export default function TransportCompanies() {
 
   // Load data on component mount
   useEffect(() => {
-    transportCompanyHandlers.loadTransportCompanies();
+    transportCompanyHandlers.loadTransportCompanies(1, 14);
   }, []);
 
   return (
@@ -154,6 +167,35 @@ export default function TransportCompanies() {
         onContainerTypeFileUpload={() => {}}
         
         // Common
+        language={language}
+        translations={translations}
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeletingItem(null);
+        }}
+        onConfirm={() => transportCompanyHandlers.confirmDeleteTransportCompany(deletingItem)}
+        title="Xác nhận xóa nhà xe"
+        message="Bạn có chắc chắn muốn xóa nhà xe này không?"
+        itemName={deletingItem?.name || ''}
+        isDeleting={isDeleting}
+      />
+
+      <EditTransportCompanyModal
+        visible={showEditTransportCompanyModal}
+        onCancel={() => {
+          setShowEditTransportCompanyModal(false);
+          setEditingTransportCompany(null);
+          setTransportCompanyErrorText('');
+        }}
+        onSubmit={(data) => transportCompanyHandlers.handleUpdateTransportCompany(data, editingTransportCompany)}
+        transportCompany={editingTransportCompany}
+        formData={transportCompanyFormData}
+        setFormData={setTransportCompanyFormData}
+        errorText={transportCompanyErrorText}
         language={language}
         translations={translations}
       />

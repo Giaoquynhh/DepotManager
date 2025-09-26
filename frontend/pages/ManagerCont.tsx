@@ -7,6 +7,10 @@ import { useToast } from '../hooks/useToastHook';
 import { useRouteRefresh } from '../hooks/useRouteRefresh';
 import { requestService } from '../services/requests';
 import { maintenanceApi } from '../services/maintenance';
+import { setupService, Customer } from '../services/setupService';
+import { containersApi } from '../services/containers';
+import { yardApi } from '../services/yard';
+import { reportsService, ContainerItem } from '../services/reports';
 
 // Interface cho dữ liệu bảng
 interface TableData {
@@ -20,15 +24,24 @@ interface TableData {
   documentsCount?: number; // Số lượng chứng từ
   repairImagesCount?: number; // Số lượng ảnh kiểm tra
   repairTicketId?: string; // ID của repair ticket
+  position?: string; // Vị trí bãi
+  sealNumber?: string; // Số seal
+  demDet?: string; // DEM/DET
+  attachments?: any[]; // Danh sách file đính kèm ở mức container
+  containerQuality?: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN'; // Trạng thái hiển thị
+  yardName?: string;
+  blockCode?: string;
+  slotCode?: string;
 }
 
 export default function ManagerCont(){
   const router = useRouter();
   const { t } = useTranslation();
-  const { showSuccess, ToastContainer } = useToast();
+  const { showSuccess, showError, ToastContainer } = useToast();
   const [localSearch, setLocalSearch] = React.useState('');
   const [localType, setLocalType] = React.useState('all');
   const [localStatus, setLocalStatus] = React.useState('all');
+  const [includeEmptyInYard, setIncludeEmptyInYard] = React.useState(true); // Tự động bật mặc định
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const routeRefreshKey = useRouteRefresh();
   const [loading, setLoading] = React.useState(false);
@@ -65,7 +78,7 @@ export default function ManagerCont(){
   // Fetch data when component mounts
   React.useEffect(() => {
     fetchImportRequests();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, includeEmptyInYard]);
 
   // Documents modal functions
   const openDocuments = async (row: TableData) => {
@@ -130,10 +143,32 @@ export default function ManagerCont(){
     setRepairImagesError(null);
   };
 
-  const handleUpdateInfo = (id: string) => {
-    // TODO: Implement update functionality
-    console.log('Update info for:', id);
-    showSuccess('Cập nhật thông tin thành công!');
+  // Update modal states
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
+  const [selectedRow, setSelectedRow] = React.useState<TableData | null>(null);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
+  const [selectedStatus, setSelectedStatus] = React.useState<string>('');
+  const [selectedSealNumber, setSelectedSealNumber] = React.useState<string>('');
+  const [selectedDemDet, setSelectedDemDet] = React.useState<string>('');
+
+  const handleUpdateInfo = async (row: TableData) => {
+    setSelectedRow(row);
+    setIsUpdateModalOpen(true);
+    setSelectedCustomerId(''); // Reset customer selection
+    setSelectedStatus(row.containerQuality || 'GOOD'); // Set initial status
+    setSelectedSealNumber(row.sealNumber || ''); // Set initial seal number
+    setSelectedDemDet(row.demDet === 'Không có' ? '' : row.demDet || ''); // Set initial DEM/DET
+    
+    // Fetch customers when opening modal
+    try {
+      const response = await setupService.getCustomers({ limit: 1000 });
+      if (response.success && response.data) {
+        setCustomers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
   };
 
   const handleCancel = (id: string) => {
@@ -143,54 +178,173 @@ export default function ManagerCont(){
   };
 
 
-  // Function để fetch import requests từ API
+  // Function để fetch danh sách request và fill record theo yêu cầu
   const fetchImportRequests = async () => {
     setLoading(true);
     try {
+      // Chỉ lấy IMPORT requests, không lấy EXPORT requests
       const response = await requestService.getRequests('IMPORT');
-      console.log('API Response:', response.data);
-      
-      if (response.data.success) {
-        // Transform data từ API thành format của table
-        const transformedData: TableData[] = await Promise.all(
-          response.data.data.map(async (request: any) => {
-            // Lấy repair ticket cho container này
-            let repairImagesCount = 0;
-            let repairTicketId = '';
-            
-            try {
-              const repairResponse = await maintenanceApi.listRepairs({ 
-                container_no: request.container_no,
-                limit: 1 
-              });
-              
-              if (repairResponse.data && repairResponse.data.length > 0) {
-                const repairTicket = repairResponse.data[0];
-                repairTicketId = repairTicket.id;
-                repairImagesCount = repairTicket.imagesCount || 0;
-              }
-            } catch (repairError) {
-              console.log('No repair ticket found for container:', request.container_no);
-            }
-
-            return {
-              id: request.id,
-              shippingLine: request.shipping_line?.name || '',
-              containerNumber: request.container_no || '',
-              containerType: request.container_type?.code || '',
-              status: request.status || '',
-              customer: request.customer?.name || '',
-              documents: request.attachments?.map((att: any) => att.file_name).join(', ') || '',
-              documentsCount: request.attachments?.length || 0,
-              repairImagesCount,
-              repairTicketId
-            };
-          })
-        );
-        setTableData(transformedData);
+      if (!response?.data?.success) {
+        setTableData([]);
+        return;
       }
+
+      const requests: any[] = response.data.data || [];
+      
+      // Lấy container EMPTY_IN_YARD nếu được bật
+      let emptyInYardContainers: ContainerItem[] = [];
+      if (includeEmptyInYard) {
+        try {
+          console.log('🔍 Fetching EMPTY_IN_YARD containers...');
+          const emptyResponse = await reportsService.getContainers({
+            service_status: 'SYSTEM_ADMIN_ADDED',
+            page: 1,
+            pageSize: 200
+          });
+          emptyInYardContainers = emptyResponse.data.items || [];
+          console.log('📦 EMPTY_IN_YARD containers found:', emptyInYardContainers.length);
+          console.log('📋 Container details:', emptyInYardContainers.map(c => ({
+            container_no: c.container_no,
+            service_status: c.service_status,
+            data_source: c.data_source,
+            yard_name: c.yard_name,
+            slot_code: c.slot_code
+          })));
+        } catch (error) {
+          console.error('❌ Error fetching EMPTY_IN_YARD containers:', error);
+        }
+      }
+
+      // Xử lý container EMPTY_IN_YARD
+      const emptyInYardData: TableData[] = emptyInYardContainers.map((container: ContainerItem) => ({
+        id: `empty_${container.container_no}`, // ID giả để phân biệt
+        shippingLine: container.shipping_line?.name || '',
+        containerNumber: container.container_no || '',
+        containerType: container.container_type?.code || '',
+        status: 'EMPTY_IN_YARD',
+        customer: container.customer?.name || '',
+        documents: '',
+        documentsCount: 0,
+        repairImagesCount: 0,
+        repairTicketId: undefined,
+        position: (() => {
+          if (container.yard_name || container.block_code || container.slot_code) {
+            const pos = `${container.block_code || ''} / ${container.slot_code || ''}`;
+            return container.yard_name ? `${container.yard_name} • ${pos}` : pos;
+          }
+          return '';
+        })(),
+        yardName: container.yard_name,
+        blockCode: container.block_code,
+        slotCode: container.slot_code,
+        sealNumber: container.seal_number || '',
+        demDet: container.dem_det || '',
+        containerQuality: 'GOOD' as const
+      }));
+
+      const transformedData: TableData[] = await Promise.all(
+        requests.map(async (request: any) => {
+          // Số ảnh kiểm tra: chỉ tính cho IMPORT bằng repair ticket
+          let repairImagesCount = 0;
+          let repairTicketId = '';
+          let documentsCount = 0;
+          let documentsList: any[] = [];
+          let containerQuality: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN' = 'UNKNOWN';
+          let demDetValue = '';
+          
+          // Tìm container trong emptyInYardContainers để lấy repair_ticket.status mới nhất
+          const containerFromReports = emptyInYardContainers.find(c => c.container_no === request.container_no);
+          
+          if (request.type === 'IMPORT') {
+            // Với IMPORT: lấy DEM/DET từ request, nếu không có thì hiển thị "Không có"
+            demDetValue = request.dem_det || request.demDet || 'Không có';
+            
+            // Sử dụng dữ liệu từ reports/containers nếu có
+            if (containerFromReports?.repair_ticket?.status) {
+              containerQuality = containerFromReports.repair_ticket.status === 'COMPLETE' ? 'GOOD' : 'NEED_REPAIR';
+            } else {
+              // Fallback: gọi maintenanceApi nếu không có dữ liệu từ reports
+              try {
+                const repairResponse = await maintenanceApi.listRepairs({
+                  container_no: request.container_no,
+                  limit: 1
+                });
+                if (repairResponse?.data && repairResponse.data.length > 0) {
+                  const repairTicket = repairResponse.data[0];
+                  repairTicketId = repairTicket.id;
+                  containerQuality = repairTicket.status === 'COMPLETE' ? 'GOOD' : 'NEED_REPAIR';
+                  try {
+                    const imgs = await maintenanceApi.getRepairImages(repairTicket.id);
+                    repairImagesCount = Array.isArray(imgs?.data) ? imgs.data.length : 0;
+                  } catch {}
+                }
+              } catch {}
+            }
+          } else if (request.type === 'EXPORT') {
+            // Với EXPORT: mặc định là "Không có"
+            demDetValue = 'Không có';
+            containerQuality = 'GOOD';
+          }
+
+          // Đếm chứng từ thực tế của request (đồng nhất với modal)
+          try {
+            const filesRes = await requestService.getFiles(request.id);
+            if (filesRes?.data?.success) {
+              documentsList = filesRes.data.data || filesRes.data.attachments || [];
+              documentsCount = documentsList.length;
+            }
+          } catch {}
+
+          // Tính toán vị trí: ưu tiên dữ liệu từ request; nếu thiếu thì tra cứu từ Yard
+          let yardNameCalc: string = request.yard_name || request.yard?.name || request.actual_location?.yard_name || '';
+          let blockCodeCalc: string = request.block_code || request.actual_location?.block_code || '';
+          let slotCodeCalc: string = request.slot_code || request.actual_location?.slot_code || '';
+
+          if (!yardNameCalc && !blockCodeCalc && !slotCodeCalc && request.container_no) {
+            try {
+              const located = await yardApi.locate(String(request.container_no));
+              yardNameCalc = located?.yard_name || located?.slot?.block?.yard?.name || yardNameCalc || '';
+              blockCodeCalc = located?.block_code || located?.slot?.block?.code || blockCodeCalc || '';
+              slotCodeCalc = located?.slot_code || located?.slot?.code || slotCodeCalc || '';
+            } catch {}
+          }
+
+          return {
+            id: request.id,
+            shippingLine: request.shipping_line?.name || '',
+            containerNumber: request.container_no || '',
+            containerType: request.container_type?.code || '',
+            status: request.status || '',
+            customer: request.customer?.name || '',
+            documents: documentsList.map((att: any) => att.file_name).join(', '),
+            documentsCount,
+            repairImagesCount,
+            repairTicketId: repairTicketId || undefined,
+            position: (() => {
+              if (yardNameCalc || blockCodeCalc || slotCodeCalc) {
+                const pos = `${blockCodeCalc || '-'} / ${slotCodeCalc || '-'}`;
+                return yardNameCalc ? `${yardNameCalc} • ${pos}` : pos;
+              }
+              return '';
+            })(),
+            yardName: yardNameCalc,
+            blockCode: blockCodeCalc,
+            slotCode: slotCodeCalc,
+            sealNumber: request.seal_number || request.seal_no || request.seal || '',
+            demDet: demDetValue
+            ,containerQuality
+          };
+        })
+      );
+
+      // Kết hợp dữ liệu từ requests và EMPTY_IN_YARD containers
+      const allData = [...transformedData, ...emptyInYardData];
+      console.log('📊 Total data after combining:', allData.length);
+      console.log('📋 ServiceRequest data:', transformedData.length);
+      console.log('📦 EMPTY_IN_YARD data:', emptyInYardData.length);
+      setTableData(allData);
     } catch (error) {
-      console.error('Error fetching import requests:', error);
+      console.error('Error fetching requests:', error);
       showSuccess('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setLoading(false);
@@ -401,6 +555,11 @@ export default function ManagerCont(){
           color: #065f46;
         }
 
+        .status-empty-in-yard {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
 
         .action-buttons {
           display: flex;
@@ -538,6 +697,16 @@ export default function ManagerCont(){
                   <option value="active">Hoạt động</option>
                   <option value="inactive">Không hoạt động</option>
                 </select>
+                
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', color: '#6b7280', fontSize: '14px' }}>
+                  <input
+                    type="checkbox"
+                    checked={includeEmptyInYard}
+                    onChange={(e) => setIncludeEmptyInYard(e.target.checked)}
+                    style={{ margin: 0 }}
+                  />
+                  Bao gồm container rỗng trong bãi (tự động bật)
+                </label>
           </div>
         </div>
 
@@ -559,8 +728,11 @@ export default function ManagerCont(){
                       <th>Số Cont</th>
                       <th>Loại Cont</th>
                       <th>Trạng thái</th>
+                      <th>Hình ảnh</th>
+                      <th>Vị trí</th>
+                      <th>Số seal</th>
                       <th>Khách hàng</th>
-                      <th>Chứng từ</th>
+                      <th>DEM/DET</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -578,11 +750,12 @@ export default function ManagerCont(){
                           <td>{row.containerNumber}</td>
                           <td>{row.containerType}</td>
                           <td>
-                            <span className={`status-badge status-${row.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                              {row.status}
-                            </span>
+                            {row.containerQuality === 'NEED_REPAIR' ? (
+                              <span className="status-badge status-đang-xử-lý">Cần sửa chữa</span>
+                            ) : (
+                              <span className="status-badge status-hoàn-thành">Container tốt</span>
+                            )}
                           </td>
-                          <td>{row.customer}</td>
                           <td>
                             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
                               <button
@@ -606,28 +779,25 @@ export default function ManagerCont(){
                             </div>
                           </td>
                           <td>
-                            <div className="action-buttons">
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => handleUpdateInfo(row.id)}
-                                title="Cập nhật thông tin"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleCancel(row.id)}
-                                title="Hủy"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                              </button>
-              </div>
+                            <div style={{display:'flex', flexDirection:'column'}}>
+                              <span>{row.yardName || ''}</span>
+                              <small className="muted">{row.blockCode || ''} / {row.slotCode || ''}</small>
+                            </div>
+                          </td>
+                          <td>{row.sealNumber || ''}</td>
+                          <td>{row.customer || ''}</td>
+                          <td>{row.demDet || ''}</td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleUpdateInfo(row)}
+                              title="Cập nhật thông tin"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -732,6 +902,183 @@ export default function ManagerCont(){
               </div>
               <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end' }}>
                 <button className="btn btn-secondary" onClick={closeRepairImages}>Đóng</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Modal */}
+        {isUpdateModalOpen && selectedRow && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
+            }}
+            onClick={() => {
+              setIsUpdateModalOpen(false);
+              setSelectedRow(null);
+              setSelectedCustomerId('');
+            }}
+          >
+            <div
+              style={{ background: '#fff', borderRadius: 12, width: '600px', maxWidth: '95vw', maxHeight: '85vh', overflow: 'auto', boxShadow: '0 20px 40px rgba(0,0,0,0.25)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Cập nhật thông tin - {selectedRow.containerNumber}</h3>
+                <button 
+                  onClick={() => {
+                    setIsUpdateModalOpen(false);
+                    setSelectedRow(null);
+                    setSelectedCustomerId('');
+                  }} 
+                  style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
+                >×</button>
+              </div>
+              <div style={{ padding: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Khách hàng</label>
+                    <select
+                      value={selectedCustomerId}
+                      onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px 12px', 
+                        border: '1px solid #d1d5db', 
+                        borderRadius: 6,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      <option value="">{selectedRow.customer || 'Chưa có khách hàng'}</option>
+                      {customers.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.code} - {customer.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
+                      {selectedCustomerId ? 'Sẽ cập nhật khách hàng khi lưu' : 'Giữ nguyên khách hàng hiện tại'}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Số seal</label>
+                    <input
+                      type="text"
+                      value={selectedSealNumber}
+                      onChange={(e) => setSelectedSealNumber(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>DEM/DET (dd/mm/yyyy)</label>
+                    <input
+                      type="text"
+                      value={selectedDemDet}
+                      onChange={(e) => {
+                        // Format input to dd/mm/yyyy
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length >= 2) {
+                          value = value.substring(0, 2) + '/' + value.substring(2);
+                        }
+                        if (value.length >= 5) {
+                          value = value.substring(0, 5) + '/' + value.substring(5, 9);
+                        }
+                        setSelectedDemDet(value);
+                      }}
+                      placeholder="dd/mm/yyyy"
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Trạng thái</label>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }}
+                    >
+                      <option value="GOOD">Container tốt</option>
+                      <option value="NEED_REPAIR">Cần sửa chữa</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setIsUpdateModalOpen(false);
+                    setSelectedRow(null);
+                    setSelectedCustomerId('');
+                    setSelectedStatus('');
+                    setSelectedSealNumber('');
+                    setSelectedDemDet('');
+                  }}
+                >
+                  Hủy
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    try {
+                      if (selectedRow?.containerNumber) {
+                        console.log('🔄 Updating container:', selectedRow.containerNumber, 'with customer:', selectedCustomerId);
+                        
+                        // Gọi API cập nhật thông tin container
+                        const updateData: any = {};
+                        if (selectedCustomerId) {
+                          updateData.customer_id = selectedCustomerId;
+                        }
+                        if (selectedStatus !== selectedRow.containerQuality) {
+                          updateData.container_quality = selectedStatus;
+                        }
+                        if (selectedSealNumber !== selectedRow.sealNumber) {
+                          updateData.seal_number = selectedSealNumber;
+                        }
+                        if (selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '')) {
+                          updateData.dem_det = selectedDemDet;
+                        }
+                        
+                        const response = await containersApi.update(selectedRow.containerNumber, updateData);
+                        console.log('✅ API response:', response);
+                        
+                        // Cập nhật local state
+                        const updatedData = tableData.map(item => 
+                          item.containerNumber === selectedRow.containerNumber 
+                            ? { 
+                                ...item, 
+                                customer: selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.name || item.customer : item.customer,
+                                containerQuality: selectedStatus !== selectedRow.containerQuality ? selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN" : item.containerQuality,
+                                sealNumber: selectedSealNumber !== selectedRow.sealNumber ? selectedSealNumber : item.sealNumber,
+                                demDet: selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '') ? selectedDemDet : item.demDet
+                              }
+                            : item
+                        );
+                        setTableData(updatedData);
+                        
+                        if (selectedCustomerId) {
+                          showSuccess(`Cập nhật thông tin thành công! Khách hàng đã được cập nhật.`);
+                        } else {
+                          showSuccess('Cập nhật thông tin thành công!');
+                        }
+                      }
+                      
+                      setIsUpdateModalOpen(false);
+                      setSelectedRow(null);
+                      setSelectedCustomerId('');
+                      setSelectedStatus('');
+                      setSelectedSealNumber('');
+                      setSelectedDemDet('');
+                    } catch (error) {
+                      console.error('❌ Error updating container:', error);
+                      showError('Có lỗi xảy ra khi cập nhật thông tin!');
+                    }
+                  }}
+                >
+                  Lưu
+                </button>
               </div>
             </div>
           </div>

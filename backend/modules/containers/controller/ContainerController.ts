@@ -1,183 +1,256 @@
 import { Request, Response } from 'express';
 import { prisma } from '../../../shared/config/database';
+import { AuthRequest } from '../../../shared/middlewares/auth';
 
-export class ContainerController {
-  async get(req: Request, res: Response) {
+class ContainerController {
+  /**
+   * Lấy thông tin container
+   */
+  async get(req: AuthRequest, res: Response) {
     try {
       const { container_no } = req.params;
       
-      // Tìm container trong ServiceRequest
-      const container = await prisma.serviceRequest.findFirst({
-        where: {
-          container_no,
-          depot_deleted_at: null
-        },
+      // Tìm trong Container model trước (cho EMPTY_IN_YARD)
+      const container = await prisma.container.findUnique({
+        where: { container_no },
         include: {
-          shipping_line: { select: { name: true, code: true } },
-          container_type: { select: { code: true, description: true } },
-          customer: { select: { name: true, code: true } },
-          vehicle_company: { select: { name: true, code: true } },
-              attachments: {
-                where: { deleted_at: null },
-                select: { 
-                  id: true, 
-                  file_name: true, 
-                  file_type: true, 
-                  storage_url: true,
-                  file_size: true
-                }
-              }
-        },
-        orderBy: { createdAt: 'desc' }
+          customer: {
+            select: { id: true, name: true, code: true }
+          },
+          shipping_line: {
+            select: { id: true, name: true, code: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
+          }
+        }
       });
 
-      if (!container) {
+      if (container) {
+        return res.json({
+          success: true,
+          data: {
+            container_no,
+            customer: container.customer,
+            shipping_line: container.shipping_line,
+            container_type: container.container_type,
+            seal_number: container.seal_number,
+            dem_det: container.dem_det,
+            yard_name: container.yard_name,
+            block_code: container.block_code,
+            slot_code: container.slot_code
+          }
+        });
+      }
+
+      // Fallback: tìm trong ServiceRequest
+      const latestRequest = await prisma.serviceRequest.findFirst({
+        where: { container_no },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          customer: {
+            select: { id: true, name: true, code: true }
+          },
+          shipping_line: {
+            select: { id: true, name: true, code: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
+          }
+        }
+      });
+
+      if (!latestRequest) {
         return res.status(404).json({ 
           success: false, 
           message: 'Không tìm thấy container' 
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
-        data: container
+        data: {
+          container_no,
+          customer: latestRequest.customer,
+          shipping_line: latestRequest.shipping_line,
+          container_type: latestRequest.container_type,
+          seal_number: latestRequest.seal_number,
+          dem_det: latestRequest.dem_det
+        }
       });
 
     } catch (error: any) {
       console.error('Error getting container:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Có lỗi xảy ra khi lấy thông tin container',
-        error: error.message
+      return res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Có lỗi xảy ra khi lấy thông tin container' 
       });
     }
   }
 
-  async alerts(req: Request, res: Response) {
+  /**
+   * Lấy danh sách alerts
+   */
+  async alerts(req: AuthRequest, res: Response) {
     try {
-      // Tạm thời trả về empty array
-      res.json({
+      // TODO: Implement alerts logic
+      return res.json({
         success: true,
         data: []
       });
     } catch (error: any) {
       console.error('Error getting alerts:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Có lỗi xảy ra khi lấy danh sách alerts',
-        error: error.message
+      return res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Có lỗi xảy ra khi lấy danh sách alerts' 
       });
     }
   }
 
-  async updateContainer(req: Request, res: Response) {
+  /**
+   * Cập nhật thông tin container (alias cho updateContainerInfo)
+   */
+  async updateContainer(req: AuthRequest, res: Response) {
+    return this.updateContainerInfo(req, res);
+  }
+
+  /**
+   * Cập nhật thông tin container
+   */
+  async updateContainerInfo(req: AuthRequest, res: Response) {
     try {
       const { container_no } = req.params;
-      const {
-        shipping_line_id,
-        container_type_id,
-        customer_id,
-        vehicle_company_id,
-        dem_det,
-        seal_number
-      } = req.body;
+      const { customer_id, seal_number, dem_det, container_quality } = req.body;
 
-      // Tìm container trong ServiceRequest
-      const existingRequest = await prisma.serviceRequest.findFirst({
-        where: {
-          container_no,
-          depot_deleted_at: null
-        },
+      // Tìm ServiceRequest mới nhất cho container này
+      const latestRequest = await prisma.serviceRequest.findFirst({
+        where: { container_no },
         orderBy: { createdAt: 'desc' }
       });
 
-      if (!existingRequest) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Không tìm thấy container' 
+      let updatedRequest = null;
+      let customer = null;
+
+      if (latestRequest) {
+        // Cập nhật thông tin ServiceRequest nếu có
+        updatedRequest = await prisma.serviceRequest.update({
+          where: { id: latestRequest.id },
+          data: {
+            ...(customer_id && { customer_id }),
+            ...(seal_number !== undefined && { seal_number }),
+            ...(dem_det !== undefined && { dem_det }),
+            updatedAt: new Date()
+          },
+          include: {
+            customer: {
+              select: { id: true, name: true, code: true }
+            }
+          }
+        });
+        customer = updatedRequest.customer;
+      } else {
+        // Với container EMPTY_IN_YARD, tạo hoặc cập nhật Container record
+        const containerData: any = {
+          container_no,
+          status: 'EMPTY_IN_YARD',
+          created_by: req.user!._id,
+          updatedAt: new Date()
+        };
+
+        if (customer_id) containerData.customer_id = customer_id;
+        if (seal_number !== undefined) containerData.seal_number = seal_number;
+        if (dem_det !== undefined) containerData.dem_det = dem_det;
+
+        // Upsert Container record
+        const container = await prisma.container.upsert({
+          where: { container_no },
+          update: containerData,
+          create: {
+            ...containerData,
+            createdAt: new Date()
+          },
+          include: {
+            customer: {
+              select: { id: true, name: true, code: true }
+            }
+          }
+        });
+
+        customer = container.customer;
+        
+        // Tạo ServiceRequest mới để tương thích với logic hiện tại
+        const createData: any = {
+          container_no,
+          type: 'IMPORT',
+          status: 'EMPTY_IN_YARD',
+          created_by: req.user!._id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        if (customer_id) createData.customer_id = customer_id;
+        if (seal_number !== undefined) createData.seal_number = seal_number;
+        if (dem_det !== undefined) createData.dem_det = dem_det;
+
+        updatedRequest = await prisma.serviceRequest.create({
+          data: createData,
+          include: {
+            customer: {
+              select: { id: true, name: true, code: true }
+            }
+          }
         });
       }
 
-      // Validate foreign keys
-      if (shipping_line_id) {
-        const shippingLine = await prisma.shippingLine.findUnique({ 
-          where: { id: shipping_line_id } 
+      // Cập nhật container_quality bằng cách cập nhật RepairTicket
+      if (container_quality) {
+        const repairTickets = await prisma.repairTicket.findMany({
+          where: { container_no },
+          orderBy: { createdAt: 'desc' }
         });
-        if (!shippingLine) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Hãng tàu không tồn tại' 
+
+        if (repairTickets.length > 0) {
+          // Cập nhật tất cả RepairTicket của container này
+          const repairStatus = container_quality === 'GOOD' ? 'COMPLETE' : 'PENDING';
+          await prisma.repairTicket.updateMany({
+            where: { container_no },
+            data: { 
+              status: repairStatus,
+              updatedAt: new Date()
+            }
+          });
+        } else if (container_quality === 'NEED_REPAIR') {
+          // Tạo RepairTicket mới nếu chưa có và cần sửa chữa
+          await prisma.repairTicket.create({
+            data: {
+              container_no,
+              status: 'PENDING',
+              problem_description: 'Container cần sửa chữa',
+              code: `RT-${Date.now()}`, // Tạo code unique
+              created_by: req.user!._id,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
           });
         }
       }
 
-      if (container_type_id) {
-        const containerType = await prisma.containerType.findUnique({ 
-          where: { id: container_type_id } 
-        });
-        if (!containerType) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Loại container không tồn tại' 
-          });
-        }
-      }
-
-      if (customer_id) {
-        const customer = await prisma.customer.findUnique({ 
-          where: { id: customer_id } 
-        });
-        if (!customer) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Khách hàng không tồn tại' 
-          });
-        }
-      }
-
-      if (vehicle_company_id) {
-        const transportCompany = await prisma.transportCompany.findUnique({ 
-          where: { id: vehicle_company_id } 
-        });
-        if (!transportCompany) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Nhà xe không tồn tại' 
-          });
-        }
-      }
-
-      // Cập nhật ServiceRequest
-      const updatedRequest = await prisma.serviceRequest.update({
-        where: { id: existingRequest.id },
-        data: {
-          shipping_line_id: shipping_line_id || existingRequest.shipping_line_id,
-          container_type_id: container_type_id || existingRequest.container_type_id,
-          customer_id: customer_id || existingRequest.customer_id,
-          vehicle_company_id: vehicle_company_id || existingRequest.vehicle_company_id,
-          dem_det: dem_det || existingRequest.dem_det,
-          seal_number: seal_number || existingRequest.seal_number
-        },
-        include: {
-          shipping_line: { select: { name: true, code: true } },
-          container_type: { select: { code: true, description: true } },
-          customer: { select: { name: true, code: true } },
-          vehicle_company: { select: { name: true, code: true } }
-        }
-      });
-
-      res.json({
+      return res.json({
         success: true,
-        message: 'Cập nhật container thành công',
-        data: updatedRequest
+        message: 'Cập nhật thông tin container thành công',
+        data: {
+          container_no,
+          customer: customer,
+          seal_number: updatedRequest.seal_number,
+          dem_det: updatedRequest.dem_det
+        }
       });
 
     } catch (error: any) {
-      console.error('Error updating container:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Có lỗi xảy ra khi cập nhật container',
-        error: error.message
+      console.error('Error updating container info:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Có lỗi xảy ra khi cập nhật thông tin container' 
       });
     }
   }

@@ -48,18 +48,21 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
           type="text" 
           placeholder={`${translations[language].fullNamePlaceholder} *`} 
           value={empFullName} 
+          autoComplete="off"
           onChange={e => setEmpFullName(e.target.value)} 
         />
         <input 
           type="email" 
           placeholder={`${translations[language].emailPlaceholder} *`} 
           value={empEmail} 
+          autoComplete="off"
           onChange={e => setEmpEmail(e.target.value)} 
         />
         <input 
           type="password" 
           placeholder={`${translations[language].passwordPlaceholder} *`} 
           value={empPassword} 
+          autoComplete="new-password"
           onChange={e => setEmpPassword(e.target.value)} 
         />
         <select value={empRole} onChange={e => setEmpRole(e.target.value)}>

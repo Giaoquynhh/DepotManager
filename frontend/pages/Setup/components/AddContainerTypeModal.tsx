@@ -58,103 +58,20 @@ export const AddContainerTypeModal: React.FC<AddContainerTypeModalProps> = ({
   if (!visible) return null;
 
   return (
-    <div 
-      className="modal-overlay" 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        backdropFilter: 'blur(4px)'
-      }}
-    >
-      <div 
-        className="modal" 
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          maxWidth: '500px',
-          width: '90%',
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          animation: 'modalSlideIn 0.3s ease-out'
-        }}
-      >
-        {/* Header với gradient đẹp */}
-        <div 
-          className="modal-header" 
-          style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            padding: '24px 32px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid #e5e7eb'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div 
-              style={{
-                width: '40px',
-                height: '40px',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
-              }}
-            >
-              📦
-            </div>
-            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
-              {translations[language].addNewContainerType}
-            </h3>
-          </div>
-          <button 
-            onClick={onCancel}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              borderRadius: '8px',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'white',
-              fontSize: '18px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-            }}
-          >
-            ✕
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '500px', maxWidth: '90vw' }}>
+        <div className="modal-header">
+          <h3 className="modal-title">{translations[language].addNewContainerType}</h3>
+          <button className="modal-close" onClick={onCancel} style={{ color: 'white', outline: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
         
         <form onSubmit={handleSubmit}>
-          <div 
-            className="modal-body" 
-            style={{
-              padding: '32px',
-              maxHeight: '60vh',
-              overflowY: 'auto'
-            }}
-          >
+          <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             {errorText && (
               <div 
                 style={{
@@ -302,127 +219,13 @@ export const AddContainerTypeModal: React.FC<AddContainerTypeModalProps> = ({
             </div>
           </div>
           
-          <div 
-            className="modal-footer" 
-            style={{
-              padding: '24px 32px',
-              backgroundColor: '#f9fafb',
-              borderTop: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}
-          >
-            <button 
-              type="button" 
-              onClick={onCancel}
-              disabled={isSubmitting}
-              style={{
-                padding: '10px 20px',
-                border: '2px solid #d1d5db',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: isSubmitting ? 0.6 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.borderColor = '#9ca3af';
-                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.borderColor = '#d1d5db';
-                  e.currentTarget.style.backgroundColor = 'white';
-                }
-              }}
-            >
-              {translations[language].cancel}
-            </button>
-            <button 
-              type="submit" 
-              disabled={isSubmitting || !formData.code.trim() || !formData.description.trim()}
-              style={{
-                padding: '10px 24px',
-                border: 'none',
-                borderRadius: '8px',
-                background: isSubmitting || !formData.code.trim() || !formData.description.trim() 
-                  ? '#9ca3af' 
-                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: isSubmitting || !formData.code.trim() || !formData.description.trim() 
-                  ? 'not-allowed' 
-                  : 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: isSubmitting || !formData.code.trim() || !formData.description.trim() 
-                  ? 'none' 
-                  : '0 4px 14px 0 rgba(16, 185, 129, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onMouseOver={(e) => {
-                if (!isSubmitting && formData.code.trim() && formData.description.trim()) {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px 0 rgba(16, 185, 129, 0.4)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isSubmitting && formData.code.trim() && formData.description.trim()) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(16, 185, 129, 0.3)';
-                }
-              }}
-            >
-              {isSubmitting ? (
-                <>
-                  <div 
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid rgba(255, 255, 255, 0.3)',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }}
-                  />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <span>💾</span>
-                  {translations[language].save}
-                </>
-              )}
+          <div className="modal-footer">
+            <button type="submit" className="btn" disabled={isSubmitting || !formData.code.trim() || !formData.description.trim()} style={{ opacity: isSubmitting || !formData.code.trim() || !formData.description.trim() ? 0.7 : 1, cursor: isSubmitting || !formData.code.trim() || !formData.description.trim() ? 'not-allowed' : 'pointer' }}>
+              {translations[language].save}
             </button>
           </div>
         </form>
       </div>
-      
-      <style jsx>{`
-        @keyframes modalSlideIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9) translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

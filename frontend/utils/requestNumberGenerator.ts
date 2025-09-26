@@ -18,7 +18,7 @@ export const generateImportRequestNumber = (date: Date, sequenceNumber: number):
 };
 
 /**
- * Generate Export Request number in format: HAddmmyyy00000
+ * Generate Export (Nâng) Request number in format: NAddmmyy#####
  * @param date - Date object for the request creation date
  * @param sequenceNumber - Sequence number for the day (1-based)
  * @returns Formatted request number
@@ -29,7 +29,8 @@ export const generateExportRequestNumber = (date: Date, sequenceNumber: number):
   const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
   const sequence = sequenceNumber.toString().padStart(5, '0');
   
-  return `HA${day}${month}${year}${sequence}`;
+  // Theo yêu cầu mới: Nâng container dùng tiền tố 'NA'
+  return `NA${day}${month}${year}${sequence}`;
 };
 
 /**
@@ -114,19 +115,16 @@ export const getNextLowerSequenceNumber = async (): Promise<number> => {
 };
 
 /**
- * Generate a complete request number for new requests
- * @param requestType - 'import' or 'export'
+ * Generate a complete request number cho Nâng (EXPORT). 
+ * Lưu ý: Luồng Hạ đã có hàm chuyên biệt, không dùng hàm này.
+ * @param requestType - vẫn giữ tham số để tương thích; sẽ bỏ qua và luôn sinh mã cho Nâng
  * @returns Promise with complete request number
  */
 export const generateNewRequestNumber = async (requestType: 'import' | 'export'): Promise<string> => {
   const now = new Date();
   const sequenceNumber = await getNextSequenceNumber(requestType);
-  
-  if (requestType === 'import') {
-    return generateImportRequestNumber(now, sequenceNumber);
-  } else {
-    return generateExportRequestNumber(now, sequenceNumber);
-  }
+  // Bất kể tham số, luôn sinh số cho Nâng (NA...)
+  return generateExportRequestNumber(now, sequenceNumber);
 };
 
 /**

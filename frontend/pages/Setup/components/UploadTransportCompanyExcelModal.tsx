@@ -91,120 +91,80 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
   if (!visible) return null;
 
   return (
-    <div className="modal-overlay" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div className="modal-content" style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '12px'
-        }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '20px',
-            fontWeight: '600',
-            color: '#111827'
-          }}>
-            {translations[language].uploadExcel}
-          </h2>
-          <button
-            onClick={onCancel}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#6b7280',
-              padding: '4px'
-            }}
-          >
-            ×
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '600px', maxWidth: '95vw' }}>
+        <div className="modal-header">
+          <h3 className="modal-title">{translations[language].uploadExcel}</h3>
+          <button className="modal-close" onClick={onCancel} style={{ color: 'white', outline: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
-        {/* Instructions */}
-        <div style={{
+        <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          {/* Instructions */}
+          <div style={{
           marginBottom: '20px',
           padding: '16px',
           backgroundColor: '#f8fafc',
           borderRadius: '8px',
           border: '1px solid #e2e8f0'
         }}>
-          <h3 style={{
+            <h3 style={{
             margin: '0 0 12px 0',
             fontSize: '16px',
             fontWeight: '600',
             color: '#374151'
-          }}>
-            {translations[language].uploadInstructions}
-          </h3>
-          <ul style={{
+            }}>
+              {translations[language].uploadInstructions}
+            </h3>
+            <ul style={{
             margin: 0,
             paddingLeft: '20px',
             color: '#6b7280',
             fontSize: '14px',
             lineHeight: '1.5'
-          }}>
-            <li>{translations[language].uploadInstruction1}</li>
-            <li>{translations[language].uploadInstruction2}</li>
-            <li>{translations[language].uploadInstruction3}</li>
-            <li>{translations[language].uploadInstruction4}</li>
-          </ul>
-        </div>
+            }}>
+              <li>{translations[language].uploadInstruction1}</li>
+              <li>{translations[language].uploadInstruction2}</li>
+              <li>{translations[language].uploadInstruction3}</li>
+              <li>{translations[language].uploadInstruction4}</li>
+            </ul>
+          </div>
 
-        {/* Template Download */}
-        <div style={{
+          {/* Template Download */}
+          <div style={{
           marginBottom: '20px',
           padding: '16px',
           backgroundColor: '#f0f9ff',
           borderRadius: '8px',
           border: '1px solid #bae6fd'
         }}>
-          <div style={{
+            <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
-          }}>
-            <div>
-              <h4 style={{
+            }}>
+              <div>
+                <h4 style={{
                 margin: '0 0 8px 0',
                 fontSize: '14px',
                 fontWeight: '600',
                 color: '#0369a1'
-              }}>
-                {translations[language].downloadTemplate}
-              </h4>
-              <p style={{
+                }}>
+                  {translations[language].downloadTemplate}
+                </h4>
+                <p style={{
                 margin: 0,
                 fontSize: '12px',
                 color: '#0369a1'
-              }}>
-                {translations[language].templateDescription}
-              </p>
-            </div>
-            <button
+                }}>
+                  {translations[language].templateDescription}
+                </p>
+              </div>
+              <button
               onClick={handleDownloadTemplate}
               style={{
                 padding: '8px 16px',
@@ -216,14 +176,14 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
                 fontWeight: '500',
                 cursor: 'pointer'
               }}
-            >
-              {translations[language].download}
-            </button>
+              >
+                {translations[language].download}
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* File Upload Area */}
-        <div
+          {/* File Upload Area */}
+          <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -291,70 +251,35 @@ export const UploadTransportCompanyExcelModal: React.FC<UploadTransportCompanyEx
           >
             {translations[language].browseFiles}
           </button>
-        </div>
+          </div>
 
-        {/* Selected File */}
-        {selectedFiles.length > 0 && (
-          <div style={{
+          {/* Selected File */}
+          {selectedFiles.length > 0 && (
+            <div style={{
             marginTop: '16px',
             padding: '12px',
             backgroundColor: '#f0fdf4',
             borderRadius: '6px',
             border: '1px solid #bbf7d0'
-          }}>
-            {selectedFiles.map((f, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 20 }}>📄</span>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#166534' }}>{f.name}</p>
-                    <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>{(f.size/1024).toFixed(1)} KB</p>
+            }}>
+              {selectedFiles.map((f, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>📄</span>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: '#166534' }}>{f.name}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>{(f.size/1024).toFixed(1)} KB</p>
+                    </div>
                   </div>
+                  <button onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#166534', padding: 4 }}>×</button>
                 </div>
-                <button onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#166534', padding: 4 }}>×</button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
 
-        {/* Action Buttons */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '12px',
-          marginTop: '24px',
-          borderTop: '1px solid #e5e7eb',
-          paddingTop: '16px'
-        }}>
-          <button
-            onClick={onCancel}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              backgroundColor: 'white',
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            {translations[language].cancel}
-          </button>
-          <button
-            onClick={handleUpload}
-            disabled={selectedFiles.length === 0}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor: selectedFiles.length ? '#059669' : '#9ca3af',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: selectedFiles.length ? 'pointer' : 'not-allowed'
-            }}
-          >
+        <div className="modal-footer">
+          <button onClick={handleUpload} disabled={selectedFiles.length === 0} className="btn" style={{ opacity: selectedFiles.length ? 1 : 0.7, cursor: selectedFiles.length ? 'pointer' : 'not-allowed' }}>
             {translations[language].upload}
           </button>
         </div>

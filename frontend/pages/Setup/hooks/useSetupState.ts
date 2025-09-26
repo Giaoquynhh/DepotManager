@@ -9,7 +9,7 @@ export const useSetupState = () => {
   const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
   const [shippingLinesPagination, setShippingLinesPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 14,
     total: 0,
     totalPages: 0
   });
@@ -29,7 +29,7 @@ export const useSetupState = () => {
   const [transportCompanies, setTransportCompanies] = useState<TransportCompany[]>([]);
   const [transportCompaniesPagination, setTransportCompaniesPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 14,
     total: 0,
     totalPages: 0
   });
@@ -51,7 +51,7 @@ export const useSetupState = () => {
   const [containerTypes, setContainerTypes] = useState<ContainerType[]>([]);
   const [containerTypesPagination, setContainerTypesPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 14,
     total: 0,
     totalPages: 0
   });
@@ -65,6 +65,11 @@ export const useSetupState = () => {
     note: ''
   });
   const [containerTypeErrorText, setContainerTypeErrorText] = useState('');
+
+  // Delete Modal States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Common state
   const [successMessage, setSuccessMessage] = useState('');
@@ -123,6 +128,14 @@ export const useSetupState = () => {
     setContainerTypeFormData,
     containerTypeErrorText,
     setContainerTypeErrorText,
+
+    // Delete Modal States
+    showDeleteModal,
+    setShowDeleteModal,
+    deletingItem,
+    setDeletingItem,
+    isDeleting,
+    setIsDeleting,
 
     // Common State
     successMessage,

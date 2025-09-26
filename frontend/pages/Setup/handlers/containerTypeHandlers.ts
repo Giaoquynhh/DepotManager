@@ -17,6 +17,9 @@ export const createContainerTypeHandlers = (
   setContainerTypeFormData: React.Dispatch<React.SetStateAction<ContainerTypeFormData>>,
   setContainerTypeErrorText: React.Dispatch<React.SetStateAction<string>>,
   setSuccessMessage: React.Dispatch<React.SetStateAction<string>>,
+  setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setDeletingItem: React.Dispatch<React.SetStateAction<any>>,
+  setIsDeleting: React.Dispatch<React.SetStateAction<boolean>>,
   containerTypes: ContainerType[],
   containerTypesPagination: {
     page: number;
@@ -27,7 +30,7 @@ export const createContainerTypeHandlers = (
   language: 'vi' | 'en',
   translations: any
 ) => {
-  const loadContainerTypes = async (page: number = 1, limit: number = 10) => {
+  const loadContainerTypes = async (page: number = 1, limit: number = 14) => {
     try {
       const response = await setupService.getContainerTypes({ page, limit });
       if (response.success && response.data) {
@@ -59,18 +62,24 @@ export const createContainerTypeHandlers = (
     setShowEditContainerTypeModal(true);
   };
 
-  const handleDeleteContainerType = async (id: string) => {
-    if (window.confirm(
-      translations[language].code 
-        ? 'Bạn có chắc chắn muốn xóa loại container này?' 
-        : 'Are you sure you want to delete this container type?'
-    )) {
-      try {
-        const response = await setupService.deleteContainerType(id);
+  const handleDeleteContainerType = (id: string) => {
+    const containerTypeToDelete = containerTypes.find(ct => ct.id === id);
+    if (containerTypeToDelete) {
+      setDeletingItem(containerTypeToDelete);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const confirmDeleteContainerType = async (deletingItem: ContainerType) => {
+    if (!deletingItem) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await setupService.deleteContainerType(deletingItem.id);
       if (response.success) {
         // 1. Cập nhật trạng thái frontend một cách lạc quan (optimistic update)
         //    Xóa mục khỏi danh sách hiện tại để hiển thị ngay lập tức.
-        setContainerTypes(prev => prev.filter(item => item.id !== id));
+        setContainerTypes(prev => prev.filter(item => item.id !== deletingItem.id));
 
         // 2. Cập nhật tổng số mục và tổng số trang trong trạng thái phân trang
         setContainerTypesPagination(prev => ({
@@ -81,10 +90,12 @@ export const createContainerTypeHandlers = (
 
         setSuccessMessage(
           translations[language].code 
-            ? 'Đã xóa loại container thành công!'
-            : 'Container type deleted successfully!'
+            ? `Đã xóa loại container "${deletingItem.code}" thành công!`
+            : `Successfully deleted container type "${deletingItem.code}"!`
         );
         setTimeout(() => setSuccessMessage(''), 3000);
+        setShowDeleteModal(false);
+        setDeletingItem(null);
 
         // 3. Sau một khoảng thời gian ngắn, gọi lại loadContainerTypes để đồng bộ hoàn toàn
         //    với backend, đảm bảo dữ liệu chính xác, sắp xếp và phân trang đúng.
@@ -92,12 +103,13 @@ export const createContainerTypeHandlers = (
           loadContainerTypes(containerTypesPagination.page, containerTypesPagination.limit);
         }, 100); // Độ trễ nhỏ để cho phép optimistic update render trước
       } else {
-          setContainerTypeErrorText(response.message || 'Failed to delete container type');
-        }
-      } catch (error) {
-        console.error('Error deleting container type:', error);
-        setContainerTypeErrorText('Failed to delete container type');
+        setContainerTypeErrorText(response.message || 'Failed to delete container type');
       }
+    } catch (error) {
+      console.error('Error deleting container type:', error);
+      setContainerTypeErrorText('Failed to delete container type');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -361,6 +373,7 @@ export const createContainerTypeHandlers = (
     handlePageChange,
     handleEditContainerType,
     handleDeleteContainerType,
+    confirmDeleteContainerType,
     handleAddNewContainerType,
     handleSubmitContainerType,
     handleUpdateContainerType,

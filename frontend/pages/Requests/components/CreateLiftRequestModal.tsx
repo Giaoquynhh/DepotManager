@@ -3,7 +3,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
 import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
-import { ContainerSearchInput } from '../../../components/ContainerSearchInput';
+import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
 
 interface CreateLiftRequestModalProps {
 	isOpen: boolean;
@@ -81,6 +81,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	// Preview URLs for image files to render thumbnails
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
+	const [selectedContainerInfo, setSelectedContainerInfo] = useState<ContainerSearchResult | null>(null);
 
 	useEffect(() => {
 		(async () => {
@@ -730,7 +731,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							{errors.bookingBill && <span style={errorMessageStyle}>{errors.bookingBill}</span>}
 						</div>
 
-						{/* Số cont - Optional */}
+		{/* Số cont - Optional */}
 						<div style={formGroupStyle}>
 							<label style={formLabelStyle}>
 								Số container
@@ -740,7 +741,38 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 								onChange={(value) => handleInputChange('containerNumber', value)}
 								placeholder="Nhập số container"
 								style={formInputStyle}
+								onSelect={(c) => {
+									setSelectedContainerInfo(c);
+									
+									// Auto-fill thông tin từ Container model
+									if (c) {
+										// Auto-fill container type
+										if (c.container_type?.id) {
+											handleInputChange('containerType', c.container_type.id);
+										}
+										
+										// Auto-fill customer
+										if (c.customer?.id) {
+											handleInputChange('customer', c.customer.id);
+											setSelectedCustomerName(c.customer.name);
+										}
+										
+										// Auto-fill shipping line
+										if (c.shipping_line?.id) {
+											handleInputChange('shippingLine', c.shipping_line.id);
+											setSelectedShippingLineName(c.shipping_line.name);
+										}
+									}
+								}}
+								shippingLineId={formData.shippingLine || undefined}
 							/>
+							{selectedContainerInfo && (
+								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									<div>Vị trí: {selectedContainerInfo.block_code}-{selectedContainerInfo.slot_code}{selectedContainerInfo.tier ? `, Tầng ${selectedContainerInfo.tier}` : ''}</div>
+									<div>Bãi: {selectedContainerInfo.yard_name}</div>
+									<div>Thời điểm vào bãi: {new Date(selectedContainerInfo.placed_at).toLocaleString()}</div>
+								</div>
+							)}
 						</div>
 
 						{/* Loại cont - Required (id mapping, display code + description) */}

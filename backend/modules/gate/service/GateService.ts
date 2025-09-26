@@ -318,7 +318,7 @@ export class GateService {
 
     console.log('🔍 GateService.searchRequests - Input params:', params);
 
-    const where: any = {};
+    const where: any = { depot_deleted_at: null, customer_deleted_at: null };
 
     // Xử lý status filter
     if (status) {

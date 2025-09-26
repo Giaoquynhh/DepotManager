@@ -27,11 +27,17 @@ export const containersApi = {
     status?: string; 
     type?: string; 
     service_status?: string; 
+    not_in_yard?: boolean;
     page?: number; 
     pageSize?: number 
   }): Promise<PaginatedContainers> {
     const { data } = await api.get('/containers', { params });
     return data as PaginatedContainers;
+  },
+
+  async get(container_no: string) {
+    const { data } = await api.get(`/containers/${container_no}`);
+    return data;
   },
 
   async update(container_no: string, data: {
@@ -41,6 +47,7 @@ export const containersApi = {
     vehicle_company_id?: string;
     dem_det?: string;
     seal_number?: string;
+    container_quality?: string;
   }) {
     const { data: response } = await api.put(`/containers/${container_no}`, data);
     return response;

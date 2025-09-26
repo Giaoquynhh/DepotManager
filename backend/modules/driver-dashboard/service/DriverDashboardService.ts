@@ -244,8 +244,8 @@ export class DriverDashboardService {
 					// Logic mới: Phân biệt giữa IMPORT và EXPORT
 					let newStatus: string;
                     if (latestRequest.type === 'EXPORT') {
-                        // Theo yêu cầu: giữ ở GATE_IN cho đến khi thanh toán xong
-                        newStatus = 'GATE_IN';
+                        // Cập nhật mới: khi xe nâng hoàn thành, chuyển sang DONE_LIFTING
+                        newStatus = 'DONE_LIFTING';
 						
 						// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
 						await tx.yardPlacement.updateMany({
@@ -259,7 +259,7 @@ export class DriverDashboardService {
 								updatedAt: new Date()
 							}
 						});
-					} else {
+                    } else {
 						// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
 						newStatus = 'IN_YARD';
 					}

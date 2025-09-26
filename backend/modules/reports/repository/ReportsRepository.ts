@@ -72,7 +72,7 @@ export class ReportsRepository {
     return buckets;
   }
 
-  async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; page: number; pageSize: number }){
+  async containerList(params: { q?: string; status?: string; type?: string; service_status?: string; not_in_yard?: boolean; page: number; pageSize: number }){
     // Sửa lại query để đảm bảo container từ YardPlacement được trả về và tránh duplicate
     const raw = await prisma.$queryRaw<any[]>`
       WITH latest_sr AS (
@@ -135,7 +135,8 @@ export class ReportsRepository {
         SELECT
           CAST(${params.q ?? null} AS TEXT)             AS q,
           CAST(${params.status ?? null} AS TEXT)        AS status,
-          CAST(${params.service_status ?? null} AS TEXT) AS service_status
+          CAST(${params.service_status ?? null} AS TEXT) AS service_status,
+          CAST(${params.not_in_yard ?? null} AS BOOLEAN) AS not_in_yard
       )
       SELECT DISTINCT ON (bc.container_no)
         bc.container_no,
@@ -176,6 +177,7 @@ export class ReportsRepository {
       CROSS JOIN params p
       WHERE (p.q IS NULL OR bc.container_no ILIKE ('%' || p.q || '%'))
         AND (p.status IS NULL OR ys.status::text = p.status)
+        AND (p.not_in_yard IS NULL OR (p.not_in_yard = TRUE AND yp.container_no IS NULL) OR (p.not_in_yard = FALSE AND yp.container_no IS NOT NULL))
         AND (
           p.service_status IS NULL OR
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)
@@ -321,7 +323,8 @@ export class ReportsRepository {
         SELECT
           CAST(${params.q ?? null} AS TEXT)             AS q,
           CAST(${params.status ?? null} AS TEXT)        AS status,
-          CAST(${params.service_status ?? null} AS TEXT) AS service_status
+          CAST(${params.service_status ?? null} AS TEXT) AS service_status,
+          CAST(${params.not_in_yard ?? null} AS BOOLEAN) AS not_in_yard
       )
       SELECT COUNT(DISTINCT bc.container_no)::int as cnt
       FROM base_containers bc
@@ -332,6 +335,7 @@ export class ReportsRepository {
       CROSS JOIN params p
       WHERE (p.q IS NULL OR bc.container_no ILIKE ('%' || p.q || '%'))
         AND (p.status IS NULL OR ys.status::text = p.status)
+        AND (p.not_in_yard IS NULL OR (p.not_in_yard = TRUE AND yp.container_no IS NULL) OR (p.not_in_yard = FALSE AND yp.container_no IS NOT NULL))
         AND (
           p.service_status IS NULL OR
           -- Chỉ lấy container đã kiểm tra: có gate_checked_at (từ ServiceRequest) hoặc repair_checked = TRUE (từ RepairTicket)

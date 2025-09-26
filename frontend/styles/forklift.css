@@ -120,6 +120,39 @@
   font-weight: 500;
 }
 
+/* Thu gọn khoảng cách cho 2 cột: Trạng Thái và Tài xế xe nâng */
+.gate-table th[data-column="status"],
+.gate-table td[data-column="status"] {
+  min-width: 90px !important; /* giảm mạnh hơn */
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.gate-table th[data-column="forklift"],
+.gate-table td[data-column="forklift"] {
+  min-width: 120px !important; /* giảm bề rộng tối thiểu hơn nữa */
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  text-align: center; /* căn giữa nội dung theo chiều ngang */
+}
+
+/* Căn giữa theo cả hai chiều cho ô Tài xế xe nâng */
+.gate-table td[data-column="forklift"] {
+  display: flex;
+  align-items: center;  /* căn giữa theo chiều dọc trong ô */
+  justify-content: center; /* căn giữa theo chiều ngang */
+}
+
+/* Badge trạng thái nhỏ gọn hơn cho bảng Forklift */
+.status-badge {
+  padding: 4px 8px; /* giảm padding hơn nữa */
+  border-width: 1px; /* viền mảnh hơn */
+}
+
 .time-info {
   display: flex;
   flex-direction: column;

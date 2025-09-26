@@ -74,6 +74,7 @@ export default function RequestTable({ data, loading, userRole }: RequestTablePr
       SCHEDULED: { label: t('pages.requests.filterOptions.scheduled'), className: 'status-scheduled' },
       FORWARDED: { label: t('pages.gate.statusOptions.forwarded'), className: 'status-forwarded' },
       POSITIONED: { label: t('pages.requests.filterOptions.positioned'), className: 'status-positioned' },
+      // Hiển thị nguyên trạng FORKLIFTING cho các màn sử dụng bảng chung (Gate)
       FORKLIFTING: { label: t('pages.requests.filterOptions.forklifting'), className: 'status-forklifting' },
       IN_YARD: { label: t('pages.requests.filterOptions.inYard'), className: 'status-in-yard' },
       IN_CAR: { label: t('pages.requests.filterOptions.inCar'), className: 'status-in-car' },

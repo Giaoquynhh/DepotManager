@@ -12,6 +12,8 @@ interface GateActionButtonsProps {
   initialLicensePlate?: string;
   initialDriverName?: string;
   initialDriverPhone?: string;
+  showSuccess?: (title: string, message?: string, duration?: number) => void;
+  showError?: (title: string, message?: string, duration?: number) => void;
 }
 
 export default function GateActionButtons({ 
@@ -21,10 +23,14 @@ export default function GateActionButtons({
   onActionSuccess,
   initialLicensePlate,
   initialDriverName,
-  initialDriverPhone
+  initialDriverPhone,
+  showSuccess: injectedShowSuccess,
+  showError: injectedShowError
 }: GateActionButtonsProps) {
   const { t } = useTranslation();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess: hookSuccess, showError: hookError } = useToast();
+  const showSuccess = injectedShowSuccess || hookSuccess;
+  const showError = injectedShowError || hookError;
   const router = useRouter();
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -208,7 +214,7 @@ export default function GateActionButtons({
       // 2) Thực hiện check-in
       const res = await api.patch(`/gate/requests/${requestId}/check-in`);
 
-      showSuccess('✅ Check-in thành công', 'Đã chuyển trạng thái: GATE_IN - Xe vào cổng.', 5000);
+      showSuccess('Check-in thành công', 'Đã chuyển trạng thái: GATE_IN - Xe vào cổng.', 5000);
       setIsCheckInModalOpen(false);
       setPlateNo('');
       setDriverName('');
@@ -279,7 +285,7 @@ export default function GateActionButtons({
             onClick={handleCheckOut}
             disabled={isLoading}
             className="action-btn action-btn-warning"
-            style={{ backgroundColor: 'var(--color-orange-600)' }}
+            style={{ backgroundColor: 'var(--color-orange-600)', border: '2px solid var(--color-red-600)', boxShadow: '0 0 0 2px rgba(220,38,38,0.15) inset' }}
           >
             {isLoading ? 'Đang xử lý...' : 'Check-out'}
           </button>
@@ -336,6 +342,7 @@ export default function GateActionButtons({
   }
 
   // Chỉ hiển thị buttons khi status là FORWARDED
+  // Với FORKLIFTING: coi như đã cho phép vào → hiển thị nhãn giống GATE_IN và không có hành động
   if (currentStatus !== 'FORWARDED') {
     return (
       <span style={{ 
@@ -344,6 +351,7 @@ export default function GateActionButtons({
         fontStyle: 'italic'
       }}>
         {currentStatus === 'GATE_IN' && 'Đã cho phép vào'}
+        {currentStatus === 'FORKLIFTING' && 'Đã cho phép vào'}
         {currentStatus === 'GATE_OUT' && 'Đã cho phép ra'}
         {currentStatus === 'GATE_REJECTED' && 'Đã từ chối'}
         {currentStatus === 'COMPLETED' && 'Hoàn tất'}

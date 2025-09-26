@@ -8,6 +8,8 @@ import { ShippingLinesTable } from './components/ShippingLinesTable';
 import { SetupHeader } from './components/SetupHeader';
 import { SuccessMessage } from './components/SuccessMessage';
 import { SetupModals } from './components/SetupModals';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
+import { EditShippingLineModal } from './components/EditShippingLineModal';
 
 // Import hooks and handlers
 import { useSetupState } from './hooks/useSetupState';
@@ -40,6 +42,14 @@ export default function ShippingLines() {
     errorText,
     setErrorText,
 
+    // Delete Modal States
+    showDeleteModal,
+    setShowDeleteModal,
+    deletingItem,
+    setDeletingItem,
+    isDeleting,
+    setIsDeleting,
+
     // Common State
     successMessage,
     setSuccessMessage
@@ -56,6 +66,9 @@ export default function ShippingLines() {
     setShippingLineFormData,
     setErrorText,
     setSuccessMessage,
+    setShowDeleteModal,
+    setDeletingItem,
+    setIsDeleting,
     shippingLines,
     shippingLinesPagination,
     language,
@@ -64,7 +77,7 @@ export default function ShippingLines() {
 
   // Load data on component mount
   useEffect(() => {
-    shippingLineHandlers.loadShippingLines();
+    shippingLineHandlers.loadShippingLines(1, 14);
   }, []);
 
   return (
@@ -155,6 +168,35 @@ export default function ShippingLines() {
         onContainerTypeFileUpload={() => {}}
         
         // Common
+        language={language}
+        translations={translations}
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeletingItem(null);
+        }}
+        onConfirm={() => shippingLineHandlers.confirmDeleteShippingLine(deletingItem)}
+        title="Xác nhận xóa hãng tàu"
+        message="Bạn có chắc chắn muốn xóa hãng tàu này không?"
+        itemName={deletingItem?.name || ''}
+        isDeleting={isDeleting}
+      />
+
+      <EditShippingLineModal
+        visible={showEditModal}
+        onCancel={() => {
+          setShowEditModal(false);
+          setEditingShippingLine(null);
+          setErrorText('');
+        }}
+        onSubmit={(data) => shippingLineHandlers.handleUpdateShippingLine(data, editingShippingLine)}
+        shippingLine={editingShippingLine}
+        formData={shippingLineFormData}
+        setFormData={setShippingLineFormData}
+        errorText={errorText}
         language={language}
         translations={translations}
       />

@@ -11,6 +11,7 @@ import { SuccessMessage } from './components/SuccessMessage';
 import { AddPriceListModal } from './components/AddPriceListModal';
 import { EditPriceListModal } from './components/EditPriceListModal';
 import { UploadExcelModal } from './components/UploadExcelModal';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 
 // Import service
 import { setupService, PriceList } from '../../services/setupService';
@@ -26,7 +27,7 @@ export default function PriceLists() {
   const [priceLists, setPriceLists] = useState<PriceList[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 14,
     total: 0,
     totalPages: 0
   });
@@ -37,7 +38,10 @@ export default function PriceLists() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingPriceList, setEditingPriceList] = useState<PriceList | null>(null);
+  const [deletingPriceList, setDeletingPriceList] = useState<PriceList | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -58,7 +62,7 @@ export default function PriceLists() {
       setLoading(true);
       const response = await setupService.getPriceLists({
         page,
-        limit: 10,
+        limit: 14,
         search
       });
 
@@ -78,7 +82,7 @@ export default function PriceLists() {
 
   // Load data on component mount
   useEffect(() => {
-    loadPriceLists();
+    loadPriceLists(1, '');
   }, []);
 
   // Handle search
@@ -119,28 +123,36 @@ export default function PriceLists() {
     setShowEditModal(true);
   };
 
-  // Handle delete price list
-  const handleDeletePriceList = async (id: string) => {
-    if (!confirm(translations[language].confirmDelete)) {
-      return;
+  // Handle delete price list - show confirmation modal
+  const handleDeletePriceList = (id: string) => {
+    const priceListToDelete = priceLists.find(pl => pl.id === id);
+    if (priceListToDelete) {
+      setDeletingPriceList(priceListToDelete);
+      setShowDeleteModal(true);
     }
+  };
 
+  // Confirm delete price list
+  const confirmDeletePriceList = async () => {
+    if (!deletingPriceList) return;
+
+    setIsDeleting(true);
     try {
-      // Find the price list to get its name before deleting
-      const priceListToDelete = priceLists.find(pl => pl.id === id);
-      const serviceName = priceListToDelete?.serviceName || '';
-
-      const response = await setupService.deletePriceList(id);
+      const response = await setupService.deletePriceList(deletingPriceList.id);
       if (response.success) {
-        setSuccessMessage(`Đã xóa bảng giá "${serviceName}" thành công!`);
+        setSuccessMessage(`Đã xóa bảng giá "${deletingPriceList.serviceName}" thành công!`);
         loadPriceLists(pagination.page, searchTerm);
         setTimeout(() => setSuccessMessage(''), 3000);
+        setShowDeleteModal(false);
+        setDeletingPriceList(null);
       } else {
         setErrorText(response.message || 'Failed to delete price list');
       }
     } catch (error) {
       console.error('Error deleting price list:', error);
       setErrorText('Failed to delete price list');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -367,8 +379,8 @@ export default function PriceLists() {
         visible={showEditModal}
         onCancel={() => setShowEditModal(false)}
         onSubmit={handleUpdatePriceList}
-        formData={editingPriceList}
-        setFormData={setEditingPriceList}
+        formData={formData}
+        setFormData={setFormData}
         errorText={errorText}
         language={language}
         translations={translations}
@@ -383,6 +395,19 @@ export default function PriceLists() {
         language={language}
         translations={translations}
         context="priceLists"
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeletingPriceList(null);
+        }}
+        onConfirm={confirmDeletePriceList}
+        title="Xác nhận xóa bảng giá"
+        message="Bạn có chắc chắn muốn xóa bảng giá này không?"
+        itemName={deletingPriceList?.serviceName || ''}
+        isDeleting={isDeleting}
       />
     </>
   );

@@ -16,6 +16,9 @@ export const createShippingLineHandlers = (
   setShippingLineFormData: React.Dispatch<React.SetStateAction<ShippingLineFormData>>,
   setErrorText: React.Dispatch<React.SetStateAction<string>>,
   setSuccessMessage: React.Dispatch<React.SetStateAction<string>>,
+  setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setDeletingItem: React.Dispatch<React.SetStateAction<any>>,
+  setIsDeleting: React.Dispatch<React.SetStateAction<boolean>>,
   shippingLines: ShippingLine[],
   shippingLinesPagination: {
     page: number;
@@ -26,7 +29,7 @@ export const createShippingLineHandlers = (
   language: 'vi' | 'en',
   translations: any
 ) => {
-  const loadShippingLines = async (page: number = 1, limit: number = 10) => {
+  const loadShippingLines = async (page: number = 1, limit: number = 14) => {
     try {
       const response = await setupService.getShippingLines({ page, limit });
       if (response.success && response.data) {
@@ -59,30 +62,39 @@ export const createShippingLineHandlers = (
     setShowEditModal(true);
   };
 
-  const handleDeleteShippingLine = async (id: string) => {
-    if (window.confirm(
-      translations[language].code 
-        ? 'Bạn có chắc chắn muốn xóa hãng tàu này?' 
-        : 'Are you sure you want to delete this shipping line?'
-    )) {
-      try {
-        const response = await setupService.deleteShippingLine(id);
+  const handleDeleteShippingLine = (id: string) => {
+    const shippingLineToDelete = shippingLines.find(sl => sl.id === id);
+    if (shippingLineToDelete) {
+      setDeletingItem(shippingLineToDelete);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const confirmDeleteShippingLine = async (deletingItem: ShippingLine) => {
+    if (!deletingItem) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await setupService.deleteShippingLine(deletingItem.id);
       if (response.success) {
         // Reload current page to refresh data
         loadShippingLines(shippingLinesPagination.page, shippingLinesPagination.limit);
         setSuccessMessage(
           translations[language].code 
-            ? 'Đã xóa hãng tàu thành công!'
-            : 'Shipping line deleted successfully!'
+            ? `Đã xóa hãng tàu "${deletingItem.name}" thành công!`
+            : `Successfully deleted shipping line "${deletingItem.name}"!`
         );
         setTimeout(() => setSuccessMessage(''), 3000);
+        setShowDeleteModal(false);
+        setDeletingItem(null);
       } else {
-          setErrorText(response.message || 'Failed to delete shipping line');
-        }
-      } catch (error) {
-        console.error('Error deleting shipping line:', error);
-        setErrorText('Failed to delete shipping line');
+        setErrorText(response.message || 'Failed to delete shipping line');
       }
+    } catch (error) {
+      console.error('Error deleting shipping line:', error);
+      setErrorText('Failed to delete shipping line');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -417,6 +429,7 @@ export const createShippingLineHandlers = (
     handlePageChange,
     handleEditShippingLine,
     handleDeleteShippingLine,
+    confirmDeleteShippingLine,
     handleAddNewShippingLine,
     handleSubmitShippingLine,
     handleUpdateShippingLine,

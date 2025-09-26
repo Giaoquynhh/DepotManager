@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@components/Header';
-import { api } from '@services/api';
+import { api, API_BASE } from '@services/api';
 import { isTechnicalDepartment, isYardManager, isSystemAdmin } from '@utils/rbac';
 import AssignDriverModal from '@components/Forklift/AssignDriverModal';
 import { useTranslation } from '@hooks/useTranslation';
@@ -25,9 +25,14 @@ interface ForkliftTask {
   };
   container_info?: {
     driver_name?: string;
+    driver_phone?: string;
     license_plate?: string;
     status?: string;
     type?: string;
+    request_no?: string;
+    container_type?: {
+      code?: string;
+    };
   };
   actual_location?: {
     id: string;
@@ -217,9 +222,11 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
       
       const response = await api.get('/forklift/jobs');
       const allTasks: ForkliftTask[] = response.data.data || [];
+      // Hiển thị đầy đủ các trạng thái (bao gồm COMPLETED/CANCELLED) và chỉ ẩn task không có dữ liệu request liên kết
+      const visibleTasks = allTasks.filter(task => !!task.container_info);
       const newTasks = typeFilter 
-        ? allTasks.filter(task => task.container_info?.type === typeFilter)
-        : allTasks;
+        ? visibleTasks.filter(task => task.container_info?.type === typeFilter)
+        : visibleTasks;
       
       // Chỉ cập nhật state nếu có thay đổi thực sự
       setTasks(prevTasks => {
@@ -514,7 +521,15 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
                         <td data-column="end">{task.status === 'COMPLETED' ? formatDate(task.updatedAt) : '-'}</td>
                         <td data-column="image">
                           {task as any && (task as any).report_image ? (
-                            <img src={(task as any).report_image as any} alt="report" style={{ maxWidth: '72px', maxHeight: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                            <img
+                              src={`${API_BASE}${(task as any).report_image}`}
+                              alt="report"
+                              style={{ maxWidth: '72px', maxHeight: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                              onError={(e) => {
+                                const el = e.currentTarget as HTMLImageElement;
+                                el.style.display = 'none';
+                              }}
+                            />
                           ) : (
                             <span>-</span>
                           )}

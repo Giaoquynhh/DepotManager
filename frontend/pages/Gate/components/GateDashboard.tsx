@@ -6,7 +6,6 @@ import GateSearchBar from './GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { useDataRefresh } from '../../../hooks/useRouteRefresh';
 import Link from 'next/link';
 
 
@@ -44,12 +43,12 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true); // Thêm state cho sidebar
   const { t } = useTranslation();
-  const { ToastContainer } = useToast();
-  const { shouldRefresh, resetRefresh } = useDataRefresh();
+  const { ToastContainer, showSuccess, showError } = useToast();
 
 
   const [searchParams, setSearchParams] = useState({
     status: '',
+    statuses: '',
     container_no: '',
     type: lockedType ?? '',
     license_plate: '', // Thêm trường biển số xe
@@ -148,8 +147,13 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
       const params = new URLSearchParams();
       // Nếu có lockedType thì cưỡng bức type đó
       const paramsSource: any = lockedType ? { ...effectiveSearchParams, type: lockedType } : effectiveSearchParams;
+      // Mặc định hiển thị cả THÊM MỚI (NEW_REQUEST) + các trạng thái đã vào cổng nếu không chọn bộ lọc
+      // Bổ sung DONE_LIFTING để không ẩn khi xe nâng hoàn thành
+      if (!String(paramsSource.status || '').trim() && !String((paramsSource as any).statuses || '').trim()) {
+        (paramsSource as any).statuses = 'NEW_REQUEST,FORWARDED,GATE_IN,IN_YARD,IN_CAR,FORKLIFTING,DONE_LIFTING';
+      }
 
-      Object.entries(paramsSource).forEach(([key, value]) => {
+      Object.entries(paramsSource as Record<string, any>).forEach(([key, value]) => {
         // Thêm tất cả tham số, backend sẽ xử lý logic mặc định
         if (key === 'page' || key === 'limit') {
           params.append(key, value.toString());
@@ -256,6 +260,8 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
           requests={requests}
           loading={loading}
           onRefresh={fetchRequests}
+          showSuccess={showSuccess}
+          showError={showError}
         />
 
         {/* Pagination */}

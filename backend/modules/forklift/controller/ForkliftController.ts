@@ -507,9 +507,8 @@ export class ForkliftController {
 						// Logic mới: Phân biệt giữa IMPORT và EXPORT
 						let newStatus: string;
                         if (latestRequest.type === 'EXPORT') {
-                            // Thay đổi yêu cầu: KHÔNG chuyển sang IN_CAR khi xe nâng hoàn thành.
-                            // Giữ ở trạng thái GATE_IN cho đến khi thanh toán thành công.
-                            newStatus = 'GATE_IN';
+                            // Cập nhật mới: khi xe nâng hoàn thành, chuyển sang DONE_LIFTING
+                            newStatus = 'DONE_LIFTING';
 							
 							// Cập nhật YardPlacement để đánh dấu container đã rời khỏi bãi
 							await tx.yardPlacement.updateMany({
@@ -523,7 +522,7 @@ export class ForkliftController {
 									updatedAt: new Date()
 								}
 							});
-						} else {
+                        } else {
 							// Import request: FORKLIFTING → IN_YARD (giữ nguyên logic cũ)
 							newStatus = 'IN_YARD';
 						}

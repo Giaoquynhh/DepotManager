@@ -13,8 +13,8 @@ export const markPaid = async (req: Request, res: Response) => {
     }
 
     const data: any = { is_paid: true, updatedAt: new Date() };
-    // Nếu là EXPORT và hiện đang ở GATE_IN sau khi nâng, chuyển sang IN_CAR để Gate_out
-    if (existing.type === 'EXPORT' && existing.status === 'GATE_IN') {
+    // Nếu là EXPORT và đang ở GATE_IN hoặc DONE_LIFTING, chuyển sang IN_CAR để Gate_out
+    if (existing.type === 'EXPORT' && (existing.status === 'GATE_IN' || existing.status === 'DONE_LIFTING')) {
       data.status = 'IN_CAR';
     }
 

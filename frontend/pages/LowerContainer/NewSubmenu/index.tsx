@@ -138,6 +138,13 @@ export default function NewSubmenu() {
     }).format(amount);
   };
 
+  // Map hiển thị trạng thái thân thiện
+  const renderStatusText = (status: string) => {
+    if (!status) return '';
+    if (status === 'CHECKED') return 'Chấp nhận';
+    return status;
+  };
+
   // Function để fetch import requests từ API
   const fetchImportRequests = async () => {
     setLoading(true);
@@ -612,7 +619,7 @@ export default function NewSubmenu() {
                           <td>{row.serviceType}</td>
                           <td>
                             <span className={`status-badge status-${row.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                              {row.status}
+                              {renderStatusText(row.status)}
                             </span>
                           </td>
                           <td>

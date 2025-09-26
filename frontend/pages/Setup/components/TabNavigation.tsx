@@ -1,7 +1,7 @@
 // Tab Navigation component for Setup page
 import React from 'react';
 
-export type SetupTab = 'shippingLines' | 'transportCompanies' | 'containerTypes';
+export type SetupTab = 'shippingLines' | 'transportCompanies' | 'containerTypes' | 'customers';
 
 interface TabNavigationProps {
   activeTab: SetupTab;

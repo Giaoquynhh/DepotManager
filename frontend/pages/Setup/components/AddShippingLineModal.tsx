@@ -31,6 +31,18 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
 }) => {
   if (!visible) return null;
 
+  // Normalize placeholder text to label by removing leading verbs like "Nhập" or "Enter"
+  const toLabel = (text: string) => {
+    if (!text) return '';
+    const normalized = text
+      .replace(/^\s*Nhập\s+/i, '')
+      .replace(/^\s*Enter\s+/i, '')
+      .trim();
+    return normalized
+      ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+      : '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -48,7 +60,7 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{width: '500px', maxWidth: '90vw'}}>
         <div className="modal-header">
           <h3 className="modal-title">{translations[language].addNewShippingLine}</h3>
-          <button className="modal-close" onClick={onCancel}>
+          <button className="modal-close" onClick={onCancel} style={{color: 'white', outline: 'none'}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -73,6 +85,15 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
             )}
 
             <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].codePlaceholder)} <span style={{color: '#dc2626'}}>*</span>
+              </label>
               <input
                 type="text"
                 style={{
@@ -94,6 +115,15 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].namePlaceholder)} <span style={{color: '#dc2626'}}>*</span>
+              </label>
               <input
                 type="text"
                 style={{
@@ -115,6 +145,15 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].eirPlaceholder)} <span style={{color: '#dc2626'}}>*</span>
+              </label>
               <input
                 type="text"
                 style={{
@@ -136,6 +175,15 @@ export const AddShippingLineModal: React.FC<AddShippingLineModalProps> = ({
             </div>
 
             <div style={{marginBottom: '20px'}}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '14px'
+              }}>
+                {toLabel(translations[language].notePlaceholder)} <span style={{color: '#6b7280', fontWeight: '400'}}>({translations[language].optional})</span>
+              </label>
               <textarea
                 style={{
                   width: '100%',

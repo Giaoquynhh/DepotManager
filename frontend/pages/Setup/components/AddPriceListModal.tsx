@@ -132,213 +132,303 @@ export const AddPriceListModal: React.FC<AddPriceListModalProps> = ({
     }
   };
 
-  const ValidationTooltip = ({ field }: { field: string }) => {
-    if (fieldError !== field) return null;
-    
-    return (
-      <div className="validation-tooltip">
-        <div className="validation-tooltip-content">
-          <div className="validation-text">{getErrorMessage(field)}</div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{width: '500px', maxWidth: '90vw'}}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '500px', maxWidth: '90vw' }}>
         <div className="modal-header">
           <h3 className="modal-title">{translations[language].addNewPriceList}</h3>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onCancel}
-          >
-            ×
+          <button className="modal-close" onClick={onCancel} style={{ color: 'white', outline: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-body">
-          {errorText && (
-            <div className="error-message mb-4">
-              {errorText}
-            </div>
-          )}
-          {duplicateCodeError && (
-            <div className="error-message mb-4" style={{color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '8px 12px'}}>
-              {duplicateCodeError}
-            </div>
-          )}
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            {errorText && (
+              <div 
+                style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '24px',
+                  color: '#dc2626',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                {errorText}
+              </div>
+            )}
+            {duplicateCodeError && (
+              <div 
+                style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '24px',
+                  color: '#dc2626',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                {duplicateCodeError}
+              </div>
+            )}
 
-          <div className="form-group">
-            <label className="form-label">
-              {translations[language].serviceCode} <span className="text-red-500">*</span>
-            </label>
-            <div className="form-input-wrapper">
+            <div style={{ marginBottom: '24px' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}
+              >
+                Mã dịch vụ 
+                <span style={{ color: '#dc2626', marginLeft: '4px' }}>*</span>
+              </label>
               <input
                 type="text"
-                className={`form-input ${fieldError === 'serviceCode' ? 'error' : ''}`}
                 value={formData.serviceCode}
                 onChange={(e) => handleInputChange('serviceCode', e.target.value)}
-                placeholder={translations[language].enterServiceCode}
+                placeholder="Nhập mã dịch vụ"
                 required
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: fieldError === 'serviceCode' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: 'white',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = fieldError === 'serviceCode' ? '#dc2626' : '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
-              <ValidationTooltip field="serviceCode" />
+              {fieldError === 'serviceCode' && (
+                <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>
+                  {getErrorMessage('serviceCode')}
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              {translations[language].serviceName} <span className="text-red-500">*</span>
-            </label>
-            <div className="form-input-wrapper">
+            <div style={{ marginBottom: '24px' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}
+              >
+                Tên dịch vụ 
+                <span style={{ color: '#dc2626', marginLeft: '4px' }}>*</span>
+              </label>
               <input
                 type="text"
-                className={`form-input ${fieldError === 'serviceName' ? 'error' : ''}`}
                 value={formData.serviceName}
                 onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                placeholder={translations[language].enterServiceName}
+                placeholder="Nhập tên dịch vụ"
                 required
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: fieldError === 'serviceName' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: 'white',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = fieldError === 'serviceName' ? '#dc2626' : '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
-              <ValidationTooltip field="serviceName" />
+              {fieldError === 'serviceName' && (
+                <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>
+                  {getErrorMessage('serviceName')}
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              {translations[language].type} <span className="text-red-500">*</span>
-            </label>
-            <div className="form-input-wrapper">
+            <div style={{ marginBottom: '24px' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}
+              >
+                Loại hình 
+                <span style={{ color: '#dc2626', marginLeft: '4px' }}>*</span>
+              </label>
               <select
-                className={`form-input ${fieldError === 'type' ? 'error' : ''}`}
                 value={formData.type}
                 onChange={(e) => handleInputChange('type', e.target.value)}
                 required
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: fieldError === 'type' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: 'white',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = fieldError === 'type' ? '#dc2626' : '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               >
-                <option value="">{translations[language].selectType}</option>
+                <option value="">Chọn loại hình</option>
                 {typeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-              <ValidationTooltip field="type" />
+              {fieldError === 'type' && (
+                <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>
+                  {getErrorMessage('type')}
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              {translations[language].price} <span className="text-red-500">*</span>
-            </label>
-            <div className="form-input-wrapper">
+            <div style={{ marginBottom: '24px' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}
+              >
+                Giá 
+                <span style={{ color: '#dc2626', marginLeft: '4px' }}>*</span>
+              </label>
               <input
                 type="text"
-                className={`form-input ${fieldError === 'price' ? 'error' : ''}`}
                 value={formData.price}
                 onChange={(e) => handleInputChange('price', e.target.value)}
-                placeholder={translations[language].enterPrice}
+                placeholder="Nhập giá"
                 required
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: fieldError === 'price' ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: 'white',
+                  outline: 'none'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = fieldError === 'price' ? '#dc2626' : '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
-              <ValidationTooltip field="price" />
+              {fieldError === 'price' && (
+                <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>
+                  {getErrorMessage('price')}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}
+              >
+                Ghi chú 
+                <span style={{ color: '#6b7280', fontSize: '12px', fontWeight: '400' }}>
+                  (tùy chọn)
+                </span>
+              </label>
+              <textarea
+                value={formData.note}
+                onChange={(e) => handleInputChange('note', e.target.value)}
+                placeholder="Nhập ghi chú"
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#10b981';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
             </div>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              {translations[language].note}
-            </label>
-            <textarea
-              className="form-input"
-              value={formData.note}
-              onChange={(e) => handleInputChange('note', e.target.value)}
-              placeholder={translations[language].enterNote}
-              rows={3}
-            />
+          
+          <div className="modal-footer">
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={!formData.serviceCode.trim() || !formData.serviceName.trim() || !formData.type.trim() || !formData.price.trim()}
+            >
+              {translations[language].save}
+            </button>
           </div>
         </form>
-
-        <div className="modal-footer">
-          <button
-            type="submit"
-            className="btn btn-primary"
-            onClick={handleSubmit}
-          >
-            {translations[language].save}
-          </button>
-        </div>
       </div>
     </div>
   );
 };
 
-// CSS for validation tooltip
-const validationTooltipStyles = `
-  .form-input-wrapper {
-    position: relative;
-  }
-  
-  .validation-tooltip {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    margin-top: 4px;
-  }
-  
-  .validation-tooltip-content {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 8px 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: relative;
-    min-width: 200px;
-  }
-  
-  .validation-tooltip-content::before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 5px solid #f8f9fa;
-  }
-  
-  .validation-tooltip-content::after {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-bottom: 6px solid #dee2e6;
-  }
-  
-  .validation-text {
-    color: #333;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.4;
-  }
-  
-  .form-input.error {
-    border-color: #ff6b35;
-    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
-  }
-`;
-
-// Inject styles
-if (typeof document !== 'undefined') {
-  const styleElement = document.createElement('style');
-  styleElement.textContent = validationTooltipStyles;
-  document.head.appendChild(styleElement);
-}
 

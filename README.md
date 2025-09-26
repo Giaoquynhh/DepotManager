@@ -126,7 +126,7 @@ Chỉ có thể tạo request mới khi container không còn trong hệ thống
 ### **Ẩn container IN_CAR:**
 - Container có trạng thái `IN_CAR` sẽ tự động ẩn khỏi:
   - `http://localhost:5002/Yard` - Không hiển thị trong bản đồ bãi
-  - `http://localhost:5002/ContainersPage` - Không hiển thị trong danh sách container
+  - `http://localhost:5002/ContainersPage_2_hiden` - Không hiển thị trong danh sách container
 
 ## 📋 Mô tả dự án
 

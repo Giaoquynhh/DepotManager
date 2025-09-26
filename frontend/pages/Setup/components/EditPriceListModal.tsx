@@ -89,16 +89,93 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
   ];
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{width: '500px', maxWidth: '90vw'}}>
-        <div className="modal-header">
-          <h3 className="modal-title">{translations[language].editPriceList}</h3>
-          <button
-            type="button"
-            className="modal-close"
+    <div 
+      className="modal-overlay" 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)'
+      }}
+      onClick={onCancel}
+    >
+      <div 
+        className="modal" 
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          maxWidth: '500px',
+          width: '90%',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          animation: 'modalSlideIn 0.3s ease-out'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header với gradient đẹp */}
+        <div 
+          className="modal-header" 
+          style={{
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: 'white',
+            padding: '24px 32px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #e5e7eb'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div 
+              style={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px'
+              }}
+            >
+              ✏️
+            </div>
+            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+              {translations[language].editPriceList}
+            </h3>
+          </div>
+          <button 
             onClick={onCancel}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '18px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            }}
           >
-            ×
+            ✕
           </button>
         </div>
 
@@ -189,19 +266,56 @@ export const EditPriceListModal: React.FC<EditPriceListModalProps> = ({
           </div>
         </form>
 
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-          >
-            {translations[language].cancel}
-          </button>
+        <div 
+          className="modal-footer" 
+          style={{
+            padding: '24px 32px',
+            backgroundColor: '#f9fafb',
+            borderTop: '1px solid #e5e7eb',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px'
+          }}
+        >
           <button
             type="submit"
-            className="btn btn-primary"
+            disabled={!formData.serviceCode.trim() || !formData.serviceName.trim() || !formData.type.trim() || !formData.price.trim()}
+            style={{
+              padding: '10px 24px',
+              border: 'none',
+              borderRadius: '8px',
+              background: !formData.serviceCode.trim() || !formData.serviceName.trim() || !formData.type.trim() || !formData.price.trim()
+                ? '#9ca3af' 
+                : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: !formData.serviceCode.trim() || !formData.serviceName.trim() || !formData.type.trim() || !formData.price.trim()
+                ? 'not-allowed' 
+                : 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: !formData.serviceCode.trim() || !formData.serviceName.trim() || !formData.type.trim() || !formData.price.trim()
+                ? 'none' 
+                : '0 4px 14px 0 rgba(245, 158, 11, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            onMouseOver={(e) => {
+              if (formData.serviceCode.trim() && formData.serviceName.trim() && formData.type.trim() && formData.price.trim()) {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px 0 rgba(245, 158, 11, 0.4)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (formData.serviceCode.trim() && formData.serviceName.trim() && formData.type.trim() && formData.price.trim()) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(245, 158, 11, 0.3)';
+              }
+            }}
             onClick={handleSubmit}
           >
+            <span>✏️</span>
             {translations[language].update}
           </button>
         </div>

@@ -1454,7 +1454,7 @@ input[type="password"]::-webkit-clear-button {
 .table-container {
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 70vh; /* Giới hạn chiều cao để hiển thị thanh trượt */
+  max-height: 85vh; /* Tăng chiều cao để tận dụng không gian trống */
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -1487,7 +1487,7 @@ input[type="password"]::-webkit-clear-button {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .table-container {
-    max-height: 60vh;
+    max-height: 75vh; /* Tăng chiều cao cho mobile */
   }
 }
 
@@ -1559,4 +1559,62 @@ html, body {
 .main-content,
 .container {
   scrollbar-width: thin !important; /* Firefox sẽ hiện lại thanh (cả 2 chiều nếu có) */
+}
+
+/* ===== Yard page: KHÔNG áp dụng custom scrollbar toàn cục ===== */
+/* Trả UI scrollbar về mặc định trong phạm vi yard-page */
+.yard-page,
+.yard-page * {
+  scrollbar-width: auto !important; /* Firefox hiển thị như mặc định */
+  -ms-overflow-style: auto !important; /* Edge Legacy */
+}
+
+/* WebKit: bỏ ẩn dọc và bỏ hiệu ứng ngang trong yard */
+.yard-page::-webkit-scrollbar,
+.yard-page *::-webkit-scrollbar {
+  display: initial !important;
+  width: initial !important;
+  height: initial !important;
+  background: initial !important;
+  animation: none !important;
+}
+
+/* Khôi phục track/thumb mặc định (bỏ gradient và border) */
+.yard-page *::-webkit-scrollbar-track,
+.yard-page *::-webkit-scrollbar-thumb {
+  background: initial !important;
+  border: initial !important;
+  border-radius: initial !important;
+}
+
+/* Đảm bảo body trong yard cho phép cuộn dọc bình thường */
+.yard-page {
+  overflow-y: auto !important;
+}
+
+/* Ẩn hoàn toàn scrollbar OUTER (html/body) khi đang ở Yard */
+html.yard-page,
+body.yard-page {
+  /* Khôi phục hành vi mặc định, không áp dụng chính sách scrollbar chung */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important; /* Tắt cuộn ngoài hoàn toàn để không xuất hiện thanh ngoài */
+  background: inherit !important; /* Kế thừa nền gradient chung */
+}
+
+html.yard-page::-webkit-scrollbar,
+body.yard-page::-webkit-scrollbar {
+  /* Không hiển thị scrollbar cho lớp ngoài khi ở Yard */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Nền trang Yard giống các trang khác (để lộ gradient của body) */
+main.container.yard-page,
+.yard-page,
+.yard-page .yard-layout,
+.yard-page .modern-yard-container {
+  background: transparent !important;
 }

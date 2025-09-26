@@ -7,7 +7,7 @@ Chức năng này cho phép SystemAdmin nhập container tùy ý vào bãi mà k
 ## Tính Năng Chính
 
 ### 1. Filter "Container rỗng có trong bãi"
-- **Vị trí**: Trang ContainersPage (`http://localhost:5002/ContainersPage`)
+- **Vị trí**: Trang ContainersPage (`http://localhost:5002/ContainersPage_2_hiden`)
 - **Dropdown**: Thêm option "Container rỗng có trong bãi" vào filter trạng thái
 - **Logic**: Hiển thị container có `derived_status = 'EMPTY_IN_YARD'`
 

@@ -53,7 +53,7 @@ frontend/pages/Requests/
 ### **Ẩn container IN_CAR:**
 - Container có trạng thái `IN_CAR` sẽ tự động ẩn khỏi:
   - `http://localhost:5002/Yard` - Không hiển thị trong bản đồ bãi
-  - `http://localhost:5002/ContainersPage` - Không hiển thị trong danh sách container
+  - `http://localhost:5002/ContainersPage_2_hiden` - Không hiển thị trong danh sách container
 
 ## 🔐 Tính năng mới: ViewQuote cho RepairTicket (v2025-09-09)
 

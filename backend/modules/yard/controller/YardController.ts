@@ -54,12 +54,12 @@ export class YardController {
         try { return res.json(await service.liftContainer(req.user!, String(container_no))); } catch (e: any) { return res.status(400).json({ message: e.message }); }
     }
     async searchContainers(req: AuthRequest, res: Response) {
-        const { q, limit = 10 } = req.query;
+        const { q, limit = 10, shipping_line_id } = req.query as any;
         if (!q || String(q).trim().length < 2) {
             return res.json({ containers: [] });
         }
         try { 
-            const containers = await service.searchContainers(String(q), Number(limit));
+            const containers = await service.searchContainers(String(q), Number(limit), shipping_line_id ? String(shipping_line_id) : undefined);
             return res.json({ containers });
         } catch (e: any) { 
             return res.status(400).json({ message: e.message }); 

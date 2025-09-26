@@ -67,9 +67,17 @@
 }
 
 .modal-close:hover {
-  background: var(--color-gray-100);
-  color: var(--color-navy-primary);
-  transform: scale(1.1);
+  /* Loại bỏ khung nền trắng khi hover và dùng nền tối mờ để nổi bật dấu X màu trắng */
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #fff !important;
+  transform: scale(1.05);
+}
+
+/* CSS cụ thể cho modal setup để đảm bảo nút close không có nền trắng */
+.modal-overlay .modal-content .modal-close:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #fff !important;
+  transform: scale(1.05);
 }
 
 .modal-body {

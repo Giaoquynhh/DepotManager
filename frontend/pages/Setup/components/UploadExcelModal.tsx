@@ -121,7 +121,7 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{width: '600px', maxWidth: '90vw'}}>
         <div className="modal-header">
           <h3 className="modal-title">{translations[language].uploadExcel}</h3>
-          <button className="modal-close" onClick={handleCancel}>
+          <button className="modal-close" onClick={handleCancel} style={{color: 'white', outline: 'none'}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -330,9 +330,6 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="btn btn-outline" onClick={handleCancel}>
-            {translations[language].cancel}
-          </button>
           <button 
             type="button" 
             className="btn" 

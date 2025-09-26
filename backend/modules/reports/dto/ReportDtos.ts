@@ -34,8 +34,9 @@ export const containerListQuerySchema = Joi.object({
   // và các trạng thái ServiceRequest hợp lệ khác để lọc trực tiếp theo trạng thái SR mới nhất
   service_status: Joi.string().valid(
     'COMPLETED',
-    'PENDING','SCHEDULED','FORWARDED','GATE_IN','CHECKING','GATE_REJECTED','REJECTED','COMPLETED','EXPORTED','IN_YARD','LEFT_YARD','PENDING_ACCEPT','CHECKED'
+    'PENDING','SCHEDULED','FORWARDED','GATE_IN','CHECKING','GATE_REJECTED','REJECTED','COMPLETED','EXPORTED','IN_YARD','LEFT_YARD','PENDING_ACCEPT','CHECKED','SYSTEM_ADMIN_ADDED'
   ).optional(),
+  not_in_yard: Joi.boolean().optional(), // Lọc container chưa vào bãi
   page: Joi.number().integer().min(1).default(1),
   pageSize: Joi.number().integer().min(1).max(200).default(20)
 });

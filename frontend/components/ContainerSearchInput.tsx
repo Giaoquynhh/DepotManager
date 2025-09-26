@@ -1,12 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { containersApi } from '../services/containers';
 
-interface ContainerSearchResult {
+export interface ContainerSearchResult {
   container_no: string;
   slot_code: string;
   block_code: string;
   yard_name: string;
   tier?: number;
   placed_at: string;
+  // Thêm thông tin từ Container model
+  customer?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  shipping_line?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  container_type?: {
+    id: string;
+    code: string;
+    description: string;
+  };
+  seal_number?: string;
+  dem_det?: string;
 }
 
 interface ContainerSearchInputProps {
@@ -15,6 +34,7 @@ interface ContainerSearchInputProps {
   placeholder?: string;
   style?: React.CSSProperties;
   error?: boolean;
+  onSelect?: (container: ContainerSearchResult | null) => void;
 }
 
 export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
@@ -22,7 +42,8 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
   onChange,
   placeholder = "Nhập số container",
   style,
-  error = false
+  error = false,
+  onSelect
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<ContainerSearchResult[]>([]);
@@ -91,12 +112,43 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
     const newValue = e.target.value;
     setSearchQuery(newValue);
     onChange(newValue);
+    if (onSelect) {
+      onSelect(null);
+    }
   };
 
-  const handleSelectContainer = (container: ContainerSearchResult) => {
+  const handleSelectContainer = async (container: ContainerSearchResult) => {
     setSearchQuery(container.container_no);
     onChange(container.container_no);
     setIsOpen(false);
+    
+    // Lấy thông tin chi tiết từ Container model
+    try {
+      const response = await containersApi.get(container.container_no);
+      if (response.success && response.data) {
+        const containerInfo = {
+          ...container,
+          customer: response.data.customer,
+          shipping_line: response.data.shipping_line,
+          container_type: response.data.container_type,
+          seal_number: response.data.seal_number,
+          dem_det: response.data.dem_det
+        };
+        
+        if (onSelect) {
+          onSelect(containerInfo);
+        }
+      } else {
+        if (onSelect) {
+          onSelect(container);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching container details:', error);
+      if (onSelect) {
+        onSelect(container);
+      }
+    }
   };
 
 

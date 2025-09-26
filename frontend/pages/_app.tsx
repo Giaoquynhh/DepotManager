@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import '../styles/globals.css';
 import '../styles/chat-mini.css';
 import '../styles/appointment-mini.css';
@@ -21,6 +22,7 @@ import { Toaster } from 'sonner';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
 	const [userInfo, setUserInfo] = useState<{ id: string; role: string } | null>(null);
+  const router = useRouter();
 
 	useEffect(() => {
 		// Get user info from localStorage or API
@@ -34,6 +36,20 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 			}
 		}
 	}, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+    const html = document.documentElement;
+    const isYardRoute = router.pathname.startsWith('/Yard') || router.pathname.startsWith('/YardPage');
+    if (isYardRoute) {
+      body.classList.add('yard-page');
+      html.classList.add('yard-page');
+    } else {
+      body.classList.remove('yard-page');
+      html.classList.remove('yard-page');
+    }
+  }, [router.pathname]);
 
 	return (
 		<>

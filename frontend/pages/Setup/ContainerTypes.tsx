@@ -8,6 +8,7 @@ import { ContainerTypesTable } from './components/ContainerTypesTable';
 import { SetupHeader } from './components/SetupHeader';
 import { SuccessMessage } from './components/SuccessMessage';
 import { SetupModals } from './components/SetupModals';
+import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 
 // Import hooks and handlers
 import { useSetupState } from './hooks/useSetupState';
@@ -40,6 +41,14 @@ export default function ContainerTypes() {
     containerTypeErrorText,
     setContainerTypeErrorText,
 
+    // Delete Modal States
+    showDeleteModal,
+    setShowDeleteModal,
+    deletingItem,
+    setDeletingItem,
+    isDeleting,
+    setIsDeleting,
+
     // Common State
     successMessage,
     setSuccessMessage
@@ -56,6 +65,9 @@ export default function ContainerTypes() {
     setContainerTypeFormData,
     setContainerTypeErrorText,
     setSuccessMessage,
+    setShowDeleteModal,
+    setDeletingItem,
+    setIsDeleting,
     containerTypes,
     containerTypesPagination,
     language,
@@ -66,8 +78,7 @@ export default function ContainerTypes() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleOpenExcelPicker = () => {
-    if (fileInputRef.current) fileInputRef.current.value = '' as any;
-    fileInputRef.current?.click();
+    setShowUploadContainerTypeModal(true);
   };
 
   const handleExcelSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
@@ -78,7 +89,7 @@ export default function ContainerTypes() {
 
   // Load data on component mount
   useEffect(() => {
-    containerTypeHandlers.loadContainerTypes();
+    containerTypeHandlers.loadContainerTypes(1, 14);
   }, []);
 
   return (
@@ -151,7 +162,7 @@ export default function ContainerTypes() {
         // Container Types Modals
         showAddContainerTypeModal={showAddContainerTypeModal}
         showEditContainerTypeModal={showEditContainerTypeModal}
-        showUploadContainerTypeModal={false}
+        showUploadContainerTypeModal={showUploadContainerTypeModal}
         editingContainerType={editingContainerType}
         containerTypeFormData={containerTypeFormData}
         setContainerTypeFormData={setContainerTypeFormData}
@@ -166,7 +177,7 @@ export default function ContainerTypes() {
         onCancelUploadTransportCompanyModal={() => {}}
         onCancelAddContainerTypeModal={() => setShowAddContainerTypeModal(false)}
         onCancelEditContainerTypeModal={() => setShowEditContainerTypeModal(false)}
-        onCancelUploadContainerTypeModal={() => {}}
+        onCancelUploadContainerTypeModal={() => setShowUploadContainerTypeModal(false)}
         onSubmitShippingLine={() => {}}
         onUpdateShippingLine={() => {}}
         onFileUpload={() => {}}
@@ -175,11 +186,24 @@ export default function ContainerTypes() {
         onTransportCompanyFileUpload={() => {}}
         onSubmitContainerType={containerTypeHandlers.handleSubmitContainerType}
         onUpdateContainerType={(data) => containerTypeHandlers.handleUpdateContainerType(data, editingContainerType)}
-        onContainerTypeFileUpload={() => {}}
+        onContainerTypeFileUpload={containerTypeHandlers.handleContainerTypeFileUpload}
         
         // Common
         language={language}
         translations={translations}
+      />
+
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeletingItem(null);
+        }}
+        onConfirm={() => containerTypeHandlers.confirmDeleteContainerType(deletingItem)}
+        title="Xác nhận xóa loại container"
+        message="Bạn có chắc chắn muốn xóa loại container này không?"
+        itemName={deletingItem?.code || ''}
+        isDeleting={isDeleting}
       />
     </>
   );
