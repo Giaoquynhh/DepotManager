@@ -1,4 +1,5 @@
 import { prisma } from '../../../shared/config/database';
+import path from 'path';
 
 export class DriverDashboardService {
 	async getDashboardData(driverId: string) {
@@ -64,6 +65,97 @@ export class DriverDashboardService {
 		};
 	}
 
+	async uploadTaskImages(driverId: string, taskId: string, files: Express.Multer.File[]) {
+		// Kiểm tra quyền sở hữu task
+		const task = await prisma.forkliftTask.findUnique({ where: { id: taskId } });
+		if (!task) throw new Error('Task không tồn tại');
+		if (task.assigned_driver_id !== driverId) throw new Error('Bạn không có quyền với task này');
+
+		// Ghi nhận file vào bảng forkliftTaskReportImage nếu tồn tại, nếu không fallback lưu vào report_image
+		const created: any[] = [];
+		for (const f of files) {
+			try {
+				// Luôn chuẩn hóa đường dẫn lưu trữ thành URL tĩnh có thể truy cập qua Express static "/uploads"
+				const fileName = path.basename(f.path);
+				const storageUrl = `/uploads/reports/${fileName}`;
+				if ((prisma as any).forkliftTaskReportImage) {
+					// Map đúng schema: storage_url, file_name, file_type, file_size
+					const rec = await (prisma as any).forkliftTaskReportImage.create({
+						data: {
+							task_id: taskId,
+							storage_url: storageUrl,
+							file_name: fileName,
+							file_type: f.mimetype,
+							file_size: f.size
+						}
+					});
+					created.push(rec);
+				} else {
+					// Bảng ảnh chưa có: cập nhật trường report_image (giữ đường dẫn cuối cùng) dưới dạng URL tĩnh
+					await prisma.forkliftTask.update({ where: { id: taskId }, data: { report_image: storageUrl } });
+					created.push({ fallback: true, path: storageUrl });
+				}
+			} catch (e: any) {
+				console.error('Save report image failed:', e);
+			}
+		}
+
+		// Trả về tổng số ảnh hiện có
+		let count = 0;
+		try {
+			count = await (prisma as any).forkliftTaskReportImage.count({ where: { task_id: taskId } });
+		} catch {
+			count = (await prisma.forkliftTask.findUnique({ where: { id: taskId } }))?.report_image ? 1 : 0;
+		}
+
+		return { uploaded: files.length, created, total_images: count };
+	}
+
+	async getTaskImages(driverId: string, taskId: string) {
+		const task = await prisma.forkliftTask.findUnique({ where: { id: taskId } });
+		if (!task) throw new Error('Task không tồn tại');
+		if (task.assigned_driver_id !== driverId) throw new Error('Bạn không có quyền với task này');
+		try {
+			const rows = await (prisma as any).forkliftTaskReportImage.findMany({
+				where: { task_id: taskId },
+				orderBy: { createdAt: 'desc' }
+			});
+			// Chuẩn hóa storage_url nếu lỡ lưu absolute path trong dữ liệu cũ
+				const normalized = rows.map((r: any) => {
+				let storageUrl: string = r.storage_url?.replace(/\\/g, '/');
+				// Nếu là absolute path Windows hoặc chứa '/DepotManager/backend/uploads/', chuyển thành URL tĩnh
+				const idx = storageUrl?.lastIndexOf('/uploads/');
+				if (idx >= 0) {
+					storageUrl = storageUrl.substring(idx);
+				} else if (/^[A-Za-z]:\//.test(storageUrl) || storageUrl.includes('/DepotManager/backend/uploads/')) {
+					const fileName = path.basename(storageUrl);
+						storageUrl = `/uploads/reports/${fileName}`;
+				}
+				return { ...r, storage_url: storageUrl };
+			});
+			return normalized;
+		} catch {
+				return task.report_image ? [{ id: 'legacy', task_id: taskId, storage_url: (task.report_image?.includes('/uploads/') ? task.report_image : `/uploads/reports/${path.basename(task.report_image)}`), file_name: path.basename(task.report_image), file_type: 'image/*', file_size: 0, createdAt: new Date() }] : [];
+		}
+	}
+
+	async deleteTaskImage(driverId: string, taskId: string, imageId: string) {
+		const task = await prisma.forkliftTask.findUnique({ where: { id: taskId } });
+		if (!task) throw new Error('Task không tồn tại');
+		if (task.assigned_driver_id !== driverId) throw new Error('Bạn không có quyền với task này');
+		try {
+			await (prisma as any).forkliftTaskReportImage.delete({ where: { id: imageId } });
+		} catch {
+			// legacy: nếu chỉ có report_image duy nhất
+			if (task.report_image && imageId === 'legacy') {
+				await prisma.forkliftTask.update({ where: { id: taskId }, data: { report_image: null as any } });
+			}
+		}
+		let count = 0;
+		try { count = await (prisma as any).forkliftTaskReportImage.count({ where: { task_id: taskId } }); } catch {}
+		return { deleted: true, total_images: count };
+	}
+
 	async getAssignedTasks(driverId: string) {
 		const tasks = await prisma.forkliftTask.findMany({
 			where: {
@@ -92,7 +184,7 @@ export class DriverDashboardService {
 		const tasksWithContainerInfo = await Promise.all(
 			tasks.map(async (task) => {
 				try {
-					const [containerInfo, actualLocation] = await Promise.all([
+					const [containerInfo, actualLocation, imagesCount] = await Promise.all([
 						prisma.serviceRequest.findFirst({
 							where: { container_no: task.container_no },
 							select: {
@@ -120,20 +212,30 @@ export class DriverDashboardService {
 									} 
 								} 
 							}
-						})
+						}),
+						(async () => {
+							try {
+								return await (prisma as any).forkliftTaskReportImage.count({ where: { task_id: task.id } });
+							} catch (e: any) {
+								console.warn('Count report images fallback (table may be missing):', e?.message || e);
+								return task.report_image ? 1 : 0;
+							}
+						})()
 					]);
 
 					return {
 						...task,
 						container_info: containerInfo,
-						actual_location: actualLocation
+						actual_location: actualLocation,
+						report_images_count: imagesCount
 					};
 				} catch (error) {
 					console.log(`Could not find container info for ${task.container_no}:`, error);
 					return {
 						...task,
 						container_info: null,
-						actual_location: null
+						actual_location: null,
+						report_images_count: 0
 					};
 				}
 			})
@@ -155,19 +257,7 @@ export class DriverDashboardService {
 			throw new Error('Task not found or not assigned to this driver');
 		}
 
-		// Kiểm tra validation khi hoàn thành task
-		if (status === 'COMPLETED') {
-			if (!task.report_status) {
-				throw new Error('Không thể hoàn thành task: Báo cáo chưa được gửi');
-			}
-		}
-
-		// Kiểm tra validation khi chuyển sang chờ duyệt
-		if (status === 'PENDING_APPROVAL') {
-			if (!task.report_status) {
-				throw new Error('Không thể chuyển sang chờ duyệt: Báo cáo chưa được gửi');
-			}
-		}
+		// Bỏ ràng buộc yêu cầu báo cáo khi hoàn thành/chờ duyệt
 
 		// Thực hiện transaction để cập nhật cả forklift task và service request
 		const updatedTask = await prisma.$transaction(async (tx) => {
@@ -192,14 +282,14 @@ export class DriverDashboardService {
 				if (latestRequest) {
 					let newStatus: string;
 					
-					// Logic mới: Phân biệt giữa IMPORT và EXPORT
-					if (latestRequest.type === 'EXPORT' && latestRequest.status === 'GATE_IN') {
-						// Export request: GATE_IN → FORKLIFTING
-						newStatus = 'FORKLIFTING';
-					} else if (latestRequest.type === 'IMPORT' && latestRequest.status === 'POSITIONED') {
-						// Import request: POSITIONED → FORKLIFTING (giữ nguyên logic cũ)
-						newStatus = 'FORKLIFTING';
-					} else {
+                    // Logic mới: Phân biệt giữa IMPORT và EXPORT
+                    if (latestRequest.type === 'EXPORT' && latestRequest.status === 'GATE_IN') {
+                        // Export request: GATE_IN → FORKLIFTING
+                        newStatus = 'FORKLIFTING';
+                    } else if (latestRequest.type === 'IMPORT' && (latestRequest.status === 'POSITIONED' || latestRequest.status === 'CHECKED')) {
+                        // Import request: Cho phép chuyển POSITIONED/CHECKED → FORKLIFTING
+                        newStatus = 'FORKLIFTING';
+                    } else {
 						// Các trường hợp khác: không thay đổi
 						return updatedForkliftTask;
 					}
@@ -391,6 +481,8 @@ export class DriverDashboardService {
 		return tasksWithContainerInfo;
 	}
 
+	// Các hàm ảnh báo cáo đã được gỡ bỏ
+
 	async updateTaskCost(driverId: string, taskId: string, cost: number) {
 		// Kiểm tra task có thuộc về driver này không
 		const task = await prisma.forkliftTask.findFirst({
@@ -431,93 +523,7 @@ export class DriverDashboardService {
 		return updatedTask;
 	}
 
-	async uploadReportImage(driverId: string, taskId: string, file: Express.Multer.File) {
-		try {
-			// Kiểm tra task có thuộc về driver này không
-			const task = await prisma.forkliftTask.findFirst({
-				where: {
-					id: taskId,
-					assigned_driver_id: driverId
-				}
-			});
-
-			if (!task) {
-				throw new Error('Task not found or not assigned to this driver');
-			}
-
-			// Validate file
-			if (!file) {
-				throw new Error('Không có file được upload');
-			}
-
-			if (!file.originalname) {
-				throw new Error('Tên file không hợp lệ');
-			}
-
-		// Sử dụng tên file từ multer
-		const fileName = file.filename;
-		const relativePath = `/uploads/reports/${fileName}`; // Thêm dấu / ở đầu để tạo URL đúng
-
-		// Multer đã lưu file, chỉ cần kiểm tra và cập nhật database
-		const fs = require('fs');
-		const path = require('path');
-		
-		console.log('=== UPLOAD DEBUG INFO ===');
-		console.log('File info:', {
-			originalname: file.originalname,
-			mimetype: file.mimetype,
-			size: file.size,
-			hasBuffer: !!file.buffer,
-			hasPath: !!file.path,
-			filename: file.filename
-		});
-		
-		// Kiểm tra file đã được multer lưu
-		if (!file.path) {
-			throw new Error('File was not saved by multer');
-		}
-		
-		// Kiểm tra file tồn tại
-		if (!fs.existsSync(file.path)) {
-			throw new Error(`File not found at: ${file.path}`);
-		}
-		
-		const stats = fs.statSync(file.path);
-		console.log('File saved by multer. Size:', stats.size, 'bytes');
-
-			// Cập nhật task với thông tin báo cáo
-			const updatedTask = await prisma.forkliftTask.update({
-				where: { id: taskId },
-				data: {
-					report_status: 'SUBMITTED',
-					report_image: relativePath,
-					updatedAt: new Date()
-				}
-			});
-
-			// Ghi log audit
-			await prisma.auditLog.create({
-				data: {
-					actor_id: driverId,
-					action: 'TASK_REPORT_UPLOADED',
-					entity: 'ForkliftTask',
-					entity_id: taskId,
-					meta: {
-						fileName,
-						filePath: relativePath,
-						timestamp: new Date()
-					}
-				}
-			});
-
-			console.log('=== UPLOAD COMPLETED SUCCESSFULLY ===');
-			return updatedTask;
-		} catch (error) {
-			console.error('=== UPLOAD ERROR ===');
-			console.error('Error in uploadReportImage service:', error);
-			throw error;
-		}
-	}
+	// Hàm upload ảnh đã bỏ
 }
 
 export default new DriverDashboardService();

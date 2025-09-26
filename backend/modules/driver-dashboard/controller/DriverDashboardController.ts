@@ -83,41 +83,45 @@ export class DriverDashboardController {
 		}
 	}
 
-	async uploadReportImage(req: AuthRequest, res: Response) {
-		try {
-			const driverId = req.user?._id;
-			const { taskId } = req.params;
+    // Các API ảnh báo cáo đã được gỡ bỏ
+    async uploadTaskImages(req: AuthRequest, res: Response) {
+        try {
+            const driverId = req.user?._id;
+            const { taskId } = req.params;
+            const files = (req as any).files as Express.Multer.File[];
+            if (!driverId) return res.status(401).json({ message: 'Unauthorized' });
+            if (!files || files.length === 0) return res.status(400).json({ message: 'No files uploaded' });
 
-			if (!driverId) {
-				return res.status(401).json({ message: 'Unauthorized' });
-			}
+            const result = await service.uploadTaskImages(driverId, taskId, files);
+            return res.json(result);
+        } catch (e: any) {
+            return res.status(400).json({ message: e.message });
+        }
+    }
 
-			// Kiểm tra file upload
-			if (!req.file) {
-				return res.status(400).json({ message: 'Không có file ảnh được upload' });
-			}
+    async getTaskImages(req: AuthRequest, res: Response) {
+        try {
+            const driverId = req.user?._id;
+            const { taskId } = req.params;
+            if (!driverId) return res.status(401).json({ message: 'Unauthorized' });
+            const images = await service.getTaskImages(driverId, taskId);
+            return res.json(images);
+        } catch (e: any) {
+            return res.status(400).json({ message: e.message });
+        }
+    }
 
-			// Log thông tin file để debug
-			console.log('File upload info:', {
-				originalname: req.file.originalname,
-				mimetype: req.file.mimetype,
-				size: req.file.size,
-				fieldname: req.file.fieldname,
-				hasBuffer: !!req.file.buffer,
-				hasPath: !!req.file.path
-			});
-
-			const result = await service.uploadReportImage(driverId, taskId, req.file);
-			return res.json(result);
-		} catch (e: any) {
-			console.error('Error in uploadReportImage controller:', e);
-			return res.status(500).json({ 
-				message: 'Lỗi upload file', 
-				error: e.message,
-				stack: process.env.NODE_ENV === 'development' ? e.stack : undefined
-			});
-		}
-	}
+    async deleteTaskImage(req: AuthRequest, res: Response) {
+        try {
+            const driverId = req.user?._id;
+            const { taskId, imageId } = req.params;
+            if (!driverId) return res.status(401).json({ message: 'Unauthorized' });
+            const result = await service.deleteTaskImage(driverId, taskId, imageId);
+            return res.json(result);
+        } catch (e: any) {
+            return res.status(400).json({ message: e.message });
+        }
+    }
 }
 
 export default new DriverDashboardController();

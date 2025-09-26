@@ -36,13 +36,23 @@ export const driverDashboardApi = {
     return data;
   },
 
-  // Upload ảnh báo cáo
-  async uploadReportImage(taskId: string, formData: FormData) {
-    const { data } = await api.post(`/driver-dashboard/tasks/${taskId}/report`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+  // Upload report images for a forklift task
+  async uploadTaskImages(taskId: string, files: File[]) {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    const { data } = await api.post(`/driver-dashboard/tasks/${taskId}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
+    return data;
+  },
+
+  async getTaskImages(taskId: string) {
+    const { data } = await api.get(`/driver-dashboard/tasks/${taskId}/images`);
+    return data;
+  },
+
+  async deleteTaskImage(taskId: string, imageId: string) {
+    const { data } = await api.delete(`/driver-dashboard/tasks/${taskId}/images/${imageId}`);
     return data;
   }
 };

@@ -575,11 +575,14 @@ class SetupService {
       const response = await api.post('/api/setup/price-lists', data);
       return response.data;
     } catch (error: any) {
-      console.error('Error creating price list:', error);
+      // Tránh log Error object để không kích hoạt Next.js error overlay trong dev
+      const msg = error?.response?.data?.message || error?.message || 'Failed to create price list';
+      try { await feLog('CREATE_PRICE_LIST_ERROR', { message: msg, data, status: error?.response?.status }); } catch {}
+      console.warn('Error creating price list:', msg);
       return {
         success: false,
         error: 'CREATE_ERROR',
-        message: error.response?.data?.message || 'Failed to create price list',
+        message: msg,
         details: error.response?.data?.details
       };
     }

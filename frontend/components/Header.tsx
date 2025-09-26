@@ -764,8 +764,8 @@ export default function Header() {
                 </Link>
             )} */}
 
-            {/* Container Manager Module - HIDDEN */}
-            {/* {(() => {
+            {/* Container Manager Module */}
+            {(() => {
               const allow = canManageContainers(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'containers.manage')
@@ -781,7 +781,7 @@ export default function Header() {
                   </svg>
                   <span>{t('sidebar.containerManager')}</span>
                 </Link>
-            )} */}
+            )}
 
             {/* Forklift Module - Xe nâng */}
             {(() => {

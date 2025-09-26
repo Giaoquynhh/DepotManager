@@ -319,6 +319,20 @@ model ForkliftTask {
   report_image       String?
   from_slot          YardSlot? @relation("from_slot", fields: [from_slot_id], references: [id])
   to_slot            YardSlot? @relation("to_slot", fields: [to_slot_id], references: [id])
+  reportImages       ForkliftTaskReportImage[]
+}
+
+model ForkliftTaskReportImage {
+  id          String       @id @default(cuid())
+  task_id     String
+  file_name   String
+  file_type   String
+  file_size   Int
+  storage_url String
+  createdAt   DateTime     @default(now())
+  task        ForkliftTask @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id])
 }
 
 model Equipment {

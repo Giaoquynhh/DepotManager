@@ -428,7 +428,8 @@ export class GateService {
   }
 
   /**
-   * Gate OUT - Xe rời kho (chuyển từ IN_YARD hoặc IN_CAR sang GATE_OUT)
+   * Gate OUT - Xe rời kho
+   * - Cho phép: IN_YARD, IN_CAR, FORKLIFTING (Import)
    */
   async gateOut(requestId: string, actorId: string): Promise<any> {
     const request = await prisma.serviceRequest.findUnique({
@@ -439,9 +440,11 @@ export class GateService {
       throw new Error('Request không tồn tại');
     }
 
-    // Chỉ cho phép chuyển từ IN_YARD hoặc IN_CAR sang GATE_OUT
-    if (request.status !== 'IN_YARD' && request.status !== 'IN_CAR') {
-      throw new Error(`Không thể chuyển từ trạng thái ${request.status} sang GATE_OUT. Chỉ cho phép từ IN_YARD hoặc IN_CAR.`);
+    // Cho phép từ IN_YARD hoặc IN_CAR; mở rộng: FORKLIFTING đối với Import
+    const allowFromForklifting = request.type === 'IMPORT' && request.status === 'FORKLIFTING';
+    const allowCommon = request.status === 'IN_YARD' || request.status === 'IN_CAR';
+    if (!allowCommon && !allowFromForklifting) {
+      throw new Error(`Không thể chuyển từ trạng thái ${request.status} sang GATE_OUT. Chỉ cho phép từ IN_YARD, IN_CAR hoặc FORKLIFTING (nhập khẩu).`);
     }
 
     const currentTime = new Date();

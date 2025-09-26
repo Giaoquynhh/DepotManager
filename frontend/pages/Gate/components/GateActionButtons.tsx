@@ -327,8 +327,12 @@ export default function GateActionButtons({
     );
   }
 
-  // Hiển thị action GATE_OUT cho IN_YARD và IN_CAR
-  if (currentStatus === 'IN_YARD' || currentStatus === 'IN_CAR') {
+  // Hiển thị action GATE_OUT cho IN_YARD, IN_CAR và FORKLIFTING (đối với import)
+  if (
+    currentStatus === 'IN_YARD' ||
+    currentStatus === 'IN_CAR' ||
+    (currentStatus === 'FORKLIFTING' && requestType === 'IMPORT')
+  ) {
     return (
       <button
         onClick={handleGateOut}

@@ -66,6 +66,7 @@ interface ForkliftTask {
     status?: string;
     type?: string;
   };
+  report_images_count?: number;
 }
 
 export default function DriverDashboard() {
@@ -74,9 +75,14 @@ export default function DriverDashboard() {
   const [taskHistory, setTaskHistory] = useState<ForkliftTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'history'>('overview');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [currentUploadTask, setCurrentUploadTask] = useState<ForkliftTask | null>(null);
+  const [isImagesModalOpen, setIsImagesModalOpen] = useState(false);
+  const [currentTaskImages, setCurrentTaskImages] = useState<any[]>([]);
   
-  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Đã loại bỏ tính năng ảnh báo cáo ở DriverDashboard
   const { t, currentLanguage } = useTranslation();
   const { showSuccess, showError, ToastContainer } = useToast();
   const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
@@ -123,81 +129,7 @@ export default function DriverDashboard() {
     }
   };
 
-  const handleImageUpload = async (taskId: string) => {
-    if (!selectedFile) {
-      showError(t('pages.driverDashboard.messages.selectImageFileBeforeUpload'));
-      return;
-    }
-    
-    const task = assignedTasks.find(t => t.id === taskId);
-    if (task?.status === 'PENDING_APPROVAL') {
-      const confirmUpdate = confirm(t('pages.driverDashboard.messages.confirmUploadPendingApproval'));
-      if (!confirmUpdate) {
-        return;
-      }
-    }
-    
-    try {
-      setUploadingImage(taskId);
-      const formData = new FormData();
-      formData.append('report_image', selectedFile);
-      
-      await driverDashboardApi.uploadReportImage(taskId, formData);
-      setSelectedFile(null);
-      setUploadingImage(null);
-      await loadDashboardData();
-      showSuccess(t('pages.driverDashboard.messages.imageUploadedSuccessfully'));
-    } catch (error: any) {
-      console.error('Error uploading image:', error);
-      
-      const errorMessage = error?.response?.data?.message || error?.message || t('pages.driverDashboard.messages.errorUploadingImage');
-      showError(errorMessage);
-      setUploadingImage(null);
-    } finally {
-      if (uploadingImage === taskId) {
-        setUploadingImage(null);
-      }
-      setSelectedFile(null);
-    }
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => {
-    try {
-      const file = event.target.files?.[0];
-      if (file) {
-        if (!file.type.startsWith('image/')) {
-          showError(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
-          event.target.value = '';
-          setSelectedFile(null);
-          return;
-        }
-        
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (file.size > maxSize) {
-          showError(t('pages.driverDashboard.messages.fileTooLarge5MB'));
-          event.target.value = '';
-          setSelectedFile(null);
-          return;
-        }
-        
-        if (file.name.length > 100) {
-          showError(t('pages.driverDashboard.messages.fileNameTooLong'));
-          event.target.value = '';
-          setSelectedFile(null);
-          return;
-        }
-        
-        setSelectedFile(file);
-        setUploadingImage(taskId);
-        showSuccess(t('pages.driverDashboard.messages.fileSelectedSuccessfully'));
-      }
-    } catch (error) {
-      console.error('Error selecting file:', error);
-      showError(t('pages.driverDashboard.messages.errorSelectingFile'));
-      event.target.value = '';
-      setSelectedFile(null);
-    }
-  };
+  // Đã bỏ toàn bộ handler upload/xem ảnh
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -218,6 +150,105 @@ export default function DriverDashboard() {
       case 'COMPLETED': return t('pages.forklift.status.completed');
       case 'CANCELLED': return t('pages.forklift.status.cancelled');
       default: return status;
+    }
+  };
+
+  // Bỏ các modal ảnh
+  const handleViewReportImages = async (task: ForkliftTask) => {
+    try {
+      const images = await driverDashboardApi.getTaskImages(task.id);
+      if (!images || images.length === 0) {
+        showError(t('pages.driverDashboard.messages.noReportImages'));
+        return;
+      }
+      setCurrentUploadTask(task);
+      setCurrentTaskImages(images);
+      setIsImagesModalOpen(true);
+    } catch (e: any) {
+      showError(e?.message || 'Không tải được danh sách ảnh');
+    }
+  };
+
+  const handleUploadImages = (task: ForkliftTask) => {
+    setCurrentUploadTask(task);
+    setSelectedFiles([]);
+    // cleanup old previews
+    previewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setPreviewUrls([]);
+    setIsUploadModalOpen(true);
+  };
+
+  const handleModalFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const accepted: File[] = [];
+    const urls: string[] = [];
+    const maxSize = 5 * 1024 * 1024;
+
+    for (const f of files) {
+      if (!f.type.startsWith('image/')) {
+        showError(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
+        continue;
+      }
+      if (f.size > maxSize) {
+        showError(t('pages.driverDashboard.messages.fileTooLarge5MB'));
+        continue;
+      }
+      if (f.name.length > 100) {
+        showError(t('pages.driverDashboard.messages.fileNameTooLong'));
+        continue;
+      }
+      accepted.push(f);
+      urls.push(URL.createObjectURL(f));
+    }
+
+    // cleanup old urls
+    previewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setSelectedFiles(accepted);
+    setPreviewUrls(urls);
+  };
+
+  const closeUploadModal = () => {
+    setIsUploadModalOpen(false);
+    setCurrentUploadTask(null);
+    previewUrls.forEach((u) => URL.revokeObjectURL(u));
+    setPreviewUrls([]);
+    setSelectedFiles([]);
+  };
+
+  const getImageUrl = (storage_url?: string) => {
+    if (!storage_url) return '#';
+    let u = storage_url.replace(/\\/g, '/');
+    const idx = u.lastIndexOf('/uploads/');
+    if (idx >= 0) {
+      u = u.substring(idx);
+    } else if (/^[A-Za-z]:\//.test(u)) {
+      // Absolute path Windows -> lấy tên file và đưa về uploads
+      const name = u.split('/').pop() || '';
+      u = `/uploads/reports/${name}`;
+    } else if (!u.startsWith('/uploads/')) {
+      // Fallback: đảm bảo prefix
+      u = `/uploads/${u.replace(/^\//,'')}`;
+    }
+    return `${API_BASE}${u}`;
+  };
+
+  const submitUpload = async () => {
+    try {
+      if (!currentUploadTask) return;
+      if (selectedFiles.length === 0) {
+        showError(t('pages.driverDashboard.messages.pleaseSelectImageFile'));
+        return;
+      }
+      // Gọi API upload
+      await driverDashboardApi.uploadTaskImages(currentUploadTask.id, selectedFiles);
+      showSuccess('Tải ảnh thành công');
+      closeUploadModal();
+      // Reload để cập nhật số ảnh
+      await loadDashboardData();
+    } catch (e: any) {
+      showError(e?.message || 'Upload failed');
     }
   };
 
@@ -516,118 +547,33 @@ export default function DriverDashboard() {
                             )}
                           </td>
                           
-                           <td>
-                             <div style={{
-                               display: 'flex',
-                               alignItems: 'center',
-                               justifyContent: 'center'
-                             }}>
-                               {uploadingImage === task.id ? (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '6px',
-                                   padding: '8px',
-                                   backgroundColor: '#fef3c7',
-                                   borderRadius: '6px',
-                                   border: '1px solid #f59e0b'
-                                 }}>
-                                   <input
-                                     type="file"
-                                     accept="image/*"
-                                     className="input input-sm"
-                                     style={{
-                                       fontSize: '10px',
-                                       width: '120px'
-                                     }}
-                                     onChange={(e) => handleFileSelect(e, task.id)}
-                                   />
-                                   {selectedFile && (
-                                     <div style={{
-                                       display: 'flex',
-                                       gap: '4px',
-                                       marginTop: '4px'
-                                     }}>
-                                       <button
-                                         className="btn btn-sm btn-success"
-                                         style={{ fontSize: '10px', padding: '2px 6px' }}
-                                         onClick={() => handleImageUpload(task.id)}
-                                       >
-                                         {t('pages.driverDashboard.report.upload')}
-                                       </button>
-                                       <button
-                                         className="btn btn-sm btn-outline"
-                                         style={{ fontSize: '10px', padding: '2px 6px' }}
-                                         onClick={() => {
-                                           setUploadingImage(null);
-                                           setSelectedFile(null);
-                                           showSuccess(t('pages.driverDashboard.messages.uploadCancelled'));
-                                         }}
-                                       >
-                                         {t('common.cancel')}
-                                       </button>
-                                     </div>
-                                   )}
-                                 </div>
-                               ) : (
-                                 <div style={{
-                                   display: 'flex',
-                                   flexDirection: 'column',
-                                   alignItems: 'center',
-                                   gap: '4px',
-                                   padding: '6px'
-                                 }}>
-                                   {task.report_image ? (
-                                     <a 
-                                       href={(() => {
-                                         const url = task.report_image.startsWith('http') 
-                                           ? task.report_image 
-                                           : `${API_BASE}${task.report_image}`;
-                                         console.log('Generated image URL:', url);
-                                         return url;
-                                       })()} 
-                                       target="_blank" 
-                                       rel="noopener noreferrer" 
-                                       className="text-blue-600 hover:underline"
-                                     >
-                                       {t('pages.driverDashboard.report.viewImage')}
-                                     </a>
-                                   ) : (
-                                     <span style={{ 
-                                       color: '#94a3b8', 
-                                       fontSize: '12px',
-                                       fontStyle: 'italic'
-                                     }}>
-                                       {t('pages.driverDashboard.report.none')}
-                                     </span>
-                                   )}
-                                   {task.status === 'IN_PROGRESS' && (
-                                    <button
-                                      className="btn btn-sm btn-outline"
-                                      style={{
-                                        fontSize: '10px',
-                                        padding: '2px 6px',
-                                        marginTop: '4px'
-                                      }}
-                                      onClick={() => setUploadingImage(task.id)}
-                                    >
-                                      {task.report_image ? t('common.edit') : t('common.add')}
-                                    </button>
-                                   )}
-                                   {task.status === 'PENDING' && (
-                                    <span style={{ 
-                                      color: '#94a3b8', 
-                                      fontSize: '10px',
-                                      fontStyle: 'italic'
-                                    }}>
-                                      {t('pages.driverDashboard.messages.startTaskFirst')}
-                                    </span>
-                                   )}
-                                 </div>
-                               )}
-                             </div>
-                           </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <span
+                              role="button"
+                              onClick={() => handleViewReportImages(task)}
+                              title="Xem ảnh kiểm tra"
+                              className="badge badge-sm badge-blue"
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {(task.report_images_count ?? 0)} ảnh kiểm tra
+                            </span>
+                            <button
+                              className="btn btn-xs btn-primary"
+                              title="Tải ảnh"
+                              disabled={task.status !== 'IN_PROGRESS'}
+                              onClick={() => {
+                                if (task.status !== 'IN_PROGRESS') {
+                                  showError('Vui lòng nhấn Bắt đầu trước khi tải ảnh');
+                                  return;
+                                }
+                                handleUploadImages(task);
+                              }}
+                            >
+                              Tải ảnh
+                            </button>
+                          </div>
+                        </td>
 
                           <td>
                             <span className={`badge badge-md ${getStatusColor(task.status)}`}>
@@ -647,16 +593,8 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button 
-                                  className={`btn btn-sm ${task.report_image ? 'btn-success' : 'btn-disabled'}`}
-                                  onClick={() => {
-                                    if (!task.report_image) {
-                                      alert(t('pages.driverDashboard.messages.requireReportBeforeComplete'));
-                                      return;
-                                    }
-                                    handleStatusUpdate(task.id, 'COMPLETED');
-                                  }}
-                                  disabled={!task.report_image}
-                                  title={!task.report_image ? t('pages.driverDashboard.messages.requireReportTooltip') : ''}
+                                  className={'btn btn-sm btn-success'}
+                                  onClick={() => handleStatusUpdate(task.id, 'COMPLETED')}
                                 >
                                   {t('pages.driverDashboard.actions.complete')}
                                 </button>
@@ -783,7 +721,106 @@ export default function DriverDashboard() {
           </div>
         )}
       </main>
+      {/* Modal upload ảnh báo cáo */}
+      {isUploadModalOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            style={{
+              width: '90%',
+              maxWidth: '720px',
+              background: '#fff',
+              borderRadius: '10px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+            }}
+          >
+            <div className="modal-header" style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+              <h3 className="modal-title">Tải ảnh báo cáo</h3>
+            </div>
+            <div className="modal-body" style={{ padding: '16px' }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleModalFileChange}
+                />
+                <span className="text-sm text-gray-500">
+                  Chỉ nhận ảnh, tối đa 5MB/ảnh
+                </span>
+              </div>
+              {previewUrls.length > 0 ? (
+                <div className="grid grid-cols-3 gap-3" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+                  {previewUrls.map((url, idx) => (
+                    <div key={idx} className="preview-tile">
+                      <img src={url} alt={`preview-${idx}`} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }} />
+                      <div className="text-xs text-gray-600" style={{ marginTop: '6px', wordBreak: 'break-all' }}>
+                        {selectedFiles[idx]?.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500" style={{ padding: '24px 0' }}>
+                  Chưa chọn ảnh nào
+                </div>
+              )}
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
+              <button className="btn btn-sm btn-outline" onClick={closeUploadModal}>Đóng</button>
+              <button className="btn btn-sm btn-primary" onClick={submitUpload} disabled={selectedFiles.length === 0}>Tải lên</button>
+            </div>
+          </div>
+        </div>
+      )}
       <ToastContainer />
+
+      {/* Modal xem ảnh đã upload */}
+      {isImagesModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ width: '92%', maxWidth: '900px', background: '#fff', borderRadius: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0 }}>Ảnh kiểm tra</h3>
+              <button className="btn btn-xs btn-outline" onClick={() => setIsImagesModalOpen(false)}>Đóng</button>
+            </div>
+            <div style={{ padding: '16px', maxHeight: '65vh', overflowY: 'auto' }}>
+              <div className="grid grid-cols-3 gap-4">
+                {currentTaskImages.map((img: any) => (
+                  <div key={img.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px' }}>
+                    <img src={`${API_BASE}/${img.storage_url?.replace(/^\//,'')}`} alt={img.file_name} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '6px' }} />
+                    <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="text-xs" style={{ wordBreak: 'break-all' }}>{img.file_name}</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <a className="btn btn-xs btn-outline" href={getImageUrl(img.storage_url)} target="_blank" rel="noreferrer">Xem</a>
+                        <button className="btn btn-xs btn-danger" onClick={async () => {
+                          if (!currentUploadTask) return;
+                          await driverDashboardApi.deleteTaskImage(currentUploadTask.id, img.id);
+                          const refreshed = await driverDashboardApi.getTaskImages(currentUploadTask.id);
+                          setCurrentTaskImages(refreshed);
+                          await loadDashboardData();
+                        }}>Xóa</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -141,7 +141,13 @@ export default function NewSubmenu() {
   // Map hiển thị trạng thái thân thiện
   const renderStatusText = (status: string) => {
     if (!status) return '';
-    if (status === 'CHECKED') return 'Chấp nhận';
+    const normalized = String(status).toUpperCase();
+    if (normalized === 'PENDING') return 'Thêm mới';
+    if (normalized === 'CHECKED') return 'Chấp nhận';
+    if (normalized === 'FORKLIFTING') return 'Đang hạ container';
+    // Trạng thái mới cho Import: hiển thị ngay sau FORKLIFTING
+    if (normalized === 'IN_YARD') return 'Đã hạ thành công';
+    if (normalized === 'GATE_OUT') return 'Xe đã rời khỏi bãi';
     return status;
   };
 
@@ -618,7 +624,7 @@ export default function NewSubmenu() {
                           <td>{row.containerType}</td>
                           <td>{row.serviceType}</td>
                           <td>
-                            <span className={`status-badge status-${row.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                            <span className={`status-badge status-${row.status.toLowerCase().replace(/[_\s]+/g, '-')}`}>
                               {renderStatusText(row.status)}
                             </span>
                           </td>

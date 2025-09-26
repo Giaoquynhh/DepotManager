@@ -41,6 +41,8 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
     switch (status) {
       case 'PENDING':
         return 'Đang tới';
+      case 'FORKLIFTING':
+        return 'Đang nâng hạ';
       case 'GATE_OUT':
         return 'Đã ra khỏi depot';
       case 'CHECKED':
@@ -59,6 +61,8 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
     switch (status) {
       case 'PENDING':
         return 'status-pending';
+      case 'FORKLIFTING':
+        return 'status-forklifting';
       case 'GATE_OUT':
         return 'status-gate-out';
       case 'CHECKED':

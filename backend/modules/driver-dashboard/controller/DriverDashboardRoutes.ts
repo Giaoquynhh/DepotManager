@@ -6,50 +6,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Cấu hình multer cho upload file
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Sử dụng đường dẫn tuyệt đối cố định
-    const uploadPath = path.resolve(__dirname, '../../../uploads/reports');
-    
-    console.log('=== MULTER DEBUG ===');
-    console.log('Multer upload destination:', uploadPath);
-    
-    // Tạo thư mục nếu chưa tồn tại
-    if (!fs.existsSync(uploadPath)) {
-      console.log('Creating multer upload directory:', uploadPath);
-      fs.mkdirSync(uploadPath, { recursive: true });
-      console.log('Multer upload directory created successfully');
-    } else {
-      console.log('Multer upload directory already exists');
-    }
-    
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Làm sạch tên file để tránh ký tự đặc biệt
-    const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = file.fieldname + '-' + uniqueSuffix + '-' + cleanOriginalName;
-    console.log('Generated filename:', filename);
-    cb(null, filename);
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Chỉ chấp nhận file ảnh'));
-    }
-  },
-  limits: {
-    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
-  }
-});
-
 const router = Router();
 
 // Tất cả routes đều yêu cầu authentication và role Driver
@@ -67,29 +23,38 @@ router.patch('/tasks/:taskId/status', (req, res) => controller.updateTaskStatus(
 // Cập nhật chi phí task
 router.patch('/tasks/:taskId/cost', (req, res) => controller.updateTaskCost(req as any, res));
 
-// Upload ảnh báo cáo
-router.post('/tasks/:taskId/report', upload.single('report_image'), (req, res) => {
-  controller.uploadReportImage(req as any, res);
-});
-
-// Serve ảnh báo cáo (public access)
-router.get('/reports/:filename', (req, res) => {
-  const { filename } = req.params;
-  // Sử dụng đường dẫn động
-  const filePath = path.resolve(__dirname, '../../../uploads/reports', filename);
-  
-  console.log('=== SERVING FILE DEBUG ===');
-  console.log('Filename:', filename);
-  console.log('Full file path:', filePath);
-  
-  if (fs.existsSync(filePath)) {
-    console.log('File found, serving:', filePath);
-    res.sendFile(filePath);
-  } else {
-    console.log('File not found:', filePath);
-    res.status(404).json({ message: 'File not found' });
+// Cấu hình upload ảnh báo cáo cho Forklift Task
+// Lưu vào thư mục đã tồn tại: backend/uploads/reports (tính từ thư mục backend)
+// Dùng __dirname để tránh lệ thuộc process.cwd()
+const reportsDir = path.join(__dirname, '../../../uploads/reports');
+if (!fs.existsSync(reportsDir)) {
+  fs.mkdirSync(reportsDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, reportsDir),
+  filename: (_req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `forklift_report_${unique}${ext}`);
   }
 });
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  }
+});
+
+// Upload ảnh báo cáo cho task
+router.post('/tasks/:taskId/images', upload.array('files', 10), (req, res) => controller.uploadTaskImages(req as any, res));
+
+// Danh sách ảnh báo cáo của task
+router.get('/tasks/:taskId/images', (req, res) => controller.getTaskImages(req as any, res));
+
+// Xóa ảnh báo cáo
+router.delete('/tasks/:taskId/images/:imageId', (req, res) => controller.deleteTaskImage(req as any, res));
 
 // Lấy lịch sử task
 router.get('/tasks/history', (req, res) => controller.getTaskHistory(req as any, res));
