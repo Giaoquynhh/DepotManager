@@ -17,12 +17,12 @@
 /* 1. Variables and Design System */
 @import url('./variables.css');
 
-/* Ẩn scrollbar dọc, chỉ hiển thị scrollbar ngang */
+/* Ẩn hoàn toàn scrollbar */
 html, body {
   overflow-x: auto !important;
   overflow-y: auto !important;
-  scrollbar-width: thin !important;
-  -ms-overflow-style: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
   max-width: 100vw !important;
 }
 
@@ -31,38 +31,38 @@ body {
   padding-top: 30px !important; /* Giữ nguyên 30px cho mobile portrait */
 }
 
-/* Ẩn scrollbar dọc, chỉ hiển thị scrollbar ngang */
+/* Ẩn hoàn toàn scrollbar */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  display: block !important;
-  width: 0 !important; /* Ẩn scrollbar dọc */
-  height: 8px !important; /* Hiển thị scrollbar ngang */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-/* Ẩn scrollbar dọc cho tất cả elements, chỉ hiển thị scrollbar ngang */
+/* Ẩn scrollbar cho tất cả elements */
 * {
-  scrollbar-width: thin !important;
-  -ms-overflow-style: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* Ẩn scrollbar dọc cho tất cả elements, chỉ hiển thị scrollbar ngang */
+/* Ẩn scrollbar cho tất cả elements */
 *::-webkit-scrollbar {
-  display: block !important;
-  width: 0 !important; /* Ẩn scrollbar dọc */
-  height: 8px !important; /* Hiển thị scrollbar ngang */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 html {
   overflow-x: auto !important;
   overflow-y: auto !important;
-  scrollbar-width: thin !important;
-  -ms-overflow-style: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 html::-webkit-scrollbar {
-  display: block !important;
-  width: 0 !important; /* Ẩn scrollbar dọc */
-  height: 8px !important; /* Hiển thị scrollbar ngang */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* 2. Base styles, typography, and layout */
@@ -459,12 +459,20 @@ html::-webkit-scrollbar {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* Cho phép scroll trên mobile */
+  /* Cho phép scroll trên mobile nhưng ẩn scrollbar */
   body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 30px !important; /* Giữ nguyên 30px cho mobile */
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   
   .profile-container {
@@ -485,20 +493,24 @@ html::-webkit-scrollbar {
   }
 }
 
-/* Mobile Landscape (xoay ngang) - Scrollbar tổng */
+/* Mobile Landscape (xoay ngang) - Ẩn scrollbar */
 @media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
-  /* Cho phép scroll trên landscape */
+  /* Cho phép scroll trên landscape nhưng ẩn scrollbar */
   body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     overscroll-behavior: contain;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
   }
   
   /* Ẩn scrollbar bên ngoài */
   body::-webkit-scrollbar {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   
   /* Main content scrollbar */
@@ -1450,38 +1462,29 @@ input[type="password"]::-webkit-clear-button {
   .driver-tabs-block { margin-bottom: 18px; }
 }
 
-/* Table Container với thanh trượt */
+  /* Table Container với scroll ẩn */
 .table-container {
   overflow-x: auto;
   overflow-y: auto;
   max-height: 85vh; /* Tăng chiều cao để tận dụng không gian trống */
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* Custom scrollbar cho table container */
+/* Ẩn scrollbar cho table container */
 .table-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-.table-container::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
+.table-container::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-thumb,
 .table-container::-webkit-scrollbar-corner {
-  background: #f1f5f9;
+  display: none !important;
+  background: transparent !important;
 }
 
 /* Responsive adjustments */
@@ -1507,87 +1510,82 @@ input[type="password"]::-webkit-clear-button {
   }
 }
 
-/* ===== Scrollbar policy: hide vertical UI, keep and animate horizontal UI ===== */
-/* Firefox: ẩn dọc toàn cục, sẽ bật lại ngang ở container cụ thể bằng thin */
+/* ===== Ẩn hoàn toàn scrollbar trên toàn bộ ứng dụng ===== */
+/* Firefox: ẩn hoàn toàn scrollbar */
 html, body {
-  scrollbar-width: none !important; /* Ẩn UI trong Firefox (cả 2 chiều) */
-  -ms-overflow-style: none !important; /* IE/Edge Legacy */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* WebKit-based (Chrome/Edge/Safari): tách trục */
+/* WebKit-based (Chrome/Edge/Safari): ẩn hoàn toàn scrollbar */
 *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
   background: transparent !important;
 }
 
 /* Ẩn thanh dọc */
 *::-webkit-scrollbar:vertical {
+  display: none !important;
   width: 0 !important;
+}
+
+/* Ẩn thanh ngang */
+*::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0 !important;
+}
+
+/* Ẩn track và thumb */
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-corner {
+  display: none !important;
   background: transparent !important;
 }
 
-/* Hiển thị thanh ngang với chiều cao cố định */
-*::-webkit-scrollbar:horizontal {
-  height: 10px !important;
-}
-
-/* Track ngang */
-*::-webkit-scrollbar-track:horizontal {
-  background: rgba(148, 163, 184, 0.15) !important;
-  border-radius: 6px !important;
-}
-
-/* Thumb ngang với hoạt ảnh gradient */
-@keyframes horizontalScrollGlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-*::-webkit-scrollbar-thumb:horizontal {
-  background: linear-gradient(90deg, #60a5fa, #a78bfa, #60a5fa) !important;
-  background-size: 200% 100% !important;
-  animation: horizontalScrollGlow 3s linear infinite !important;
-  border-radius: 6px !important;
-  border: 2px solid rgba(255, 255, 255, 0.4) !important;
-}
-
-/* Bật lại UI scrollbar ngang cho các container có cuộn ngang (Firefox) */
+/* Ẩn scrollbar cho tất cả container */
 .table-container,
 .gate-table-container,
 .gate-history-scroll,
 .yard-slot-grid,
 .main-content,
-.container {
-  scrollbar-width: thin !important; /* Firefox sẽ hiện lại thanh (cả 2 chiều nếu có) */
+.container,
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* ===== Yard page: KHÔNG áp dụng custom scrollbar toàn cục ===== */
-/* Trả UI scrollbar về mặc định trong phạm vi yard-page */
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* ===== Yard page: Cũng ẩn scrollbar như các trang khác ===== */
+/* Ẩn scrollbar cho Yard page */
 .yard-page,
 .yard-page * {
-  scrollbar-width: auto !important; /* Firefox hiển thị như mặc định */
-  -ms-overflow-style: auto !important; /* Edge Legacy */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* WebKit: bỏ ẩn dọc và bỏ hiệu ứng ngang trong yard */
+/* WebKit: ẩn scrollbar trong yard */
 .yard-page::-webkit-scrollbar,
 .yard-page *::-webkit-scrollbar {
-  display: initial !important;
-  width: initial !important;
-  height: initial !important;
-  background: initial !important;
-  animation: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
-/* Khôi phục track/thumb mặc định (bỏ gradient và border) */
+/* Ẩn track/thumb trong yard */
 .yard-page *::-webkit-scrollbar-track,
 .yard-page *::-webkit-scrollbar-thumb {
-  background: initial !important;
-  border: initial !important;
-  border-radius: initial !important;
+  display: none !important;
+  background: transparent !important;
 }
 
-/* Đảm bảo body trong yard cho phép cuộn dọc bình thường */
+/* Đảm bảo body trong yard cho phép cuộn dọc bình thường nhưng ẩn scrollbar */
 .yard-page {
   overflow-y: auto !important;
 }
@@ -1595,17 +1593,15 @@ html, body {
 /* Ẩn hoàn toàn scrollbar OUTER (html/body) khi đang ở Yard */
 html.yard-page,
 body.yard-page {
-  /* Khôi phục hành vi mặc định, không áp dụng chính sách scrollbar chung */
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
   overflow-x: hidden !important;
-  overflow-y: hidden !important; /* Tắt cuộn ngoài hoàn toàn để không xuất hiện thanh ngoài */
-  background: inherit !important; /* Kế thừa nền gradient chung */
+  overflow-y: hidden !important;
+  background: inherit !important;
 }
 
 html.yard-page::-webkit-scrollbar,
 body.yard-page::-webkit-scrollbar {
-  /* Không hiển thị scrollbar cho lớp ngoài khi ở Yard */
   display: none !important;
   width: 0 !important;
   height: 0 !important;
