@@ -10,7 +10,38 @@ class ContainerController {
     try {
       const { container_no } = req.params;
       
-      // Tìm trong Container model trước (cho EMPTY_IN_YARD)
+      // Ưu tiên tìm trong ServiceRequest trước (dữ liệu mới nhất)
+      const latestRequest = await prisma.serviceRequest.findFirst({
+        where: { container_no },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          customer: {
+            select: { id: true, name: true, code: true }
+          },
+          shipping_line: {
+            select: { id: true, name: true, code: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
+          }
+        }
+      });
+
+      if (latestRequest) {
+        return res.json({
+          success: true,
+          data: {
+            container_no,
+            customer: latestRequest.customer,
+            shipping_line: latestRequest.shipping_line,
+            container_type: latestRequest.container_type,
+            seal_number: latestRequest.seal_number,
+            dem_det: latestRequest.dem_det
+          }
+        });
+      }
+
+      // Fallback: tìm trong Container model (cho EMPTY_IN_YARD)
       const container = await prisma.container.findUnique({
         where: { container_no },
         include: {
@@ -43,40 +74,9 @@ class ContainerController {
         });
       }
 
-      // Fallback: tìm trong ServiceRequest
-      const latestRequest = await prisma.serviceRequest.findFirst({
-        where: { container_no },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          customer: {
-            select: { id: true, name: true, code: true }
-          },
-          shipping_line: {
-            select: { id: true, name: true, code: true }
-          },
-          container_type: {
-            select: { id: true, code: true, description: true }
-          }
-        }
-      });
-
-      if (!latestRequest) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Không tìm thấy container' 
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: {
-          container_no,
-          customer: latestRequest.customer,
-          shipping_line: latestRequest.shipping_line,
-          container_type: latestRequest.container_type,
-          seal_number: latestRequest.seal_number,
-          dem_det: latestRequest.dem_det
-        }
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy container' 
       });
 
     } catch (error: any) {
@@ -120,7 +120,7 @@ class ContainerController {
   async updateContainerInfo(req: AuthRequest, res: Response) {
     try {
       const { container_no } = req.params;
-      const { customer_id, seal_number, dem_det, container_quality } = req.body;
+      const { customer_id, shipping_line_id, container_type_id, seal_number, dem_det, container_quality } = req.body;
 
       // Tìm ServiceRequest mới nhất cho container này
       const latestRequest = await prisma.serviceRequest.findFirst({
@@ -137,6 +137,8 @@ class ContainerController {
           where: { id: latestRequest.id },
           data: {
             ...(customer_id && { customer_id }),
+            ...(shipping_line_id && { shipping_line_id }),
+            ...(container_type_id && { container_type_id }),
             ...(seal_number !== undefined && { seal_number }),
             ...(dem_det !== undefined && { dem_det }),
             updatedAt: new Date()
@@ -144,6 +146,12 @@ class ContainerController {
           include: {
             customer: {
               select: { id: true, name: true, code: true }
+            },
+            shipping_line: {
+              select: { id: true, name: true, code: true }
+            },
+            container_type: {
+              select: { id: true, code: true, description: true }
             }
           }
         });
@@ -158,6 +166,8 @@ class ContainerController {
         };
 
         if (customer_id) containerData.customer_id = customer_id;
+        if (shipping_line_id) containerData.shipping_line_id = shipping_line_id;
+        if (container_type_id) containerData.container_type_id = container_type_id;
         if (seal_number !== undefined) containerData.seal_number = seal_number;
         if (dem_det !== undefined) containerData.dem_det = dem_det;
 
@@ -172,6 +182,12 @@ class ContainerController {
           include: {
             customer: {
               select: { id: true, name: true, code: true }
+            },
+            shipping_line: {
+              select: { id: true, name: true, code: true }
+            },
+            container_type: {
+              select: { id: true, code: true, description: true }
             }
           }
         });
@@ -189,6 +205,8 @@ class ContainerController {
         };
 
         if (customer_id) createData.customer_id = customer_id;
+        if (shipping_line_id) createData.shipping_line_id = shipping_line_id;
+        if (container_type_id) createData.container_type_id = container_type_id;
         if (seal_number !== undefined) createData.seal_number = seal_number;
         if (dem_det !== undefined) createData.dem_det = dem_det;
 
@@ -197,6 +215,12 @@ class ContainerController {
           include: {
             customer: {
               select: { id: true, name: true, code: true }
+            },
+            shipping_line: {
+              select: { id: true, name: true, code: true }
+            },
+            container_type: {
+              select: { id: true, code: true, description: true }
             }
           }
         });
@@ -232,6 +256,9 @@ class ContainerController {
               updatedAt: new Date()
             }
           });
+        } else if (container_quality === 'GOOD') {
+          // Nếu container tốt và không có repair ticket, không cần làm gì
+          // Chỉ cần đảm bảo không có repair ticket nào đang pending
         }
       }
 
@@ -241,6 +268,8 @@ class ContainerController {
         data: {
           container_no,
           customer: customer,
+          shipping_line: updatedRequest.shipping_line,
+          container_type: updatedRequest.container_type,
           seal_number: updatedRequest.seal_number,
           dem_det: updatedRequest.dem_det
         }

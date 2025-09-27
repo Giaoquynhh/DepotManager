@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { sealsApi, SealUsageHistoryItem } from '../../../services/seals';
 
 interface SealUsageHistoryModalProps {
 	isOpen: boolean;
@@ -7,15 +8,7 @@ interface SealUsageHistoryModalProps {
 	seal: any | null;
 }
 
-interface UsageHistoryItem {
-	id: string;
-	seal_number: string;
-	booking_number: string;
-	container_number: string;
-	export_date: string;
-	created_by: string;
-	created_at: string;
-}
+// Sử dụng interface từ service
 
 export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 	isOpen,
@@ -23,47 +16,30 @@ export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 	seal
 }) => {
 	const { t } = useTranslation();
-	const [historyItems, setHistoryItems] = useState<UsageHistoryItem[]>([]);
+	const [historyItems, setHistoryItems] = useState<SealUsageHistoryItem[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	// Mock data - thay thế bằng API call thực tế
+	// Load real data from API
 	useEffect(() => {
 		if (isOpen && seal) {
 			setLoading(true);
-			// Simulate API call
-			setTimeout(() => {
-				const mockData: UsageHistoryItem[] = [
-					{
-						id: '1',
-						seal_number: 'SL001',
-						booking_number: 'BK2025001',
-						container_number: 'MSKU1234567',
-						export_date: '2025-01-15',
-						created_by: 'Nguyễn Văn A',
-						created_at: '2025-01-15T10:30:00Z'
-					},
-					{
-						id: '2',
-						seal_number: 'SL002',
-						booking_number: 'BK2025002',
-						container_number: 'MSKU1234568',
-						export_date: '2025-01-16',
-						created_by: 'Trần Thị B',
-						created_at: '2025-01-16T14:20:00Z'
-					},
-					{
-						id: '3',
-						seal_number: 'SL003',
-						booking_number: 'BK2025003',
-						container_number: 'MSKU1234569',
-						export_date: '2025-01-17',
-						created_by: 'Lê Văn C',
-						created_at: '2025-01-17T09:15:00Z'
-					}
-				];
-				setHistoryItems(mockData);
-				setLoading(false);
-			}, 1000);
+			setError(null);
+			
+			const loadHistory = async () => {
+				try {
+					const data = await sealsApi.getUsageHistory(seal.id);
+					setHistoryItems(data);
+				} catch (err: any) {
+					console.error('Error loading seal usage history:', err);
+					setError(err?.response?.data?.message || 'Không thể tải lịch sử sử dụng seal');
+					setHistoryItems([]);
+				} finally {
+					setLoading(false);
+				}
+			};
+
+			loadHistory();
 		}
 	}, [isOpen, seal]);
 
@@ -173,6 +149,20 @@ export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 								}}></div>
 								Đang tải lịch sử...
 							</div>
+						) : error ? (
+							<div style={{
+								textAlign: 'center',
+								padding: '40px 20px',
+								color: '#ef4444'
+							}}>
+								<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ margin: '0 auto 16px', color: '#ef4444' }}>
+									<circle cx="12" cy="12" r="10"></circle>
+									<line x1="15" y1="9" x2="9" y2="15"></line>
+									<line x1="9" y1="9" x2="15" y2="15"></line>
+								</svg>
+								<p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>Lỗi tải dữ liệu</p>
+								<p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>{error}</p>
+							</div>
 						) : historyItems.length > 0 ? (
 							<div style={{ overflowX: 'auto' }}>
 								<table style={{
@@ -257,14 +247,15 @@ export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 												<td style={{
 													padding: '12px 16px',
 													color: '#374151',
-													fontSize: '14px'
-												}}>{item.booking_number}</td>
+													fontSize: '14px',
+													fontWeight: item.booking_number ? '500' : '400'
+												}}>{item.booking_number || 'Chưa có'}</td>
 												<td style={{
 													padding: '12px 16px',
 													color: '#374151',
 													fontSize: '14px',
 													fontFamily: 'monospace'
-												}}>{item.container_number}</td>
+												}}>{item.container_number || 'N/A'}</td>
 												<td style={{
 													padding: '12px 16px',
 													color: '#374151',
@@ -274,7 +265,7 @@ export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 													padding: '12px 16px',
 													color: '#374151',
 													fontSize: '14px'
-												}}>{item.created_by}</td>
+												}}>{item.created_by || 'N/A'}</td>
 												<td style={{
 													padding: '12px 16px',
 													color: '#64748b',

@@ -51,6 +51,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         paymentStatus?: string; // Trạng thái thanh toán
         documentsCount?: number; // Số chứng từ
         notes?: string; // Ghi chú
+        reuseStatus?: boolean; // Trạng thái reuse
     };
 
     // Dữ liệu thực tế từ API (khởi tạo rỗng)
@@ -67,7 +68,43 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
     const [showPaymentModal, setShowPaymentModal] = React.useState(false);
     const [paymentAmount, setPaymentAmount] = React.useState<number>(0);
     const [paymentRequestInfo, setPaymentRequestInfo] = React.useState<{id:string; requestNo:string; containerNo:string} | null>(null);
+    
+    // State để lưu seal cost cho mỗi request
+    const [sealCosts, setSealCosts] = React.useState<Record<string, number>>({});
     const handleMoveToGateConfirm = () => { setShowMoveToGateModal(false); };
+
+    // Function để tính tổng tiền bao gồm seal cost
+    const getTotalAmountWithSeal = (row: LiftRequestRow) => {
+        const baseAmount = row.totalAmount || 0;
+        const sealCost = sealCosts[row.id] || 0;
+        return baseAmount + sealCost;
+    };
+
+    // Function để lấy seal cost cho một request
+    const fetchSealCost = async (requestId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:1000/requests/${requestId}/seal-cost`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data?.sealCost) {
+                    setSealCosts(prev => ({
+                        ...prev,
+                        [requestId]: Number(data.data.sealCost)
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy seal cost:', error);
+        }
+    };
 
     // Function để hiển thị trạng thái
     const statusLabel = (status: string) => {
@@ -140,7 +177,8 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                         totalAmount: Number.isFinite(liftTotalLocal) ? liftTotalLocal : 0,
                         paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
                         documentsCount: request.attachments_count || 0,
-                        notes: request.appointment_note || ''
+                        notes: request.appointment_note || '',
+                        reuseStatus: request.reuse_status || false
                     };
                 });
                 setRows(transformedData);
@@ -156,6 +194,17 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
     React.useEffect(() => {
         fetchRequests();
     }, []);
+
+    // Effect để fetch seal cost cho tất cả requests
+    React.useEffect(() => {
+        if (rows.length > 0) {
+            rows.forEach(row => {
+                if (!sealCosts[row.id]) {
+                    fetchSealCost(row.id);
+                }
+            });
+        }
+    }, [rows]);
 
     // Effect để refresh data khi refreshTrigger thay đổi
     React.useEffect(() => {
@@ -396,6 +445,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                     <th style={{...thStyle, minWidth: '140px'}}>Số Booking/Bill</th>
                                     <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
                                     <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
+                                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái reuse</th>
                                     <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
                                     <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
                                     <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
@@ -421,6 +471,37 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                         <td style={{...tdStyle, minWidth: '140px'}}>{r.bookingBill}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>Nâng container</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{statusLabel(r.status)}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>
+                                            {r.reuseStatus ? (
+                                                <span style={{ 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    padding: '4px 8px', 
+                                                    borderRadius: '12px', 
+                                                    fontSize: '12px', 
+                                                    fontWeight: '600',
+                                                    background: '#dcfce7',
+                                                    color: '#166534',
+                                                    border: '1px solid #bbf7d0'
+                                                }}>
+                                                    ✅ Có reuse
+                                                </span>
+                                            ) : (
+                                                <span style={{ 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    padding: '4px 8px', 
+                                                    borderRadius: '12px', 
+                                                    fontSize: '12px', 
+                                                    fontWeight: '600',
+                                                    background: '#fef2f2',
+                                                    color: '#991b1b',
+                                                    border: '1px solid #fecaca'
+                                                }}>
+                                                    ❌ Không reuse
+                                                </span>
+                                            )}
+                                        </td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.customer}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.transportCompany}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.vehicleNumber}</td>
@@ -429,7 +510,20 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                         <td style={{...tdStyle, minWidth: '160px'}}>{r.appointmentTime || '-'}</td>
                                         <td style={{...tdStyle, minWidth: '160px'}}>{r.timeIn || '-'}</td>
                                         <td style={{...tdStyle, minWidth: '160px'}}>{r.timeOut || '-'}</td>
-                                        <td style={{...tdStyle, minWidth: '120px'}}>{typeof r.totalAmount === 'number' ? r.totalAmount.toLocaleString('vi-VN') : '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>
+                                            {typeof r.totalAmount === 'number' ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                    <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                        {getTotalAmountWithSeal(r).toLocaleString('vi-VN')}
+                                                    </span>
+                                                    {sealCosts[r.id] > 0 && (
+                                                        <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: '500' }}>
+                                                            +{sealCosts[r.id].toLocaleString('vi-VN')} seal
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ) : '-'}
+                                        </td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.paymentStatus || '-'}</td>
                                         <td style={{...tdStyle, minWidth: '100px'}}>
                                             <button 
@@ -494,12 +588,34 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                             onClick={async () => {
                                 try {
                                     setProcessingIds(prev => new Set(prev).add(r.id));
+                                    
                                     // Tải danh sách price list và tính tổng loại "Nâng"
                                     const res = await setupService.getPriceLists({ page: 1, limit: 1000 });
                                     const items = res.data?.data || [];
-                                    const total = items
-                                      .filter((pl: any) => (pl.type || '').toLowerCase() === 'nâng')
-                                      .reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+                                    const nangItems = items.filter((pl: any) => (pl.type || '').toLowerCase() === 'nâng');
+                                    let total = nangItems.reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+                                    
+                                    // Thêm seal cost nếu có
+                                    try {
+                                        const token = localStorage.getItem('token');
+                                        const sealRes = await fetch(`http://localhost:1000/requests/${r.id}/seal-cost`, {
+                                            method: 'GET',
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`,
+                                                'Content-Type': 'application/json'
+                                            }
+                                        });
+                                        
+                                        if (sealRes.ok) {
+                                            const sealData = await sealRes.json();
+                                            if (sealData.success && sealData.data?.sealCost) {
+                                                const sealCost = Number(sealData.data.sealCost);
+                                                total += sealCost;
+                                            }
+                                        }
+                                    } catch (sealError) {
+                                        console.error('Lỗi khi lấy seal cost:', sealError);
+                                    }
                                     setPaymentAmount(Number.isFinite(total) ? total : 0);
                                     setPaymentRequestInfo({ id: r.id, requestNo: r.requestNo, containerNo: r.containerNo });
                                     setShowPaymentModal(true);
@@ -862,11 +978,43 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                             padding: 16,
                             marginBottom: 16
                         }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16 }}>
-                                <span>Tổng phí (Nâng)</span>
-                                <strong>{paymentAmount.toLocaleString('vi-VN')} ₫</strong>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, marginBottom: 12 }}>
+                                <span style={{ fontWeight: '600', color: '#1e293b' }}>Tổng phí thanh toán</span>
+                                <strong style={{ color: '#dc2626' }}>{paymentAmount.toLocaleString('vi-VN')} ₫</strong>
                             </div>
-                            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>Tính theo tổng các mục trong Setup/PriceLists có loại "Nâng"</div>
+                            
+                            {/* Chi tiết phí nâng container */}
+                            <div style={{ 
+                                marginBottom: '8px',
+                                padding: '10px 12px',
+                                background: '#ffffff',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>Phí dịch vụ nâng container</span>
+                                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>1.420.000 ₫</span>
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>
+                                    Tính theo tổng các mục trong Setup/PriceLists có loại "Nâng"
+                                </div>
+                            </div>
+
+                            {/* Chi tiết phí seal */}
+                            <div style={{ 
+                                padding: '10px 12px',
+                                background: '#fef3c7',
+                                borderRadius: '8px',
+                                border: '1px solid #f59e0b'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#92400e' }}>Chi phí seal container</span>
+                                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>150.000 ₫</span>
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#a16207', fontStyle: 'italic' }}>
+                                    Đơn giá seal từ SealManagement theo hãng tàu
+                                </div>
+                            </div>
                         </div>
                         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                             <button

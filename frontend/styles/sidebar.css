@@ -20,6 +20,13 @@
   z-index: 1001;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Ẩn scrollbar cho sidebar chính */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
 }
 
 /* Simplified hover effect */
@@ -35,13 +42,13 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--space-3) var(--space-2);
-  /* Hide scrollbar for cleaner look */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  /* Ẩn scrollbar hoàn toàn */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
 }
 
 .sidebar-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none !important; /* Chrome, Safari, Opera */
 }
 
 .sidebar-link, 

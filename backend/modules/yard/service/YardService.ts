@@ -59,24 +59,24 @@ export class YardService {
 	async getStackMap() {
 		const now = new Date();
 		
-		// Lấy danh sách container có trạng thái IN_CAR để loại bỏ khỏi yard
-		const inCarContainers = await prisma.serviceRequest.findMany({
+		// Lấy danh sách container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT để loại bỏ khỏi yard
+		const removedContainers = await prisma.serviceRequest.findMany({
 			where: { 
-				status: 'IN_CAR',
+				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] },
 				container_no: { not: null }
 			},
 			select: { container_no: true }
 		});
-		const inCarContainerNos = new Set(inCarContainers.map(c => c.container_no!));
+		const removedContainerNos = new Set(removedContainers.map(c => c.container_no!));
 		
-		// Đếm số OCCUPIED và HOLD(active) theo slot_id bằng groupBy, loại bỏ container IN_CAR
+		// Đếm số OCCUPIED và HOLD(active) theo slot_id bằng groupBy, loại bỏ container đã rời khỏi bãi
 		const [occCounts, holdCounts] = await Promise.all([
 			prisma.yardPlacement.groupBy({
 				by: ['slot_id'],
 				where: { 
 					status: 'OCCUPIED', 
 					removed_at: null,
-					container_no: { notIn: Array.from(inCarContainerNos) } // Loại bỏ container IN_CAR
+					container_no: { notIn: Array.from(removedContainerNos) } // Loại bỏ container IN_CAR và DONE_LIFTING
 				},
 				_count: { _all: true }
 			}),
@@ -85,7 +85,7 @@ export class YardService {
 				where: { 
 					status: 'HOLD', 
 					OR: [ { hold_expires_at: null }, { hold_expires_at: { gt: now } } ],
-					container_no: { notIn: Array.from(inCarContainerNos) } // Loại bỏ container IN_CAR
+					container_no: { notIn: Array.from(removedContainerNos) } // Loại bỏ container IN_CAR và DONE_LIFTING
 				},
 				_count: { _all: true }
 			})
@@ -116,19 +116,19 @@ export class YardService {
 		});
 		if (!slot) throw new Error('Slot không tồn tại');
 		
-		// Lọc bỏ container có trạng thái IN_CAR khỏi placements
-		const inCarContainers = await prisma.serviceRequest.findMany({
+		// Lọc bỏ container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT khỏi placements
+		const removedContainers = await prisma.serviceRequest.findMany({
 			where: { 
-				status: 'IN_CAR',
+				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] },
 				container_no: { not: null }
 			},
 			select: { container_no: true }
 		});
-		const inCarContainerNos = new Set(inCarContainers.map(c => c.container_no!));
+		const removedContainerNos = new Set(removedContainers.map(c => c.container_no!));
 		
-		// Lọc placements để loại bỏ container IN_CAR
+		// Lọc placements để loại bỏ container đã rời khỏi bãi
 		const filteredPlacements = slot.placements.filter((p: any) => 
-			!p.container_no || !inCarContainerNos.has(p.container_no)
+			!p.container_no || !removedContainerNos.has(p.container_no)
 		);
 		
 		return {
@@ -138,16 +138,16 @@ export class YardService {
 	}
 
 	async findContainerLocation(container_no: string) {
-		// Kiểm tra xem container có trạng thái IN_CAR không
-		const inCarRequest = await prisma.serviceRequest.findFirst({
+		// Kiểm tra xem container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT không
+		const removedRequest = await prisma.serviceRequest.findFirst({
 			where: { 
 				container_no,
-				status: 'IN_CAR'
+				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] }
 			}
 		});
 		
-		// Nếu container có trạng thái IN_CAR, không trả về vị trí
-		if (inCarRequest) {
+		// Nếu container đã rời khỏi bãi, không trả về vị trí
+		if (removedRequest) {
 			return null;
 		}
 		
@@ -217,15 +217,16 @@ export class YardService {
 	async confirm(actor: any, slot_id: string, tier: number, container_no: string) {
 		if (!container_no) throw new Error('Thiếu container_no');
 		
-		// SystemAdmin có thể nhập container tùy ý
+		// SystemAdmin có thể nhập container tùy ý, NHƯNG vẫn phải tuân theo quy tắc DONE_LIFTING
 		const isSystemAdmin = actor.role === 'SystemAdmin';
 		
-
-		
-		// Kiểm tra container có tồn tại và có trạng thái "Đang chờ sắp xếp" không (chỉ cho non-SystemAdmin)
-		if (!isSystemAdmin) {
-			const containerStatus = await this.validateContainerForYardPlacement(container_no);
-			if (!containerStatus.canPlace) {
+		// Kiểm tra container có tồn tại và có trạng thái hợp lệ
+		const containerStatus = await this.validateContainerForYardPlacement(container_no);
+		if (!containerStatus.canPlace) {
+			// SystemAdmin có thể bypass một số validation, NHƯNG KHÔNG được bypass DONE_LIFTING và GATE_OUT
+			if (isSystemAdmin && !containerStatus.reason?.includes('DONE_LIFTING') && !containerStatus.reason?.includes('GATE_OUT')) {
+				// SystemAdmin có thể bypass các validation khác, nhưng không được bypass DONE_LIFTING và GATE_OUT
+			} else {
 				throw new Error(containerStatus.reason);
 			}
 		}
@@ -421,6 +422,15 @@ export class YardService {
 			const isChecked = container.gate_checked_at || container.repair_checked;
 			if (!isChecked) {
 				return { canPlace: false, reason: 'Container chưa được kiểm tra (COMPLETED)' };
+			}
+			
+			// Kiểm tra container có trạng thái DONE_LIFTING hoặc GATE_OUT không (đã rời khỏi bãi)
+			if (container.service_status === 'DONE_LIFTING') {
+				return { canPlace: false, reason: 'Container đã được nâng ra khỏi bãi (DONE_LIFTING), không thể đặt lại vào yard' };
+			}
+			
+			if (container.service_status === 'GATE_OUT') {
+				return { canPlace: false, reason: 'Container đã ra khỏi cổng (GATE_OUT), không thể đặt lại vào yard' };
 			}
 			
 			// Kiểm tra container đã được đặt vào yard chưa
@@ -741,6 +751,7 @@ export class YardService {
                 sr.container_no,
                 sr.shipping_line_id,
                 sr.container_type_id,
+                sr.status as service_status,
                 sr."createdAt"
               FROM "ServiceRequest" sr
               WHERE sr.container_no ILIKE $1
@@ -762,6 +773,7 @@ export class YardService {
             LEFT JOIN latest_sr ls ON ls.container_no = yp.container_no
             WHERE yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
               AND yp.container_no ILIKE $1
+              AND (ls.service_status IS NULL OR ls.service_status NOT IN ('IN_CAR', 'DONE_LIFTING', 'GATE_OUT'))
               ${shippingLineId ? 'AND (ls.shipping_line_id = $2)' : ''}
             ORDER BY yp.container_no ASC
             LIMIT ${limit}

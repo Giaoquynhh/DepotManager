@@ -142,6 +142,73 @@ export class SealController {
       });
     }
   }
+
+  async incrementExportedQuantity(req: AuthRequest, res: Response) {
+    try {
+      const { shipping_company, seal_number, container_number, request_id } = req.body;
+      const userId = req.user!._id;
+
+      if (!shipping_company) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping company is required'
+        });
+      }
+
+      const updatedSeal = await service.incrementExportedQuantity(
+        shipping_company, 
+        userId, 
+        seal_number, 
+        container_number, 
+        request_id
+      );
+
+      // Audit log
+      await audit(userId, 'SEAL_EXPORTED', 'SEAL', updatedSeal.id, {
+        shipping_company: updatedSeal.shipping_company,
+        quantity_exported: updatedSeal.quantity_exported,
+        quantity_remaining: updatedSeal.quantity_remaining
+      });
+
+      return res.json({
+        success: true,
+        message: 'Seal exported quantity updated successfully',
+        data: updatedSeal
+      });
+    } catch (error: any) {
+      console.error('Error incrementing exported quantity:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to update exported quantity'
+      });
+    }
+  }
+
+  async getUsageHistory(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Seal ID is required'
+        });
+      }
+
+      const history = await service.getUsageHistory(id);
+
+      return res.json({
+        success: true,
+        data: history
+      });
+    } catch (error: any) {
+      console.error('Error getting seal usage history:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to get seal usage history'
+      });
+    }
+  }
 }
 
 export default new SealController();

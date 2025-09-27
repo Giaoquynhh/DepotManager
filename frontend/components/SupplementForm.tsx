@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { toast } from 'sonner';
 import { api } from '@services/api';
 import { useTranslation } from '../hooks/useTranslation';
+import { useToast } from '../hooks/useToastHook';
 
 interface SupplementFormProps {
   requestId: string;
@@ -14,6 +14,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
+  const { showSuccess, showError, showWarning, ToastContainer } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -24,13 +25,13 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       for (const file of selectedFiles) {
         // Validate file type
         if (!allowedTypes.includes(file.type)) {
-          toast.error(`File ${file.name}: ${t('pages.requests.supplementFileTypeError')}`);
+          showError(`File ${file.name}: ${t('pages.requests.supplementFileTypeError')}`);
           continue;
         }
 
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          toast.error(`File ${file.name}: ${t('pages.requests.supplementFileSizeError')}`);
+          showError(`File ${file.name}: ${t('pages.requests.supplementFileSizeError')}`);
           continue;
         }
 
@@ -66,13 +67,13 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
       for (const file of droppedFiles) {
         // Validate file type
         if (!allowedTypes.includes(file.type)) {
-          toast.error(`File ${file.name}: ${t('pages.requests.supplementFileTypeError')}`);
+          showError(`File ${file.name}: ${t('pages.requests.supplementFileTypeError')}`);
           continue;
         }
 
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          toast.error(`File ${file.name}: ${t('pages.requests.supplementFileSizeError')}`);
+          showError(`File ${file.name}: ${t('pages.requests.supplementFileSizeError')}`);
           continue;
         }
 
@@ -89,7 +90,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
     e.preventDefault();
     
     if (files.length === 0) {
-      toast.warning(t('pages.requests.supplementNoFileWarning'));
+      showWarning(t('pages.requests.supplementNoFileWarning'));
       return;
     }
 
@@ -133,7 +134,7 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
        console.error('Upload error:', error);
        console.error('Error response:', error.response);
        console.error('Error message:', error.response?.data?.message);
-       toast.error(error.response?.data?.message || t('pages.requests.supplementUploadError'));
+       showError(error.response?.data?.message || t('pages.requests.supplementUploadError'));
      } finally {
       setIsUploading(false);
     }
@@ -218,6 +219,9 @@ export default function SupplementForm({ requestId, onSuccess }: SupplementFormP
           </div>
         </form>
       </div>
+      
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 }

@@ -205,65 +205,53 @@ export default function NewSubmenu() {
           .container.depot-requests { overflow: visible !important; padding-bottom: 2rem; }
         }
 
-        .search-filter-section {
-          margin-bottom: 1.5rem;
-        }
-
-        .search-filter-container {
-          background: #f8f9fa;
-          border-radius: 8px;
-          padding: 1rem 1.5rem;
+        .gate-search-section .search-row {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 8px;
+        }
+        .gate-search-section .search-section { flex: 0 0 320px; max-width: 320px; }
+        .gate-search-section .filter-group { display: flex; gap: 4px; }
+        .gate-search-section .filter-group select { height: 40px; min-width: 140px; }
+        .gate-search-section .action-group { margin-left: 0; }
+        .gate-search-section .action-group .btn { height: 40px; }
+        @media (max-width: 1024px) {
+          .gate-search-section .search-row { flex-wrap: wrap; }
+          .gate-search-section .action-group { margin-left: 0; width: 100%; display: flex; justify-content: flex-end; }
         }
 
-        .search-input-wrapper {
-          position: relative;
-          flex: 1;
-          min-width: 300px;
+        .gate-table-container .table-scroll-container {
+          scrollbar-width: auto !important;
+          -ms-overflow-style: scrollbar !important;
+        }
+        .gate-table-container .table-scroll-container::-webkit-scrollbar {
+          display: block !important;
+          width: 8px !important;
+          height: 8px !important;
+        }
+        .gate-table-container .table-scroll-container::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .gate-table-container .table-scroll-container::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+        .gate-table-container .table-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
 
-        .search-icon {
-          position: absolute;
-          left: 0.75rem;
-          top: 50%;
-          transform: translateY(-50%);
+        .table-empty.modern-empty {
+          text-align: center;
+          padding: 3rem;
           color: #6b7280;
+          font-style: italic;
         }
 
-        .search-input {
-          width: 100%;
-          padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 0.875rem;
-          background: white;
-          transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .filter-select {
-          padding: 0.75rem 1rem;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 0.875rem;
-          background: white;
-          min-width: 180px;
-          transition: border-color 0.2s;
-          cursor: pointer;
-        }
-
-        .filter-select:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        .empty-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
         }
 
         .btn {
@@ -281,15 +269,33 @@ export default function NewSubmenu() {
           white-space: nowrap;
         }
 
-        .btn-primary {
+        .btn-success {
           background: #10b981;
           color: white;
         }
 
-        .btn-primary:hover {
+        .btn-success:hover {
           background: #059669;
           transform: translateY(-1px);
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .btn-primary:hover {
+          background: #2563eb;
+        }
+
+        .btn-danger {
+          background: #ef4444;
+          color: white;
+        }
+
+        .btn-danger:hover {
+          background: #dc2626;
         }
 
         .btn-light {
@@ -305,91 +311,15 @@ export default function NewSubmenu() {
           color: #1e40af !important;
         }
 
-        .btn-secondary {
-          background: #6b7280;
-          color: white;
+        .btn-outline {
+          background: transparent;
+          color: #6b7280;
+          border: 1px solid #d1d5db;
         }
 
-        .btn-secondary:hover {
-          background: #4b5563;
-        }
-
-        /* Specific styling for documents button */
-        .data-table .btn-light {
-          background: #f8f9fa !important;
-          color: #1e3a8a !important;
-          border: 1px solid #d1d5db !important;
-          font-weight: 500 !important;
-        }
-
-        .data-table .btn-light:hover {
-          background: #e5e7eb !important;
-          border-color: #9ca3af !important;
-          color: #1e40af !important;
-        }
-
-        .table-section {
-          margin-top: 1.5rem;
-        }
-
-        .table-container {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
-
-        .table-wrapper {
-          overflow-x: auto;
-        }
-
-        .data-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.875rem;
-        }
-
-        .data-table th {
-          background: #f3f4f6;
-          padding: 0.75rem 0.5rem;
-          text-align: left;
-          font-weight: 600;
-          color: #374151;
-          border-bottom: 2px solid #e5e7eb;
-          white-space: nowrap;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .data-table td {
-          padding: 0.75rem 0.5rem;
-          border-bottom: 1px solid #e5e7eb;
-          vertical-align: middle;
-          white-space: nowrap;
-        }
-
-        .data-table tr:hover {
+        .btn-outline:hover {
           background: #f9fafb;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.375rem;
-          font-size: 0.75rem;
-          font-weight: 500;
-          text-transform: uppercase;
-        }
-
-        .status-đang-xử-lý {
-          background: #fef3c7;
-          color: #92400e;
-        }
-
-        .status-hoàn-thành {
-          background: #d1fae5;
-          color: #065f46;
+          border-color: #9ca3af;
         }
 
         .reuse-status {
@@ -428,42 +358,6 @@ export default function NewSubmenu() {
           color: #991b1b;
         }
 
-        .action-buttons {
-          display: flex;
-          gap: 0.5rem;
-          align-items: center;
-        }
-
-        .btn-sm {
-          padding: 0.375rem 0.5rem;
-          font-size: 0.75rem;
-          border-radius: 0.375rem;
-          border: none;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.25rem;
-          transition: all 0.2s;
-        }
-
-        .btn-primary {
-          background: #3b82f6;
-          color: white;
-        }
-
-        .btn-primary:hover {
-          background: #2563eb;
-        }
-
-        .btn-danger {
-          background: #ef4444;
-          color: white;
-        }
-
-        .btn-danger:hover {
-          background: #dc2626;
-        }
-
         .loading-container {
           display: flex;
           flex-direction: column;
@@ -488,39 +382,14 @@ export default function NewSubmenu() {
           100% { transform: rotate(360deg); }
         }
 
-        .no-data {
-          text-align: center;
-          padding: 3rem;
-          color: #6b7280;
-          font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-          .search-filter-container {
-            padding: 0.75rem;
-            flex-direction: column;
-            gap: 0.75rem;
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
           }
-
-          .search-input-wrapper {
-            min-width: 100%;
-          }
-
-          .filter-select {
-            min-width: 100%;
-          }
-
-          .btn {
-            width: 100%;
-            justify-content: center;
-          }
-        }
-
-        @media (max-width: 1200px) {
-          .data-table th,
-          .data-table td {
-            padding: 0.5rem 0.25rem;
-            font-size: 0.75rem;
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
           }
         }
       `}</style>
@@ -537,162 +406,153 @@ export default function NewSubmenu() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="search-filter-section">
-          <div className="search-filter-container">
-              <div className="search-input-wrapper">
-                <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input
-                  type="text"
-                  className="search-input"
+        <div className="gate-search-section">
+          <div className="search-row">
+            <div className="search-section">
+              <input
+                type="text"
+                className="search-input"
                 placeholder="Tìm kiếm theo mã container"
-                  value={localSearch}
-                  onChange={(e) => setLocalSearch(e.target.value)}
-                />
+                aria-label="Tìm kiếm theo mã container"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+              />
             </div>
-            
-                <select
-                  className="filter-select"
-                  value={localStatus}
-                  onChange={(e) => setLocalStatus(e.target.value)}
-                >
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value="active">Hoạt động</option>
-                  <option value="inactive">Không hoạt động</option>
-                </select>
-            
-              <button
-                className="btn btn-primary"
+            <div className="filter-group">
+              <select
+                aria-label="Trạng thái"
+                className="filter-select"
+                value={localStatus}
+                onChange={(e) => setLocalStatus(e.target.value)}
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="PENDING">Chờ xử lý</option>
+                <option value="SCHEDULED">Đã lên lịch</option>
+                <option value="IN_PROGRESS">Đang thực hiện</option>
+                <option value="GATE_IN">Gate-in</option>
+                <option value="COMPLETED">Hoàn thành</option>
+                <option value="CANCELLED">Đã hủy</option>
+              </select>
+            </div>
+            <div className="action-group">
+              <button 
+                className="btn btn-success"
                 onClick={handleCreateNew}
               >
-              Tạo yêu cầu hạ container
+                Tạo yêu cầu hạ container
               </button>
+            </div>
           </div>
         </div>
 
         {/* Table Section */}
-        <div className="table-section">
-          <div className="table-container">
-            
-            <div className="table-wrapper">
-              {loading ? (
-                <div className="loading-container">
-                  <div className="loading-spinner"></div>
-                  <p>Đang tải dữ liệu...</p>
-                </div>
-              ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Hãng tàu</th>
-                      <th>Số yêu cầu</th>
-                      <th>Số Cont</th>
-                      <th>Loại Cont</th>
-                      <th>Loại dịch vụ</th>
-                      <th>Trạng thái</th>
-                      <th>Trạng thái reuse</th>
-                      <th>Khách hàng</th>
-                      <th>Nhà xe</th>
-                      <th>Số xe</th>
-                      <th>Tên tài xế</th>
-                      <th>SDT tài xế</th>
-                      <th>Thời gian hẹn</th>
-                      <th>Giờ vào thực tế</th>
-                      <th>Giờ ra thực tế</th>
-                      <th>Tổng tiền</th>
-                      <th>Trạng thái dịch vụ</th>
-                      <th>Chứng từ</th>
-                      <th>Dem/Det</th>
-                      <th>Ghi chú</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableData.length === 0 ? (
-                      <tr>
-                        <td colSpan={21} className="no-data">
-                          Không có dữ liệu
-                        </td>
-                      </tr>
-                    ) : (
-                      tableData.map((row) => (
-                        <tr key={row.id}>
-                          <td>{row.shippingLine}</td>
-                          <td>{row.requestNumber}</td>
-                          <td>{row.containerNumber}</td>
-                          <td>{row.containerType}</td>
-                          <td>{row.serviceType}</td>
-                          <td>
-                            <span className={`status-badge status-${row.status.toLowerCase().replace(/[_\s]+/g, '-')}`}>
-                              {renderStatusText(row.status)}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`reuse-status ${row.reuseStatus ? 'on' : 'off'}`}>
-                              {row.reuseStatus ? 'On' : 'Off'}
-                            </span>
-                          </td>
-                          <td>{row.customer}</td>
-                          <td>{row.truckCompany}</td>
-                          <td>{row.truckNumber}</td>
-                          <td>{row.driverName}</td>
-                          <td>{row.driverPhone}</td>
-                          <td>{row.appointmentTime}</td>
-                          <td>{row.actualInTime}</td>
-                          <td>{row.actualOutTime}</td>
-                          <td>{formatCurrency(row.totalAmount)}</td>
-                          <td>
-                            <span className={`payment-status ${row.paymentStatus === 'Đã thanh toán' ? 'paid' : 'unpaid'}`}>
-                              {row.paymentStatus}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-light"
-                              onClick={() => openDocuments(row)}
-                              title="Xem chứng từ"
-                              style={{ padding: '4px 8px', fontSize: '12px' }}
-                            >
-                              {(row.documentsCount ?? 0)} file
-                            </button>
-                          </td>
-                          <td>{row.demDet}</td>
-                          <td>{row.notes}</td>
-                          <td>
-                            <div className="action-buttons">
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => handleUpdateInfo(row.id)}
-                                title="Cập nhật thông tin"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleCancel(row.id)}
-                                title="Hủy"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                              </button>
-              </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              )}
+        <div className="gate-table-container">
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Đang tải dữ liệu...</p>
             </div>
-          </div>
+          ) : tableData.length === 0 ? (
+            <div className="table-empty modern-empty">
+              <div className="empty-icon">📦⬇️</div>
+              <p>Chưa có yêu cầu hạ container nào</p>
+              <small>Không có yêu cầu hạ container nào để xử lý</small>
+            </div>
+          ) : (
+            <div className="table-scroll-container">
+              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1800 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
+                    <th style={{...thStyle, minWidth: '100px'}}>Hãng tàu</th>
+                    <th style={{...thStyle, minWidth: '150px'}}>Số yêu cầu</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Số Cont</th>
+                    <th style={{...thStyle, minWidth: '100px'}}>Loại cont</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái reuse</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
+                    <th style={{...thStyle, minWidth: '100px'}}>Tài xế</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>SDT Tài xế</th>
+                    <th style={{...thStyle, minWidth: '160px'}}>Thời gian hẹn</th>
+                    <th style={{...thStyle, minWidth: '160px'}}>Giờ vào thực tế</th>
+                    <th style={{...thStyle, minWidth: '160px'}}>Giờ ra thực tế</th>
+                    <th style={{...thStyle, minWidth: '120px'}}>Tổng tiền</th>
+                    <th style={{...thStyle, minWidth: '150px'}}>Trạng thái thanh toán</th>
+                    <th style={{...thStyle, minWidth: '100px'}}>Chứng từ</th>
+                    <th style={{...thStyle, minWidth: '100px'}}>Dem/Det</th>
+                    <th style={{...thStyle, minWidth: '150px'}}>Ghi chú</th>
+                    <th style={{...thStyle, minWidth: '200px'}}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.map((row) => (
+                    <tr key={row.id} style={{ borderTop: '1px solid #f1f5f9' }}>
+                      <td style={{...tdStyle, minWidth: '100px'}}>{row.shippingLine}</td>
+                      <td style={{...tdStyle, minWidth: '150px'}}>{row.requestNumber}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{row.containerNumber}</td>
+                      <td style={{...tdStyle, minWidth: '100px'}}>{row.containerType}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>Hạ container</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{renderStatusText(row.status)}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>
+                        <span className={`reuse-status ${row.reuseStatus ? 'on' : 'off'}`}>
+                          {row.reuseStatus ? 'On' : 'Off'}
+                        </span>
+                      </td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{row.customer}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{row.truckCompany}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{row.truckNumber}</td>
+                      <td style={{...tdStyle, minWidth: '100px'}}>{row.driverName}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{row.driverPhone}</td>
+                      <td style={{...tdStyle, minWidth: '160px'}}>{row.appointmentTime || '-'}</td>
+                      <td style={{...tdStyle, minWidth: '160px'}}>{row.actualInTime || '-'}</td>
+                      <td style={{...tdStyle, minWidth: '160px'}}>{row.actualOutTime || '-'}</td>
+                      <td style={{...tdStyle, minWidth: '120px'}}>{formatCurrency(row.totalAmount)}</td>
+                      <td style={{...tdStyle, minWidth: '150px'}}>
+                        <span className={`payment-status ${row.paymentStatus === 'Đã thanh toán' ? 'paid' : 'unpaid'}`}>
+                          {row.paymentStatus}
+                        </span>
+                      </td>
+                      <td style={{...tdStyle, minWidth: '100px'}}>
+                        <button 
+                          type="button" 
+                          className="btn btn-light" 
+                          style={{ padding: '6px 10px', fontSize: 12 }}
+                          onClick={() => openDocuments(row)}
+                          title="Xem chứng từ"
+                        >
+                          {(row.documentsCount ?? 0)} file
+                        </button>
+                      </td>
+                      <td style={{...tdStyle, minWidth: '100px'}}>{row.demDet || '-'}</td>
+                      <td style={{...tdStyle, minWidth: '150px'}}>{row.notes || '-'}</td>
+                      <td style={{ ...tdStyle, minWidth: '200px', whiteSpace: 'nowrap' }}>
+                        <button 
+                          type="button" 
+                          className="btn btn-primary" 
+                          style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                          onClick={() => handleUpdateInfo(row.id)}
+                          title="Cập nhật thông tin"
+                        >
+                          Cập nhật thông tin
+                        </button>
+                        <button 
+                          type="button" 
+                          className="btn btn-danger" 
+                          style={{ padding: '6px 10px', fontSize: 12 }}
+                          onClick={() => handleCancel(row.id)}
+                          title="Hủy"
+                        >
+                          Hủy
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Modal */}
@@ -759,3 +619,30 @@ export default function NewSubmenu() {
     </>
   );
 }
+
+// Styles cho table cells
+const thStyle: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+  textAlign: 'left',
+  fontWeight: 700,
+  fontSize: 12,
+  textTransform: 'uppercase',
+  letterSpacing: 0.3,
+  padding: '12px 16px',
+  borderBottom: '1px solid #e2e8f0',
+  whiteSpace: 'nowrap',
+  minWidth: '120px'
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '12px 16px',
+  fontSize: 14,
+  color: '#0f172a',
+  verticalAlign: 'top',
+  background: 'white',
+  borderTop: '1px solid #f1f5f9',
+  whiteSpace: 'nowrap',
+  minWidth: '120px'
+};

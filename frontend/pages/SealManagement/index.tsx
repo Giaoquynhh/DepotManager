@@ -44,6 +44,15 @@ function SealManagement() {
     loadShippingLines();
   }, [filters]);
 
+  // Refresh seals data every 30 seconds to catch updates from other pages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadSeals();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [filters]);
+
   const loadSeals = async () => {
     try {
       setLoading(true);

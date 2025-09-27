@@ -14,10 +14,16 @@ export interface EditSealFormData {
 	shipping_company: string;
 	purchase_date: string;
 	quantity_purchased: number;
-	quantity_exported: number;
 	unit_price: number;
 	pickup_location: string;
-	status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface EditSealFormErrors {
+	shipping_company?: string;
+	purchase_date?: string;
+	quantity_purchased?: string;
+	unit_price?: string;
+	pickup_location?: string;
 }
 
 export const EditSealModal: React.FC<EditSealModalProps> = ({
@@ -31,21 +37,14 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		shipping_company: '',
 		purchase_date: '',
 		quantity_purchased: 0,
-		quantity_exported: 0,
 		unit_price: 0,
-		pickup_location: '',
-		status: 'ACTIVE'
+		pickup_location: ''
 	});
 
-	const [errors, setErrors] = useState<Partial<EditSealFormData>>({});
+	const [errors, setErrors] = useState<EditSealFormErrors>({});
 
-	// Shipping lines
+	// Shipping lines (chỉ để hiển thị tên hãng tàu)
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
-	const [selectedShippingLineName, setSelectedShippingLineName] = useState<string>('');
-
-	// Custom dropdown states
-	const [isShippingLineOpen, setIsShippingLineOpen] = useState(false);
-	const [shippingLineSearch, setShippingLineSearch] = useState('');
 
 	// Load shipping lines
 	useEffect(() => {
@@ -60,43 +59,24 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 	// Load seal data when modal opens
 	useEffect(() => {
 		if (isOpen && seal) {
-			// Tìm ID hãng tàu từ tên
-			const shippingLineId = shippingLines.find(line => line.name === seal.shipping_company)?.id || '';
-			
 			setFormData({
-				shipping_company: shippingLineId,
+				shipping_company: seal.shipping_company, // Giữ nguyên tên hãng tàu
 				purchase_date: seal.purchase_date.split('T')[0],
 				quantity_purchased: seal.quantity_purchased,
-				quantity_exported: seal.quantity_exported,
 				unit_price: Number(seal.unit_price),
-				pickup_location: seal.pickup_location,
-				status: seal.status as 'ACTIVE' | 'INACTIVE'
+				pickup_location: seal.pickup_location
 			});
 		}
-	}, [isOpen, seal, shippingLines]);
+	}, [isOpen, seal]);
 
-	// Close dropdowns when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as HTMLElement;
-			if (!target.closest('.custom-dropdown-container')) {
-				setIsShippingLineOpen(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, []);
-
-	// Filter data based on search terms
-	const filteredShippingLines = shippingLines.filter(sl => 
-		sl.code.toLowerCase().includes(shippingLineSearch.toLowerCase()) ||
-		sl.name.toLowerCase().includes(shippingLineSearch.toLowerCase())
-	);
+	// Không cần dropdown logic nữa vì hãng tàu không thể sửa
 
 	const handleInputChange = (field: keyof EditSealFormData, value: string | number) => {
+		// Không cho phép thay đổi hãng tàu
+		if (field === 'shipping_company') {
+			return;
+		}
+		
 		setFormData(prev => ({
 			...prev,
 			[field]: value
@@ -112,11 +92,9 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 	};
 
 	const validateForm = (): boolean => {
-		const newErrors: Partial<EditSealFormData> = {};
+		const newErrors: EditSealFormErrors = {};
 
-		if (!formData.shipping_company.trim()) {
-			newErrors.shipping_company = 'Hãng tàu là bắt buộc';
-		}
+		// Không validate hãng tàu vì không thể sửa
 		if (!formData.purchase_date.trim()) {
 			newErrors.purchase_date = 'Ngày mua là bắt buộc';
 		}
@@ -147,18 +125,15 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		
 		if (validateForm()) {
 			try {
-				// Tìm tên hãng tàu từ ID
-				const selectedShippingLine = shippingLines.find(line => line.id === formData.shipping_company);
-				const shippingCompanyName = selectedShippingLine ? selectedShippingLine.name : formData.shipping_company;
-
 				// Chuyển đổi ngày thành ISO-8601 DateTime đầy đủ
 				const purchaseDate = new Date(formData.purchase_date + 'T00:00:00.000Z').toISOString();
 
 				const updateData: UpdateSealData = {
-					...formData,
-					shipping_company: shippingCompanyName, // Lưu tên hãng tàu vào database
-					purchase_date: purchaseDate, // Chuyển đổi thành DateTime đầy đủ
-					quantity_exported: formData.quantity_exported || 0
+					// Không gửi shipping_company vì không thể sửa
+					purchase_date: purchaseDate,
+					quantity_purchased: formData.quantity_purchased,
+					unit_price: formData.unit_price,
+					pickup_location: formData.pickup_location
 				};
 
 				// Call parent onSubmit with data
@@ -169,12 +144,9 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 					shipping_company: '',
 					purchase_date: '',
 					quantity_purchased: 0,
-					quantity_exported: 0,
 					unit_price: 0,
-					pickup_location: '',
-					status: 'ACTIVE'
+					pickup_location: ''
 				});
-				setSelectedShippingLineName('');
 				onClose();
 			} catch (error: any) {
 				console.error('Update seal error:', error);
@@ -185,9 +157,6 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 
 	const handleClose = () => {
 		setErrors({});
-		setIsShippingLineOpen(false);
-		setShippingLineSearch('');
-		setSelectedShippingLineName('');
 		onClose();
 	};
 
@@ -229,6 +198,14 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		outline: 'none'
 	};
 
+	const formInputDisabledStyle = {
+		...formInputStyle,
+		background: '#f8fafc',
+		color: '#64748b',
+		cursor: 'not-allowed',
+		borderColor: '#e2e8f0'
+	};
+
 	const formInputErrorStyle = {
 		...formInputStyle,
 		borderColor: '#ef4444',
@@ -242,108 +219,10 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		fontWeight: '500'
 	};
 
-	// Custom scrollbar styles for dropdowns
-	const dropdownScrollbarStyle = `
-		.custom-dropdown-container {
-			position: relative;
-		}
-		.custom-dropdown-button {
-			width: 100%;
-			text-align: left;
-			background: white;
-			border: 2px solid #e2e8f0;
-			border-radius: 8px;
-			padding: 12px 16px;
-			font-size: 14px;
-			color: #374151;
-			cursor: pointer;
-			transition: all 0.2s ease;
-			outline: none;
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-		}
-		.custom-dropdown-button:hover {
-			border-color: #cbd5e1;
-		}
-		.custom-dropdown-button:focus {
-			border-color: #3b82f6;
-			box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-		}
-		.custom-dropdown-button.error {
-			border-color: #ef4444;
-			box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-		}
-		.custom-dropdown-arrow {
-			transition: transform 0.2s ease;
-		}
-		.custom-dropdown-arrow.open {
-			transform: rotate(180deg);
-		}
-		.custom-dropdown-list {
-			position: absolute;
-			top: 100%;
-			left: 0;
-			right: 0;
-			background: white;
-			border: 2px solid #e2e8f0;
-			border-top: none;
-			border-radius: 0 0 8px 8px;
-			max-height: 200px;
-			overflow-y: auto;
-			z-index: 1000;
-			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-		}
-		.custom-dropdown-list::-webkit-scrollbar {
-			width: 8px;
-		}
-		.custom-dropdown-list::-webkit-scrollbar-track {
-			background: #f1f5f9;
-			border-radius: 4px;
-		}
-		.custom-dropdown-list::-webkit-scrollbar-thumb {
-			background: #cbd5e1;
-			border-radius: 4px;
-		}
-		.custom-dropdown-list::-webkit-scrollbar-thumb:hover {
-			background: #94a3b8;
-		}
-		.custom-dropdown-option {
-			padding: 12px 16px;
-			cursor: pointer;
-			transition: background-color 0.2s ease;
-			border-bottom: 1px solid #f1f5f9;
-		}
-		.custom-dropdown-option:hover {
-			background-color: #f8fafc;
-		}
-		.custom-dropdown-option:last-child {
-			border-bottom: none;
-		}
-		.custom-dropdown-search {
-			padding: 8px 12px;
-			border: none;
-			border-bottom: 1px solid #e2e8f0;
-			width: 100%;
-			font-size: 14px;
-			outline: none;
-			background: #f8fafc;
-		}
-		.custom-dropdown-search:focus {
-			background: white;
-			border-bottom-color: #3b82f6;
-		}
-		.custom-dropdown-no-results {
-			padding: 12px 16px;
-			color: #64748b;
-			font-style: italic;
-			text-align: center;
-		}
-	`;
+	// Không cần CSS cho dropdown vì hãng tàu không thể sửa
 
 	return (
 		<>
-			<style>{dropdownScrollbarStyle}</style>
 			<div 
 				style={{
 					position: 'fixed',
@@ -418,77 +297,35 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 						gap: '20px',
 						marginBottom: '24px'
 					}}>
-						{/* Hãng tàu - Required */}
+						{/* Hãng tàu - Read Only */}
 						<div style={formGroupStyle}>
-							<label style={requiredLabelStyle}>
-								Hãng tàu <span style={requiredAsteriskStyle}>*</span>
+							<label style={formLabelStyle}>
+								Hãng tàu
 							</label>
-							<div className="custom-dropdown-container">
-								<button
-									type="button"
-									className={`custom-dropdown-button ${errors.shipping_company ? 'error' : ''}`}
-									onClick={() => {
-										setIsShippingLineOpen(!isShippingLineOpen);
-										if (!isShippingLineOpen) {
-											setShippingLineSearch('');
-										}
-									}}
-								>
-									<span>
-										{formData.shipping_company 
-											? `${shippingLines.find(s => s.id === formData.shipping_company)?.code} - ${shippingLines.find(s => s.id === formData.shipping_company)?.name}`
-											: 'Chọn hãng tàu'
-										}
-									</span>
-									<svg 
-										className={`custom-dropdown-arrow ${isShippingLineOpen ? 'open' : ''}`}
-										width="16" 
-										height="16" 
-										viewBox="0 0 24 24" 
-										fill="none" 
-										stroke="currentColor" 
-										strokeWidth="2"
-									>
-										<polyline points="6,9 12,15 18,9"></polyline>
-									</svg>
-								</button>
-								{isShippingLineOpen && (
-									<div className="custom-dropdown-list">
-										<input
-											type="text"
-											className="custom-dropdown-search"
-											placeholder="Tìm kiếm hãng tàu..."
-											value={shippingLineSearch}
-											onChange={(e) => setShippingLineSearch(e.target.value)}
-											onClick={(e) => e.stopPropagation()}
-										/>
-										{filteredShippingLines.length > 0 ? (
-											filteredShippingLines.map(sl => (
-												<div
-													key={sl.id}
-													className="custom-dropdown-option"
-													onClick={() => {
-														handleInputChange('shipping_company', sl.id);
-														setSelectedShippingLineName(sl.name);
-														setIsShippingLineOpen(false);
-														setShippingLineSearch('');
-													}}
-												>
-													{`${sl.code} - ${sl.name}`}
-												</div>
-											))
-										) : (
-											<div className="custom-dropdown-no-results">
-												Không tìm thấy hãng tàu nào
-											</div>
-										)}
-									</div>
-								)}
+							<input
+								type="text"
+								style={formInputDisabledStyle}
+								value={seal?.shipping_company || ''}
+								readOnly
+								disabled
+							/>
+							<div style={{
+								background: '#fef3c7',
+								border: '1px solid #f59e0b',
+								borderRadius: '6px',
+								padding: '8px 12px',
+								marginTop: '8px',
+								fontSize: '13px',
+								color: '#92400e',
+								display: 'flex',
+								alignItems: 'center',
+								gap: '6px'
+							}}>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+									<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+								</svg>
+								Hãng tàu không thể thay đổi
 							</div>
-							{selectedShippingLineName && (
-								<small style={{ color: '#64748b', marginTop: '6px' }}>Tên hãng tàu: {selectedShippingLineName}</small>
-							)}
-							{errors.shipping_company && <span style={errorMessageStyle}>{errors.shipping_company}</span>}
 						</div>
 
 						{/* Ngày mua - Required */}
@@ -521,20 +358,6 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 							{errors.quantity_purchased && <span style={errorMessageStyle}>{errors.quantity_purchased}</span>}
 						</div>
 
-						{/* Số lượng đã xuất - Optional */}
-						<div style={formGroupStyle}>
-							<label style={formLabelStyle}>
-								Số lượng đã xuất
-							</label>
-							<input
-								type="number"
-								min="0"
-								style={formInputStyle}
-								value={formData.quantity_exported || ''}
-								onChange={(e) => handleInputChange('quantity_exported', parseInt(e.target.value) || 0)}
-								placeholder="Nhập số lượng đã xuất"
-							/>
-						</div>
 
 						{/* Đơn giá - Required */}
 						<div style={formGroupStyle}>
@@ -569,20 +392,6 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 							{errors.pickup_location && <span style={errorMessageStyle}>{errors.pickup_location}</span>}
 						</div>
 
-						{/* Trạng thái - Optional */}
-						<div style={formGroupStyle}>
-							<label style={formLabelStyle}>
-								Trạng thái
-							</label>
-							<select
-								style={formInputStyle}
-								value={formData.status}
-								onChange={(e) => handleInputChange('status', e.target.value as 'ACTIVE' | 'INACTIVE')}
-							>
-								<option value="ACTIVE">Hoạt động</option>
-								<option value="INACTIVE">Không hoạt động</option>
-							</select>
-						</div>
 					</div>
 
 					{/* Actions */}
@@ -593,23 +402,6 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 						paddingTop: '20px',
 						borderTop: '1px solid #e2e8f0'
 					}}>
-						<button 
-							type="button" 
-							style={{
-								padding: '12px 24px',
-								borderRadius: '8px',
-								fontSize: '14px',
-								fontWeight: '600',
-								cursor: 'pointer',
-								transition: 'all 0.2s ease',
-								background: '#f8fafc',
-								color: '#64748b',
-								border: '2px solid #e2e8f0'
-							}}
-							onClick={handleClose}
-						>
-							Hủy
-						</button>
 						<button 
 							type="submit" 
 							style={{

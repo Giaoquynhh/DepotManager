@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { requireRoles } from '../../../shared/middlewares/rbac';
 import * as controller from './RequestController';
+import { updateAllInvoicesWithSealCost, updateInvoiceWithSealCost } from './updateInvoiceWithSealCostController';
+import { getSealCost } from './getSealCostController';
 import FileUploadService from '../service/FileUploadService';
 
 const router = Router();
@@ -48,6 +50,12 @@ router.get('/',
     controller.getRequests
 );
 
+// Get seal cost for a request (PHẢI ĐẶT TRƯỚC /:id)
+router.get('/:id/seal-cost',
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    getSealCost
+);
+
 // Get single request details
 router.get('/:id', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
@@ -83,6 +91,18 @@ router.delete('/:id',
 router.patch('/:id/move-to-gate', 
     requireRoles('TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'),
     controller.moveToGate
+);
+
+// Update all invoices with seal cost
+router.post('/update-all-invoices-with-seal-cost',
+    requireRoles('SystemAdmin', 'BusinessAdmin'),
+    updateAllInvoicesWithSealCost
+);
+
+// Update specific invoice with seal cost
+router.post('/:requestId/update-invoice-with-seal-cost',
+    requireRoles('SystemAdmin', 'BusinessAdmin'),
+    updateInvoiceWithSealCost
 );
 
 export default router;

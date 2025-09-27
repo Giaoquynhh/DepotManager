@@ -93,6 +93,7 @@ export class ReportsRepository {
           sr.request_no
         FROM "ServiceRequest" sr
         WHERE sr.container_no IS NOT NULL
+          AND sr.status NOT IN ('GATE_OUT', 'DONE_LIFTING', 'IN_CAR')
         ORDER BY sr.container_no, sr."createdAt" DESC
       ),
       rt_checked AS (
@@ -158,17 +159,18 @@ export class ReportsRepository {
         rt.updated_at as repair_updated_at,
         yp.tier as placement_tier,
         bc.source as data_source,
-        -- Thông tin từ request
-        ls.shipping_line_id,
-        ls.container_type_id,
-        ls.customer_id,
+        -- Thông tin từ request hoặc container (ưu tiên request)
+        COALESCE(ls.shipping_line_id, c.shipping_line_id) as shipping_line_id,
+        COALESCE(ls.container_type_id, c.container_type_id) as container_type_id,
+        COALESCE(ls.customer_id, c.customer_id) as customer_id,
         ls.vehicle_company_id,
-        ls.dem_det,
-        ls.seal_number,
+        COALESCE(ls.dem_det, c.dem_det) as dem_det,
+        COALESCE(ls.seal_number, c.seal_number) as seal_number,
         ls.request_no
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
       LEFT JOIN rt_checked rt ON rt.container_no = bc.container_no
+      LEFT JOIN "Container" c ON c.container_no = bc.container_no
       LEFT JOIN "ContainerMeta" cm ON cm.container_no = bc.container_no
       LEFT JOIN "YardPlacement" yp ON yp.container_no = bc.container_no AND yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
       LEFT JOIN "YardSlot" ys ON ys.id = yp.slot_id
@@ -282,6 +284,7 @@ export class ReportsRepository {
           sr."createdAt" as created_at
         FROM "ServiceRequest" sr
         WHERE sr.container_no IS NOT NULL
+          AND sr.status NOT IN ('GATE_OUT', 'DONE_LIFTING', 'IN_CAR')
         ORDER BY sr.container_no, sr."createdAt" DESC
       ),
       rt_checked AS (

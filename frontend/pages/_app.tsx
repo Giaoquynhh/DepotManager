@@ -17,7 +17,7 @@ import '../styles/forklift.css';
 import '../styles/mobile-landscape.css';
 import '../styles/UpdateRequestModal.css';
 import DriverNotification from '@components/DriverNotification';
-import { Toaster } from 'sonner';
+// import { Toaster } from 'sonner'; // Đã xóa để tránh thông báo trùng lặp
 
 
 export default function MyApp({ Component, pageProps }: AppProps) {
@@ -57,7 +57,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 				<title>Smartlog Depot Management</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 			</Head>
-						<Toaster position="top-right" richColors />
+						{/* <Toaster position="top-right" richColors /> */} {/* Đã xóa để tránh thông báo trùng lặp */}
 			<Component {...pageProps} />
 			{userInfo && (
 				<DriverNotification 

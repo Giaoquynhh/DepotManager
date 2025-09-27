@@ -38,6 +38,7 @@ model User {
   PhoneOtps           PhoneOtp[]
   RefreshTokens       RefreshToken[]
   RequestAttachments  RequestAttachment[]
+  SealUsageHistory    SealUsageHistory[]
 
   @@index([role, tenant_id])
   @@index([partner_id])
@@ -678,11 +679,30 @@ model Seal {
   updated_by         String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  usageHistory       SealUsageHistory[]
 
   @@index([shipping_company])
   @@index([purchase_date])
   @@index([status])
   @@map("seals")
+}
+
+model SealUsageHistory {
+  id                String   @id @default(cuid())
+  seal_id           String
+  seal_number       String
+  container_number  String?
+  booking_number    String?
+  export_date       DateTime @default(now())
+  created_by        String
+  created_at        DateTime @default(now())
+  seal              Seal     @relation(fields: [seal_id], references: [id], onDelete: Cascade)
+  creator           User     @relation(fields: [created_by], references: [id])
+
+  @@index([seal_id])
+  @@index([export_date])
+  @@index([container_number])
+  @@map("seal_usage_history")
 }
 
 enum EquipmentType {

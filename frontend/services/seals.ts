@@ -60,6 +60,21 @@ export interface SealStatistics {
   totalValue: number;
 }
 
+export interface SealUsageHistoryItem {
+  id: string;
+  seal_id: string;
+  seal_number: string;
+  container_number?: string;
+  booking_number?: string;
+  export_date: string;
+  created_by: string;
+  created_at: string;
+  seal?: {
+    shipping_company: string;
+    quantity_remaining: number;
+  };
+}
+
 export const sealsApi = {
   // Create a new seal
   create: async (data: CreateSealData): Promise<Seal> => {
@@ -93,6 +108,23 @@ export const sealsApi = {
   // Get seal statistics
   getStatistics: async (): Promise<SealStatistics> => {
     const response = await api.get('/seals/statistics');
+    return response.data.data;
+  },
+
+  // Increment exported quantity
+  incrementExportedQuantity: async (shippingCompany: string, sealNumber?: string, containerNumber?: string, requestId?: string): Promise<Seal> => {
+    const response = await api.post('/seals/increment-exported', {
+      shipping_company: shippingCompany,
+      seal_number: sealNumber,
+      container_number: containerNumber,
+      request_id: requestId
+    });
+    return response.data.data;
+  },
+
+  // Get seal usage history
+  getUsageHistory: async (sealId: string): Promise<SealUsageHistoryItem[]> => {
+    const response = await api.get(`/seals/${sealId}/usage-history`);
     return response.data.data;
   }
 };

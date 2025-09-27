@@ -447,43 +447,43 @@ export default function Customers() {
                   }}
                 />
               </div>
-
-              {/* Add Modal */}
-              <AddCustomerModal
-                visible={showAddModal}
-                onCancel={() => { 
-                  setShowAddModal(false); 
-                  setEditingCustomer(null);
-                  resetForm();
-                }}
-                onSubmit={validateAndCreate}
-                formData={customerFormData}
-                setFormData={setCustomerFormData}
-                errorText={errorText}
-                language={language}
-                translations={translations}
-              />
-
-              {/* Edit Modal */}
-              <EditCustomerModal
-                visible={showEditModal}
-                onCancel={() => { 
-                  setShowEditModal(false); 
-                  setEditingCustomer(null);
-                  resetForm();
-                }}
-                onSubmit={validateAndCreate}
-                formData={customerFormData}
-                setFormData={setCustomerFormData}
-                errorText={errorText}
-                language={language}
-                translations={translations}
-                originalCode={editingCustomer?.code || ''}
-              />
             </Card>
           </div>
         </div>
       </main>
+
+      {/* Add Modal */}
+      <AddCustomerModal
+        visible={showAddModal}
+        onCancel={() => { 
+          setShowAddModal(false); 
+          setEditingCustomer(null);
+          resetForm();
+        }}
+        onSubmit={validateAndCreate}
+        formData={customerFormData}
+        setFormData={setCustomerFormData}
+        errorText={errorText}
+        language={language}
+        translations={translations}
+      />
+
+      {/* Edit Modal */}
+      <EditCustomerModal
+        visible={showEditModal}
+        onCancel={() => { 
+          setShowEditModal(false); 
+          setEditingCustomer(null);
+          resetForm();
+        }}
+        onSubmit={validateAndCreate}
+        formData={customerFormData}
+        setFormData={setCustomerFormData}
+        errorText={errorText}
+        language={language}
+        translations={translations}
+        originalCode={editingCustomer?.code || ''}
+      />
 
       {/* Upload Excel Modal */}
       <UploadCustomerExcelModal

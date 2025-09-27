@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { validate } from '../../../shared/middlewares/validate';
 import controller from './SealController';
+import debugController from './SealDebugController';
 import { CreateSealDto, UpdateSealDto, SealListQueryDto } from '../dto/SealDtos';
 
 const router = Router();
@@ -25,6 +26,18 @@ router.get('/statistics',
   controller.getStatistics
 );
 
+// Increment exported quantity
+router.post('/increment-exported', 
+  authenticate, 
+  controller.incrementExportedQuantity
+);
+
+// Get seal usage history
+router.get('/:id/usage-history', 
+  authenticate, 
+  controller.getUsageHistory
+);
+
 // Get seal by ID
 router.get('/:id', 
   authenticate, 
@@ -42,6 +55,22 @@ router.patch('/:id',
 router.delete('/:id', 
   authenticate, 
   controller.delete
+);
+
+// Debug routes
+router.post('/debug/test-pricing', 
+  authenticate, 
+  debugController.testPricing
+);
+
+router.get('/debug/find-service-request', 
+  authenticate, 
+  debugController.findServiceRequest
+);
+
+router.get('/debug/seal-usage', 
+  authenticate, 
+  debugController.getAllSealUsage
 );
 
 export default router;

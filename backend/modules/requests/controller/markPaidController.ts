@@ -2,6 +2,27 @@ import { Request, Response } from 'express';
 import { prisma } from './dependencies';
 import invoiceService from '../../finance/service/InvoiceService';
 
+// Helper function to calculate totals
+function calculateTotals(lineItems: any[]) {
+  let subtotal = 0;
+  let tax = 0;
+
+  for (const item of lineItems) {
+    const qty = Number(item.qty);
+    const price = Number(item.unit_price);
+    const line = qty * price;
+    const taxAmt = item.tax_rate ? line * (Number(item.tax_rate) / 100) : 0;
+    subtotal += line;
+    tax += taxAmt;
+  }
+
+  return {
+    subtotal: Math.round(subtotal * 100) / 100,
+    tax_amount: Math.round(tax * 100) / 100,
+    total_amount: Math.round((subtotal + tax) * 100) / 100
+  };
+}
+
 // Mark request as paid and optionally advance status for EXPORT flow
 export const markPaid = async (req: Request, res: Response) => {
   try {
@@ -21,7 +42,13 @@ export const markPaid = async (req: Request, res: Response) => {
     const updated = await prisma.serviceRequest.update({ where: { id }, data });
 
     // Auto-create invoice if not exists yet
-    const existingInvoice = await prisma.invoice.findFirst({ where: { source_module: 'REQUESTS', source_id: id } });
+    const existingInvoice = await prisma.invoice.findFirst({ 
+      where: { source_module: 'REQUESTS', source_id: id },
+      include: {
+        items: true
+      }
+    });
+    
     if (!existingInvoice) {
       // Lấy khách hàng từ request (ưu tiên customer_id)
       const customerId = updated.customer_id || null;
@@ -32,6 +59,44 @@ export const markPaid = async (req: Request, res: Response) => {
       if (items.length === 0) {
         items.push({ service_code: 'LOLO', description: 'Nâng container', qty: 1, unit_price: 0 });
       }
+      
+      // Thêm seal cost nếu có seal được sử dụng cho container này
+      console.log(`🔍 Tìm seal usage cho container: ${updated.container_no}, booking: ${updated.booking_bill}`);
+      
+      const sealUsage = await prisma.sealUsageHistory.findFirst({
+        where: {
+          OR: [
+            { container_number: updated.container_no },
+            { booking_number: updated.booking_bill }
+          ]
+        },
+        include: {
+          seal: {
+            select: {
+              unit_price: true,
+              shipping_company: true
+            }
+          }
+        }
+      });
+      
+      console.log(`📊 Seal usage found:`, sealUsage ? 'Yes' : 'No');
+      if (sealUsage) {
+        console.log(`   - Container: ${sealUsage.container_number}`);
+        console.log(`   - Booking: ${sealUsage.booking_number}`);
+        console.log(`   - Seal Price: ${sealUsage.seal?.unit_price} VND`);
+      }
+      
+      if (sealUsage && sealUsage.seal) {
+        items.push({
+          service_code: 'SEAL',
+          description: `Chi phí seal container (${sealUsage.seal.shipping_company})`,
+          qty: 1,
+          unit_price: Number(sealUsage.seal.unit_price)
+        });
+        console.log(`💰 Đã thêm seal cost: ${sealUsage.seal.unit_price} VND vào invoice`);
+      }
+      
       if (!customerId) {
         // fallback: tạo customer tạm nếu thiếu
         const fallbackCustomer = await prisma.customer.findFirst();
@@ -40,6 +105,75 @@ export const markPaid = async (req: Request, res: Response) => {
       } else {
         const payload = { customer_id: customerId, source_module: 'REQUESTS', source_id: id, items };
         await invoiceService.create((req as any).user!, payload);
+      }
+    } else {
+      // Cập nhật invoice hiện có nếu chưa có seal cost
+      const hasSealCost = existingInvoice.items.some(item => item.service_code === 'SEAL');
+      
+      if (!hasSealCost) {
+        // Tìm seal cost cho container này
+        console.log(`🔍 Tìm seal usage cho invoice hiện có - container: ${updated.container_no}, booking: ${updated.booking_bill}`);
+        
+        const sealUsage = await prisma.sealUsageHistory.findFirst({
+          where: {
+            OR: [
+              { container_number: updated.container_no },
+              { booking_number: updated.booking_bill }
+            ]
+          },
+          include: {
+            seal: {
+              select: {
+                unit_price: true,
+                shipping_company: true
+              }
+            }
+          }
+        });
+        
+        console.log(`📊 Seal usage found for existing invoice:`, sealUsage ? 'Yes' : 'No');
+        if (sealUsage) {
+          console.log(`   - Container: ${sealUsage.container_number}`);
+          console.log(`   - Booking: ${sealUsage.booking_number}`);
+          console.log(`   - Seal Price: ${sealUsage.seal?.unit_price} VND`);
+        }
+        
+        if (sealUsage && sealUsage.seal) {
+          // Thêm seal cost vào invoice hiện có
+          await prisma.invoiceLineItem.create({
+            data: {
+              org_id: null,
+              invoice_id: existingInvoice.id,
+              service_code: 'SEAL',
+              description: `Chi phí seal container (${sealUsage.seal.shipping_company})`,
+              qty: 1 as any,
+              unit_price: Number(sealUsage.seal.unit_price) as any,
+              line_amount: Number(sealUsage.seal.unit_price) as any,
+              tax_code: null,
+              tax_rate: null as any,
+              tax_amount: 0 as any,
+              total_line_amount: Number(sealUsage.seal.unit_price) as any
+            }
+          });
+          
+          // Tính lại tổng tiền
+          const allLineItems = await prisma.invoiceLineItem.findMany({
+            where: { invoice_id: existingInvoice.id }
+          });
+          
+          const totals = calculateTotals(allLineItems);
+          
+          await prisma.invoice.update({
+            where: { id: existingInvoice.id },
+            data: {
+              subtotal: totals.subtotal as any,
+              tax_amount: totals.tax_amount as any,
+              total_amount: totals.total_amount as any
+            }
+          });
+          
+          console.log(`💰 Đã cập nhật invoice ${existingInvoice.id} với seal cost: ${sealUsage.seal.unit_price} VND`);
+        }
       }
     }
 

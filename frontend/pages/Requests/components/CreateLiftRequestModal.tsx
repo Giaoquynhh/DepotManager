@@ -3,7 +3,33 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine, type TransportCompany, type ContainerType, type Customer } from '../../../services/setupService';
 import { requestService } from '../../../services/requests';
 import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
-import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
+import { containersApi } from '../../../services/containers';
+
+export interface ContainerSearchResult {
+	container_no: string;
+	slot_code: string;
+	block_code: string;
+	yard_name: string;
+	tier?: number;
+	placed_at: string;
+	customer?: {
+		id: string;
+		name: string;
+		code: string;
+	};
+	shipping_line?: {
+		id: string;
+		name: string;
+		code: string;
+	};
+	container_type?: {
+		id: string;
+		code: string;
+		description: string;
+	};
+	seal_number?: string;
+	dem_det?: string;
+}
 
 interface CreateLiftRequestModalProps {
 	isOpen: boolean;
@@ -82,6 +108,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
 	const [selectedContainerInfo, setSelectedContainerInfo] = useState<ContainerSearchResult | null>(null);
+	
+	// Container search states
+	const [containerSearchResults, setContainerSearchResults] = useState<ContainerSearchResult[]>([]);
+	const [isContainerSearchOpen, setIsContainerSearchOpen] = useState(false);
+	const [containerSearchQuery, setContainerSearchQuery] = useState('');
+	const [isSearchingContainers, setIsSearchingContainers] = useState(false);
+	const [isRefreshingContainerInfo, setIsRefreshingContainerInfo] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -90,16 +123,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 					setupService.getShippingLines({ page: 1, limit: 100 }),
 					setupService.getTransportCompanies({ page: 1, limit: 100 }),
 					setupService.getContainerTypes({ page: 1, limit: 100 }),
-					setupService.getCustomers()
+					setupService.getCustomers({ page: 1, limit: 1000 })
 				]);
 				if (slRes.success && slRes.data) setShippingLines(slRes.data.data);
 				if (tcRes.success && tcRes.data) setTransportCompanies(tcRes.data.data);
 				if (ctRes.success && ctRes.data) setContainerTypes(ctRes.data.data);
 				if (custRes.success && custRes.data) {
-					console.log('Customers loaded:', custRes.data);
 					setCustomers(custRes.data.data || []);
-				} else {
-					console.log('Failed to load customers:', custRes);
 				}
 			} catch (_) {}
 		})();
@@ -109,10 +139,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			const target = event.target as HTMLElement;
-			if (!target.closest('.custom-dropdown-container')) {
+			if (!target.closest('.custom-dropdown-container') && !target.closest('.container-search-dropdown')) {
 				setIsShippingLineOpen(false);
 				setIsContainerTypeOpen(false);
 				setIsTransportCompanyOpen(false);
+				setIsContainerSearchOpen(false);
 			}
 		};
 
@@ -121,6 +152,66 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
 	}, []);
+
+	// Close other dropdowns when opening a new one
+	const closeAllDropdowns = () => {
+		setIsShippingLineOpen(false);
+		setIsContainerTypeOpen(false);
+		setIsTransportCompanyOpen(false);
+		setIsContainerSearchOpen(false);
+	};
+
+	// Refresh container data
+	const refreshContainerData = async () => {
+		if (formData.shippingLine) {
+			await searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+		}
+	};
+
+	// Refresh selected container info with latest data
+	const refreshSelectedContainerInfo = async () => {
+		if (formData.containerNumber) {
+			setIsRefreshingContainerInfo(true);
+			try {
+				const containerResponse = await containersApi.get(formData.containerNumber);
+				
+				if (containerResponse.success && containerResponse.data) {
+					const containerData = containerResponse.data;
+					
+					// Update selected container info with latest data
+					const updatedContainerInfo = {
+						container_no: formData.containerNumber,
+						slot_code: selectedContainerInfo?.slot_code || '',
+						block_code: selectedContainerInfo?.block_code || '',
+						yard_name: selectedContainerInfo?.yard_name || '',
+						tier: selectedContainerInfo?.tier,
+						placed_at: selectedContainerInfo?.placed_at || '',
+						customer: containerData.customer,
+						shipping_line: containerData.shipping_line,
+						container_type: containerData.container_type,
+						seal_number: containerData.seal_number,
+						dem_det: containerData.dem_det
+					};
+					
+					setSelectedContainerInfo(updatedContainerInfo);
+
+					// Update form data with latest information
+					if (containerData.container_type?.id) {
+						handleInputChange('containerType', containerData.container_type.id);
+					}
+					
+					if (containerData.customer?.id) {
+						handleInputChange('customer', containerData.customer.id);
+						setSelectedCustomerName(containerData.customer.name);
+					}
+				}
+			} catch (error) {
+				console.error('Error refreshing container info:', error);
+			} finally {
+				setIsRefreshingContainerInfo(false);
+			}
+		}
+	};
 
 	// Filter data based on search terms
 	const filteredShippingLines = shippingLines.filter(sl => 
@@ -143,6 +234,131 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
 		customer.code.toLowerCase().includes(customerSearch.toLowerCase())
 	);
+
+	// Search containers by shipping line using containers API
+	const searchContainersByShippingLine = async (shippingLineId: string, query: string) => {
+		if (!shippingLineId) {
+			setContainerSearchResults([]);
+			return;
+		}
+
+		setIsSearchingContainers(true);
+		try {
+			// Sử dụng containers API để lấy tất cả container, sau đó filter theo shipping_line_id
+			const response = await containersApi.list({
+				q: query.length > 0 ? query : undefined,
+				page: 1,
+				pageSize: 100
+			});
+			
+			if (response.items) {
+				// Filter containers theo shipping_line_id
+				const filteredContainers = response.items.filter((container: any) => {
+					return container.shipping_line_id === shippingLineId;
+				});
+				
+				// Transform data thành format cần thiết
+				const containersWithDetails = filteredContainers.map((container: any) => ({
+					container_no: container.container_no,
+					slot_code: container.slot_code || '',
+					block_code: container.block_code || '',
+					yard_name: container.yard_name || '',
+					tier: container.placement_tier,
+					placed_at: container.placed_at || '',
+					customer: container.customer,
+					shipping_line: container.shipping_line,
+					container_type: container.container_type,
+					seal_number: container.seal_number,
+					dem_det: container.dem_det
+				}));
+				
+				setContainerSearchResults(containersWithDetails);
+			} else {
+				setContainerSearchResults([]);
+			}
+		} catch (error) {
+			console.error('Error searching containers:', error);
+			setContainerSearchResults([]);
+		} finally {
+			setIsSearchingContainers(false);
+		}
+	};
+
+	// Load containers when shipping line is selected
+	useEffect(() => {
+		if (formData.shippingLine) {
+			// Load all containers for the selected shipping line
+			searchContainersByShippingLine(formData.shippingLine, '');
+		} else {
+			setContainerSearchResults([]);
+			setIsContainerSearchOpen(false);
+		}
+	}, [formData.shippingLine]);
+
+	// Refresh container info when shipping line changes (in case container was moved to different shipping line)
+	useEffect(() => {
+		if (formData.containerNumber && formData.shippingLine) {
+			// Refresh container info to get latest data including new shipping line info
+			refreshSelectedContainerInfo();
+		}
+	}, [formData.shippingLine]);
+
+	// Refresh container data when modal opens
+	useEffect(() => {
+		if (isOpen && formData.shippingLine) {
+			// Refresh container data when modal opens
+			searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+		}
+	}, [isOpen]);
+
+	// Auto-refresh selected container info when modal opens
+	useEffect(() => {
+		if (isOpen && formData.containerNumber) {
+			// Auto-refresh container info when modal opens to get latest data
+			refreshSelectedContainerInfo();
+		}
+	}, [isOpen]);
+
+	// Update selectedCustomerName when formData.customer changes
+	useEffect(() => {
+		if (formData.customer && customers.length > 0) {
+			const customer = customers.find(c => c.id === formData.customer);
+			if (customer) {
+				setSelectedCustomerName(customer.name);
+			}
+		}
+	}, [formData.customer, customers]);
+
+	// Update selectedCustomerName when selectedContainerInfo changes
+	useEffect(() => {
+		if (selectedContainerInfo?.customer?.name) {
+			setSelectedCustomerName(selectedContainerInfo.customer.name);
+		}
+	}, [selectedContainerInfo]);
+
+	// Refresh container data when container number changes (user might have updated in ManagerCont)
+	useEffect(() => {
+		if (formData.containerNumber && formData.shippingLine) {
+			// Refresh container data to get latest information
+			refreshContainerData();
+			// Also refresh the selected container info to get latest customer/container type data
+			refreshSelectedContainerInfo();
+		}
+	}, [formData.containerNumber]);
+
+	// Debounced container search when typing
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			if (formData.shippingLine && containerSearchQuery.length >= 2) {
+				searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+			} else if (formData.shippingLine && containerSearchQuery.length === 0) {
+				// Show all containers when search is cleared
+				searchContainersByShippingLine(formData.shippingLine, '');
+			}
+		}, 300);
+
+		return () => clearTimeout(timeoutId);
+	}, [containerSearchQuery]);
 
 	// File upload handlers
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,6 +427,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			setErrors(prev => ({
 				...prev,
 				[field]: undefined
+			}));
+		}
+
+		// Reset container search when shipping line changes
+		if (field === 'shippingLine') {
+			setContainerSearchQuery('');
+			setContainerSearchResults([]);
+			setSelectedContainerInfo(null);
+			// Clear container number when shipping line changes
+			setFormData(prev => ({
+				...prev,
+				containerNumber: ''
 			}));
 		}
 	};
@@ -316,11 +544,15 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		setIsContainerTypeOpen(false);
 		setIsTransportCompanyOpen(false);
 		setIsCustomerOpen(false);
+		setIsContainerSearchOpen(false);
 		setShippingLineSearch('');
 		setContainerTypeSearch('');
 		setTransportCompanySearch('');
 		setCustomerSearch('');
+		setContainerSearchQuery('');
+		setContainerSearchResults([]);
 		setSelectedCustomerName('');
+		setSelectedContainerInfo(null);
 		setUploadedFiles([]);
 		setPreviewUrls([]);
 		onClose();
@@ -653,6 +885,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 									type="button"
 									className={`custom-dropdown-button ${errors.shippingLine ? 'error' : ''}`}
 									onClick={() => {
+										closeAllDropdowns();
 										setIsShippingLineOpen(!isShippingLineOpen);
 										if (!isShippingLineOpen) {
 											setShippingLineSearch('');
@@ -736,41 +969,287 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							<label style={formLabelStyle}>
 								Số container
 							</label>
-							<ContainerSearchInput
-								value={formData.containerNumber || ''}
-								onChange={(value) => handleInputChange('containerNumber', value)}
-								placeholder="Nhập số container"
+							<div className="container-search-dropdown" style={{ position: 'relative' }}>
+								<input
+									type="text"
 								style={formInputStyle}
-								onSelect={(c) => {
-									setSelectedContainerInfo(c);
-									
-									// Auto-fill thông tin từ Container model
-									if (c) {
-										// Auto-fill container type
-										if (c.container_type?.id) {
-											handleInputChange('containerType', c.container_type.id);
+									value={formData.containerNumber || ''}
+									onChange={(e) => {
+										handleInputChange('containerNumber', e.target.value);
+										setContainerSearchQuery(e.target.value);
+										setIsContainerSearchOpen(true);
+									}}
+									onFocus={() => {
+										if (formData.shippingLine) {
+											closeAllDropdowns();
+											setIsContainerSearchOpen(true);
 										}
-										
-										// Auto-fill customer
-										if (c.customer?.id) {
-											handleInputChange('customer', c.customer.id);
-											setSelectedCustomerName(c.customer.name);
+									}}
+									onClick={() => {
+										if (formData.shippingLine) {
+											closeAllDropdowns();
+											setIsContainerSearchOpen(true);
 										}
-										
-										// Auto-fill shipping line
-										if (c.shipping_line?.id) {
-											handleInputChange('shippingLine', c.shipping_line.id);
-											setSelectedShippingLineName(c.shipping_line.name);
-										}
-									}
-								}}
-								shippingLineId={formData.shippingLine || undefined}
-							/>
+									}}
+									placeholder={formData.shippingLine ? "Chọn container hoặc nhập để tìm kiếm" : "Chọn hãng tàu trước"}
+									disabled={!formData.shippingLine}
+								/>
+								
+								{isContainerSearchOpen && formData.shippingLine && (
+									<div style={{
+										position: 'absolute',
+										top: '100%',
+										left: 0,
+										right: 0,
+										background: 'white',
+										border: '2px solid #e2e8f0',
+										borderTop: 'none',
+										borderRadius: '0 0 8px 8px',
+										maxHeight: '200px',
+										overflowY: 'auto',
+										zIndex: 1000,
+										boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+									}}>
+										{/* Header với nút refresh */}
+										<div style={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											padding: '8px 12px',
+											borderBottom: '1px solid #e2e8f0',
+											background: '#f8fafc'
+										}}>
+											<span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+												{containerSearchQuery.length > 0 ? `Tìm kiếm: "${containerSearchQuery}"` : 'Danh sách container'}
+											</span>
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													refreshContainerData();
+												}}
+												disabled={isSearchingContainers}
+												style={{
+													background: 'none',
+													border: 'none',
+													cursor: isSearchingContainers ? 'not-allowed' : 'pointer',
+													padding: '4px',
+													borderRadius: '4px',
+													color: isSearchingContainers ? '#9ca3af' : '#64748b',
+													transition: 'all 0.2s'
+												}}
+												title="Làm mới danh sách container"
+											>
+												<svg 
+													width="16" 
+													height="16" 
+													viewBox="0 0 24 24" 
+													fill="none" 
+													stroke="currentColor" 
+													strokeWidth="2"
+													style={{
+														transform: isSearchingContainers ? 'rotate(180deg)' : 'rotate(0deg)',
+														transition: 'transform 0.3s ease'
+													}}
+												>
+													<polyline points="23 4 23 10 17 10"></polyline>
+													<polyline points="1 20 1 14 7 14"></polyline>
+													<path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+												</svg>
+											</button>
+										</div>
+										{isSearchingContainers ? (
+											<div style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b' }}>
+												Đang tải danh sách container...
+											</div>
+										) : containerSearchResults.length > 0 ? (
+											<div>
+												{containerSearchResults.map((container) => (
+													<div
+														key={container.container_no}
+														style={{
+															padding: '12px 16px',
+															cursor: 'pointer',
+															borderBottom: '1px solid #f1f5f9',
+															transition: 'background-color 0.2s ease'
+														}}
+														onMouseEnter={(e) => {
+															e.currentTarget.style.backgroundColor = '#f8fafc';
+														}}
+														onMouseLeave={(e) => {
+															e.currentTarget.style.backgroundColor = 'white';
+														}}
+													onClick={async () => {
+														handleInputChange('containerNumber', container.container_no);
+														setIsContainerSearchOpen(false);
+														setContainerSearchQuery('');
+														
+														// Lấy thông tin chi tiết container để auto-fill
+														try {
+															const containerResponse = await containersApi.get(container.container_no);
+															
+															if (containerResponse.success && containerResponse.data) {
+																const containerData = containerResponse.data;
+																
+																// Auto-fill container type với dữ liệu mới nhất
+																if (containerData.container_type?.id) {
+																	handleInputChange('containerType', containerData.container_type.id);
+																}
+																
+																// Auto-fill customer với dữ liệu mới nhất
+																if (containerData.customer?.id) {
+																	handleInputChange('customer', containerData.customer.id);
+																	setSelectedCustomerName(containerData.customer.name);
+																}
+																
+																// Cập nhật selectedContainerInfo với dữ liệu mới nhất từ database
+																const updatedContainerInfo = {
+																	container_no: container.container_no,
+																	slot_code: container.slot_code || '',
+																	block_code: container.block_code || '',
+																	yard_name: container.yard_name || '',
+																	tier: container.tier,
+																	placed_at: container.placed_at || '',
+																	customer: containerData.customer,
+																	shipping_line: containerData.shipping_line,
+																	container_type: containerData.container_type,
+																	seal_number: containerData.seal_number,
+																	dem_det: containerData.dem_det
+																};
+																
+																setSelectedContainerInfo(updatedContainerInfo);
+															} else {
+																// Fallback: sử dụng dữ liệu có sẵn
+																setSelectedContainerInfo(container);
+																if (container.container_type?.id) {
+																	handleInputChange('containerType', container.container_type.id);
+																}
+																if (container.customer?.id) {
+																	handleInputChange('customer', container.customer.id);
+																	setSelectedCustomerName(container.customer.name);
+																}
+															}
+														} catch (error) {
+															console.error('Error fetching container details:', error);
+															// Fallback: sử dụng dữ liệu có sẵn
+															setSelectedContainerInfo(container);
+															if (container.container_type?.id) {
+																handleInputChange('containerType', container.container_type.id);
+															}
+															if (container.customer?.id) {
+																handleInputChange('customer', container.customer.id);
+																setSelectedCustomerName(container.customer.name);
+															}
+														}
+													}}
+													>
+														<div style={{ fontWeight: '500', color: '#1f2937' }}>
+															{container.container_no}
+														</div>
+														<div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+															{container.container_type?.code} - {container.container_type?.description}
+														</div>
+														<div style={{ fontSize: '12px', color: '#64748b' }}>
+															{container.customer?.name} | {container.yard_name} - {container.block_code}-{container.slot_code}
+														</div>
+													</div>
+												))}
+											</div>
+										) : containerSearchQuery.length >= 2 ? (
+											<div style={{ padding: '12px 16px', color: '#64748b', textAlign: 'center' }}>
+												Không tìm thấy container nào phù hợp
+											</div>
+										) : (
+											<div style={{ padding: '12px 16px', color: '#64748b', textAlign: 'center' }}>
+												{formData.shippingLine ? 'Click vào ô để xem danh sách container' : 'Chọn hãng tàu để xem danh sách container'}
+											</div>
+										)}
+									</div>
+								)}
+							</div>
 							{selectedContainerInfo && (
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									<div style={{ 
+										display: 'flex', 
+										justifyContent: 'space-between', 
+										alignItems: 'center', 
+										marginBottom: '8px',
+										padding: '8px',
+										background: '#f8fafc',
+										borderRadius: '6px',
+										border: '1px solid #e2e8f0'
+									}}>
+										<span style={{ fontWeight: '500', color: '#374151' }}>Thông tin container đã chọn:</span>
+										<button
+											type="button"
+											onClick={refreshSelectedContainerInfo}
+											disabled={isRefreshingContainerInfo}
+											style={{
+												background: isRefreshingContainerInfo ? '#9ca3af' : '#3b82f6',
+												border: 'none',
+												cursor: isRefreshingContainerInfo ? 'not-allowed' : 'pointer',
+												padding: '4px 8px',
+												borderRadius: '4px',
+												color: 'white',
+												fontSize: '11px',
+												fontWeight: '500',
+												transition: 'all 0.2s',
+												display: 'flex',
+												alignItems: 'center',
+												gap: '4px'
+											}}
+											title={isRefreshingContainerInfo ? "Đang cập nhật..." : "Làm mới thông tin container từ database"}
+											onMouseEnter={(e) => {
+												if (!isRefreshingContainerInfo) {
+													e.currentTarget.style.background = '#2563eb';
+												}
+											}}
+											onMouseLeave={(e) => {
+												if (!isRefreshingContainerInfo) {
+													e.currentTarget.style.background = '#3b82f6';
+												}
+											}}
+										>
+											<svg 
+												width="12" 
+												height="12" 
+												viewBox="0 0 24 24" 
+												fill="none" 
+												stroke="currentColor" 
+												strokeWidth="2"
+												style={{
+													transform: isRefreshingContainerInfo ? 'rotate(180deg)' : 'rotate(0deg)',
+													transition: 'transform 0.3s ease'
+												}}
+											>
+												<polyline points="23 4 23 10 17 10"></polyline>
+												<polyline points="1 20 1 14 7 14"></polyline>
+												<path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+											</svg>
+											{isRefreshingContainerInfo ? 'Đang cập nhật...' : 'Cập nhật'}
+										</button>
+									</div>
+									<div style={{ padding: '0 8px' }}>
 									<div>Vị trí: {selectedContainerInfo.block_code}-{selectedContainerInfo.slot_code}{selectedContainerInfo.tier ? `, Tầng ${selectedContainerInfo.tier}` : ''}</div>
 									<div>Bãi: {selectedContainerInfo.yard_name}</div>
 									<div>Thời điểm vào bãi: {new Date(selectedContainerInfo.placed_at).toLocaleString()}</div>
+										{selectedContainerInfo.container_type && (
+											<div style={{ color: '#059669', fontWeight: '500' }}>Loại container: {selectedContainerInfo.container_type.code} - {selectedContainerInfo.container_type.description}</div>
+										)}
+										{selectedContainerInfo.customer && (
+											<div style={{ color: '#dc2626', fontWeight: '500' }}>Khách hàng: {selectedContainerInfo.customer.name}</div>
+										)}
+									</div>
+								</div>
+							)}
+							{!formData.shippingLine && (
+								<div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
+									⚠️ Vui lòng chọn hãng tàu để xem danh sách container
+								</div>
+							)}
+							{formData.shippingLine && containerSearchResults.length > 0 && (
+								<div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
+									✅ Click vào ô để xem {containerSearchResults.length} container thuộc hãng tàu này
 								</div>
 							)}
 						</div>
@@ -785,6 +1264,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 									type="button"
 									className={`custom-dropdown-button ${errors.containerType ? 'error' : ''}`}
 									onClick={() => {
+										closeAllDropdowns();
 										setIsContainerTypeOpen(!isContainerTypeOpen);
 										if (!isContainerTypeOpen) {
 											setContainerTypeSearch('');
@@ -875,7 +1355,10 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 								<button
 									type="button"
 									style={errors.customer ? formInputErrorStyle : formInputStyle}
-									onClick={() => setIsCustomerOpen(!isCustomerOpen)}
+									onClick={() => {
+										closeAllDropdowns();
+										setIsCustomerOpen(!isCustomerOpen);
+									}}
 									className="custom-dropdown-button"
 								>
 									{formData.customer 
@@ -996,6 +1479,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 									type="button"
 									className="custom-dropdown-button"
 									onClick={() => {
+										closeAllDropdowns();
 										setIsTransportCompanyOpen(!isTransportCompanyOpen);
 										if (!isTransportCompanyOpen) {
 											setTransportCompanySearch('');

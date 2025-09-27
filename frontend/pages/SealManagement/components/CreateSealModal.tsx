@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine } from '../../../services/setupService';
-import { sealsApi, type CreateSealData } from '../../../services/seals';
+import { sealsApi, type CreateSealData, type Seal } from '../../../services/seals';
 
 interface CreateSealModalProps {
 	isOpen: boolean;
@@ -37,6 +37,10 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
 	const [selectedShippingLineName, setSelectedShippingLineName] = useState<string>('');
 
+	// Existing seals to check for duplicates
+	const [existingSeals, setExistingSeals] = useState<Seal[]>([]);
+	const [loadingSeals, setLoadingSeals] = useState(false);
+
 	// Custom dropdown states
 	const [isShippingLineOpen, setIsShippingLineOpen] = useState(false);
 	const [shippingLineSearch, setShippingLineSearch] = useState('');
@@ -49,6 +53,25 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 			} catch (_) {}
 		})();
 	}, []);
+
+	// Load existing seals when modal opens
+	useEffect(() => {
+		if (isOpen) {
+			loadExistingSeals();
+		}
+	}, [isOpen]);
+
+	const loadExistingSeals = async () => {
+		setLoadingSeals(true);
+		try {
+			const sealsRes = await sealsApi.list({ page: 1, pageSize: 1000 });
+			setExistingSeals(sealsRes.items);
+		} catch (error) {
+			console.error('Error loading existing seals:', error);
+		} finally {
+			setLoadingSeals(false);
+		}
+	};
 
 	// Close dropdowns when clicking outside
 	useEffect(() => {
@@ -65,11 +88,24 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 		};
 	}, []);
 
-	// Filter data based on search terms
-	const filteredShippingLines = shippingLines.filter(sl => 
-		sl.code.toLowerCase().includes(shippingLineSearch.toLowerCase()) ||
-		sl.name.toLowerCase().includes(shippingLineSearch.toLowerCase())
-	);
+	// Check if shipping line already has a seal
+	const isShippingLineUsed = (shippingLineId: string): boolean => {
+		const selectedShippingLine = shippingLines.find(line => line.id === shippingLineId);
+		if (!selectedShippingLine) return false;
+		
+		return existingSeals.some(seal => seal.shipping_company === selectedShippingLine.name);
+	};
+
+	// Filter data based on search terms and exclude used shipping lines
+	const filteredShippingLines = shippingLines.filter(sl => {
+		const matchesSearch = sl.code.toLowerCase().includes(shippingLineSearch.toLowerCase()) ||
+			sl.name.toLowerCase().includes(shippingLineSearch.toLowerCase());
+		
+		// Don't show shipping lines that already have seals
+		const isUsed = isShippingLineUsed(sl.id);
+		
+		return matchesSearch && !isUsed;
+	});
 
 	const handleInputChange = (field: keyof SealFormData, value: string | number) => {
 		setFormData(prev => ({
@@ -91,6 +127,8 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 
 		if (!formData.shipping_company.trim()) {
 			newErrors.shipping_company = 'Hãng tàu là bắt buộc';
+		} else if (isShippingLineUsed(formData.shipping_company)) {
+			newErrors.shipping_company = 'Hãng tàu này đã có seal, không thể tạo thêm';
 		}
 		if (!formData.purchase_date.trim()) {
 			newErrors.purchase_date = 'Ngày mua là bắt buộc';
@@ -162,6 +200,13 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 		setIsShippingLineOpen(false);
 		setShippingLineSearch('');
 		setSelectedShippingLineName('');
+		setFormData({
+			shipping_company: '',
+			purchase_date: '',
+			quantity_purchased: 0,
+			unit_price: 0,
+			pickup_location: ''
+		});
 		onClose();
 	};
 
@@ -313,6 +358,10 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 			font-style: italic;
 			text-align: center;
 		}
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
 	`;
 
 	return (
@@ -436,7 +485,27 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 											onChange={(e) => setShippingLineSearch(e.target.value)}
 											onClick={(e) => e.stopPropagation()}
 										/>
-										{filteredShippingLines.length > 0 ? (
+										{loadingSeals ? (
+											<div className="custom-dropdown-no-results">
+												<div style={{
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													gap: '8px',
+													color: '#64748b'
+												}}>
+													<div style={{
+														width: '16px',
+														height: '16px',
+														border: '2px solid #e2e8f0',
+														borderTop: '2px solid #3b82f6',
+														borderRadius: '50%',
+														animation: 'spin 1s linear infinite'
+													}}></div>
+													Đang tải danh sách hãng tàu...
+												</div>
+											</div>
+										) : filteredShippingLines.length > 0 ? (
 											filteredShippingLines.map(sl => (
 												<div
 													key={sl.id}
@@ -453,7 +522,7 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 											))
 										) : (
 											<div className="custom-dropdown-no-results">
-												Không tìm thấy hãng tàu nào
+												{shippingLineSearch ? 'Không tìm thấy hãng tàu nào' : 'Tất cả hãng tàu đã có seal'}
 											</div>
 										)}
 									</div>
@@ -461,6 +530,25 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 							</div>
 							{selectedShippingLineName && (
 								<small style={{ color: '#64748b', marginTop: '6px' }}>Tên hãng tàu: {selectedShippingLineName}</small>
+							)}
+							{!loadingSeals && filteredShippingLines.length === 0 && !shippingLineSearch && (
+								<div style={{
+									background: '#fef3c7',
+									border: '1px solid #f59e0b',
+									borderRadius: '6px',
+									padding: '8px 12px',
+									marginTop: '8px',
+									fontSize: '13px',
+									color: '#92400e',
+									display: 'flex',
+									alignItems: 'center',
+									gap: '6px'
+								}}>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+										<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+									</svg>
+									Tất cả hãng tàu đã có seal. Không thể tạo seal mới.
+								</div>
 							)}
 							{errors.shipping_company && <span style={errorMessageStyle}>{errors.shipping_company}</span>}
 						</div>
@@ -539,20 +627,26 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 					}}>
 						<button 
 							type="submit" 
+							disabled={loadingSeals || (!loadingSeals && filteredShippingLines.length === 0)}
 							style={{
 								padding: '12px 24px',
 								borderRadius: '8px',
 								fontSize: '14px',
 								fontWeight: '600',
-								cursor: 'pointer',
+								cursor: (loadingSeals || (!loadingSeals && filteredShippingLines.length === 0)) ? 'not-allowed' : 'pointer',
 								transition: 'all 0.2s ease',
 								border: 'none',
-								background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+								background: (loadingSeals || (!loadingSeals && filteredShippingLines.length === 0)) 
+									? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+									: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
 								color: 'white',
-								boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)'
+								boxShadow: (loadingSeals || (!loadingSeals && filteredShippingLines.length === 0))
+									? '0 2px 4px rgba(156, 163, 175, 0.3)'
+									: '0 4px 6px rgba(59, 130, 246, 0.3)',
+								opacity: (loadingSeals || (!loadingSeals && filteredShippingLines.length === 0)) ? 0.6 : 1
 							}}
 						>
-							Tạo Seal
+							{loadingSeals ? 'Đang tải...' : 'Tạo Seal'}
 						</button>
 					</div>
 				</form>

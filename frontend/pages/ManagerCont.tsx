@@ -11,6 +11,7 @@ import { setupService, Customer } from '../services/setupService';
 import { containersApi } from '../services/containers';
 import { yardApi } from '../services/yard';
 import { reportsService, ContainerItem } from '../services/reports';
+import { sealsApi } from '../services/seals';
 
 // Interface cho dữ liệu bảng
 interface TableData {
@@ -46,6 +47,11 @@ export default function ManagerCont(){
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const routeRefreshKey = useRouteRefresh();
   const [loading, setLoading] = React.useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [itemsPerPage] = React.useState(6);
+  const [totalItems, setTotalItems] = React.useState(0);
   
   // Map trạng thái container -> nhãn tiếng Việt (đồng bộ với Maintenance/Repairs)
   const getContainerStatusLabel = (ticketStatus?: string, containerQuality?: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN') => {
@@ -97,29 +103,37 @@ export default function ManagerCont(){
   // Map trạng thái request -> nhãn tiếng Việt
   const getRequestStatusLabel = (status: string) => {
     if (!status) return 'Không xác định';
+    // Chuyển DONE_LIFTING thành GATE_OUT
+    const normalizedStatus = status === 'DONE_LIFTING' ? 'GATE_OUT' : status;
     const map: Record<string, string> = {
       'PENDING': 'Thêm mới',
+      'NEW_REQUEST': 'Thêm mới',
       'CHECKED': 'Chấp nhận',
       'GATE_IN': 'Đã vào cổng',
       'FORKLIFTING': 'Đang hạ container',
       'IN_YARD': 'Đã hạ thành công',
-      'GATE_OUT': 'Xe đã rời khỏi bãi'
+      'GATE_OUT': 'Xe đã rời khỏi bãi',
+      'EMPTY_IN_YARD': 'Container rỗng trong bãi'
     };
-    return map[status] || status;
+    return map[normalizedStatus] || normalizedStatus;
   };
 
   // Map trạng thái request -> CSS class cho badge
   const getRequestStatusBadgeClass = (status: string) => {
     if (!status) return 'status-unknown';
+    // Chuyển DONE_LIFTING thành GATE_OUT
+    const normalizedStatus = status === 'DONE_LIFTING' ? 'GATE_OUT' : status;
     const map: Record<string, string> = {
       'PENDING': 'status-đang-xử-lý',
+      'NEW_REQUEST': 'status-đang-xử-lý',
       'CHECKED': 'status-hoàn-thành',
       'GATE_IN': 'status-đang-xử-lý',
       'FORKLIFTING': 'status-đang-xử-lý',
       'IN_YARD': 'status-hoàn-thành',
-      'GATE_OUT': 'status-hoàn-thành'
+      'GATE_OUT': 'status-hoàn-thành',
+      'EMPTY_IN_YARD': 'status-empty-in-yard'
     };
-    return map[status] || 'status-unknown';
+    return map[normalizedStatus] || 'status-unknown';
   };
   
   // Documents modal states
@@ -138,6 +152,19 @@ export default function ManagerCont(){
 
   // Dữ liệu bảng từ database
   const [tableData, setTableData] = React.useState<TableData[]>([]);
+  const [allData, setAllData] = React.useState<TableData[]>([]); // Lưu tất cả dữ liệu để phân trang
+
+  // Tính toán dữ liệu hiển thị dựa trên trang hiện tại
+  const paginatedData = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return allData.slice(startIndex, endIndex);
+  }, [allData, currentPage, itemsPerPage]);
+
+  // Cập nhật tableData khi paginatedData thay đổi
+  React.useEffect(() => {
+    setTableData(paginatedData);
+  }, [paginatedData]);
 
   // Force refresh when route changes to ensure fresh data
   React.useEffect(() => {
@@ -188,7 +215,7 @@ export default function ManagerCont(){
   // Repair images modal functions
   const openRepairImages = async (row: TableData) => {
     if (!row.repairTicketId) {
-      showSuccess('Không có phiếu sửa chữa cho container này');
+      showSuccess('Không có phiếu sửa chữa cho container này', undefined, 2000);
       return;
     }
     
@@ -223,7 +250,11 @@ export default function ManagerCont(){
   const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<TableData | null>(null);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [shippingLines, setShippingLines] = React.useState<any[]>([]);
+  const [containerTypes, setContainerTypes] = React.useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
+  const [selectedShippingLineId, setSelectedShippingLineId] = React.useState<string>('');
+  const [selectedContainerTypeId, setSelectedContainerTypeId] = React.useState<string>('');
   const [selectedStatus, setSelectedStatus] = React.useState<string>('');
   const [selectedSealNumber, setSelectedSealNumber] = React.useState<string>('');
   const [selectedDemDet, setSelectedDemDet] = React.useState<string>('');
@@ -232,25 +263,58 @@ export default function ManagerCont(){
     setSelectedRow(row);
     setIsUpdateModalOpen(true);
     setSelectedCustomerId(''); // Reset customer selection
+    setSelectedShippingLineId(''); // Reset shipping line selection
+    setSelectedContainerTypeId(''); // Reset container type selection
     setSelectedStatus(row.containerQuality || 'GOOD'); // Set initial status
     setSelectedSealNumber(row.sealNumber || ''); // Set initial seal number
     setSelectedDemDet(row.demDet === 'Không có' ? '' : row.demDet || ''); // Set initial DEM/DET
     
-    // Fetch customers when opening modal
+    // Fetch customers, shipping lines, and container types when opening modal
     try {
-      const response = await setupService.getCustomers({ limit: 1000 });
-      if (response.success && response.data) {
-        setCustomers(response.data.data || []);
+      const [customersRes, shippingLinesRes, containerTypesRes] = await Promise.all([
+        setupService.getCustomers({ limit: 1000 }),
+        setupService.getShippingLines({ limit: 1000 }),
+        setupService.getContainerTypes({ limit: 1000 })
+      ]);
+      
+      if (customersRes.success && customersRes.data) {
+        setCustomers(customersRes.data.data || []);
+      }
+      
+      if (shippingLinesRes.success && shippingLinesRes.data) {
+        setShippingLines(shippingLinesRes.data.data || []);
+      }
+      
+      if (containerTypesRes.success && containerTypesRes.data) {
+        setContainerTypes(containerTypesRes.data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
   const handleCancel = (id: string) => {
     // TODO: Implement cancel functionality
     console.log('Cancel for:', id);
-    showSuccess('Đã hủy yêu cầu!');
+    showSuccess('Đã hủy yêu cầu!', undefined, 2000);
+  };
+
+  // Pagination handlers
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
 
@@ -258,14 +322,36 @@ export default function ManagerCont(){
   const fetchImportRequests = async () => {
     setLoading(true);
     try {
-      // Chỉ lấy IMPORT requests, không lấy EXPORT requests
-      const response = await requestService.getRequests('IMPORT');
-      if (!response?.data?.success) {
+      // Lấy cả IMPORT và EXPORT requests để hiển thị đầy đủ trạng thái
+      const [importResponse, exportResponse] = await Promise.all([
+        requestService.getRequests('IMPORT'),
+        requestService.getRequests('EXPORT')
+      ]);
+      
+      const importRequests = importResponse?.data?.success ? (importResponse.data.data || []) : [];
+      const exportRequests = exportResponse?.data?.success ? (exportResponse.data.data || []) : [];
+      let allRequests = [...importRequests, ...exportRequests];
+      
+      if (allRequests.length === 0) {
         setTableData([]);
         return;
       }
 
-      const requests: any[] = response.data.data || [];
+      // Nhóm requests theo container_no và chỉ lấy request mới nhất cho mỗi container
+      const latestRequestsMap = new Map<string, any>();
+      allRequests.forEach((req: any) => {
+        const existingReq = latestRequestsMap.get(req.container_no);
+        if (!existingReq || new Date(req.createdAt) > new Date(existingReq.createdAt)) {
+          latestRequestsMap.set(req.container_no, req);
+        }
+      });
+      const requests = Array.from(latestRequestsMap.values());
+      console.log('🔍 Raw requests data:', requests.map(r => ({
+        id: r.id,
+        container_no: r.container_no,
+        status: r.status,
+        type: r.type
+      })));
       
       // Lấy container EMPTY_IN_YARD nếu được bật
       let emptyInYardContainers: ContainerItem[] = [];
@@ -291,33 +377,40 @@ export default function ManagerCont(){
         }
       }
 
-      // Xử lý container EMPTY_IN_YARD - hiển thị "Container tốt" vì không có request
-      const emptyInYardData: TableData[] = emptyInYardContainers.map((container: ContainerItem) => ({
-        id: `empty_${container.container_no}`, // ID giả để phân biệt
-        shippingLine: container.shipping_line?.name || '',
-        containerNumber: container.container_no || '',
-        containerType: container.container_type?.code || '',
-        status: 'EMPTY_IN_YARD',
-        repairTicketStatus: undefined, // Không có repair ticket cho empty containers
-        customer: container.customer?.name || '',
-        documents: '',
-        documentsCount: 0,
-        repairImagesCount: 0,
-        repairTicketId: undefined,
-        position: (() => {
-          if (container.yard_name || container.block_code || container.slot_code) {
-            const pos = `${container.block_code || ''} / ${container.slot_code || ''}`;
-            return container.yard_name ? `${container.yard_name} • ${pos}` : pos;
-          }
-          return '';
-        })(),
-        yardName: container.yard_name,
-        blockCode: container.block_code,
-        slotCode: container.slot_code,
-        sealNumber: container.seal_number || '',
-        demDet: container.dem_det || '',
-        containerQuality: 'GOOD' as const // Không có request nên hiển thị "Container tốt"
-      }));
+      // Lọc ra tất cả container đã có ServiceRequest để tránh trùng lặp
+      const containersWithServiceRequests = new Set(
+        requests.map((req: any) => req.container_no)
+      );
+      
+      // Xử lý container EMPTY_IN_YARD - chỉ hiển thị container không có ServiceRequest
+      const emptyInYardData: TableData[] = emptyInYardContainers
+        .filter((container: ContainerItem) => !containersWithServiceRequests.has(container.container_no))
+        .map((container: ContainerItem) => ({
+          id: `empty_${container.container_no}`, // ID giả để phân biệt
+          shippingLine: container.shipping_line?.name || '',
+          containerNumber: container.container_no || '',
+          containerType: container.container_type?.code || '',
+          status: 'EMPTY_IN_YARD',
+          repairTicketStatus: undefined, // Không có repair ticket cho empty containers
+          customer: container.customer?.name || '',
+          documents: '',
+          documentsCount: 0,
+          repairImagesCount: 0,
+          repairTicketId: undefined,
+          position: (() => {
+            if (container.yard_name || container.block_code || container.slot_code) {
+              const pos = `${container.block_code || ''} / ${container.slot_code || ''}`;
+              return container.yard_name ? `${container.yard_name} • ${pos}` : pos;
+            }
+            return '';
+          })(),
+          yardName: container.yard_name,
+          blockCode: container.block_code,
+          slotCode: container.slot_code,
+          sealNumber: container.seal_number || '',
+          demDet: container.dem_det || '',
+          containerQuality: 'GOOD' as const // Không có request nên hiển thị "Container tốt"
+        }));
 
       const transformedData: TableData[] = await Promise.all(
         requests.map(async (request: any) => {
@@ -327,6 +420,8 @@ export default function ManagerCont(){
             status: request.status,
             container_no: request.container_no
           });
+          
+          try {
           
           // Số ảnh kiểm tra: chỉ tính cho IMPORT bằng repair ticket
           let repairImagesCount = 0;
@@ -383,8 +478,8 @@ export default function ManagerCont(){
                 id: t.id, 
                 status: t.status, 
                 container_no: t.container_no,
-                createdAt: t.createdAt,
-                updatedAt: t.updatedAt
+                createdAt: (t as any).createdAt,
+                updatedAt: (t as any).updatedAt
               })));
               if (tickets.length > 0) {
                 // Xếp hạng trạng thái để tie-break khi thiếu/giống thời gian
@@ -421,30 +516,30 @@ export default function ManagerCont(){
                   repairImagesCount = Array.isArray(imgs?.data) ? imgs.data.length : 0;
                 } catch {}
               } else {
-                // Không có repair ticket cho IMPORT, hiển thị "Cần sửa chữa" theo yêu cầu
-                containerQuality = 'NEED_REPAIR';
+                // Không có repair ticket cho IMPORT, hiển thị "Container tốt" (mặc định)
+                containerQuality = 'GOOD';
                 repairTicketStatus = undefined; // Không set status khi không có repair ticket
-                console.log(`⚠️ No repair tickets found for ${request.container_no}, using NEED_REPAIR status`);
-                console.log(`⚠️ This means the container will show as "CẦN SỬA CHỮA"`);
+                console.log(`⚠️ No repair tickets found for ${request.container_no}, using GOOD status`);
+                console.log(`⚠️ This means the container will show as "CONTAINER TỐT"`);
               }
-            } catch (error) {
-              // Lỗi khi lấy repair ticket cho IMPORT, hiển thị "Cần sửa chữa" theo yêu cầu
-              containerQuality = 'NEED_REPAIR';
+            } catch (error: any) {
+              // Lỗi khi lấy repair ticket cho IMPORT, hiển thị "Container tốt" (mặc định)
+              containerQuality = 'GOOD';
               repairTicketStatus = undefined; // Không set status khi có lỗi
               console.log(`❌ Error fetching repair tickets for ${request.container_no}:`, error);
               console.log(`❌ Error details:`, {
-                message: error.message,
-                stack: error.stack,
-                response: error.response?.data,
-                status: error.response?.status,
+                message: error?.message,
+                stack: error?.stack,
+                response: error?.response?.data,
+                status: error?.response?.status,
                 config: {
-                  url: error.config?.url,
-                  method: error.config?.method,
-                  headers: error.config?.headers
+                  url: error?.config?.url,
+                  method: error?.config?.method,
+                  headers: error?.config?.headers
                 }
               });
-              console.log(`❌ Using NEED_REPAIR status due to error`);
-              console.log(`❌ This means the container will show as "CẦN SỬA CHỮA"`);
+              console.log(`❌ Using GOOD status due to error`);
+              console.log(`❌ This means the container will show as "CONTAINER TỐT"`);
             }
           } else if (request.type === 'EXPORT') {
             // Với EXPORT: mặc định là "Container tốt" (không áp dụng logic repair ticket)
@@ -488,7 +583,7 @@ export default function ManagerCont(){
             shippingLine: request.shipping_line?.name || '',
             containerNumber: request.container_no || '',
             containerType: request.container_type?.code || '',
-            status: request.status || '',
+            status: request.status === 'DONE_LIFTING' ? 'GATE_OUT' : (request.status || ''),
             customer: request.customer?.name || '',
             documents: documentsList.map((att: any) => att.file_name).join(', '),
             documentsCount,
@@ -527,18 +622,43 @@ export default function ManagerCont(){
           });
           
           return result;
+          } catch (error) {
+            console.error(`❌ Error processing container ${request.container_no}:`, error);
+            // Trả về container với thông tin cơ bản nếu có lỗi
+            return {
+              id: request.id,
+              shippingLine: request.shipping_line?.name || '',
+              containerNumber: request.container_no || '',
+              containerType: request.container_type?.code || '',
+              status: request.status || '',
+              customer: request.customer?.name || '',
+              documents: '',
+              documentsCount: 0,
+              repairImagesCount: 0,
+              repairTicketId: undefined,
+              position: '',
+              yardName: '',
+              blockCode: '',
+              slotCode: '',
+              sealNumber: request.seal_number || '',
+              demDet: request.dem_det || '',
+              containerQuality: 'GOOD' as const,
+              repairTicketStatus: undefined
+            };
+          }
         })
       );
 
-      // Lọc container theo trạng thái request: chỉ hiển thị CHECKED, FORKLIFTING, IN_YARD, GATE_OUT
-      const allowedStatuses = ['CHECKED', 'FORKLIFTING', 'IN_YARD', 'GATE_OUT'];
-      const filteredTransformedData = transformedData.filter(request => 
-        allowedStatuses.includes(request.status)
-      );
+      // Tạm thời bỏ lọc trạng thái để debug - hiển thị tất cả container
+      const filteredTransformedData = transformedData;
       
       console.log('🔍 Filtering containers by request status:');
       console.log('📊 Total requests before filter:', transformedData.length);
       console.log('📊 Total requests after filter:', filteredTransformedData.length);
+      console.log('📋 All request statuses before filter:', transformedData.map(r => ({ 
+        container: r.containerNumber, 
+        status: r.status
+      })));
       console.log('📋 Filtered requests by status:', filteredTransformedData.reduce((acc, req) => {
         acc[req.status] = (acc[req.status] || 0) + 1;
         return acc;
@@ -565,14 +685,39 @@ export default function ManagerCont(){
       });
 
       // Kết hợp dữ liệu từ filtered requests và EMPTY_IN_YARD containers
-      const allData = [...filteredTransformedData, ...emptyInYardData];
-      console.log('📊 Total data after combining:', allData.length);
+      const combinedData = [...filteredTransformedData, ...emptyInYardData];
+      
+      // Loại bỏ trùng lặp dựa trên containerNumber, ưu tiên ServiceRequest data
+      const uniqueDataMap = new Map<string, TableData>();
+      
+      // Thêm EMPTY_IN_YARD data trước (ưu tiên thấp hơn)
+      emptyInYardData.forEach(item => {
+        if (!uniqueDataMap.has(item.containerNumber)) {
+          uniqueDataMap.set(item.containerNumber, item);
+        }
+      });
+      
+      // Thêm ServiceRequest data sau (ưu tiên cao hơn, sẽ ghi đè EMPTY_IN_YARD)
+      filteredTransformedData.forEach(item => {
+        uniqueDataMap.set(item.containerNumber, item);
+      });
+      
+      const finalData = Array.from(uniqueDataMap.values());
+      
+      console.log('📊 Total data after combining:', finalData.length);
       console.log('📋 ServiceRequest data:', filteredTransformedData.length);
       console.log('📦 EMPTY_IN_YARD data:', emptyInYardData.length);
-      setTableData(allData);
+      console.log('🔄 Final unique data:', finalData.length);
+      
+      // Lưu tất cả dữ liệu và cập nhật pagination
+      setAllData(finalData);
+      setTotalItems(finalData.length);
+      
+      // Reset về trang 1 khi có dữ liệu mới
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching requests:', error);
-      showSuccess('Có lỗi xảy ra khi tải dữ liệu');
+      showSuccess('Có lỗi xảy ra khi tải dữ liệu', undefined, 2000);
     } finally {
       setLoading(false);
     }
@@ -787,6 +932,11 @@ export default function ManagerCont(){
           color: #92400e;
         }
 
+        .status-done-lifting {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+
         .status-unknown {
           background: #f3f4f6;
           color: #6b7280;
@@ -966,7 +1116,7 @@ export default function ManagerCont(){
                       <th>Số seal</th>
                       <th>Khách hàng</th>
                       <th>DEM/DET</th>
-                      <th>Action</th>
+                      <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1056,6 +1206,82 @@ export default function ManagerCont(){
             </div>
           </div>
         </div>
+
+        {/* Pagination */}
+        {totalItems > itemsPerPage && (
+          <div className="pagination-container" style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginTop: '1.5rem',
+            padding: '1rem',
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ color: '#6b7280', fontSize: '14px' }}>
+              Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} trong tổng số {totalItems} container
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  background: currentPage === 1 ? '#f9fafb' : 'white',
+                  color: currentPage === 1 ? '#9ca3af' : '#374151',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Trước
+              </button>
+              
+              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                {Array.from({ length: Math.ceil(totalItems / itemsPerPage) }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      background: currentPage === page ? '#3b82f6' : 'white',
+                      color: currentPage === page ? 'white' : '#374151',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      minWidth: '40px'
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  background: currentPage === Math.ceil(totalItems / itemsPerPage) ? '#f9fafb' : 'white',
+                  color: currentPage === Math.ceil(totalItems / itemsPerPage) ? '#9ca3af' : '#374151',
+                  cursor: currentPage === Math.ceil(totalItems / itemsPerPage) ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Documents Modal */}
         {isDocsOpen && (
@@ -1167,6 +1393,11 @@ export default function ManagerCont(){
               setIsUpdateModalOpen(false);
               setSelectedRow(null);
               setSelectedCustomerId('');
+              setSelectedShippingLineId('');
+              setSelectedContainerTypeId('');
+              setSelectedStatus('');
+              setSelectedSealNumber('');
+              setSelectedDemDet('');
             }}
           >
             <div
@@ -1180,12 +1411,69 @@ export default function ManagerCont(){
                     setIsUpdateModalOpen(false);
                     setSelectedRow(null);
                     setSelectedCustomerId('');
+                    setSelectedShippingLineId('');
+                    setSelectedContainerTypeId('');
+                    setSelectedStatus('');
+                    setSelectedSealNumber('');
+                    setSelectedDemDet('');
                   }} 
                   style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
                 >×</button>
               </div>
               <div style={{ padding: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Hãng tàu</label>
+                    <select
+                      value={selectedShippingLineId}
+                      onChange={(e) => setSelectedShippingLineId(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px 12px', 
+                        border: '1px solid #d1d5db', 
+                        borderRadius: 6,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      <option value="">{selectedRow.shippingLine || 'Chưa có hãng tàu'}</option>
+                      {shippingLines.map((shippingLine) => (
+                        <option key={shippingLine.id} value={shippingLine.id}>
+                          {shippingLine.code} - {shippingLine.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
+                      {selectedShippingLineId ? 'Sẽ cập nhật hãng tàu khi lưu' : 'Giữ nguyên hãng tàu hiện tại'}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Loại container</label>
+                    <select
+                      value={selectedContainerTypeId}
+                      onChange={(e) => setSelectedContainerTypeId(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px 12px', 
+                        border: '1px solid #d1d5db', 
+                        borderRadius: 6,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      <option value="">{selectedRow.containerType || 'Chưa có loại container'}</option>
+                      {containerTypes.map((containerType) => (
+                        <option key={containerType.id} value={containerType.id}>
+                          {containerType.code} - {containerType.description}
+                        </option>
+                      ))}
+                    </select>
+                    <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
+                      {selectedContainerTypeId ? 'Sẽ cập nhật loại container khi lưu' : 'Giữ nguyên loại container hiện tại'}
+                    </div>
+                  </div>
+                  
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Khách hàng</label>
                     <select
@@ -1211,15 +1499,49 @@ export default function ManagerCont(){
                       {selectedCustomerId ? 'Sẽ cập nhật khách hàng khi lưu' : 'Giữ nguyên khách hàng hiện tại'}
                     </div>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Số seal</label>
-                    <input
-                      type="text"
-                      value={selectedSealNumber}
-                      onChange={(e) => setSelectedSealNumber(e.target.value)}
-                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }}
-                    />
-                  </div>
+                   <div>
+                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Số seal</label>
+                     <input
+                       type="text"
+                       value={selectedSealNumber}
+                       onChange={(e) => setSelectedSealNumber(e.target.value)}
+                       disabled={(!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')}
+                       style={{ 
+                         width: '100%', 
+                         padding: '8px 12px', 
+                         border: '1px solid #d1d5db', 
+                         borderRadius: 6,
+                         backgroundColor: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? '#f9fafb' : 'white',
+                         color: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? '#9ca3af' : '#374151',
+                         cursor: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'not-allowed' : 'text'
+                       }}
+                       placeholder={((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'Cần chọn hãng tàu trước' : 'Nhập số seal'}
+                     />
+                     {((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? (
+                       <div style={{ 
+                         fontSize: 12, 
+                         color: '#ef4444', 
+                         marginTop: 4,
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: '4px',
+                         fontWeight: '500'
+                       }}>
+                         🔒 Cần chọn hãng tàu trước để mở khóa trường số seal
+                       </div>
+                     ) : (
+                       <div style={{ 
+                         fontSize: 12, 
+                         color: '#f59e0b', 
+                         marginTop: 4,
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: '4px'
+                       }}>
+                         ⚠️ Cần có số booking từ Yêu cầu nâng để cập nhật số seal
+                       </div>
+                     )}
+                   </div>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>DEM/DET (dd/mm/yyyy)</label>
                     <input
@@ -1255,19 +1577,6 @@ export default function ManagerCont(){
               </div>
               <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    setIsUpdateModalOpen(false);
-                    setSelectedRow(null);
-                    setSelectedCustomerId('');
-                    setSelectedStatus('');
-                    setSelectedSealNumber('');
-                    setSelectedDemDet('');
-                  }}
-                >
-                  Hủy
-                </button>
-                <button 
                   className="btn btn-primary"
                   onClick={async () => {
                     try {
@@ -1279,10 +1588,22 @@ export default function ManagerCont(){
                         if (selectedCustomerId) {
                           updateData.customer_id = selectedCustomerId;
                         }
+                        if (selectedShippingLineId) {
+                          updateData.shipping_line_id = selectedShippingLineId;
+                        }
+                        if (selectedContainerTypeId) {
+                          updateData.container_type_id = selectedContainerTypeId;
+                        }
                         if (selectedStatus !== selectedRow.containerQuality) {
                           updateData.container_quality = selectedStatus;
                         }
                         if (selectedSealNumber !== selectedRow.sealNumber) {
+                          // Kiểm tra nếu có seal number nhưng chưa có hãng tàu (cả mới chọn và hiện tại)
+                          const hasShippingLine = (selectedShippingLineId && selectedShippingLineId !== '') || (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '');
+                          if (selectedSealNumber && selectedSealNumber.trim() !== '' && !hasShippingLine) {
+                            showError('Cần cập nhật hãng tàu trước khi nhập số seal!', undefined, 3000);
+                            return;
+                          }
                           updateData.seal_number = selectedSealNumber;
                         }
                         if (selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '')) {
@@ -1291,37 +1612,76 @@ export default function ManagerCont(){
                         
                         const response = await containersApi.update(selectedRow.containerNumber, updateData);
                         console.log('✅ API response:', response);
+
+                        // Cập nhật số lượng đã xuất seal nếu có nhập số seal mới
+                        if (selectedSealNumber && selectedSealNumber !== selectedRow.sealNumber && selectedSealNumber.trim() !== '') {
+                          try {
+                            // Lấy tên hãng tàu từ selectedShippingLineId hoặc từ selectedRow
+                            let shippingCompanyName = '';
+                            if (selectedShippingLineId) {
+                              const shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId);
+                              shippingCompanyName = shippingLine?.name || '';
+                            } else if (selectedRow.shippingLine) {
+                              shippingCompanyName = selectedRow.shippingLine;
+                            }
+
+                            if (shippingCompanyName) {
+                              console.log('🔄 Updating seal exported quantity for shipping company:', shippingCompanyName);
+                              await sealsApi.incrementExportedQuantity(
+                                shippingCompanyName,
+                                selectedSealNumber,
+                                selectedRow.containerNumber,
+                                selectedRow.id // Sử dụng request ID để lấy booking từ ServiceRequest
+                              );
+                              console.log('✅ Seal exported quantity updated successfully');
+                            }
+                          } catch (sealError: any) {
+                            console.error('❌ Error updating seal exported quantity:', sealError);
+                            // Không hiển thị lỗi seal để không làm gián đoạn quá trình cập nhật container
+                            // Chỉ log để debug
+                          }
+                        }
                         
-                        // Cập nhật local state
-                        const updatedData = tableData.map(item => 
-                          item.containerNumber === selectedRow.containerNumber 
-                            ? { 
-                                ...item, 
-                                customer: selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.name || item.customer : item.customer,
-                                containerQuality: selectedStatus !== selectedRow.containerQuality ? selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN" : item.containerQuality,
-                                sealNumber: selectedSealNumber !== selectedRow.sealNumber ? selectedSealNumber : item.sealNumber,
-                                demDet: selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '') ? selectedDemDet : item.demDet
-                              }
-                            : item
-                        );
-                        setTableData(updatedData);
+                         // Cập nhật local state cho allData - luôn cập nhật tất cả trường
+                         const updatedAllData = allData.map(item => 
+                           item.containerNumber === selectedRow.containerNumber 
+                             ? { 
+                                 ...item, 
+                                 customer: selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.name || '' : item.customer,
+                                 shippingLine: selectedShippingLineId ? shippingLines.find(sl => sl.id === selectedShippingLineId)?.name || '' : item.shippingLine,
+                                 containerType: selectedContainerTypeId ? containerTypes.find(ct => ct.id === selectedContainerTypeId)?.code || '' : item.containerType,
+                                 containerQuality: selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN",
+                                 sealNumber: selectedSealNumber,
+                                 demDet: selectedDemDet
+                               }
+                             : item
+                         );
+                        setAllData(updatedAllData);
                         
-                        if (selectedCustomerId) {
-                          showSuccess(`Cập nhật thông tin thành công! Khách hàng đã được cập nhật.`);
-                        } else {
-                          showSuccess('Cập nhật thông tin thành công!');
+                        const updatedFields = [];
+                        if (selectedCustomerId && selectedCustomerId !== '') updatedFields.push('khách hàng');
+                        if (selectedShippingLineId && selectedShippingLineId !== '') updatedFields.push('hãng tàu');
+                        if (selectedContainerTypeId && selectedContainerTypeId !== '') updatedFields.push('loại container');
+                        if (selectedStatus !== selectedRow.containerQuality) updatedFields.push('trạng thái');
+                        if (selectedSealNumber !== selectedRow.sealNumber) updatedFields.push('số seal');
+                        if (selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '')) updatedFields.push('DEM/DET');
+                        
+                        if (updatedFields.length > 0) {
+                          showSuccess(`Cập nhật thông tin thành công! Đã cập nhật: ${updatedFields.join(', ')}.`, undefined, 2000);
                         }
                       }
                       
                       setIsUpdateModalOpen(false);
                       setSelectedRow(null);
                       setSelectedCustomerId('');
+                      setSelectedShippingLineId('');
+                      setSelectedContainerTypeId('');
                       setSelectedStatus('');
                       setSelectedSealNumber('');
                       setSelectedDemDet('');
                     } catch (error) {
                       console.error('❌ Error updating container:', error);
-                      showError('Có lỗi xảy ra khi cập nhật thông tin!');
+                      showError('Có lỗi xảy ra khi cập nhật thông tin!', undefined, 3000);
                     }
                   }}
                 >
