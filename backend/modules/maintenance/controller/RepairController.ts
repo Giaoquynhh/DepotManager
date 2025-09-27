@@ -10,10 +10,15 @@ export class RepairController {
    */
   async getRepairs(req: AuthRequest, res: Response) {
     try {
-      const { page = 1, limit = 20 } = req.query;
+      const { page = 1, limit = 20, container_no } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
 
       const where: any = {};
+      
+      // Filter theo container_no nếu có
+      if (container_no) {
+        where.container_no = container_no;
+      }
 
       const [repairTickets, total] = await Promise.all([
         prisma.repairTicket.findMany({

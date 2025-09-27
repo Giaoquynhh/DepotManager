@@ -47,22 +47,79 @@ export default function ManagerCont(){
   const routeRefreshKey = useRouteRefresh();
   const [loading, setLoading] = React.useState(false);
   
-  // Map trạng thái ticket -> nhãn tiếng Việt
-  const getTicketStatusLabel = (status?: string) => {
-    if (!status) return '';
+  // Map trạng thái container -> nhãn tiếng Việt (đồng bộ với Maintenance/Repairs)
+  const getContainerStatusLabel = (ticketStatus?: string, containerQuality?: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN') => {
+    // Nếu có containerQuality từ logic xử lý, ưu tiên sử dụng nó
+    if (containerQuality === 'GOOD') return 'Container tốt';
+    if (containerQuality === 'NEED_REPAIR') return 'Cần sửa chữa';
+    
+    // Fallback về logic cũ nếu có ticketStatus
+    if (!ticketStatus) return 'Không xác định';
     const map: Record<string, string> = {
-      PENDING: 'Chờ xử lý',
-      REJECT: 'Từ chối',
-      REJECTED: 'Từ chối',
-      COMPLETE: 'Chấp nhận',
-      COMPLETE_NEEDREPAIR: 'Chấp nhận - cần sửa',
-      COMPLETE_NEED_REPAIR: 'Chấp nhận - cần sửa',
-      CHECKING: 'Đang kiểm tra',
-      PENDING_ACCEPT: 'Chờ xác nhận',
-      REPAIRING: 'Đang sửa chữa',
-      CHECKED: 'Đã kiểm tra'
+      'COMPLETE': 'Container tốt',
+      'COMPLETE_NEEDREPAIR': 'Container xấu có thể sửa chữa',
+      'COMPLETE_NEED_REPAIR': 'Container xấu có thể sửa chữa',
+      'PENDING': 'Chưa kiểm tra',
+      'REJECT': 'Container xấu không thể sửa chữa',
+      'REJECTED': 'Container xấu không thể sửa chữa',
+      // Thêm các trạng thái khác để tương thích
+      'CHECKING': 'Đang kiểm tra',
+      'PENDING_ACCEPT': 'Chờ xác nhận',
+      'REPAIRING': 'Đang sửa chữa',
+      'CHECKED': 'Đã kiểm tra'
+    };
+    return map[ticketStatus] || 'Không xác định';
+  };
+
+  // Map trạng thái -> CSS class cho badge
+  const getStatusBadgeClass = (status?: string, containerQuality?: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN') => {
+    // Nếu có containerQuality từ logic xử lý, ưu tiên sử dụng nó
+    if (containerQuality === 'GOOD') return 'status-hoàn-thành';
+    if (containerQuality === 'NEED_REPAIR') return 'status-cần-sửa-chữa';
+    
+    // Fallback về logic cũ nếu có status
+    if (!status) return 'status-đang-xử-lý';
+    const map: Record<string, string> = {
+      'COMPLETE': 'status-hoàn-thành',
+      'COMPLETE_NEEDREPAIR': 'status-cần-sửa-chữa',
+      'COMPLETE_NEED_REPAIR': 'status-cần-sửa-chữa',
+      'PENDING': 'status-đang-xử-lý',
+      'REJECT': 'status-từ-chối',
+      'REJECTED': 'status-từ-chối',
+      'CHECKING': 'status-đang-xử-lý',
+      'PENDING_ACCEPT': 'status-đang-xử-lý',
+      'REPAIRING': 'status-đang-xử-lý',
+      'CHECKED': 'status-hoàn-thành'
+    };
+    return map[status] || 'status-đang-xử-lý';
+  };
+
+  // Map trạng thái request -> nhãn tiếng Việt
+  const getRequestStatusLabel = (status: string) => {
+    if (!status) return 'Không xác định';
+    const map: Record<string, string> = {
+      'PENDING': 'Thêm mới',
+      'CHECKED': 'Chấp nhận',
+      'GATE_IN': 'Đã vào cổng',
+      'FORKLIFTING': 'Đang hạ container',
+      'IN_YARD': 'Đã hạ thành công',
+      'GATE_OUT': 'Xe đã rời khỏi bãi'
     };
     return map[status] || status;
+  };
+
+  // Map trạng thái request -> CSS class cho badge
+  const getRequestStatusBadgeClass = (status: string) => {
+    if (!status) return 'status-unknown';
+    const map: Record<string, string> = {
+      'PENDING': 'status-đang-xử-lý',
+      'CHECKED': 'status-hoàn-thành',
+      'GATE_IN': 'status-đang-xử-lý',
+      'FORKLIFTING': 'status-đang-xử-lý',
+      'IN_YARD': 'status-hoàn-thành',
+      'GATE_OUT': 'status-hoàn-thành'
+    };
+    return map[status] || 'status-unknown';
   };
   
   // Documents modal states
@@ -234,14 +291,14 @@ export default function ManagerCont(){
         }
       }
 
-      // Xử lý container EMPTY_IN_YARD
+      // Xử lý container EMPTY_IN_YARD - hiển thị "Container tốt" vì không có request
       const emptyInYardData: TableData[] = emptyInYardContainers.map((container: ContainerItem) => ({
         id: `empty_${container.container_no}`, // ID giả để phân biệt
         shippingLine: container.shipping_line?.name || '',
         containerNumber: container.container_no || '',
         containerType: container.container_type?.code || '',
         status: 'EMPTY_IN_YARD',
-        repairTicketStatus: undefined,
+        repairTicketStatus: undefined, // Không có repair ticket cho empty containers
         customer: container.customer?.name || '',
         documents: '',
         documentsCount: 0,
@@ -259,11 +316,18 @@ export default function ManagerCont(){
         slotCode: container.slot_code,
         sealNumber: container.seal_number || '',
         demDet: container.dem_det || '',
-        containerQuality: 'GOOD' as const
+        containerQuality: 'GOOD' as const // Không có request nên hiển thị "Container tốt"
       }));
 
       const transformedData: TableData[] = await Promise.all(
         requests.map(async (request: any) => {
+          console.log(`🔍 Processing container: ${request.container_no} (ID: ${request.id})`);
+          console.log(`📋 Request details:`, {
+            type: request.type,
+            status: request.status,
+            container_no: request.container_no
+          });
+          
           // Số ảnh kiểm tra: chỉ tính cho IMPORT bằng repair ticket
           let repairImagesCount = 0;
           let repairTicketId = '';
@@ -273,20 +337,55 @@ export default function ManagerCont(){
           let repairTicketStatus: string | undefined = undefined;
           let demDetValue = '';
           
-          // Có thể dùng để fallback khi không có ticket
-          const containerFromReports = emptyInYardContainers.find(c => c.container_no === request.container_no);
+          // Không sử dụng emptyInYardContainers làm fallback cho request containers
+          // vì chúng là hai loại container khác nhau
           
           if (request.type === 'IMPORT') {
             // Với IMPORT: lấy DEM/DET từ request, nếu không có thì hiển thị "Không có"
             demDetValue = request.dem_det || request.demDet || 'Không có';
             
-            // Luôn ưu tiên lấy từ maintenanceApi (trạng thái mới nhất), chỉ fallback sang reports nếu không có ticket
+            // Luôn ưu tiên lấy từ maintenanceApi (trạng thái mới nhất)
             try {
+              console.log(`🔧 Fetching repair tickets for container: ${request.container_no}`);
+              console.log(`🔧 API call: maintenanceApi.listRepairs({ container_no: '${request.container_no}', limit: 10 })`);
+              
+              // Debug: Kiểm tra token
+              const token = localStorage.getItem('token');
+              const refreshToken = localStorage.getItem('refresh_token');
+              const userId = localStorage.getItem('user_id');
+              console.log(`🔑 Auth tokens:`, {
+                hasToken: !!token,
+                hasRefreshToken: !!refreshToken,
+                hasUserId: !!userId,
+                tokenLength: token?.length || 0
+              });
+              
               const repairResponse = await maintenanceApi.listRepairs({
                 container_no: request.container_no,
                 limit: 10
               });
+              
+              console.log(`🔍 Raw repair response for ${request.container_no}:`, repairResponse);
+              console.log(`🔍 Response type:`, typeof repairResponse);
+              console.log(`🔍 Response has data:`, !!repairResponse?.data);
+              console.log(`🔍 Response data type:`, typeof repairResponse?.data);
+              console.log(`🔍 Response data is array:`, Array.isArray(repairResponse?.data));
+              
+              // Debug: Kiểm tra chi tiết response
+              if (repairResponse?.data) {
+                console.log(`🔍 Full response data for ${request.container_no}:`, JSON.stringify(repairResponse.data, null, 2));
+              } else {
+                console.log(`❌ No data in response for ${request.container_no}`);
+              }
+              
               const tickets = Array.isArray(repairResponse?.data) ? repairResponse.data : [];
+              console.log(`📋 Found ${tickets.length} repair tickets for ${request.container_no}:`, tickets.map(t => ({ 
+                id: t.id, 
+                status: t.status, 
+                container_no: t.container_no,
+                createdAt: t.createdAt,
+                updatedAt: t.updatedAt
+              })));
               if (tickets.length > 0) {
                 // Xếp hạng trạng thái để tie-break khi thiếu/giống thời gian
                 const statusPriority: Record<string, number> = {
@@ -313,28 +412,52 @@ export default function ManagerCont(){
                 const latest = tickets[0];
                 repairTicketId = latest.id;
                 repairTicketStatus = latest.status;
-                containerQuality = repairTicketStatus === 'COMPLETE' ? 'GOOD' : 'NEED_REPAIR';
+                // Áp dụng logic: if repairTicket.status == COMPLETE then "Container tốt" else "Cần sửa chữa"
+                // Chỉ áp dụng cho IMPORT requests
+                containerQuality = (repairTicketStatus === 'COMPLETE') ? 'GOOD' : 'NEED_REPAIR';
+                console.log(`✅ Selected repair ticket for ${request.container_no}: ID=${latest.id}, Status=${latest.status}, Quality=${containerQuality}`);
                 try {
                   const imgs = await maintenanceApi.getRepairImages(latest.id);
                   repairImagesCount = Array.isArray(imgs?.data) ? imgs.data.length : 0;
                 } catch {}
-              } else if (containerFromReports?.repair_ticket?.status) {
-                repairTicketStatus = containerFromReports.repair_ticket.status;
-                containerQuality = repairTicketStatus === 'COMPLETE' ? 'GOOD' : 'NEED_REPAIR';
               } else {
-                // Không có thông tin, giữ UNKNOWN để UI hiển thị mặc định
-                containerQuality = 'UNKNOWN';
+                // Không có repair ticket cho IMPORT, hiển thị "Cần sửa chữa" theo yêu cầu
+                containerQuality = 'NEED_REPAIR';
+                repairTicketStatus = undefined; // Không set status khi không có repair ticket
+                console.log(`⚠️ No repair tickets found for ${request.container_no}, using NEED_REPAIR status`);
+                console.log(`⚠️ This means the container will show as "CẦN SỬA CHỮA"`);
               }
-            } catch {
-              if (containerFromReports?.repair_ticket?.status) {
-                repairTicketStatus = containerFromReports.repair_ticket.status;
-                containerQuality = repairTicketStatus === 'COMPLETE' ? 'GOOD' : 'NEED_REPAIR';
-              }
+            } catch (error) {
+              // Lỗi khi lấy repair ticket cho IMPORT, hiển thị "Cần sửa chữa" theo yêu cầu
+              containerQuality = 'NEED_REPAIR';
+              repairTicketStatus = undefined; // Không set status khi có lỗi
+              console.log(`❌ Error fetching repair tickets for ${request.container_no}:`, error);
+              console.log(`❌ Error details:`, {
+                message: error.message,
+                stack: error.stack,
+                response: error.response?.data,
+                status: error.response?.status,
+                config: {
+                  url: error.config?.url,
+                  method: error.config?.method,
+                  headers: error.config?.headers
+                }
+              });
+              console.log(`❌ Using NEED_REPAIR status due to error`);
+              console.log(`❌ This means the container will show as "CẦN SỬA CHỮA"`);
             }
           } else if (request.type === 'EXPORT') {
-            // Với EXPORT: mặc định là "Không có"
+            // Với EXPORT: mặc định là "Container tốt" (không áp dụng logic repair ticket)
             demDetValue = 'Không có';
             containerQuality = 'GOOD';
+            repairTicketStatus = undefined; // Không set repair ticket status cho EXPORT
+            console.log(`📦 EXPORT container ${request.container_no}: using GOOD status (no repair ticket logic)`);
+          } else {
+            // Không có request hoặc loại request không xác định: hiển thị "Container tốt"
+            demDetValue = 'Không có';
+            containerQuality = 'GOOD';
+            repairTicketStatus = undefined; // Không set repair ticket status
+            console.log(`❓ Unknown request type for ${request.container_no}: using GOOD status`);
           }
 
           // Đếm chứng từ thực tế của request (đồng nhất với modal)
@@ -360,7 +483,7 @@ export default function ManagerCont(){
             } catch {}
           }
 
-          return {
+          const result = {
             id: request.id,
             shippingLine: request.shipping_line?.name || '',
             containerNumber: request.container_no || '',
@@ -382,17 +505,69 @@ export default function ManagerCont(){
             blockCode: blockCodeCalc,
             slotCode: slotCodeCalc,
             sealNumber: request.seal_number || request.seal_no || request.seal || '',
-            demDet: demDetValue
-            ,containerQuality
-            ,repairTicketStatus
+            demDet: demDetValue,
+            containerQuality,
+            repairTicketStatus
           };
+          
+          console.log(`📊 Final result for ${request.container_no}:`, {
+            containerNumber: result.containerNumber,
+            status: result.status,
+            repairTicketStatus: result.repairTicketStatus,
+            containerQuality: result.containerQuality,
+            repairTicketId: result.repairTicketId
+          });
+          
+          // Debug: Kiểm tra kết quả cuối cùng
+          const expectedLabel = getContainerStatusLabel(result.repairTicketStatus, result.containerQuality);
+          console.log(`🎯 Container ${request.container_no} will display as:`, {
+            repairTicketStatus: result.repairTicketStatus,
+            containerQuality: result.containerQuality,
+            expectedLabel: expectedLabel
+          });
+          
+          return result;
         })
       );
 
-      // Kết hợp dữ liệu từ requests và EMPTY_IN_YARD containers
-      const allData = [...transformedData, ...emptyInYardData];
+      // Lọc container theo trạng thái request: chỉ hiển thị CHECKED, FORKLIFTING, IN_YARD, GATE_OUT
+      const allowedStatuses = ['CHECKED', 'FORKLIFTING', 'IN_YARD', 'GATE_OUT'];
+      const filteredTransformedData = transformedData.filter(request => 
+        allowedStatuses.includes(request.status)
+      );
+      
+      console.log('🔍 Filtering containers by request status:');
+      console.log('📊 Total requests before filter:', transformedData.length);
+      console.log('📊 Total requests after filter:', filteredTransformedData.length);
+      console.log('📋 Filtered requests by status:', filteredTransformedData.reduce((acc, req) => {
+        acc[req.status] = (acc[req.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
+      
+      // Debug: Log chi tiết từng container sau khi xử lý
+      console.log('🔍 Detailed container data after processing:');
+      filteredTransformedData.forEach(container => {
+        console.log(`Container ${container.containerNumber}:`, {
+          repairTicketStatus: container.repairTicketStatus,
+          containerQuality: container.containerQuality,
+          status: container.status
+        });
+        
+        // Debug: Kiểm tra logic hiển thị
+        const statusLabel = getContainerStatusLabel(container.repairTicketStatus, container.containerQuality);
+        
+        console.log(`🎯 Container ${container.containerNumber} display logic:`, {
+          repairTicketStatus: container.repairTicketStatus,
+          containerQuality: container.containerQuality,
+          statusLabel: statusLabel,
+          willShowAs: statusLabel
+        });
+      });
+
+      // Kết hợp dữ liệu từ filtered requests và EMPTY_IN_YARD containers
+      const allData = [...filteredTransformedData, ...emptyInYardData];
       console.log('📊 Total data after combining:', allData.length);
-      console.log('📋 ServiceRequest data:', transformedData.length);
+      console.log('📋 ServiceRequest data:', filteredTransformedData.length);
       console.log('📦 EMPTY_IN_YARD data:', emptyInYardData.length);
       setTableData(allData);
     } catch (error) {
@@ -612,6 +787,11 @@ export default function ManagerCont(){
           color: #92400e;
         }
 
+        .status-unknown {
+          background: #f3f4f6;
+          color: #6b7280;
+        }
+
 
         .action-buttons {
           display: flex;
@@ -780,6 +960,7 @@ export default function ManagerCont(){
                       <th>Số Cont</th>
                       <th>Loại Cont</th>
                       <th>Trạng thái</th>
+                      <th>Trạng thái Request</th>
                       <th>Hình ảnh</th>
                       <th>Vị trí</th>
                       <th>Số seal</th>
@@ -791,7 +972,7 @@ export default function ManagerCont(){
                   <tbody>
                     {tableData.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="no-data">
+                        <td colSpan={11} className="no-data">
                           Không có dữ liệu
                         </td>
                       </tr>
@@ -802,17 +983,26 @@ export default function ManagerCont(){
                           <td>{row.containerNumber}</td>
                           <td>{row.containerType}</td>
                           <td>
-                            {row.repairTicketStatus ? (
-                              <span className={`status-badge ${row.repairTicketStatus === 'COMPLETE' ? 'status-hoàn-thành' : 'status-đang-xử-lý'}`}>
-                                {getTicketStatusLabel(row.repairTicketStatus)}
-                              </span>
-                            ) : (
-                              row.containerQuality === 'NEED_REPAIR' ? (
-                                <span className="status-badge status-đang-xử-lý">Cần sửa chữa</span>
-                              ) : (
-                                <span className="status-badge status-hoàn-thành">Container tốt</span>
-                              )
-                            )}
+                            {(() => {
+                              const statusLabel = getContainerStatusLabel(row.repairTicketStatus, row.containerQuality);
+                              const badgeClass = getStatusBadgeClass(row.repairTicketStatus, row.containerQuality);
+                              console.log(`🎨 Rendering status for ${row.containerNumber}:`, {
+                                repairTicketStatus: row.repairTicketStatus,
+                                containerQuality: row.containerQuality,
+                                statusLabel: statusLabel,
+                                badgeClass: badgeClass
+                              });
+                              return (
+                                <span className={`status-badge ${badgeClass}`}>
+                                  {statusLabel}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td>
+                            <span className={`status-badge ${getRequestStatusBadgeClass(row.status)}`}>
+                              {getRequestStatusLabel(row.status)}
+                            </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
