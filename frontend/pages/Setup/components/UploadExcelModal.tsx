@@ -90,9 +90,9 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
     const sampleData = context === 'priceLists'
       ? [
           ['STT', 'Mã dịch vụ', 'Tên dịch vụ', 'Loại hình', 'Giá', 'Ghi chú'],
-          ['1', 'DV001', 'Nâng container 20GP lên xe', 'Nâng', '350000', 'Thời gian thực hiện: 15-20 phút'],
-          ['2', 'DV002', 'Hạ container 40GP xuống bãi', 'Hạ', '450000', 'Bao gồm vận chuyển đến vị trí'],
-          ['3', 'DV003', 'Tôn sửa cửa container', 'Tồn kho', '800000', 'Sửa chữa cửa hỏng, thay thế bản lề']
+          ['1', 'DV001', 'Nâng container 20GP lên xe', 'Nâng', '350,000 VND', 'Thời gian thực hiện: 15-20 phút'],
+          ['2', 'DV002', 'Hạ container 40GP xuống bãi', 'Hạ', '450,000 VND', 'Bao gồm vận chuyển đến vị trí'],
+          ['3', 'DV003', 'Tôn sửa cửa container', 'Tồn kho', '800,000 VND', 'Sửa chữa cửa hỏng, thay thế bản lề']
         ]
       : [
           ['STT', 'Mã hãng tàu', 'Tên hãng tàu', 'EIR', 'Ghi chú'],
@@ -310,11 +310,12 @@ export const UploadExcelModal: React.FC<UploadExcelModalProps> = ({
               {context === 'priceLists' ? (
                 <>
                   <li>{translations[language].code ? 'File phải có định dạng .xlsx hoặc .xls' : 'File must be in .xlsx or .xls format'}</li>
-                  <li>{translations[language].code ? 'Cột 1: "Mã dịch vụ" (bắt buộc, duy nhất)' : 'Column 1: "Service Code" (required, unique)'}</li>
-                  <li>{translations[language].code ? 'Cột 2: "Tên dịch vụ" (bắt buộc)' : 'Column 2: "Service Name" (required)'}</li>
-                  <li>{translations[language].code ? 'Cột 3: "Loại hình" (bắt buộc, ví dụ: Nâng/Hạ/Tồn kho)' : 'Column 3: "Type" (required, e.g., Nâng/Hạ/Tồn kho)'}</li>
-                  <li>{translations[language].code ? 'Cột 4: "Giá" (bắt buộc, số; có thể chứa dấu chấm/phẩy hoặc chữ VND)' : 'Column 4: "Price" (required, number; dots/commas or VND allowed)'}</li>
-                  <li>{translations[language].code ? 'Cột 5: "Ghi chú" (tùy chọn)' : 'Column 5: "Note" (optional)'}</li>
+                  <li>{translations[language].code ? 'Cột A: "STT" (tùy chọn, có thể có hoặc không)' : 'Column A: "STT" (optional, may or may not be present)'}</li>
+                  <li>{translations[language].code ? 'Cột B: "Mã dịch vụ" (bắt buộc, duy nhất)' : 'Column B: "Service Code" (required, unique)'}</li>
+                  <li>{translations[language].code ? 'Cột C: "Tên dịch vụ" (bắt buộc)' : 'Column C: "Service Name" (required)'}</li>
+                  <li>{translations[language].code ? 'Cột D: "Loại hình" (bắt buộc, ví dụ: Nâng/Hạ/Tồn kho)' : 'Column D: "Type" (required, e.g., Nâng/Hạ/Tồn kho)'}</li>
+                  <li>{translations[language].code ? 'Cột E: "Giá" (bắt buộc, số; có thể chứa dấu chấm/phẩy hoặc chữ VND)' : 'Column E: "Price" (required, number; dots/commas or VND allowed)'}</li>
+                  <li>{translations[language].code ? 'Cột F: "Ghi chú" (tùy chọn)' : 'Column F: "Note" (optional)'}</li>
                 </>
               ) : (
                 <>

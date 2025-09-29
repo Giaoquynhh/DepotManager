@@ -59,10 +59,17 @@ export class YardService {
 	async getStackMap() {
 		const now = new Date();
 		
-		// Lấy danh sách container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT để loại bỏ khỏi yard
+		// Lấy danh sách container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT (EXPORT) để loại bỏ khỏi yard
+		// IMPORT với GATE_OUT: xe rời khỏi bãi nhưng container ở lại, không nên lọc bỏ
 		const removedContainers = await prisma.serviceRequest.findMany({
 			where: { 
-				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] },
+				OR: [
+					{ status: { in: ['IN_CAR', 'DONE_LIFTING'] } },
+					{ 
+						status: 'GATE_OUT',
+						type: 'EXPORT' // Chỉ lọc bỏ EXPORT với GATE_OUT, giữ lại IMPORT với GATE_OUT
+					}
+				],
 				container_no: { not: null }
 			},
 			select: { container_no: true }
@@ -116,10 +123,17 @@ export class YardService {
 		});
 		if (!slot) throw new Error('Slot không tồn tại');
 		
-		// Lọc bỏ container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT khỏi placements
+		// Lọc bỏ container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT (EXPORT) khỏi placements
+		// IMPORT với GATE_OUT: xe rời khỏi bãi nhưng container ở lại, không nên lọc bỏ
 		const removedContainers = await prisma.serviceRequest.findMany({
 			where: { 
-				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] },
+				OR: [
+					{ status: { in: ['IN_CAR', 'DONE_LIFTING'] } },
+					{ 
+						status: 'GATE_OUT',
+						type: 'EXPORT' // Chỉ lọc bỏ EXPORT với GATE_OUT, giữ lại IMPORT với GATE_OUT
+					}
+				],
 				container_no: { not: null }
 			},
 			select: { container_no: true }
@@ -138,11 +152,18 @@ export class YardService {
 	}
 
 	async findContainerLocation(container_no: string) {
-		// Kiểm tra xem container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT không
+		// Kiểm tra xem container có trạng thái IN_CAR, DONE_LIFTING hoặc GATE_OUT (EXPORT) không
+		// IMPORT với GATE_OUT: xe rời khỏi bãi nhưng container ở lại, vẫn có thể tìm thấy vị trí
 		const removedRequest = await prisma.serviceRequest.findFirst({
 			where: { 
 				container_no,
-				status: { in: ['IN_CAR', 'DONE_LIFTING', 'GATE_OUT'] }
+				OR: [
+					{ status: { in: ['IN_CAR', 'DONE_LIFTING'] } },
+					{ 
+						status: 'GATE_OUT',
+						type: 'EXPORT' // Chỉ lọc bỏ EXPORT với GATE_OUT, giữ lại IMPORT với GATE_OUT
+					}
+				]
 			}
 		});
 		
@@ -231,6 +252,15 @@ export class YardService {
 			}
 		}
 		
+		// Đặc biệt xử lý container có trạng thái GATE_OUT - tự động chuyển về IN_YARD khi hạ xuống bãi
+		const latestRequest = await prisma.serviceRequest.findFirst({
+			where: { container_no },
+			orderBy: { createdAt: 'desc' }
+		});
+		
+		if (latestRequest && latestRequest.status === 'GATE_OUT') {
+		}
+		
 		const now = new Date();
 		const updated = await prisma.$transaction(async (tx) => {
 			const existing = await tx.yardPlacement.findUnique({ where: { slot_tier_unique: { slot_id, tier } } });
@@ -270,13 +300,39 @@ export class YardService {
 				});
 			}
 			
+			// Đặc biệt xử lý: Chỉ với IMPORT (HẠ), nếu container có trạng thái GATE_OUT, tự động chuyển về IN_YARD
+			// EXPORT (NÂNG): GATE_OUT có nghĩa là container thực sự ra khỏi bãi, không chuyển về IN_YARD
+			if (latestRequest && latestRequest.status === 'GATE_OUT' && latestRequest.type === 'IMPORT') {
+				console.log(`🔄 [Auto-fix] Container ${container_no} là IMPORT (HẠ), chuyển từ GATE_OUT về IN_YARD`);
+				await tx.serviceRequest.update({
+					where: { id: latestRequest.id },
+					data: {
+						status: 'IN_YARD',
+						history: {
+							...(latestRequest.history as any || {}),
+							container_placed: {
+								previous_status: 'GATE_OUT',
+								placed_at: now.toISOString(),
+								placed_by: actor._id,
+								yard: 'N/A', // Slot info không có trong transaction này
+								block: 'N/A',
+								slot: 'N/A',
+								reason: 'Container IMPORT (HẠ) được hạ xuống bãi, tự động chuyển từ GATE_OUT về IN_YARD'
+							}
+						}
+					}
+				});
+			} else if (latestRequest && latestRequest.status === 'GATE_OUT' && latestRequest.type === 'EXPORT') {
+				console.log(`⚠️ [Skip] Container ${container_no} là EXPORT (NÂNG), GATE_OUT có nghĩa là đã ra khỏi bãi, không chuyển về IN_YARD`);
+			}
+			
 
 			
 			if (isSystemAdmin) {
-				// SystemAdmin: Logic mới - chỉ tạo ForkliftTask khi container có trạng thái "Đang chờ sắp xếp"
-				console.log(`🔍 [SystemAdmin] Processing container ${container_no} for forklift task creation`);
+				// SystemAdmin: Logic mới - tạo ServiceRequest nếu chưa có, sau đó xử lý ForkliftTask
+				console.log(`🔍 [SystemAdmin] Processing container ${container_no} for SystemAdmin placement`);
 				
-				const latestRequest = await tx.serviceRequest.findFirst({
+				let latestRequest = await tx.serviceRequest.findFirst({
 					where: { container_no },
 					orderBy: { createdAt: 'desc' }
 				});
@@ -284,34 +340,14 @@ export class YardService {
 				console.log(`🔍 [SystemAdmin] Latest request for ${container_no}:`, latestRequest ? {
 					id: latestRequest.id,
 					status: latestRequest.status,
+					type: latestRequest.type,
 					container_no: latestRequest.container_no,
 					createdAt: latestRequest.createdAt
 				} : 'No request found');
 
-				// Kiểm tra xem container có trạng thái "Đang chờ sắp xếp" không
-				// Container đang chờ sắp xếp nếu có ServiceRequest với status = 'COMPLETED'
-				const isWaitingForPlacement = latestRequest && latestRequest.status === 'COMPLETED';
-				console.log(`🔍 [SystemAdmin] Is waiting for placement (ServiceRequest): ${isWaitingForPlacement}`);
-				
-				// Nếu không có ServiceRequest COMPLETED, kiểm tra RepairTicket
-				let isWaitingFromRepair = false;
-				if (!isWaitingForPlacement) {
-					const repairTicket = await tx.repairTicket.findFirst({
-						where: { 
-							container_no
-						},
-						orderBy: { updatedAt: 'desc' }
-					});
-					isWaitingFromRepair = !!repairTicket;
-					console.log(`🔍 [SystemAdmin] Is waiting for placement (RepairTicket): ${isWaitingFromRepair}`);
-				}
-				
-				const shouldCreateForkliftTask = isWaitingForPlacement || isWaitingFromRepair;
-				console.log(`🔍 [SystemAdmin] Should create forklift task: ${shouldCreateForkliftTask}`);
-
-				if (shouldCreateForkliftTask) {
-					// Container có trạng thái "Đang chờ sắp xếp" - tạo ForkliftTask
-					console.log(`✅ [SystemAdmin] Creating forklift task for ${container_no}`);
+				if (latestRequest) {
+					// SystemAdmin với ServiceRequest: Tạo ForkliftTask để hiển thị trong LowerContainer/Forklift
+					console.log(`💡 [SystemAdmin] Container ${container_no} có ServiceRequest, tạo ForkliftTask`);
 					await tx.forkliftTask.create({
 						data: {
 							container_no,
@@ -320,30 +356,27 @@ export class YardService {
 							created_by: actor._id
 						}
 					});
-
-					// Cập nhật request status từ COMPLETED sang POSITIONED (nếu có ServiceRequest)
-					if (isWaitingForPlacement && latestRequest) {
-						await tx.serviceRequest.update({
-							where: { id: latestRequest.id },
-							data: { 
-								status: 'POSITIONED',
-								updatedAt: now
-							}
-						});
-						console.log(`✅ [SystemAdmin] Updated request status to POSITIONED for ${container_no}`);
-					}
+					console.log(`✅ [SystemAdmin] Created ForkliftTask for ${container_no}`);
 				} else {
-					// Container không có trạng thái "Đang chờ sắp xếp" - không tạo ForkliftTask
-					console.log(`❌ [SystemAdmin] NOT creating forklift task for ${container_no} - not waiting for placement`);
-					// Chỉ tạo ContainerMeta nếu chưa tồn tại
-					await tx.containerMeta.upsert({
+					// SystemAdmin không có ServiceRequest: Đặt trực tiếp vào bãi
+					console.log(`💡 [SystemAdmin] Container ${container_no} không có ServiceRequest, đặt trực tiếp vào bãi`);
+					
+					// SystemAdmin tạo Container với trạng thái EMPTY_IN_YARD
+					await tx.container.upsert({
 						where: { container_no },
-						update: { updatedAt: now },
+						update: { 
+							status: 'EMPTY_IN_YARD',
+							updatedAt: now 
+						},
 						create: { 
 							container_no,
+							status: 'EMPTY_IN_YARD',
+							created_by: actor._id,
+							createdAt: now,
 							updatedAt: now
 						}
 					});
+					console.log(`✅ [SystemAdmin] Created/Updated Container ${container_no} with status EMPTY_IN_YARD`);
 				}
 			} else {
 				// Non-SystemAdmin: Giữ nguyên logic cũ - luôn tạo ForkliftTask
@@ -424,13 +457,24 @@ export class YardService {
 				return { canPlace: false, reason: 'Container chưa được kiểm tra (COMPLETED)' };
 			}
 			
-			// Kiểm tra container có trạng thái DONE_LIFTING hoặc GATE_OUT không (đã rời khỏi bãi)
+			// Kiểm tra container có trạng thái DONE_LIFTING không (đã rời khỏi bãi)
 			if (container.service_status === 'DONE_LIFTING') {
 				return { canPlace: false, reason: 'Container đã được nâng ra khỏi bãi (DONE_LIFTING), không thể đặt lại vào yard' };
 			}
 			
+			// GATE_OUT: Chỉ cho phép IMPORT (HẠ) được đặt vào yard, EXPORT (NÂNG) không được
 			if (container.service_status === 'GATE_OUT') {
-				return { canPlace: false, reason: 'Container đã ra khỏi cổng (GATE_OUT), không thể đặt lại vào yard' };
+				// Cần kiểm tra type của request để phân biệt IMPORT vs EXPORT
+				const requestType = await prisma.serviceRequest.findFirst({
+					where: { container_no },
+					orderBy: { createdAt: 'desc' },
+					select: { type: true }
+				});
+				
+				if (requestType?.type === 'EXPORT') {
+					return { canPlace: false, reason: 'Container EXPORT (NÂNG) đã ra khỏi cổng (GATE_OUT), không thể đặt lại vào yard' };
+				}
+				// IMPORT (HẠ) với GATE_OUT được phép đặt vào yard (sẽ tự động chuyển về IN_YARD)
 			}
 			
 			// Kiểm tra container đã được đặt vào yard chưa
@@ -773,7 +817,9 @@ export class YardService {
             LEFT JOIN latest_sr ls ON ls.container_no = yp.container_no
             WHERE yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
               AND yp.container_no ILIKE $1
-              AND (ls.service_status IS NULL OR ls.service_status NOT IN ('IN_CAR', 'DONE_LIFTING', 'GATE_OUT'))
+              AND (ls.service_status IS NULL 
+                   OR ls.service_status NOT IN ('IN_CAR', 'DONE_LIFTING') 
+                   OR (ls.service_status = 'GATE_OUT' AND ls.type = 'IMPORT'))
               ${shippingLineId ? 'AND (ls.shipping_line_id = $2)' : ''}
             ORDER BY yp.container_no ASC
             LIMIT ${limit}

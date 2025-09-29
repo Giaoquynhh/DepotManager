@@ -25,6 +25,7 @@ interface GateRequest {
   };
   docs: any[];
   attachments: any[];
+  isPaid?: boolean;          // Trạng thái thanh toán
 }
 
 interface GateRequestTableProps {
@@ -254,6 +255,7 @@ export default function GateRequestTable({ requests, loading, onRefresh, showSuc
                     requestType={request.type}
                     currentStatus={request.status}
                     onActionSuccess={onRefresh}
+                    isPaid={request.isPaid}
                     showSuccess={showSuccess}
                     showError={showError}
                   />

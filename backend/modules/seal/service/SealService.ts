@@ -243,7 +243,8 @@ export class SealService {
           Number(seal.unit_price),
           userId,
           containerNumber,
-          requestId
+          requestId,
+          false // Không tự động tạo invoice khi sử dụng seal
         );
         console.log(`✅ Đã cập nhật pricing cho booking: ${bookingNumber}, container: ${containerNumber}`);
       } catch (pricingError) {

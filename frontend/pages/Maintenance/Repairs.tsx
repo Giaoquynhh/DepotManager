@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from '@hooks/useTranslation';
 import { api } from '@services/api';
+import { useToast } from '@hooks/useToastHook';
 
 interface RepairTicket {
   id: string;
@@ -35,6 +36,7 @@ interface RepairTicket {
 export default function RepairsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { showSuccess, showError, ToastContainer } = useToast();
   const [repairs, setRepairs] = useState<RepairTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -134,12 +136,14 @@ export default function RepairsPage() {
   const deleteRepairImage = async (imageId: string) => {
     try {
       await api.delete(`/maintenance/repairs/images/${imageId}`);
+      showSuccess('Xóa ảnh kiểm tra thành công!');
       if (repairImagesModal.ticket) {
         await openRepairImages(repairImagesModal.ticket);
         fetchRepairs();
       }
     } catch (e) {
       console.error(e);
+      showError('Có lỗi xảy ra khi xóa ảnh kiểm tra');
     }
   };
 
@@ -164,10 +168,12 @@ export default function RepairsPage() {
     uploadModal.files.forEach(f => form.append('files', f));
     try {
       await api.post(`/maintenance/repairs/${uploadModal.ticket.id}/images`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      showSuccess('Tải ảnh kiểm tra thành công!');
       setUploadModal({ open: false, files: [], previews: [] });
       fetchRepairs();
     } catch (e) {
       console.error('Upload repair images error:', e);
+      showError('Có lỗi xảy ra khi tải ảnh kiểm tra');
     }
   };
 
@@ -241,9 +247,11 @@ export default function RepairsPage() {
 
       // Đóng modal và refresh danh sách
       setAcceptModal({ open: false, status: 'GOOD', files: [], previews: [] });
+      showSuccess('Chấp nhận phiếu sửa chữa thành công!');
       fetchRepairs();
     } catch (e) {
       console.error('Accept container error:', e);
+      showError('Có lỗi xảy ra khi chấp nhận phiếu sửa chữa');
     }
   };
 
@@ -265,21 +273,21 @@ export default function RepairsPage() {
 
         <Card>
           <div style={{ overflow: 'auto' }}>
-            <table className="table" style={{ width: '100%', minWidth: '1400px' }}>
+            <table className="table" style={{ width: '100%', minWidth: '1800px' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Số yêu cầu</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Số cont</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Loại cont</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Số xe</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Tài xế</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>SDT tài xế</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Trạng thái phiếu</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Trạng thái cont</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Thời gian bắt đầu</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Thời gian kết thúc</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Hình ảnh</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Hành động</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '150px', whiteSpace: 'nowrap' }}>Số yêu cầu</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>Số cont</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '100px', whiteSpace: 'nowrap' }}>Loại cont</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>Số xe</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '100px', whiteSpace: 'nowrap' }}>Tài xế</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>SDT tài xế</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '180px', whiteSpace: 'nowrap' }}>Trạng thái phiếu</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '200px', whiteSpace: 'nowrap' }}>Trạng thái cont</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '160px', whiteSpace: 'nowrap' }}>Thời gian bắt đầu</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '160px', whiteSpace: 'nowrap' }}>Thời gian kết thúc</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', minWidth: '300px', whiteSpace: 'nowrap' }}>Hình ảnh</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', minWidth: '200px', whiteSpace: 'nowrap' }}>Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -308,25 +316,25 @@ export default function RepairsPage() {
                 ) : (
                   repairs.map((repair) => (
                     <tr key={repair.id}>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '150px', whiteSpace: 'nowrap' }}>
                         {repair.serviceRequest?.request_no || repair.code}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '120px', whiteSpace: 'nowrap' }}>
                         {repair.container_no || repair.serviceRequest?.container_no || '-'}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '100px', whiteSpace: 'nowrap' }}>
                         {repair.serviceRequest?.container_type?.code || '-'}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '120px', whiteSpace: 'nowrap' }}>
                         {repair.serviceRequest?.license_plate || '-'}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '100px', whiteSpace: 'nowrap' }}>
                         {repair.serviceRequest?.driver_name || '-'}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '120px', whiteSpace: 'nowrap' }}>
                         {repair.serviceRequest?.driver_phone || '-'}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '180px', whiteSpace: 'nowrap' }}>
                         <span style={{
                           padding: '4px 8px',
                           borderRadius: '4px',
@@ -338,7 +346,7 @@ export default function RepairsPage() {
                           {getTicketStatusLabel(repair.status)}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '200px', whiteSpace: 'nowrap' }}>
                         <span style={{
                           padding: '4px 8px',
                           borderRadius: '4px',
@@ -350,32 +358,32 @@ export default function RepairsPage() {
                           {getContainerStatusLabel(repair.serviceRequest, repair.status)}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '160px', whiteSpace: 'nowrap' }}>
                         {repair.status === 'PENDING' ? 'Chưa có' : new Date(repair.updatedAt).toLocaleString('vi-VN')}
                       </td>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '12px 16px', minWidth: '160px', whiteSpace: 'nowrap' }}>
                         {repair.endTime ? new Date(repair.endTime).toLocaleString('vi-VN') : 'Chưa có'}
                       </td>
-                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'center', minWidth: '300px' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                           {/* Ảnh của RepairTicket */}
-                          <button onClick={() => openRepairImages(repair)} style={{ padding: '4px 8px', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontSize: '12px', border: 'none', cursor: 'pointer' }}>
+                          <button onClick={() => openRepairImages(repair)} style={{ padding: '4px 8px', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontSize: '12px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             {(repair.imagesCount ?? 0)} ảnh kiểm tra
                           </button>
                           {/* Ảnh chứng từ của Request */}
-                          <button onClick={() => openRequestDocs(repair)} style={{ padding: '4px 8px', backgroundColor: '#e0e7ff', color: '#2563eb', borderRadius: '4px', fontSize: '12px', border: 'none', cursor: 'pointer' }}>
+                          <button onClick={() => openRequestDocs(repair)} style={{ padding: '4px 8px', backgroundColor: '#e0e7ff', color: '#2563eb', borderRadius: '4px', fontSize: '12px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             {(repair.serviceRequest?.attachments?.length || 0)} ảnh chứng từ
                           </button>
                           {/* Nút upload ảnh RepairTicket */}
                           {!(repair.status === 'COMPLETE' || repair.status === 'COMPLETE_NEEDREPAIR' || repair.status === 'COMPLETE_NEED_REPAIR' || repair.status === 'REJECT' || repair.status === 'REJECTED') && (
-                            <button onClick={() => openUpload(repair)} style={{ padding: '4px 8px', backgroundColor: '#10b981', color: 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', border: 'none' }}>
+                            <button onClick={() => openUpload(repair)} style={{ padding: '4px 8px', backgroundColor: '#10b981', color: 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', border: 'none', whiteSpace: 'nowrap' }}>
                               Tải ảnh
                             </button>
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'center', minWidth: '200px' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           {(repair.status === 'REJECT' || repair.status === 'REJECTED' || repair.status === 'COMPLETE' || repair.status === 'COMPLETE_NEEDREPAIR' || repair.status === 'COMPLETE_NEED_REPAIR') ? (
                             <button
                               style={{
@@ -385,14 +393,19 @@ export default function RepairsPage() {
                                 border: 'none',
                                 borderRadius: '4px',
                                 cursor: 'pointer',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                whiteSpace: 'nowrap'
                               }}
                               onClick={async () => {
                                 if (!window.confirm('Bạn có chắc muốn xóa phiếu sửa chữa này?')) return;
                                 try {
                                   await api.delete(`/maintenance/repairs/${repair.id}`);
+                                  showSuccess('Xóa phiếu sửa chữa thành công!');
                                   fetchRepairs();
-                                } catch (e) { console.error(e); }
+                                } catch (e) { 
+                                  console.error(e);
+                                  showError('Có lỗi xảy ra khi xóa phiếu sửa chữa');
+                                }
                               }}
                             >Xóa</button>
                           ) : (
@@ -405,13 +418,18 @@ export default function RepairsPage() {
                                   border: 'none',
                                   borderRadius: '4px',
                                   cursor: 'pointer',
-                                  fontSize: '12px'
+                                  fontSize: '12px',
+                                  whiteSpace: 'nowrap'
                                 }}
                                 onClick={async () => {
                                   try {
                                     await api.post(`/maintenance/repairs/${repair.id}/decide`, { decision: 'REJECT' });
+                                    showSuccess('Từ chối phiếu sửa chữa thành công!');
                                     fetchRepairs();
-                                  } catch (e) { console.error(e); }
+                                  } catch (e) { 
+                                    console.error(e);
+                                    showError('Có lỗi xảy ra khi từ chối phiếu sửa chữa');
+                                  }
                                 }}>Từ chối</button>
                               <button
                                 style={{
@@ -421,7 +439,8 @@ export default function RepairsPage() {
                                   border: 'none',
                                   borderRadius: '4px',
                                   cursor: 'pointer',
-                                  fontSize: '12px'
+                                  fontSize: '12px',
+                                  whiteSpace: 'nowrap'
                                 }}
                                 onClick={() => openAcceptModal(repair)}>Chấp nhận</button>
                             </>
@@ -650,6 +669,9 @@ export default function RepairsPage() {
           </div>
         </div>
       )}
+
+      {/* Toast Container */}
+      <ToastContainer />
     </>
   );
 }

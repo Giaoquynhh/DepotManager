@@ -145,5 +145,10 @@ export const requestService = {
   // Check if container number already exists
   async checkContainerExists(containerNo: string) {
     return api.get(`/requests/check-container?container_no=${encodeURIComponent(containerNo)}`);
+  },
+
+  // Get repair cost for a container
+  async getRepairCost(containerNo: string) {
+    return api.get(`/requests/repair-cost/${encodeURIComponent(containerNo)}`);
   }
 };

@@ -20,6 +20,10 @@ export const getRequests = async (req: any, res: any) => {
                 attachments: {
                     where: { deleted_at: null },
                     select: { id: true, file_name: true, file_type: true, file_size: true, storage_url: true, uploaded_at: true }
+                },
+                invoices: {
+                    where: { source_module: 'REQUESTS' },
+                    select: { id: true, total_amount: true, subtotal: true, tax_amount: true }
                 }
             },
             orderBy: { createdAt: 'desc' },

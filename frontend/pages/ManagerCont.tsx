@@ -34,6 +34,7 @@ interface TableData {
   yardName?: string;
   blockCode?: string;
   slotCode?: string;
+  requestType?: 'IMPORT' | 'EXPORT'; // Loại request để hiển thị đúng trạng thái
 }
 
 export default function ManagerCont(){
@@ -100,40 +101,40 @@ export default function ManagerCont(){
     return map[status] || 'status-đang-xử-lý';
   };
 
-  // Map trạng thái request -> nhãn tiếng Việt
-  const getRequestStatusLabel = (status: string) => {
+  // Map trạng thái request -> nhãn tiếng Việt (cần biết loại request để hiển thị đúng)
+  const getRequestStatusLabel = (status: string, requestType?: string) => {
     if (!status) return 'Không xác định';
-    // Chuyển DONE_LIFTING thành GATE_OUT
-    const normalizedStatus = status === 'DONE_LIFTING' ? 'GATE_OUT' : status;
+    
     const map: Record<string, string> = {
       'PENDING': 'Thêm mới',
       'NEW_REQUEST': 'Thêm mới',
       'CHECKED': 'Chấp nhận',
       'GATE_IN': 'Đã vào cổng',
-      'FORKLIFTING': 'Đang hạ container',
-      'IN_YARD': 'Đã hạ thành công',
+      'FORKLIFTING': requestType === 'EXPORT' ? 'Đang nâng container' : 'Đang hạ container',
+      'DONE_LIFTING': 'Đã nâng xong',
       'GATE_OUT': 'Xe đã rời khỏi bãi',
+      'IN_YARD': 'Đã hạ thành công', // Chỉ dành cho IMPORT
       'EMPTY_IN_YARD': 'Container rỗng trong bãi'
     };
-    return map[normalizedStatus] || normalizedStatus;
+    return map[status] || status;
   };
 
   // Map trạng thái request -> CSS class cho badge
   const getRequestStatusBadgeClass = (status: string) => {
     if (!status) return 'status-unknown';
-    // Chuyển DONE_LIFTING thành GATE_OUT
-    const normalizedStatus = status === 'DONE_LIFTING' ? 'GATE_OUT' : status;
+    
     const map: Record<string, string> = {
       'PENDING': 'status-đang-xử-lý',
       'NEW_REQUEST': 'status-đang-xử-lý',
       'CHECKED': 'status-hoàn-thành',
       'GATE_IN': 'status-đang-xử-lý',
       'FORKLIFTING': 'status-đang-xử-lý',
+      'DONE_LIFTING': 'status-hoàn-thành',
       'IN_YARD': 'status-hoàn-thành',
       'GATE_OUT': 'status-hoàn-thành',
       'EMPTY_IN_YARD': 'status-empty-in-yard'
     };
-    return map[normalizedStatus] || 'status-unknown';
+    return map[status] || 'status-unknown';
   };
   
   // Documents modal states
@@ -409,7 +410,8 @@ export default function ManagerCont(){
           slotCode: container.slot_code,
           sealNumber: container.seal_number || '',
           demDet: container.dem_det || '',
-          containerQuality: 'GOOD' as const // Không có request nên hiển thị "Container tốt"
+          containerQuality: 'GOOD' as const, // Không có request nên hiển thị "Container tốt"
+          requestType: undefined // EMPTY_IN_YARD không có requestType
         }));
 
       const transformedData: TableData[] = await Promise.all(
@@ -602,7 +604,8 @@ export default function ManagerCont(){
             sealNumber: request.seal_number || request.seal_no || request.seal || '',
             demDet: demDetValue,
             containerQuality,
-            repairTicketStatus
+            repairTicketStatus,
+            requestType: request.type // Thêm requestType để phân biệt IMPORT/EXPORT
           };
           
           console.log(`📊 Final result for ${request.container_no}:`, {
@@ -643,7 +646,8 @@ export default function ManagerCont(){
               sealNumber: request.seal_number || '',
               demDet: request.dem_det || '',
               containerQuality: 'GOOD' as const,
-              repairTicketStatus: undefined
+              repairTicketStatus: undefined,
+              requestType: request.type // Thêm requestType cho error case
             };
           }
         })
@@ -1151,7 +1155,7 @@ export default function ManagerCont(){
                           </td>
                           <td>
                             <span className={`status-badge ${getRequestStatusBadgeClass(row.status)}`}>
-                              {getRequestStatusLabel(row.status)}
+                              {getRequestStatusLabel(row.status, row.requestType)}
                             </span>
                           </td>
                           <td>

@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../../shared/middlewares/auth';
+import { RepairCostService } from '../../finance/service/RepairCostService';
 
 const prisma = new PrismaClient();
 
 export class RepairController {
+  private repairCostService: RepairCostService;
+
+  constructor() {
+    this.repairCostService = new RepairCostService();
+  }
   /**
    * Lấy danh sách repair tickets với thông tin từ import request
    */
@@ -75,7 +81,7 @@ export class RepairController {
   async decide(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params as any;
-      const { decision, canRepair } = (req as any).body || {};
+      const { decision, canRepair, repairServices, totalCost } = (req as any).body || {};
 
       const ticket = await prisma.repairTicket.findUnique({ where: { id } });
       if (!ticket) return res.status(404).json({ message: 'RepairTicket không tồn tại' });
@@ -94,11 +100,24 @@ export class RepairController {
         statusUpdate = canRepair ? 'COMPLETE_NEEDREPAIR' : 'COMPLETE';
       }
 
+      // Tính toán chi phí sửa chữa từ repairServices
+      let estimatedCost = 0;
+      let laborCost = 0;
+      
+      if (decision === 'ACCEPT' && canRepair && repairServices && repairServices.length > 0) {
+        // Tính estimated_cost từ tổng giá trị các dịch vụ được chọn
+        estimatedCost = totalCost || 0;
+        // Labor cost có thể được tính riêng hoặc là một phần của estimated_cost
+        laborCost = 0; // Tạm thời set = 0, có thể điều chỉnh sau
+      }
+
       const txCalls: any[] = [
         prisma.repairTicket.update({ 
           where: { id }, 
           data: { 
             status: statusUpdate, 
+            estimated_cost: estimatedCost,
+            labor_cost: laborCost,
             updatedAt: new Date(),
             endTime: decision === 'ACCEPT' ? new Date() : undefined
           } 
@@ -117,6 +136,47 @@ export class RepairController {
         );
       }
       const [updatedTicket] = await prisma.$transaction(txCalls as any);
+
+      // Lưu repair services vào RepairTicketItem nếu có
+      if (decision === 'ACCEPT' && canRepair && repairServices && repairServices.length > 0) {
+        try {
+          console.log(`📝 Lưu repair services cho ticket: ${updatedTicket.id}`);
+          
+          // Xóa các items cũ trước
+          await prisma.repairTicketItem.deleteMany({
+            where: { repair_ticket_id: updatedTicket.id }
+          });
+          
+          // Tạo items mới từ repairServices
+          const repairItems = repairServices.map((service: any) => ({
+            repair_ticket_id: updatedTicket.id,
+            inventory_item_id: service.id, // Sử dụng service.id làm inventory_item_id
+            quantity: service.quantity || 1,
+            unit_price: service.price || 0,
+            total_price: service.lineTotal || 0
+          }));
+          
+          await prisma.repairTicketItem.createMany({
+            data: repairItems
+          });
+          
+          console.log(`✅ Đã lưu ${repairItems.length} repair services`);
+        } catch (error) {
+          console.error('❌ Lỗi khi lưu repair services:', error);
+        }
+      }
+
+      // Cập nhật repair cost vào invoice khi RepairTicket được ACCEPT
+      // Không tạo invoice ngay khi RepairTicket được ACCEPT
+      // Invoice sẽ được tạo khi thanh toán thành công (giống logic LiftContainer)
+      if (decision === 'ACCEPT' && request && ticket.container_no) {
+        console.log(`💰 RepairTicket được ACCEPT cho container: ${ticket.container_no}`);
+        console.log(`📄 Invoice sẽ được tạo khi thanh toán thành công`);
+        
+        // Lưu repair cost vào RepairTicket để sử dụng sau này khi thanh toán
+        const repairCost = this.repairCostService.calculateRepairCost(updatedTicket);
+        console.log(`💰 Repair cost đã được lưu: ${repairCost} VND`);
+      }
 
       return res.json({ success: true, data: updatedTicket });
     } catch (e: any) {

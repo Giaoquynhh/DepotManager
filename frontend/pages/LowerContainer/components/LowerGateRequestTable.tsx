@@ -23,6 +23,8 @@ interface GateRequest {
   repair_ticket_id?: string | null;
   repair_ticket_code?: string | null;
   repair_ticket_status?: string | null;
+  is_paid?: boolean;          // Trạng thái thanh toán
+  has_invoice?: boolean;      // Trạng thái hóa đơn
 }
 
 interface LowerGateRequestTableProps {
@@ -227,6 +229,7 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
                     initialLicensePlate={request.license_plate}
                     initialDriverName={request.driver_name}
                     initialDriverPhone={request.driver_phone}
+                    isPaid={request.is_paid || false}
                     onActionSuccess={onRefresh}
                   />
                 </td>

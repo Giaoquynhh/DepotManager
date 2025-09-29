@@ -4,6 +4,7 @@ import { requireRoles } from '../../../shared/middlewares/rbac';
 import * as controller from './RequestController';
 import { updateAllInvoicesWithSealCost, updateInvoiceWithSealCost } from './updateInvoiceWithSealCostController';
 import { getSealCost } from './getSealCostController';
+import { getRepairCost } from './getRepairCostController';
 import FileUploadService from '../service/FileUploadService';
 
 const router = Router();
@@ -54,6 +55,12 @@ router.get('/',
 router.get('/:id/seal-cost',
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
     getSealCost
+);
+
+// Get repair cost for a container (PHẢI ĐẶT TRƯỚC /:id)
+router.get('/repair-cost/:containerNo',
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    getRepairCost
 );
 
 // Get single request details

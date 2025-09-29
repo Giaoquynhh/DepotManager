@@ -5,6 +5,7 @@ import LowerGateRequestTable from './LowerGateRequestTable';
 import GateSearchBar from '../../Gate/components/GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useDataRefresh } from '../../../hooks/useRouteRefresh';
+import Link from 'next/link';
 
 interface GateRequest {
   id: string;
@@ -112,6 +113,19 @@ export default function LowerGateDashboard() {
         <div className="header-content">
           <div className="header-left">
             <h1 className="page-title gradient gradient-ultimate">Bảng điều khiển cổng - Hạ container</h1>
+          </div>
+          <div className="header-right">
+            <Link 
+              href="/LowerContainer/GateHistory" 
+              className="btn btn-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 4h13l3 7-3 7H3V4z"></path>
+                <path d="M8 11l2 2 4-4"></path>
+              </svg>
+              <span>Lịch sử ra vào</span>
+            </Link>
           </div>
         </div>
       </div>

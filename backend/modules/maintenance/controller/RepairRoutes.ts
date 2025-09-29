@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { repairImageService } from '../service/RepairImageService';
 import { RepairController } from './RepairController';
+import { testRepairCostIntegration } from './testRepairCostController';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { requireRoles } from '../../../shared/middlewares/rbac';
 
@@ -76,6 +77,13 @@ router.delete(
       res.status(400).json({ success: false, message: e.message || 'Delete error' });
     }
   }
+);
+
+// Test RepairCostService integration (chỉ dành cho SystemAdmin)
+router.post(
+  '/test-repair-cost',
+  requireRoles('SystemAdmin'),
+  testRepairCostIntegration
 );
 
 export default router;

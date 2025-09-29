@@ -12,6 +12,7 @@ interface GateActionButtonsProps {
   initialLicensePlate?: string;
   initialDriverName?: string;
   initialDriverPhone?: string;
+  isPaid?: boolean; // Trạng thái thanh toán
   showSuccess?: (title: string, message?: string, duration?: number) => void;
   showError?: (title: string, message?: string, duration?: number) => void;
 }
@@ -24,6 +25,7 @@ export default function GateActionButtons({
   initialLicensePlate,
   initialDriverName,
   initialDriverPhone,
+  isPaid = false, // Mặc định chưa thanh toán
   showSuccess: injectedShowSuccess,
   showError: injectedShowError
 }: GateActionButtonsProps) {
@@ -328,17 +330,46 @@ export default function GateActionButtons({
   }
 
   // Hiển thị action GATE_OUT cho IN_YARD, IN_CAR và FORKLIFTING (đối với import)
+  // CHỈ khi đã thanh toán thành công
   if (
     currentStatus === 'IN_YARD' ||
     currentStatus === 'IN_CAR' ||
     (currentStatus === 'FORKLIFTING' && requestType === 'IMPORT')
   ) {
+    if (!isPaid) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'center' }}>
+          <button
+            disabled={true}
+            className="action-btn action-btn-disabled"
+            style={{ 
+              backgroundColor: 'var(--color-gray-400)', 
+              cursor: 'not-allowed',
+              opacity: 0.6
+            }}
+            title="Chưa thanh toán - Không thể cho xe rời kho"
+          >
+            GATE_OUT - Chưa thanh toán
+          </button>
+          <span style={{ 
+            fontSize: 'var(--font-size-xs)', 
+            color: 'var(--color-red-600)',
+            textAlign: 'center',
+            fontWeight: 'var(--font-weight-medium)'
+          }}>
+            ⚠️ Cần thanh toán trước
+          </span>
+        </div>
+      );
+    }
+
     return (
       <button
         onClick={handleGateOut}
         disabled={isLoading}
         className="action-btn action-btn-success"
         style={{ backgroundColor: 'var(--color-green-600)' }}
+        title="Đã thanh toán - Có thể cho xe rời kho"
       >
         {isLoading ? 'Đang xử lý...' : 'GATE_OUT - Xe rời kho'}
       </button>

@@ -1282,7 +1282,139 @@ export class SetupService {
     }
   }
 
-  // Removed: uploadPriceListExcel
+  // Upload price list Excel file
+  async uploadPriceListExcel(file: Express.Multer.File): Promise<ApiResponse<PriceListResponse[]>> {
+    try {
+      // Read Excel file
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // Skip header row and process data
+      const rows = jsonData.slice(1) as string[][];
+      const priceLists: PriceListResponse[] = [];
+      const errors: string[] = [];
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Skip empty rows
+        if (!row || row.length === 0 || !row.some(cell => cell && cell.toString().trim())) {
+          continue;
+        }
+        
+        // Detect if first column is STT (sequential number)
+        const hasSttColumn = row.length >= 5 && typeof row[0] !== 'undefined' && 
+          (row[0].toString().trim().match(/^\d+$/) || row[0].toString().trim() === 'STT');
+        
+        // Adjust column offset based on STT column presence
+        const colOffset = hasSttColumn ? 1 : 0;
+        
+        // Validate required fields with offset
+        if (row.length < (4 + colOffset) || !row[0 + colOffset] || !row[1 + colOffset] || 
+            !row[2 + colOffset] || !row[3 + colOffset]) {
+          errors.push(`Row ${i + 2}: Missing required fields (Service Code, Service Name, Type, Price)`);
+          continue;
+        }
+        
+        const serviceCode = row[0 + colOffset].toString().trim();
+        const serviceName = row[1 + colOffset].toString().trim();
+        const type = row[2 + colOffset].toString().trim();
+        const priceRaw = row[3 + colOffset];
+        const note = row[4 + colOffset] ? row[4 + colOffset].toString().trim() : '';
+        
+        // Normalize price (remove dots, commas, VND text)
+        const normalizePrice = (val: any): number => {
+          if (typeof val === 'number') return val;
+          const s = String(val || '')
+            .replace(/\./g, '')
+            .replace(/,/g, '')
+            .replace(/\s?VND/gi, '')
+            .trim();
+          const num = parseFloat(s);
+          return isNaN(num) ? NaN : num;
+        };
+        
+        const price = normalizePrice(priceRaw);
+        
+        // Validate price
+        if (isNaN(price) || price <= 0) {
+          errors.push(`Row ${i + 2}: Invalid price "${priceRaw}"`);
+          continue;
+        }
+        
+        // Validate type
+        const validTypes = ['Nâng', 'Hạ', 'Tồn kho'];
+        if (!validTypes.includes(type)) {
+          errors.push(`Row ${i + 2}: Invalid type "${type}". Must be one of: ${validTypes.join(', ')}`);
+          continue;
+        }
+        
+        // Check for duplicate service code in current batch
+        const isDuplicate = priceLists.some(pl => 
+          pl.serviceCode.toLowerCase() === serviceCode.toLowerCase()
+        );
+        
+        if (isDuplicate) {
+          errors.push(`Row ${i + 2}: Duplicate service code "${serviceCode}" in file`);
+          continue;
+        }
+        
+        // Create price list data
+        const priceListData: CreatePriceListDto = {
+          serviceCode,
+          serviceName,
+          type,
+          price,
+          note: note || undefined
+        };
+        
+        try {
+          const result = await this.createPriceList(priceListData);
+          if (result.success && result.data) {
+            priceLists.push(result.data);
+          } else {
+            errors.push(`Row ${i + 2}: ${result.message || 'Failed to create'}`);
+          }
+        } catch (error) {
+          errors.push(`Row ${i + 2}: Failed to create price list`);
+        }
+      }
+      
+      if (errors.length > 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Some rows failed to process',
+          details: errors
+        };
+      }
+      
+      if (priceLists.length === 0) {
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No valid data found in Excel file'
+        };
+      }
+      
+      return {
+        success: true,
+        data: priceLists,
+        message: `Successfully uploaded ${priceLists.length} price lists`
+      };
+    } catch (error) {
+      console.error('Error uploading price list Excel:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process Excel file'
+      };
+    }
+  }
 }
 
 export default new SetupService();

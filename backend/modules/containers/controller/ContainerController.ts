@@ -157,7 +157,7 @@ class ContainerController {
         });
         customer = updatedRequest.customer;
       } else {
-        // Với container EMPTY_IN_YARD, tạo hoặc cập nhật Container record
+        // Container không có ServiceRequest - chỉ cập nhật Container model
         const containerData: any = {
           container_no,
           status: 'EMPTY_IN_YARD',
@@ -193,37 +193,7 @@ class ContainerController {
         });
 
         customer = container.customer;
-        
-        // Tạo ServiceRequest mới để tương thích với logic hiện tại
-        const createData: any = {
-          container_no,
-          type: 'IMPORT',
-          status: 'EMPTY_IN_YARD',
-          created_by: req.user!._id,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-
-        if (customer_id) createData.customer_id = customer_id;
-        if (shipping_line_id) createData.shipping_line_id = shipping_line_id;
-        if (container_type_id) createData.container_type_id = container_type_id;
-        if (seal_number !== undefined) createData.seal_number = seal_number;
-        if (dem_det !== undefined) createData.dem_det = dem_det;
-
-        updatedRequest = await prisma.serviceRequest.create({
-          data: createData,
-          include: {
-            customer: {
-              select: { id: true, name: true, code: true }
-            },
-            shipping_line: {
-              select: { id: true, name: true, code: true }
-            },
-            container_type: {
-              select: { id: true, code: true, description: true }
-            }
-          }
-        });
+        updatedRequest = null; // Không có ServiceRequest để cập nhật
       }
 
       // Cập nhật container_quality bằng cách cập nhật RepairTicket
@@ -268,10 +238,10 @@ class ContainerController {
         data: {
           container_no,
           customer: customer,
-          shipping_line: updatedRequest.shipping_line,
-          container_type: updatedRequest.container_type,
-          seal_number: updatedRequest.seal_number,
-          dem_det: updatedRequest.dem_det
+          shipping_line: updatedRequest?.shipping_line || null,
+          container_type: updatedRequest?.container_type || null,
+          seal_number: updatedRequest?.seal_number || null,
+          dem_det: updatedRequest?.dem_det || null
         }
       });
 

@@ -232,7 +232,7 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
           </div>
           <div className="header-right">
             <Link 
-              href="/Gate/History" 
+              href={lockedType === 'EXPORT' ? '/LiftContainer/GateHistory' : '/LowerContainer/GateHistory'} 
               className="btn btn-outline"
               style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}
             >

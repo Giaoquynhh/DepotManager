@@ -80,6 +80,6 @@ router.get('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'
 router.post('/price-lists', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.createPriceList);
 router.put('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updatePriceList);
 router.delete('/price-lists/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deletePriceList);
-// Removed: price-lists/upload-excel route
+router.post('/price-lists/upload-excel', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadPriceListExcel);
 
 export default router;

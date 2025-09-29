@@ -410,6 +410,7 @@ export class GateService {
         appointment_time: r.appointment_time || null,
         isCheck: r.isCheck || false,
         isRepair: r.isRepair || false,
+        isPaid: r.is_paid || false, // Thêm field isPaid để frontend kiểm tra
         repair_ticket_id: repairTicket?.id || null,
         repair_ticket_code: repairTicket?.code || null,
         repair_ticket_status: repairTicket?.status || null
@@ -734,7 +735,8 @@ export class GateService {
       page = 1,
       limit = 20,
       // Bỏ mặc định theo status; trang lịch sử cần tất cả xe đã có time_in
-      status
+      status,
+      type // Thêm filter theo type (IMPORT/EXPORT)
     } = params;
 
     // Convert string to number for pagination
@@ -751,6 +753,11 @@ export class GateService {
     // Nếu vẫn truyền status (tùy biến), áp dụng thêm bộ lọc
     if (status) {
       where.status = status;
+    }
+
+    // Filter theo type (IMPORT/EXPORT)
+    if (type) {
+      where.type = type;
     }
 
     if (container_no) {

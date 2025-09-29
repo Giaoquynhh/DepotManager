@@ -9,7 +9,7 @@ import { useTranslation } from '@hooks/useTranslation';
 
 export default function InvoiceList(){
   const { t } = useTranslation();
-  const [status, setStatus] = useState<string>('');
+  const [status, setStatus] = useState<string>(''); // Hiển thị tất cả invoice
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   
@@ -31,8 +31,10 @@ export default function InvoiceList(){
   const key = ['finance_invoices_v2', status].join(':');
   const { data: invoices } = useSWR(key, async ()=> financeApi.listInvoicesV2({ status: status || undefined }));
   
-  const getTypeLabel = (_type: string) => {
-    return 'Nâng container';
+  const getTypeLabel = (type: string) => {
+    if (type === 'IMPORT') return 'Hạ container';
+    if (type === 'EXPORT') return 'Nâng container';
+    return 'Nâng container'; // Default fallback
   };
 
   // giữ lại nếu cần sau này

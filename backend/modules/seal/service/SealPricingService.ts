@@ -19,7 +19,8 @@ export class SealPricingService {
     sealUnitPrice: number, 
     userId: string,
     containerNumber?: string,
-    requestId?: string
+    requestId?: string,
+    createInvoice: boolean = true // Mặc định là true để giữ nguyên behavior hiện tại
   ): Promise<void> {
     try {
       console.log(`🔍 Tìm ServiceRequest với booking: ${bookingNumber}, container: ${containerNumber}, requestId: ${requestId}`);
@@ -94,7 +95,8 @@ export class SealPricingService {
       // Kiểm tra xem đã có invoice chưa
       let invoice = serviceRequest.invoices[0];
 
-      if (!invoice) {
+      // Chỉ tạo invoice nếu createInvoice = true
+      if (!invoice && createInvoice) {
         // Tạo invoice mới nếu chưa có
         console.log('📄 Tạo invoice mới cho ServiceRequest');
         
@@ -129,14 +131,15 @@ export class SealPricingService {
           customer_id: serviceRequest.customer_id || serviceRequest.created_by,
           source_module: 'REQUESTS',
           source_id: serviceRequest.id,
-          items
+          items,
+          status: 'DRAFT' // Tạo invoice với status DRAFT
         };
 
         console.log(`📤 Payload tạo invoice:`, payload);
 
         invoice = await this.invoiceService.create({ _id: userId } as any, payload);
         console.log(`✅ Đã tạo invoice mới: ${invoice.id} với tổng tiền: ${invoice.total_amount}`);
-      } else {
+      } else if (invoice && createInvoice) {
         // Cập nhật invoice hiện có
         console.log('📄 Cập nhật invoice hiện có:', invoice.id);
         

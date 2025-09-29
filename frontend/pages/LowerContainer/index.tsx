@@ -1,11 +1,12 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import Header from '@components/Header';
-import { useTranslation } from '../../../hooks/useTranslation';
-import { useToast } from '../../../hooks/useToastHook';
-import { useRouteRefresh } from '../../../hooks/useRouteRefresh';
-import { CreateLowerRequestModal, type LowerRequestData } from '../../Requests/components/CreateLowerRequestModal';
-import { requestService } from '../../../services/requests';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useToast } from '../../hooks/useToastHook';
+import { useRouteRefresh } from '../../hooks/useRouteRefresh';
+import { CreateLowerRequestModal, type LowerRequestData } from '../Requests/components/CreateLowerRequestModal';
+import { requestService } from '../../services/requests';
+import { setupService } from '../../services/setupService';
 
 // Interface cho dữ liệu bảng
 interface TableData {
@@ -16,7 +17,6 @@ interface TableData {
   containerType: string; // Loại Cont
   serviceType: string; // Loại dịch vụ
   status: string; // Trạng thái
-  reuseStatus: boolean; // Trạng thái reuse
   customer: string; // Khách hàng
   truckCompany: string; // Nhà xe
   truckNumber: string; // Số xe
@@ -54,6 +54,11 @@ export default function NewSubmenu() {
 
   // Dữ liệu bảng từ database
   const [tableData, setTableData] = React.useState<TableData[]>([]);
+  
+  const [showPaymentModal, setShowPaymentModal] = React.useState(false);
+  const [paymentAmount, setPaymentAmount] = React.useState<number>(0);
+  const [paymentRequestInfo, setPaymentRequestInfo] = React.useState<{id:string; requestNo:string; containerNo:string} | null>(null);
+  const [paymentDetails, setPaymentDetails] = React.useState<{baseCost: number; repairCost: number; invoiceItems: any[]} | null>(null);
 
   // Force refresh when route changes to ensure fresh data
   React.useEffect(() => {
@@ -71,6 +76,7 @@ export default function NewSubmenu() {
   React.useEffect(() => {
     fetchImportRequests();
   }, [refreshTrigger]);
+
 
   const handleCreateNew = () => {
     setIsModalOpen(true);
@@ -138,6 +144,7 @@ export default function NewSubmenu() {
     }).format(amount);
   };
 
+
   // Map hiển thị trạng thái thân thiện
   const renderStatusText = (status: string) => {
     if (!status) return '';
@@ -156,12 +163,51 @@ export default function NewSubmenu() {
   const fetchImportRequests = async () => {
     setLoading(true);
     try {
+      // Tính tổng phí loại "Hạ" để hiển thị đồng nhất với popup
+      let lowerTotalLocal = 0;
+      try {
+        const res = await setupService.getPriceLists({ page: 1, limit: 1000 });
+        const items = res.data?.data || [];
+        lowerTotalLocal = items
+          .filter((pl: any) => String(pl.type || '').toLowerCase() === 'hạ')
+          .reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+      } catch {
+        lowerTotalLocal = 0;
+      }
+
       const response = await requestService.getRequests('IMPORT');
       console.log('API Response:', response.data);
       
       if (response.data.success) {
         // Transform data từ API thành format của table
-        const transformedData: TableData[] = response.data.data.map((request: any) => {
+        // Lọc ra những container có trạng thái EMPTY_IN_YARD vì chúng đã được nâng lên và không thuộc về quy trình hạ container
+        const filteredData = response.data.data.filter((request: any) => {
+          return request.status !== 'EMPTY_IN_YARD';
+        });
+        
+        const transformedData: TableData[] = await Promise.all(filteredData.map(async (request: any) => {
+          // Lấy repair cost cho container này
+          let repairCost = 0;
+          try {
+            const repairRes = await requestService.getRepairCost(request.container_no);
+            if (repairRes.data?.success && repairRes.data?.data?.hasRepairTicket) {
+              repairCost = repairRes.data.data.repairCost;
+            }
+          } catch (error) {
+            console.log(`Không lấy được repair cost cho container ${request.container_no}:`, error);
+          }
+
+          // Tính tổng tiền bao gồm cả repair cost
+          let totalAmount = 0;
+          if (request.is_paid && request.invoices && request.invoices.length > 0) {
+            // Chỉ lấy từ invoice khi đã thanh toán
+            const invoice = request.invoices[0];
+            totalAmount = Number(invoice.total_amount || 0);
+          } else {
+            // Sử dụng PriceList + repair cost cho các trường hợp khác (chưa thanh toán)
+            totalAmount = (Number.isFinite(lowerTotalLocal) ? lowerTotalLocal : 0) + repairCost;
+          }
+
           return {
             id: request.id,
             shippingLine: request.shipping_line?.name || '',
@@ -170,7 +216,6 @@ export default function NewSubmenu() {
             containerType: request.container_type?.code || '',
             serviceType: 'Hạ cont', // Mặc định cho import request
             status: request.status || '',
-            reuseStatus: request.reuse_status || false,
             customer: request.customer?.name || '',
             truckCompany: request.vehicle_company?.name || '',
             truckNumber: request.license_plate || '',
@@ -179,14 +224,14 @@ export default function NewSubmenu() {
             appointmentTime: request.appointment_time ? new Date(request.appointment_time).toLocaleString('vi-VN') : '',
             actualInTime: request.time_in ? new Date(request.time_in).toLocaleString('vi-VN') : '',
             actualOutTime: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
-            totalAmount: request.total_amount || 0,
+            totalAmount: totalAmount,
             paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
             documents: request.attachments?.map((att: any) => att.file_name).join(', ') || '',
             documentsCount: request.attachments?.length || 0,
             demDet: request.dem_det || '',
             notes: request.appointment_note || ''
           };
-        });
+        }));
         setTableData(transformedData);
       }
     } catch (error) {
@@ -322,23 +367,6 @@ export default function NewSubmenu() {
           border-color: #9ca3af;
         }
 
-        .reuse-status {
-          display: inline-block;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.375rem;
-          font-size: 0.75rem;
-          font-weight: 500;
-        }
-
-        .reuse-status.on {
-          background: #d1fae5;
-          color: #065f46;
-        }
-
-        .reuse-status.off {
-          background: #fee2e2;
-          color: #991b1b;
-        }
 
         .payment-status {
           display: inline-block;
@@ -469,7 +497,6 @@ export default function NewSubmenu() {
                     <th style={{...thStyle, minWidth: '100px'}}>Loại cont</th>
                     <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
                     <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái reuse</th>
                     <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
                     <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
                     <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
@@ -489,32 +516,33 @@ export default function NewSubmenu() {
                 <tbody>
                   {tableData.map((row) => (
                     <tr key={row.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                      <td style={{...tdStyle, minWidth: '100px'}}>{row.shippingLine}</td>
-                      <td style={{...tdStyle, minWidth: '150px'}}>{row.requestNumber}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{row.containerNumber}</td>
-                      <td style={{...tdStyle, minWidth: '100px'}}>{row.containerType}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>Hạ container</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{renderStatusText(row.status)}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>
-                        <span className={`reuse-status ${row.reuseStatus ? 'on' : 'off'}`}>
-                          {row.reuseStatus ? 'On' : 'Off'}
-                        </span>
+                      <td style={tdStyle}>{row.shippingLine}</td>
+                      <td style={tdStyle}>{row.requestNumber}</td>
+                      <td style={tdStyle}>{row.containerNumber}</td>
+                      <td style={tdStyle}>{row.containerType}</td>
+                      <td style={tdStyle}>Hạ container</td>
+                      <td style={tdStyle}>{renderStatusText(row.status)}</td>
+                      <td style={tdStyle}>{row.customer}</td>
+                      <td style={tdStyle}>{row.truckCompany}</td>
+                      <td style={tdStyle}>{row.truckNumber}</td>
+                      <td style={tdStyle}>{row.driverName}</td>
+                      <td style={tdStyle}>{row.driverPhone}</td>
+                      <td style={tdStyle}>{row.appointmentTime || '-'}</td>
+                      <td style={tdStyle}>{row.actualInTime || '-'}</td>
+                      <td style={tdStyle}>{row.actualOutTime || '-'}</td>
+                      <td style={tdStyle}>
+                        {typeof row.totalAmount === 'number' ? (
+                          <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                            {row.totalAmount.toLocaleString('vi-VN')} ₫
+                          </span>
+                        ) : '-'}
                       </td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{row.customer}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{row.truckCompany}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{row.truckNumber}</td>
-                      <td style={{...tdStyle, minWidth: '100px'}}>{row.driverName}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{row.driverPhone}</td>
-                      <td style={{...tdStyle, minWidth: '160px'}}>{row.appointmentTime || '-'}</td>
-                      <td style={{...tdStyle, minWidth: '160px'}}>{row.actualInTime || '-'}</td>
-                      <td style={{...tdStyle, minWidth: '160px'}}>{row.actualOutTime || '-'}</td>
-                      <td style={{...tdStyle, minWidth: '120px'}}>{formatCurrency(row.totalAmount)}</td>
-                      <td style={{...tdStyle, minWidth: '150px'}}>
+                      <td style={tdStyle}>
                         <span className={`payment-status ${row.paymentStatus === 'Đã thanh toán' ? 'paid' : 'unpaid'}`}>
                           {row.paymentStatus}
                         </span>
                       </td>
-                      <td style={{...tdStyle, minWidth: '100px'}}>
+                      <td style={tdStyle}>
                         <button 
                           type="button" 
                           className="btn btn-light" 
@@ -525,9 +553,9 @@ export default function NewSubmenu() {
                           {(row.documentsCount ?? 0)} file
                         </button>
                       </td>
-                      <td style={{...tdStyle, minWidth: '100px'}}>{row.demDet || '-'}</td>
-                      <td style={{...tdStyle, minWidth: '150px'}}>{row.notes || '-'}</td>
-                      <td style={{ ...tdStyle, minWidth: '200px', whiteSpace: 'nowrap' }}>
+                      <td style={tdStyle}>{row.demDet || '-'}</td>
+                      <td style={tdStyle}>{row.notes || '-'}</td>
+                      <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                         <button 
                           type="button" 
                           className="btn btn-primary" 
@@ -537,6 +565,67 @@ export default function NewSubmenu() {
                         >
                           Cập nhật thông tin
                         </button>
+                        {(row.status === 'IN_YARD') && row.paymentStatus !== 'Đã thanh toán' && (
+                          <button
+                            type="button"
+                            className="btn btn-success"
+                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                            onClick={async () => {
+                              try {
+                                // Lấy PriceList cho dịch vụ hạ container
+                                const priceListRes = await setupService.getPriceLists({ page: 1, limit: 1000 });
+                                const priceListItems = priceListRes.data?.data || [];
+                                const baseCost = priceListItems
+                                  .filter((pl: any) => String(pl.type || '').toLowerCase() === 'hạ')
+                                  .reduce((sum: number, pl: any) => sum + Number(pl.price || 0), 0);
+                                
+                                // Lấy repair cost cho container này
+                                let repairCost = 0;
+                                try {
+                                  const repairRes = await requestService.getRepairCost(row.containerNumber);
+                                  if (repairRes.data?.success && repairRes.data?.data?.hasRepairTicket) {
+                                    repairCost = repairRes.data.data.repairCost;
+                                  }
+                                } catch (error) {
+                                  console.log(`Không lấy được repair cost cho container ${row.containerNumber}:`, error);
+                                }
+                                
+                                // Tạo items từ PriceList
+                                const invoiceItems = priceListItems
+                                  .filter((pl: any) => String(pl.type || '').toLowerCase() === 'hạ')
+                                  .map((pl: any) => ({
+                                    service_code: pl.serviceCode,
+                                    description: pl.serviceName,
+                                    unit_price: Number(pl.price || 0)
+                                  }));
+                                
+                                // Thêm repair cost vào items nếu có
+                                if (repairCost > 0) {
+                                  invoiceItems.push({
+                                    service_code: 'REPAIR',
+                                    description: 'Chi phí sửa chữa container',
+                                    unit_price: repairCost
+                                  });
+                                }
+                                
+                                const totalAmount = baseCost + repairCost;
+                                
+                                setPaymentAmount(totalAmount);
+                                setPaymentRequestInfo({ id: row.id, requestNo: row.requestNumber, containerNo: row.containerNumber });
+                                setPaymentDetails({
+                                  baseCost: baseCost,
+                                  repairCost: repairCost,
+                                  invoiceItems: invoiceItems
+                                });
+                                setShowPaymentModal(true);
+                              } catch (e) {
+                                showSuccess('Không lấy được thông tin thanh toán', 'Vui lòng kiểm tra lại');
+                              }
+                            }}
+                          >
+                            Tạo yêu cầu thanh toán
+                          </button>
+                        )}
                         <button 
                           type="button" 
                           className="btn btn-danger" 
@@ -613,6 +702,191 @@ export default function NewSubmenu() {
           </div>
         )}
 
+        {/* Payment Confirmation Modal */}
+        {showPaymentModal && paymentRequestInfo && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            <div style={{
+              background: '#fff',
+              borderRadius: 16,
+              padding: 24,
+              width: '92%',
+              maxWidth: 520,
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,.25)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: '#111827', fontWeight: 700 }}>Xác nhận thanh toán</h3>
+              <p style={{ margin: '8px 0 16px', color: '#6b7280' }}>
+                Yêu cầu {paymentRequestInfo.requestNo} - Cont {paymentRequestInfo.containerNo}
+              </p>
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 16
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, marginBottom: 12 }}>
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>Tổng phí thanh toán</span>
+                  <strong style={{ color: '#dc2626' }}>{paymentAmount.toLocaleString('vi-VN')} ₫</strong>
+                </div>
+                
+                {/* Chi tiết từng mục dịch vụ */}
+                <div style={{ 
+                  padding: '12px',
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                    Chi tiết dịch vụ
+                  </div>
+                  
+                  {/* Base services */}
+                  {paymentDetails && paymentDetails.baseCost > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                        Dịch vụ hạ container
+                      </div>
+                      {paymentDetails.invoiceItems
+                        .filter((item: any) => item.service_code !== 'REPAIR')
+                        .map((item: any, index: number) => (
+                          <div key={index} style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            fontSize: '12px',
+                            padding: '2px 0',
+                            color: '#374151'
+                          }}>
+                            <span>{item.service_code} - {item.description}</span>
+                            <span>{Number(item.unit_price || 0).toLocaleString('vi-VN')} ₫</span>
+                          </div>
+                        ))}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        padding: '4px 0',
+                        borderTop: '1px solid #f3f4f6',
+                        marginTop: '4px',
+                        color: '#374151'
+                      }}>
+                        <span>Tổng dịch vụ hạ</span>
+                        <span>{paymentDetails.baseCost.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Repair services */}
+                  {paymentDetails && paymentDetails.repairCost > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                        Chi phí sửa chữa
+                      </div>
+                      {paymentDetails.invoiceItems
+                        .filter((item: any) => item.service_code === 'REPAIR')
+                        .map((item: any, index: number) => (
+                          <div key={index} style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            fontSize: '12px',
+                            padding: '2px 0',
+                            color: '#374151'
+                          }}>
+                            <span>{item.description}</span>
+                            <span>{Number(item.unit_price || 0).toLocaleString('vi-VN')} ₫</span>
+                          </div>
+                        ))}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        padding: '4px 0',
+                        borderTop: '1px solid #f3f4f6',
+                        marginTop: '4px',
+                        color: '#dc2626'
+                      }}>
+                        <span>Tổng chi phí sửa chữa</span>
+                        <span>{paymentDetails.repairCost.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Hiển thị thông báo nếu không có repair cost */}
+                  {paymentDetails && paymentDetails.repairCost === 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>
+                        Chi phí sửa chữa
+                      </div>
+                      <div style={{ 
+                        fontSize: '12px',
+                        padding: '2px 0',
+                        color: '#9ca3af',
+                        fontStyle: 'italic'
+                      }}>
+                        Không có chi phí sửa chữa
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Total */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    padding: '8px 0',
+                    borderTop: '2px solid #e5e7eb',
+                    marginTop: '8px',
+                    color: '#1e293b'
+                  }}>
+                    <span>TỔNG CỘNG</span>
+                    <span>{paymentAmount.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => { setShowPaymentModal(false); setPaymentRequestInfo(null); setPaymentDetails(null); }}
+                  style={{ padding: '10px 16px' }}
+                >Hủy</button>
+                <button
+                  className="btn btn-success"
+                  onClick={async () => {
+                    // Cập nhật UI: đánh dấu đã thanh toán, đóng popup, giữ nguyên màn hình
+                    try {
+                      if (paymentRequestInfo?.id) {
+                        await requestService.markPaid(paymentRequestInfo.id);
+                      }
+                      setShowPaymentModal(false);
+                      if (paymentRequestInfo) {
+                        setTableData(prev => prev.map(r => r.id === paymentRequestInfo.id ? { ...r, paymentStatus: 'Đã thanh toán' } : r));
+                      }
+                      setPaymentRequestInfo(null);
+                      setPaymentDetails(null);
+                      showSuccess('Thanh toán thành công', 'Yêu cầu đã xuất hiện trong trang hóa đơn');
+                    } catch (e:any) {
+                      showSuccess('Không thể xác nhận thanh toán', e?.response?.data?.message || 'Lỗi không xác định');
+                    }
+                  }}
+                  style={{ padding: '10px 16px' }}
+                >Xác nhận thanh toán</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Toast Container */}
         <ToastContainer />
       </main>
@@ -632,8 +906,7 @@ const thStyle: React.CSSProperties = {
   letterSpacing: 0.3,
   padding: '12px 16px',
   borderBottom: '1px solid #e2e8f0',
-  whiteSpace: 'nowrap',
-  minWidth: '120px'
+  whiteSpace: 'nowrap'
 };
 
 const tdStyle: React.CSSProperties = {
@@ -644,5 +917,6 @@ const tdStyle: React.CSSProperties = {
   background: 'white',
   borderTop: '1px solid #f1f5f9',
   whiteSpace: 'nowrap',
-  minWidth: '120px'
+  overflow: 'hidden',
+  textOverflow: 'ellipsis'
 };
