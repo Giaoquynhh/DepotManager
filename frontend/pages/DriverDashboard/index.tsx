@@ -275,7 +275,6 @@ export default function DriverDashboard() {
           <div className="header-content">
             <div className="header-left">
               <h1 className="page-title gradient gradient-ultimate">{t('pages.driverDashboard.title')}</h1>
-              <p className="page-subtitle">{t('pages.driverDashboard.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -368,7 +367,7 @@ export default function DriverDashboard() {
         {activeTab === 'tasks' && (
           <div className="space-y-16">
             <Card title={t('pages.driverDashboard.assignedTasks.title')} padding="lg">
-                <div className="table-container" style={{ height: '55vh', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' as any }}>
+                <div className="table-container" style={{ height: '55vh', overflowY: 'auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
                   <table className="table-modern sticky-header">
                     <thead>
                       <tr>

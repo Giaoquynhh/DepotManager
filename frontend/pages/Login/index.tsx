@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Header from '@components/Header';
 import { api } from '@services/api';
-import Link from 'next/link';
+ 
 import { homeFor } from '@utils/rbac';
 
 export default function Login(){
@@ -184,12 +184,7 @@ export default function Login(){
 							</button>
 
 							{/* Register Link */}
-							<div className="navy-auth-link">
-								<span className="link-text">Chưa có mật khẩu?</span>
-								<Link href="/Register" className="navy-link">
-									📋 Kích hoạt tài khoản (Accept Invite)
-								</Link>
-							</div>
+
 						</form>
 					</div>
 				</div>

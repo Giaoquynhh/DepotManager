@@ -75,13 +75,13 @@
   100% { left: 120%; opacity: .2; }
 }
 
-/* Glassmorphism card */
+/* Card wrapper for quick actions - remove white frame */
 .driver-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
-  box-shadow: none; /* remove card shadow */
+  background: transparent;
+  backdrop-filter: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none; /* ensure no shadow */
   transition: transform .25s ease, box-shadow .25s ease;
 }
 .driver-card.card-hoverable:hover {
@@ -121,6 +121,49 @@
 
 /* Table modern adjustments */
 .driver-dashboard-modern .table-modern { border-radius: 14px; overflow: hidden; }
+/* Enable horizontal scroll on mobile for table container */
+@media (max-width: 480px) {
+  .driver-dashboard-modern .table-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .driver-dashboard-modern .table-modern { min-width: 600px; }
+}
+/* Remove inner borders for Assigned Tasks table, keep only outer frame */
+.driver-dashboard-modern .table-modern th,
+.driver-dashboard-modern .table-modern td {
+  border-bottom: 0 !important;
+}
+/* Remove inner white frame (table-container) on Driver Dashboard */
+.driver-dashboard-modern .table-container {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Remove header wrapper/background and rounded corners on header row */
+.driver-dashboard-modern .table-modern {
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+.driver-dashboard-modern .table-modern thead,
+.driver-dashboard-modern .table-modern th {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Slightly lift header cells upward */
+.driver-dashboard-modern .table-modern th {
+  padding-top: 6px !important;
+  padding-bottom: 2px !important;
+  position: relative;
+  top: -2px;
+}
+
+/* Remove decorative text effects on header labels */
+.driver-dashboard-modern .table-modern th {
+  text-shadow: none !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
 
 /* Subtitle effects - same as Requests/Depot */
 .driver-dashboard-modern .page-subtitle {
@@ -135,3 +178,19 @@
 /* Remove global card shadow within the Driver Dashboard scope */
 .driver-dashboard-modern .card { box-shadow: none !important; }
 .driver-dashboard-modern .card-hoverable:hover { box-shadow: none !important; transform: none; }
+
+/* Mobile-only tweaks for quick action buttons */
+@media (max-width: 480px) {
+  .driver-dashboard-modern .quick-actions { gap: 10px; }
+  .driver-dashboard-modern .pill-btn { padding: 8px 12px; font-size: 12px; }
+  /* Thu nhỏ khung chứa 3 nút (card đầu tiên dưi header) */
+}
+
+/* Mobile layout & sizing for stat tiles */
+@media (max-width: 480px) {
+  .driver-dashboard-modern .stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .driver-dashboard-modern .stat-tile { padding: 12px 10px; border-radius: 12px; }
+  .driver-dashboard-modern .stat-icon { width: 28px; height: 28px; font-size: 16px; border-radius: 8px; }
+  .driver-dashboard-modern .stat-tile .text-2xl { font-size: 18px !important; }
+  .driver-dashboard-modern .stat-tile .text-sm { font-size: 12px !important; }
+}

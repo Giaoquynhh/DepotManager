@@ -92,13 +92,13 @@ body.with-sidebar .header {
 /* Mobile Portrait - Tăng chiều cao header cho trang đăng nhập */
 @media (max-width: 768px) and (orientation: portrait) {
   .header {
-    height: 60px !important; /* Tăng chiều cao header cho mobile portrait */
-    min-height: 60px !important;
-    max-height: 60px !important;
+    height: 45px !important; /* Tăng chiều cao header cho mobile portrait */
+    min-height: 45px !important;
+    max-height: 45px !important;
   }
   
   .header-inner {
-    min-height: 60px !important; /* Tăng chiều cao inner cho mobile portrait */
+    min-height: 45px !important; /* Tăng chiều cao inner cho mobile portrait */
     padding: 12px var(--space-2) !important; /* Tăng padding cho mobile portrait */
   }
   
