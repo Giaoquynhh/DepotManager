@@ -126,17 +126,8 @@ export default function InvoiceList(){
                       <td>{invoice.customer_tax_code || '-'}</td>
                       <td>{(invoice.customer_phone || '').toString().replace(/\D/g,'') || '-'}</td>
                       <td>{Number(invoice.total_amount||0).toLocaleString('vi-VN')} VND</td>
-                      <td style={{display:'flex', gap:6}}>
-                        <button className="btn" style={{padding:'4px 8px', fontSize:'12px'}} onClick={async()=>{
-                          try{
-                            const blob = await financeApi.getInvoicePdfBlob(invoice.id);
-                            const url = URL.createObjectURL(blob);
-                            const w = window.open('about:blank','_blank');
-                            if (w){ w.document.write(`<iframe src="${url}" style="width:100%;height:100%;border:0"></iframe>`); }
-                          }catch(e){ console.error(e); alert('Không thể tạo PDF hóa đơn'); }
-                        }}>
-                          Xuất hóa đơn
-                        </button>
+                      <td>
+                        -
                       </td>
                     </tr>
                   ))}

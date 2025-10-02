@@ -1030,6 +1030,127 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                 style={{ padding: '10px 16px' }}
                             >Hủy</button>
                             <button
+                                className="btn"
+                                onClick={async () => {
+                                    try {
+                                        if (paymentRequestInfo?.id) {
+                                            // Tạo PDF tổng phí thanh toán
+                                            const jsPDF = (await import('jspdf')).default;
+                                            const doc = new jsPDF();
+                                            
+                                            // Thiết lập font
+                                            doc.setFont('helvetica', 'normal');
+                                            
+                                            // Khung viền trang
+                                            doc.setLineWidth(0.5);
+                                            doc.rect(10, 10, 190, 277);
+                                            
+                                            // Header với background
+                                            doc.setFillColor(240, 240, 240);
+                                            doc.rect(15, 15, 180, 25, 'F');
+                                            doc.setFontSize(18);
+                                            doc.setFont('helvetica', 'bold');
+                                            doc.text('TONG PHI THANH TOAN', 105, 32, { align: 'center' });
+                                            
+                                            // Thông tin cơ bản với khung
+                                            doc.setFont('helvetica', 'normal');
+                                            doc.setFontSize(11);
+                                            let yPos = 55;
+                                            
+                                            // Khung thông tin
+                                            doc.setLineWidth(0.3);
+                                            doc.rect(15, yPos - 5, 180, 45);
+                                            
+                                            doc.setFont('helvetica', 'bold');
+                                            doc.text('Thong tin yeu cau:', 20, yPos);
+                                            
+                                            doc.setFont('helvetica', 'normal');
+                                            yPos += 10;
+                                            doc.text(`• So yeu cau: ${paymentRequestInfo.requestNo}`, 25, yPos);
+                                            yPos += 8;
+                                            doc.text(`• Container: ${paymentRequestInfo.containerNo}`, 25, yPos);
+                                            yPos += 8;
+                                            doc.text('• Loai dich vu: Nang container', 25, yPos);
+                                            yPos += 8;
+                                            doc.text(`• Ngay tao: ${new Date().toLocaleDateString('vi-VN')}`, 25, yPos);
+                                            
+                                            // Bảng dịch vụ
+                                            yPos = 125;
+                                            doc.setFont('helvetica', 'bold');
+                                            doc.setFontSize(12);
+                                            doc.text('CHI TIET DICH VU', 20, yPos);
+                                            
+                                            yPos += 10;
+                                            
+                                            // Header bảng với background
+                                            doc.setFillColor(220, 220, 220);
+                                            doc.rect(15, yPos - 3, 180, 12, 'F');
+                                            doc.setLineWidth(0.3);
+                                            doc.rect(15, yPos - 3, 180, 12);
+                                            
+                                            doc.setFont('helvetica', 'bold');
+                                            doc.setFontSize(10);
+                                            doc.text('STT', 20, yPos + 5);
+                                            doc.text('Dich vu', 45, yPos + 5);
+                                            doc.text('Don gia', 160, yPos + 5);
+                                            
+                                            // Đường kẻ dọc header
+                                            doc.line(35, yPos - 3, 35, yPos + 9);
+                                            doc.line(150, yPos - 3, 150, yPos + 9);
+                                            
+                                            yPos += 12;
+                                            
+                                            // Nội dung bảng
+                                            doc.setFont('helvetica', 'normal');
+                                            
+                                            // Dòng 1: Phí dịch vụ nâng
+                                            doc.rect(15, yPos - 3, 180, 12);
+                                            doc.text('1', 20, yPos + 5);
+                                            doc.text('Phi dich vu nang container', 45, yPos + 5);
+                                            doc.text('1.420.000 VND', 160, yPos + 5);
+                                            doc.line(35, yPos - 3, 35, yPos + 9);
+                                            doc.line(150, yPos - 3, 150, yPos + 9);
+                                            yPos += 12;
+                                            
+                                            // Dòng 2: Seal cost (nếu có)
+                                            if (currentSealCost > 0) {
+                                                doc.rect(15, yPos - 3, 180, 12);
+                                                doc.text('2', 20, yPos + 5);
+                                                doc.text('Chi phi seal container', 45, yPos + 5);
+                                                doc.text(`${currentSealCost.toLocaleString('vi-VN')} VND`, 160, yPos + 5);
+                                                doc.line(35, yPos - 3, 35, yPos + 9);
+                                                doc.line(150, yPos - 3, 150, yPos + 9);
+                                                yPos += 12;
+                                            }
+                                            
+                                            // Tổng cộng với background
+                                            yPos += 10;
+                                            doc.setFillColor(245, 245, 245);
+                                            doc.rect(15, yPos - 5, 180, 20, 'F');
+                                            doc.setLineWidth(0.5);
+                                            doc.rect(15, yPos - 5, 180, 20);
+                                            
+                                            doc.setFont('helvetica', 'bold');
+                                            doc.setFontSize(14);
+                                            doc.text('TONG PHI THANH TOAN:', 20, yPos + 5);
+                                            doc.text(`${paymentAmount.toLocaleString('vi-VN')} VND`, 175, yPos + 5, { align: 'right' });
+                                            
+                                            // Footer
+                                            doc.setFont('helvetica', 'italic');
+                                            doc.setFontSize(8);
+                                            doc.text('Tai lieu duoc tao tu dong tu he thong quan ly depot', 105, 270, { align: 'center' });
+                                            
+                                            // Tự động tải xuống PDF
+                                            doc.save(`Tong_phi_thanh_toan_${paymentRequestInfo.requestNo}_${paymentRequestInfo.containerNo}.pdf`);
+                                        }
+                                    } catch (e) { 
+                                        console.error(e); 
+                                        showError('Không thể tạo file', 'Vui lòng thử lại sau'); 
+                                    }
+                                }}
+                                style={{ padding: '10px 16px' }}
+                            >Xuất file</button>
+                            <button
                                 className="btn btn-success"
                                 onClick={async () => {
                                     // Cập nhật UI: đánh dấu đã thanh toán, đóng popup, giữ nguyên màn hình

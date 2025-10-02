@@ -8,6 +8,7 @@ import { CreateLowerRequestModal, type LowerRequestData } from '../Requests/comp
 import { EditLowerRequestModal } from '../Requests/components/EditLowerRequestModal';
 import { requestService } from '../../services/requests';
 import { setupService } from '../../services/setupService';
+import { api } from '../../services/api';
 
 // Interface cho dữ liệu bảng
 interface TableData {
@@ -1123,6 +1124,146 @@ export default function NewSubmenu() {
                   onClick={() => { setShowPaymentModal(false); setPaymentRequestInfo(null); setPaymentDetails(null); }}
                   style={{ padding: '10px 16px' }}
                 >Hủy</button>
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    try {
+                      if (paymentRequestInfo?.id && paymentDetails) {
+                        // Tạo PDF tổng phí thanh toán
+                        const jsPDF = (await import('jspdf')).default;
+                        const doc = new jsPDF();
+                        
+                        // Thiết lập font
+                        doc.setFont('helvetica', 'normal');
+                        
+                        // Khung viền trang
+                        doc.setLineWidth(0.5);
+                        doc.rect(10, 10, 190, 277);
+                        
+                        // Header với background
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(15, 15, 180, 25, 'F');
+                        doc.setFontSize(18);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('TONG PHI THANH TOAN', 105, 32, { align: 'center' });
+                        
+                        // Thông tin cơ bản với khung
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(11);
+                        let yPos = 55;
+                        
+                        // Khung thông tin
+                        doc.setLineWidth(0.3);
+                        doc.rect(15, yPos - 5, 180, 45);
+                        
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Thong tin yeu cau:', 20, yPos);
+                        
+                        doc.setFont('helvetica', 'normal');
+                        yPos += 10;
+                        doc.text(`• So yeu cau: ${paymentRequestInfo.requestNo}`, 25, yPos);
+                        yPos += 8;
+                        doc.text(`• Container: ${paymentRequestInfo.containerNo}`, 25, yPos);
+                        yPos += 8;
+                        doc.text('• Loai dich vu: Ha container', 25, yPos);
+                        yPos += 8;
+                        doc.text(`• Ngay tao: ${new Date().toLocaleDateString('vi-VN')}`, 25, yPos);
+                        
+                        // Bảng dịch vụ
+                        yPos = 125;
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(12);
+                        doc.text('CHI TIET DICH VU', 20, yPos);
+                        
+                        yPos += 10;
+                        
+                        // Header bảng với background
+                        doc.setFillColor(220, 220, 220);
+                        doc.rect(15, yPos - 3, 180, 12, 'F');
+                        doc.setLineWidth(0.3);
+                        doc.rect(15, yPos - 3, 180, 12);
+                        
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text('STT', 20, yPos + 5);
+                        doc.text('Dich vu', 45, yPos + 5);
+                        doc.text('Don gia', 160, yPos + 5);
+                        
+                        // Đường kẻ dọc header
+                        doc.line(35, yPos - 3, 35, yPos + 9);
+                        doc.line(150, yPos - 3, 150, yPos + 9);
+                        
+                        yPos += 12;
+                        
+                        // Nội dung bảng
+                        doc.setFont('helvetica', 'normal');
+                        paymentDetails.invoiceItems.forEach((item: any, index: number) => {
+                          // Khung dòng
+                          doc.rect(15, yPos - 3, 180, 12);
+                          
+                          // Chuyển đổi tên dịch vụ sang tiếng Việt không dấu
+                          const removeVietnameseTones = (str: string) => {
+                            return str
+                              .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+                              .replace(/[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]/g, 'A')
+                              .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+                              .replace(/[ÈÉẸẺẼÊỀẾỆỂỄ]/g, 'E')
+                              .replace(/[ìíịỉĩ]/g, 'i')
+                              .replace(/[ÌÍỊỈĨ]/g, 'I')
+                              .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+                              .replace(/[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]/g, 'O')
+                              .replace(/[ùúụủũưừứựửữ]/g, 'u')
+                              .replace(/[ÙÚỤỦŨƯỪỨỰỬỮ]/g, 'U')
+                              .replace(/[ỳýỵỷỹ]/g, 'y')
+                              .replace(/[ỲÝỴỶỸ]/g, 'Y')
+                              .replace(/đ/g, 'd')
+                              .replace(/[ôộốồỗổ]/g, 'o')
+                              .replace(/[ÔỐỘỒỔỖ]/g, 'O')
+                              .replace(/[ơờợởỡ]/g, 'o')
+                              .replace(/[ƠỜỢỞỠ]/g, 'O')
+                              .replace(/Đ/g, 'D');
+                          };
+                          
+                          let serviceName = removeVietnameseTones(item.description);
+                          
+                          doc.text(`${index + 1}`, 20, yPos + 5);
+                          doc.text(serviceName, 45, yPos + 5);
+                          doc.text(`${Number(item.unit_price || 0).toLocaleString('vi-VN')} VND`, 160, yPos + 5);
+                          
+                          // Đường kẻ dọc
+                          doc.line(35, yPos - 3, 35, yPos + 9);
+                          doc.line(150, yPos - 3, 150, yPos + 9);
+                          
+                          yPos += 12;
+                        });
+                        
+                        // Tổng cộng với background
+                        yPos += 10;
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(15, yPos - 5, 180, 20, 'F');
+                        doc.setLineWidth(0.5);
+                        doc.rect(15, yPos - 5, 180, 20);
+                        
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(14);
+                        doc.text('TONG PHI THANH TOAN:', 20, yPos + 5);
+                        doc.text(`${paymentAmount.toLocaleString('vi-VN')} VND`, 175, yPos + 5, { align: 'right' });
+                        
+                        // Footer
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(8);
+                        doc.text('Tai lieu duoc tao tu dong tu he thong quan ly depot', 105, 270, { align: 'center' });
+                        
+                        // Tự động tải xuống PDF
+                        doc.save(`Tong_phi_thanh_toan_${paymentRequestInfo.requestNo}_${paymentRequestInfo.containerNo}.pdf`);
+                      }
+                    } catch (e) { 
+                      console.error(e); 
+                      showSuccess('Không thể tạo file', 'Vui lòng thử lại sau'); 
+                    }
+                  }}
+                  style={{ padding: '10px 16px' }}
+                >Xuất file</button>
                 <button
                   className="btn btn-success"
                   onClick={async () => {
