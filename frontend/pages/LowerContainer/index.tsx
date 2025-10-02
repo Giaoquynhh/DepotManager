@@ -5,6 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useToast } from '../../hooks/useToastHook';
 import { useRouteRefresh } from '../../hooks/useRouteRefresh';
 import { CreateLowerRequestModal, type LowerRequestData } from '../Requests/components/CreateLowerRequestModal';
+import { EditLowerRequestModal } from '../Requests/components/EditLowerRequestModal';
 import { requestService } from '../../services/requests';
 import { setupService } from '../../services/setupService';
 
@@ -59,6 +60,13 @@ export default function NewSubmenu() {
   const [paymentAmount, setPaymentAmount] = React.useState<number>(0);
   const [paymentRequestInfo, setPaymentRequestInfo] = React.useState<{id:string; requestNo:string; containerNo:string} | null>(null);
   const [paymentDetails, setPaymentDetails] = React.useState<{baseCost: number; repairCost: number; invoiceItems: any[]} | null>(null);
+  
+  // Update and Delete states
+  const [processingIds, setProcessingIds] = React.useState<Set<string>>(new Set());
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [editRequestData, setEditRequestData] = React.useState<any>(null);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [deleteRequestId, setDeleteRequestId] = React.useState<string | null>(null);
 
   // Force refresh when route changes to ensure fresh data
   React.useEffect(() => {
@@ -125,16 +133,130 @@ export default function NewSubmenu() {
     setDocsError(null);
   };
 
-  const handleUpdateInfo = (id: string) => {
-    // TODO: Implement update functionality
-    console.log('Update info for:', id);
-    showSuccess('Cập nhật thông tin thành công!');
+  // Function để mở modal chỉnh sửa
+  const handleUpdateInfo = async (requestId: string) => {
+    setProcessingIds(prev => new Set(prev).add(requestId));
+    try {
+      console.log('Loading request details:', requestId);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showSuccess('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này');
+        setProcessingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(requestId);
+          return newSet;
+        });
+        return;
+      }
+      
+      // Lấy thông tin chi tiết của request
+      const response = await requestService.getRequest(requestId);
+      if (response.data.success) {
+        const requestData = response.data.data;
+        setEditRequestData(requestData);
+        setShowEditModal(true);
+      }
+    } catch (error: any) {
+      console.error('Error fetching request details:', error);
+      if (error.response?.status === 401) {
+        showSuccess('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        showSuccess('❌ Không thể tải thông tin', 'Có lỗi xảy ra khi tải thông tin yêu cầu');
+      }
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(requestId);
+        return newSet;
+      });
+    }
   };
 
-  const handleCancel = (id: string) => {
-    // TODO: Implement cancel functionality
-    console.log('Cancel for:', id);
-    showSuccess('Đã hủy yêu cầu!');
+  // Function để xử lý cập nhật yêu cầu
+  const handleUpdateRequest = async (data: any) => {
+    try {
+      // Hiển thị thông báo thành công với toast notification
+      showSuccess(
+        'Yêu cầu đã được cập nhật thành công!',
+        `Thông tin yêu cầu đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
+      );
+      
+      // Refresh data after update
+      fetchImportRequests();
+    } catch (error) {
+      console.error('Error updating request:', error);
+      showSuccess('❌ Có lỗi xảy ra', 'Không thể cập nhật thông tin yêu cầu');
+    }
+  };
+
+  // Function để mở modal xóa
+  const handleDeleteClick = (requestId: string) => {
+    setDeleteRequestId(requestId);
+    setShowDeleteModal(true);
+  };
+
+  // Function để xử lý xóa yêu cầu
+  const handleDeleteRequest = async () => {
+    if (!deleteRequestId) return;
+    
+    setProcessingIds(prev => new Set(prev).add(deleteRequestId));
+    try {
+      console.log('Deleting request:', deleteRequestId);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showSuccess('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này');
+        setProcessingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(deleteRequestId);
+          return newSet;
+        });
+        setShowDeleteModal(false);
+        return;
+      }
+      
+      const response = await requestService.deleteRequest(deleteRequestId);
+      if (response.data.success) {
+        // Hiển thị thông báo thành công với toast notification
+        showSuccess(
+          '🗑️ Yêu cầu đã được xóa thành công!',
+          `Yêu cầu đã được xóa khỏi hệ thống\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
+        );
+        
+        // Refresh data after deletion
+        fetchImportRequests();
+      } else {
+        showSuccess('❌ Không thể xóa yêu cầu', response.data.message || 'Có lỗi xảy ra khi xóa yêu cầu');
+      }
+    } catch (error: any) {
+      console.error('Error deleting request:', error);
+      if (error.response?.status === 401) {
+        showSuccess('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        showSuccess('❌ Có lỗi xảy ra', 'Không thể xóa yêu cầu: ' + (error.response?.data?.message || error.message));
+      }
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(deleteRequestId);
+        return newSet;
+      });
+      setShowDeleteModal(false);
+      setDeleteRequestId(null);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -561,9 +683,10 @@ export default function NewSubmenu() {
                           className="btn btn-primary" 
                           style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
                           onClick={() => handleUpdateInfo(row.id)}
-                          title="Cập nhật thông tin"
+                          disabled={processingIds.has(row.id) || loading || row.status !== 'PENDING'}
+                          title={row.status !== 'PENDING' ? 'Chỉ cho phép cập nhật khi trạng thái là Chờ xử lý' : 'Cập nhật thông tin'}
                         >
-                          Cập nhật thông tin
+                          {processingIds.has(row.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                         </button>
                         {(row.status === 'IN_YARD') && row.paymentStatus !== 'Đã thanh toán' && (
                           <button
@@ -630,10 +753,11 @@ export default function NewSubmenu() {
                           type="button" 
                           className="btn btn-danger" 
                           style={{ padding: '6px 10px', fontSize: 12 }}
-                          onClick={() => handleCancel(row.id)}
-                          title="Hủy"
+                          onClick={() => handleDeleteClick(row.id)}
+                          disabled={processingIds.has(row.id) || loading}
+                          title="Xóa yêu cầu"
                         >
-                          Hủy
+                          {processingIds.has(row.id) ? 'Đang xử lý...' : 'Xóa'}
                         </button>
                       </td>
                     </tr>
@@ -644,11 +768,22 @@ export default function NewSubmenu() {
           )}
         </div>
 
-        {/* Modal */}
+        {/* Create Modal */}
         <CreateLowerRequestModal
           isOpen={isModalOpen}
           onClose={handleModalClose}
           onSubmit={handleModalSubmit}
+        />
+
+        {/* Edit Modal */}
+        <EditLowerRequestModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditRequestData(null);
+          }}
+          onSubmit={handleUpdateRequest}
+          requestData={editRequestData}
         />
 
         {/* Documents Modal */}
@@ -697,6 +832,133 @@ export default function NewSubmenu() {
               </div>
               <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end' }}>
                 <button className="btn btn-secondary" onClick={closeDocuments}>Đóng</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            <div style={{
+              background: 'white',
+              padding: '32px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center',
+              animation: 'modalSlideIn 0.2s ease-out'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: '#fef2f2',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+                fontSize: '32px',
+                color: '#ef4444'
+              }}>
+                ⚠️
+              </div>
+              
+              <h3 style={{
+                margin: '0 0 12px 0',
+                color: '#1f2937',
+                fontSize: '20px',
+                fontWeight: '600',
+                lineHeight: '1.2'
+              }}>
+                Xác nhận xóa yêu cầu
+              </h3>
+              
+              <p style={{
+                margin: '0 0 24px 0',
+                color: '#6b7280',
+                fontSize: '14px',
+                lineHeight: '1.5'
+              }}>
+                Bạn có chắc chắn muốn xóa yêu cầu này?<br/>
+                <strong style={{ color: '#ef4444' }}>Hành động này không thể hoàn tác.</strong>
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteRequestId(null);
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    border: '1px solid #d1d5db',
+                    background: 'white',
+                    color: '#374151',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: '80px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  Hủy
+                </button>
+                
+                <button
+                  onClick={handleDeleteRequest}
+                  disabled={processingIds.has(deleteRequestId || '')}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    background: processingIds.has(deleteRequestId || '') ? '#9ca3af' : '#ef4444',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: processingIds.has(deleteRequestId || '') ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: '80px'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!processingIds.has(deleteRequestId || '')) {
+                      e.currentTarget.style.background = '#dc2626';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!processingIds.has(deleteRequestId || '')) {
+                      e.currentTarget.style.background = '#ef4444';
+                    }
+                  }}
+                >
+                  {processingIds.has(deleteRequestId || '') ? 'Đang xóa...' : 'Xóa'}
+                </button>
               </div>
             </div>
           </div>
@@ -892,9 +1154,7 @@ export default function NewSubmenu() {
       </main>
     </>
   );
-}
-
-// Styles cho table cells
+}// Styles cho table cells
 const thStyle: React.CSSProperties = {
   position: 'sticky',
   top: 0,
@@ -920,3 +1180,4 @@ const tdStyle: React.CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis'
 };
+

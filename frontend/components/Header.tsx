@@ -772,7 +772,7 @@ export default function Header() {
                 : allow;
               return ok;
             })() && (
-                <Link className={`sidebar-link ${router.pathname === '/ManagerCont' ? 'active' : ''}`} href="http://localhost:5002/ManagerCont" onClick={handleSidebarLinkClick}>
+                <Link className={`sidebar-link ${router.pathname === '/ManagerCont' ? 'active' : ''}`} href="/ManagerCont" onClick={handleSidebarLinkClick}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                     <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -783,8 +783,8 @@ export default function Header() {
                 </Link>
             )}
 
-            {/* Forklift Module - Xe nâng */}
-            {(() => {
+            {/* Forklift Module - Xe nâng - HIDDEN: Đã có 2 trang riêng import từ Forklift */}
+            {false && (() => {
               const allow = canManageForklift(me?.role);
               const ok = Array.isArray(me?.permissions) && me!.permissions!.length > 0
                 ? hasPermission(me?.permissions, 'forklift.view')

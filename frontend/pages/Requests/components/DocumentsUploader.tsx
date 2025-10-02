@@ -1,10 +1,11 @@
 import React, { useRef } from 'react';
 import { formatFileSize, isImage } from './fileUtils';
 import type { ExistingFile, EditLiftRequestData } from './EditLiftRequestModal.types';
+import type { EditLowerRequestData } from './EditLowerRequestModal.types';
 
-interface DocumentsUploaderProps {
-	formData: EditLiftRequestData;
-	setFormData: React.Dispatch<React.SetStateAction<EditLiftRequestData>>;
+interface DocumentsUploaderProps<T = EditLiftRequestData | EditLowerRequestData> {
+	formData: T;
+	setFormData: React.Dispatch<React.SetStateAction<T>>;
 	existingFiles: ExistingFile[];
 }
 

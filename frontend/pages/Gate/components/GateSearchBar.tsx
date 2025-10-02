@@ -83,8 +83,8 @@ export default function GateSearchBar({
                     // PENDING = Đang tới
                     onSearch({ status: '', statuses: 'PENDING,NEW_REQUEST', page: 1 });
                   } else if (val === 'ENTERED_GATE') {
-                    // Các trạng thái khác = Đã vào cổng
-                    onSearch({ status: '', statuses: 'FORWARDED,GATE_IN,IN_YARD,IN_CAR,COMPLETED', page: 1 });
+                    // Các trạng thái khác = Đã vào cổng (không bao gồm GATE_OUT)
+                    onSearch({ status: '', statuses: 'FORWARDED,GATE_IN,IN_YARD,IN_CAR,FORKLIFTING,COMPLETED', page: 1 });
                   }
                 }}
               >

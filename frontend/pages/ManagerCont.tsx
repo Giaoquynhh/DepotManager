@@ -333,10 +333,13 @@ export default function ManagerCont(){
       const exportRequests = exportResponse?.data?.success ? (exportResponse.data.data || []) : [];
       let allRequests = [...importRequests, ...exportRequests];
       
-      if (allRequests.length === 0) {
-        setTableData([]);
-        return;
-      }
+      // FIXED: Không return sớm khi không có requests để vẫn hiển thị container SYSTEM_ADMIN_ADDED (như SA11)
+      // Trước đây, khi không có IMPORT/EXPORT requests, hàm sẽ return sớm và không hiển thị container do SystemAdmin thêm
+      // Bây giờ vẫn tiếp tục xử lý để lấy emptyInYardContainers (SYSTEM_ADMIN_ADDED)
+      // if (allRequests.length === 0) {
+      //   setTableData([]);
+      //   return;
+      // }
 
       // Nhóm requests theo container_no và chỉ lấy request mới nhất cho mỗi container
       const latestRequestsMap = new Map<string, any>();

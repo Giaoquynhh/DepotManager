@@ -182,7 +182,7 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 			const vehicleCompanyId = Array.isArray(transportCompanies) ? transportCompanies.find(tc => tc.name === formData.vehicleCompany)?.id : undefined;
 
 			const updateData = {
-				type: 'IMPORT',
+				type: requestData.type || 'EXPORT', // Giữ nguyên type của request hiện tại, mặc định là EXPORT cho trang nâng container
 				request_no: formData.requestNo,
 				container_no: formData.containerNumber,
 				shipping_line_id: shippingLineId,

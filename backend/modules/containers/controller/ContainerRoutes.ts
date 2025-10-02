@@ -21,6 +21,13 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+// Route để lấy containers trong yard theo shipping line cho lift request
+router.get('/yard/by-shipping-line/:shipping_line_id', (req, res) => {
+  const { shipping_line_id } = req.params;
+  const { q: searchQuery } = req.query;
+  controller.getContainersInYardByShippingLine(req as any, res, shipping_line_id, searchQuery as string);
+});
+
 router.get('/:container_no', (req, res) => controller.get(req as any, res));
 router.put('/:container_no', (req, res) => controller.updateContainer(req, res));
 router.get('/alerts/list', (req, res) => controller.alerts(req as any, res));

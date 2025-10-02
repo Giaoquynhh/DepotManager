@@ -5,6 +5,7 @@ import LowerGateRequestTable from './LowerGateRequestTable';
 import GateSearchBar from '../../Gate/components/GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useDataRefresh } from '../../../hooks/useRouteRefresh';
+import { useToast } from '../../../hooks/useToastHook';
 import Link from 'next/link';
 
 interface GateRequest {
@@ -30,9 +31,11 @@ export default function LowerGateDashboard() {
   const { t } = useTranslation();
   const { shouldRefresh, resetRefresh } = useDataRefresh();
   const [componentKey, setComponentKey] = useState(0);
+  const { showSuccess, showError } = useToast();
 
   const [searchParams, setSearchParams] = useState({
     status: '',
+    statuses: '',
     container_no: '',
     type: 'IMPORT',
     license_plate: '',
@@ -44,13 +47,24 @@ export default function LowerGateDashboard() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      Object.entries(searchParams).forEach(([key, value]) => {
+      
+      // Tạo bản sao của searchParams để xử lý
+      const paramsSource = { ...searchParams };
+      
+      // Mặc định ẩn GATE_OUT (xe đã ra khỏi depot) nếu không có filter status cụ thể
+      if (!String(paramsSource.status || '').trim() && !String(paramsSource.statuses || '').trim()) {
+        // Chỉ hiển thị các trạng thái còn trong depot, loại bỏ GATE_OUT
+        params.append('statuses', 'NEW_REQUEST,PENDING,CHECKED,FORWARDED,GATE_IN,IN_YARD,FORKLIFTING');
+      }
+      
+      Object.entries(paramsSource).forEach(([key, value]) => {
         if (key === 'page' || key === 'limit') {
           params.append(key, value.toString());
         } else if (value && value.toString().trim()) {
           params.append(key, value.toString().trim());
         }
       });
+      
       const response = await api.get(`/gate/requests/search?${params.toString()}`);
       setRequests(response.data.data || []);
     } finally {
@@ -93,7 +107,7 @@ export default function LowerGateDashboard() {
 
   useEffect(() => {
     fetchRequests();
-  }, [searchParams.status, searchParams.type, searchParams.page, searchParams.container_no, searchParams.license_plate]);
+  }, [searchParams.status, searchParams.statuses, searchParams.type, searchParams.page, searchParams.container_no, searchParams.license_plate]);
 
   const handleSearch = (newParams: Partial<typeof searchParams>) => {
     setSearchParams(prev => ({ ...prev, ...newParams, page: 1 }));
@@ -144,6 +158,8 @@ export default function LowerGateDashboard() {
         requests={requests}
         loading={loading}
         onRefresh={fetchRequests}
+        showSuccess={showSuccess}
+        showError={showError}
       />
     </main>
   );

@@ -1,0 +1,123 @@
+# Logic Tìm Kiếm Container Cho Lift Request
+
+## Tổng Quan
+
+Khi tạo yêu cầu nâng container (Lift Request), hệ thống chỉ cho phép chọn các container đang ở trong yard và thỏa mãn các điều kiện cụ thể.
+
+## Điều Kiện Container Có Thể Nâng
+
+Chỉ có **2 loại container** được phép nâng:
+
+### 1. EMPTY_IN_YARD (SystemAdmin thêm)
+- **Mô tả**: Container rỗng được SystemAdmin thêm trực tiếp vào hệ thống
+- **Đặc điểm**:
+  - Không có ServiceRequest tương ứng
+  - Được lưu trong bảng `Container` với `shipping_line_id`
+  - Trạng thái: `EMPTY_IN_YARD`
+  - Nguồn: `SYSTEM_ADMIN_ADDED`
+
+### 2. GATE_OUT với type IMPORT
+- **Mô tả**: Container đã qua cổng ra (GATE_OUT) từ yêu cầu IMPORT
+- **Đặc điểm**:
+  - Có ServiceRequest với `type = 'IMPORT'`
+  - Trạng thái ServiceRequest: `GATE_OUT`
+  - Đã hoàn thành quy trình import và sẵn sàng để nâng
+
+## API Endpoint
+
+```
+GET /containers/yard/by-shipping-line/:shipping_line_id?q=search_query
+```
+
+### Parameters
+- `shipping_line_id` (required): ID của hãng tàu
+- `q` (optional): Từ khóa tìm kiếm container number
+
+### Response Format
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "container_no": "CONT123456",
+      "slot_code": "A01",
+      "block_code": "B1",
+      "yard_name": "Yard A",
+      "tier": 1,
+      "placed_at": "2024-01-01T00:00:00Z",
+      "shipping_line": {
+        "id": "sl-id",
+        "name": "Shipping Line Name",
+        "code": "SL"
+      },
+      "container_type": {
+        "id": "ct-id",
+        "code": "20GP",
+        "description": "20ft General Purpose"
+      },
+      "customer": {
+        "id": "customer-id",
+        "name": "Customer Name",
+        "code": "CUST"
+      },
+      "seal_number": "SEAL123",
+      "dem_det": "DEM/DET info",
+      "service_status": "EMPTY_IN_YARD", // hoặc "GATE_OUT"
+      "request_type": "SYSTEM_ADMIN_ADDED" // hoặc "IMPORT"
+    }
+  ],
+  "total": 1
+}
+```
+
+## SQL Logic
+
+API sử dụng query phức tạp với các CTE:
+
+1. **latest_sr**: Lấy ServiceRequest mới nhất cho mỗi container
+2. **yard_containers**: Lấy tất cả containers đang trong yard (YardPlacement)
+3. **Main Query**: Join và filter theo điều kiện
+
+### Điều Kiện Filter Chính
+
+```sql
+WHERE (
+  -- Điều kiện 1: EMPTY_IN_YARD (SystemAdmin thêm)
+  (ls.container_no IS NULL AND c.shipping_line_id = :shipping_line_id)
+  OR
+  -- Điều kiện 2: GATE_OUT với type IMPORT  
+  (ls.service_status = 'GATE_OUT' AND ls.type = 'IMPORT' AND ls.shipping_line_id = :shipping_line_id)
+)
+```
+
+## Frontend Integration
+
+### Thay Đổi Chính
+- Thay thế `containersApi.list()` + client-side filter
+- Sử dụng `containersApi.getContainersInYardByShippingLine()`
+- Hiển thị badge trạng thái container (EMPTY_IN_YARD vs GATE_OUT-IMPORT)
+
+### UI Improvements
+- Badge màu xanh cho EMPTY_IN_YARD
+- Badge màu đỏ cho GATE_OUT (IMPORT)
+- Badge tím cho containers do SystemAdmin thêm
+- Thông báo số lượng containers tìm thấy
+
+## Lợi Ích
+
+1. **Performance**: Chỉ query containers cần thiết thay vì lấy tất cả rồi filter
+2. **Accuracy**: Đảm bảo chỉ containers đúng điều kiện được hiển thị
+3. **User Experience**: Hiển thị rõ ràng loại container và nguồn gốc
+4. **Maintainability**: Logic tập trung ở backend, dễ bảo trì
+
+## Testing
+
+Sử dụng script test: `test-yard-containers-api.js`
+
+```bash
+node test-yard-containers-api.js
+```
+
+Cần cập nhật:
+- `TEST_SHIPPING_LINE_ID`: ID hãng tàu thực tế
+- Authorization token trong headers

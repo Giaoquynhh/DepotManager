@@ -11,12 +11,18 @@ const nextConfig = {
 	devIndicators: {
 		position: 'bottom-right',
 	},
-	rewrites: async () => ([
-		{
-			source: '/backend/:path*',
-			destination: 'http://localhost:1000/:path*'
-		}
-	])
+	rewrites: async () => {
+		// Nếu có BACKEND_URL (ngrok), sử dụng nó
+		// Nếu không, mặc định là localhost:1000
+		const backendUrl = process.env.BACKEND_URL || 'http://localhost:1000';
+		
+		return [
+			{
+				source: '/backend/:path*',
+				destination: `${backendUrl}/:path*`
+			}
+		];
+	}
 };
 
 module.exports = nextConfig;

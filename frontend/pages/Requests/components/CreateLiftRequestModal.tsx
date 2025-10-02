@@ -29,6 +29,8 @@ export interface ContainerSearchResult {
 	};
 	seal_number?: string;
 	dem_det?: string;
+	service_status?: string; // EMPTY_IN_YARD hoặc GATE_OUT
+	request_type?: string; // SYSTEM_ADMIN_ADDED hoặc IMPORT
 }
 
 interface CreateLiftRequestModalProps {
@@ -235,7 +237,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		customer.code.toLowerCase().includes(customerSearch.toLowerCase())
 	);
 
-	// Search containers by shipping line using containers API
+	// Search containers by shipping line using new specialized API
 	const searchContainersByShippingLine = async (shippingLineId: string, query: string) => {
 		if (!shippingLineId) {
 			setContainerSearchResults([]);
@@ -244,32 +246,29 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 		setIsSearchingContainers(true);
 		try {
-			// Sử dụng containers API để lấy tất cả container, sau đó filter theo shipping_line_id
-			const response = await containersApi.list({
-				q: query.length > 0 ? query : undefined,
-				page: 1,
-				pageSize: 100
-			});
+			// Sử dụng API mới chuyên biệt để lấy containers trong yard theo shipping line
+			// Chỉ lấy containers có trạng thái EMPTY_IN_YARD (SystemAdmin) và GATE_OUT (IMPORT)
+			const response = await containersApi.getContainersInYardByShippingLine(
+				shippingLineId, 
+				query.length > 0 ? query : undefined
+			);
 			
-			if (response.items) {
-				// Filter containers theo shipping_line_id
-				const filteredContainers = response.items.filter((container: any) => {
-					return container.shipping_line_id === shippingLineId;
-				});
-				
-				// Transform data thành format cần thiết
-				const containersWithDetails = filteredContainers.map((container: any) => ({
+			if (response.success && response.data) {
+				// Transform data thành format cần thiết cho ContainerSearchResult
+				const containersWithDetails = response.data.map((container: any) => ({
 					container_no: container.container_no,
 					slot_code: container.slot_code || '',
 					block_code: container.block_code || '',
 					yard_name: container.yard_name || '',
-					tier: container.placement_tier,
+					tier: container.tier,
 					placed_at: container.placed_at || '',
 					customer: container.customer,
 					shipping_line: container.shipping_line,
 					container_type: container.container_type,
 					seal_number: container.seal_number,
-					dem_det: container.dem_det
+					dem_det: container.dem_det,
+					service_status: container.service_status,
+					request_type: container.request_type
 				}));
 				
 				setContainerSearchResults(containersWithDetails);
@@ -277,7 +276,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				setContainerSearchResults([]);
 			}
 		} catch (error) {
-			console.error('Error searching containers:', error);
+			console.error('Error searching containers in yard by shipping line:', error);
 			setContainerSearchResults([]);
 		} finally {
 			setIsSearchingContainers(false);
@@ -1143,15 +1142,39 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 														}
 													}}
 													>
-														<div style={{ fontWeight: '500', color: '#1f2937' }}>
-															{container.container_no}
-														</div>
-														<div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-															{container.container_type?.code} - {container.container_type?.description}
-														</div>
-														<div style={{ fontSize: '12px', color: '#64748b' }}>
-															{container.customer?.name} | {container.yard_name} - {container.block_code}-{container.slot_code}
-														</div>
+													<div style={{ fontWeight: '500', color: '#1f2937' }}>
+														{container.container_no}
+													</div>
+													<div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+														{container.container_type?.code} - {container.container_type?.description}
+													</div>
+													<div style={{ fontSize: '12px', color: '#64748b' }}>
+														{container.customer?.name} | {container.yard_name} - {container.block_code}-{container.slot_code}
+													</div>
+													<div style={{ fontSize: '11px', marginTop: '2px', display: 'flex', gap: '8px' }}>
+														<span style={{ 
+															color: container.service_status === 'EMPTY_IN_YARD' ? '#059669' : '#dc2626',
+															fontWeight: '500',
+															backgroundColor: container.service_status === 'EMPTY_IN_YARD' ? '#ecfdf5' : '#fef2f2',
+															padding: '2px 6px',
+															borderRadius: '4px',
+															border: `1px solid ${container.service_status === 'EMPTY_IN_YARD' ? '#10b981' : '#ef4444'}`
+														}}>
+															{container.service_status === 'EMPTY_IN_YARD' ? 'EMPTY_IN_YARD' : 'GATE_OUT (IMPORT)'}
+														</span>
+														{container.request_type === 'SYSTEM_ADMIN_ADDED' && (
+															<span style={{ 
+																color: '#7c3aed',
+																fontWeight: '500',
+																backgroundColor: '#f3f4f6',
+																padding: '2px 6px',
+																borderRadius: '4px',
+																border: '1px solid #9ca3af'
+															}}>
+																SystemAdmin
+															</span>
+														)}
+													</div>
 													</div>
 												))}
 											</div>
@@ -1249,7 +1272,12 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							)}
 							{formData.shippingLine && containerSearchResults.length > 0 && (
 								<div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
-									✅ Click vào ô để xem {containerSearchResults.length} container thuộc hãng tàu này
+									✅ Tìm thấy {containerSearchResults.length} container có thể nâng (EMPTY_IN_YARD hoặc GATE_OUT-IMPORT)
+								</div>
+							)}
+							{formData.shippingLine && containerSearchResults.length === 0 && !isSearchingContainers && (
+								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+									ℹ️ Không có container nào có thể nâng cho hãng tàu này
 								</div>
 							)}
 						</div>

@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '@components/Header';
 import { useTranslation } from '../hooks/useTranslation';
 import { useToast } from '../hooks/useToastHook';
-import { ImportRequest } from './Requests/components/ImportRequest';
+import { ExportRequest } from './Requests/components/ExportRequest';
 import { CreateLiftRequestModal, LiftRequestData } from './Requests/components';
 
 export default function LiftContainer() {
@@ -56,7 +56,7 @@ export default function LiftContainer() {
         </div>
 
 			{/* Import Request Component */}
-			<ImportRequest
+			<ExportRequest
 				localSearch={localSearch}
 				setLocalSearch={setLocalSearch}
 				localType={localType}

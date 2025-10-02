@@ -115,6 +115,153 @@ class ContainerController {
   }
 
   /**
+   * Lấy containers trong yard theo shipping line cho lift request (Simple version)
+   * Chỉ lấy containers có trạng thái:
+   * - EMPTY_IN_YARD (được SystemAdmin thêm)
+   * - GATE_OUT với type IMPORT
+   */
+  async getContainersInYardByShippingLine(req: AuthRequest, res: Response, shipping_line_id: string, searchQuery?: string) {
+    try {
+      console.log('Debug - shipping_line_id:', shipping_line_id);
+      console.log('Debug - searchQuery:', searchQuery);
+
+      // Bước 1: Lấy tất cả containers trong yard
+      const yardContainers = await prisma.yardPlacement.findMany({
+        where: {
+          status: 'OCCUPIED',
+          removed_at: null,
+          container_no: { not: null },
+          ...(searchQuery && searchQuery.trim() && {
+            container_no: {
+              contains: searchQuery.trim(),
+              mode: 'insensitive'
+            }
+          })
+        },
+        include: {
+          slot: {
+            include: {
+              block: {
+                include: {
+                  yard: true
+                }
+              }
+            }
+          }
+        },
+        take: 100
+      });
+
+      console.log(`Debug - Found ${yardContainers.length} containers in yard`);
+
+      const result = [];
+
+      // Bước 2: Kiểm tra từng container
+      for (const yardContainer of yardContainers) {
+        const container_no = yardContainer.container_no;
+        if (!container_no) continue;
+
+        // Tìm ServiceRequest mới nhất cho container này
+        const latestServiceRequest = await prisma.serviceRequest.findFirst({
+          where: { 
+            container_no,
+            shipping_line_id 
+          },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            shipping_line: {
+              select: { id: true, name: true, code: true }
+            },
+            container_type: {
+              select: { id: true, code: true, description: true }
+            },
+            customer: {
+              select: { id: true, name: true, code: true }
+            }
+          }
+        });
+
+        // Kiểm tra điều kiện 2: GATE_OUT với type IMPORT
+        if (latestServiceRequest && 
+            latestServiceRequest.status === 'GATE_OUT' && 
+            latestServiceRequest.type === 'IMPORT') {
+          
+          result.push({
+            container_no,
+            slot_code: yardContainer.slot?.code || '',
+            block_code: yardContainer.slot?.block?.code || '',
+            yard_name: yardContainer.slot?.block?.yard?.name || '',
+            tier: yardContainer.tier,
+            placed_at: yardContainer.placed_at,
+            shipping_line: latestServiceRequest.shipping_line,
+            container_type: latestServiceRequest.container_type,
+            customer: latestServiceRequest.customer,
+            seal_number: latestServiceRequest.seal_number,
+            dem_det: latestServiceRequest.dem_det,
+            service_status: 'GATE_OUT',
+            request_type: 'IMPORT'
+          });
+          continue;
+        }
+
+        // Kiểm tra điều kiện 1: EMPTY_IN_YARD (SystemAdmin thêm)
+        if (!latestServiceRequest) {
+          // Tìm trong bảng Container
+          const container = await prisma.container.findUnique({
+            where: { container_no },
+            include: {
+              shipping_line: {
+                select: { id: true, name: true, code: true }
+              },
+              container_type: {
+                select: { id: true, code: true, description: true }
+              },
+              customer: {
+                select: { id: true, name: true, code: true }
+              }
+            }
+          });
+
+          if (container && container.shipping_line_id === shipping_line_id) {
+            result.push({
+              container_no,
+              slot_code: yardContainer.slot?.code || '',
+              block_code: yardContainer.slot?.block?.code || '',
+              yard_name: yardContainer.slot?.block?.yard?.name || '',
+              tier: yardContainer.tier,
+              placed_at: yardContainer.placed_at,
+              shipping_line: container.shipping_line,
+              container_type: container.container_type,
+              customer: container.customer,
+              seal_number: container.seal_number,
+              dem_det: container.dem_det,
+              service_status: 'EMPTY_IN_YARD',
+              request_type: 'SYSTEM_ADMIN_ADDED'
+            });
+          }
+        }
+      }
+
+      console.log(`Debug - Final result: ${result.length} containers`);
+
+      return res.json({
+        success: true,
+        data: result,
+        total: result.length
+      });
+
+    } catch (error) {
+      console.error('Error getting containers in yard by shipping line:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Lỗi khi lấy danh sách container trong yard',
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  }
+
+  /**
    * Cập nhật thông tin container
    */
   async updateContainerInfo(req: AuthRequest, res: Response) {

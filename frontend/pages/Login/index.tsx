@@ -40,47 +40,9 @@ export default function Login(){
 	};
 
 	return (
-		<>
+		<div className="login-page">
 			<Header />
 			<main className="futuristic-login">
-				{/* Premium Marine Background */}
-				<div className="navy-bg">
-					<div className="navy-particles"></div>
-					<div className="navy-waves"></div>
-					<div className="navy-grid"></div>
-					
-					{/* 3D Marine Illustrations */}
-					<div className="marine-illustrations">
-						{/* Container Ship */}
-						<div className="container-ship"></div>
-						
-						{/* Marine Crane */}
-						<div className="marine-crane">🏗️</div>
-						
-						{/* Seagulls */}
-						<div className="seagulls">
-							<div className="seagull">🕊️</div>
-							<div className="seagull">🕊️</div>
-							<div className="seagull">🕊️</div>
-						</div>
-						
-						{/* Lighthouse */}
-						<div className="lighthouse"></div>
-					</div>
-					
-					{/* Floating Containers */}
-					<div className="floating-containers">
-						<div className="floating-container" style={{left: '10%', animationDelay: '0s'}}>📦</div>
-						<div className="floating-container" style={{left: '30%', animationDelay: '2s'}}>📦</div>
-						<div className="floating-container" style={{left: '50%', animationDelay: '4s'}}>📦</div>
-						<div className="floating-container" style={{left: '70%', animationDelay: '6s'}}>📦</div>
-						<div className="floating-container" style={{left: '90%', animationDelay: '8s'}}>📦</div>
-					</div>
-					
-					{/* Wave Sound Effect */}
-					<div className="wave-sound-effect"></div>
-				</div>
-
 				{/* Login Container */}
 				<div className="login-container">
 					{/* Glass Login Card */}
@@ -189,6 +151,6 @@ export default function Login(){
 					</div>
 				</div>
 			</main>
-		</>
+		</div>
 	);
 }

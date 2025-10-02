@@ -51,5 +51,12 @@ export const containersApi = {
   }) {
     const { data: response } = await api.put(`/containers/${container_no}`, data);
     return response;
+  },
+
+  // API mới để lấy containers trong yard theo shipping line cho lift request
+  async getContainersInYardByShippingLine(shipping_line_id: string, searchQuery?: string) {
+    const params = searchQuery ? { q: searchQuery } : {};
+    const { data } = await api.get(`/containers/yard/by-shipping-line/${shipping_line_id}`, { params });
+    return data;
   }
 };

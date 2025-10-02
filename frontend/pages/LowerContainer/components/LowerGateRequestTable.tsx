@@ -31,9 +31,11 @@ interface LowerGateRequestTableProps {
   requests: GateRequest[];
   loading: boolean;
   onRefresh: () => void;
+  showSuccess?: (title: string, message?: string, duration?: number) => void;
+  showError?: (title: string, message?: string, duration?: number) => void;
 }
 
-export default function LowerGateRequestTable({ requests, loading, onRefresh }: LowerGateRequestTableProps) {
+export default function LowerGateRequestTable({ requests, loading, onRefresh, showSuccess, showError }: LowerGateRequestTableProps) {
   const [selectedRequest, setSelectedRequest] = useState<GateRequest | null>(null);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const { t, currentLanguage } = useTranslation();
@@ -231,6 +233,8 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh }: 
                     initialDriverPhone={request.driver_phone}
                     isPaid={request.is_paid || false}
                     onActionSuccess={onRefresh}
+                    showSuccess={showSuccess}
+                    showError={showError}
                   />
                 </td>
               </tr>
