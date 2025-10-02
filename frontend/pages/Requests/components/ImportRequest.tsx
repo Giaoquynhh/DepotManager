@@ -93,7 +93,7 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
         try {
             console.log('=== DEBUG FETCH REQUESTS ===');
             console.log('Token in localStorage:', localStorage.getItem('token'));
-            console.log('API_BASE:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1000');
+            console.log('API_BASE:', process.env.NEXT_PUBLIC_API_BASE_URL || '/backend');
             const response = await requestService.getRequests('IMPORT');
             console.log('API Response:', response.data);
             if (response.data.success) {

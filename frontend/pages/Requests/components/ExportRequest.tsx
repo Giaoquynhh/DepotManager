@@ -85,7 +85,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     const fetchSealCost = async (requestId: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:1000/requests/${requestId}/seal-cost`, {
+            const response = await fetch(`/backend/requests/${requestId}/seal-cost`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -600,7 +600,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                     let sealCost = 0;
                                     try {
                                         const token = localStorage.getItem('token');
-                                        const sealRes = await fetch(`http://localhost:1000/requests/${r.id}/seal-cost`, {
+                                        const sealRes = await fetch(`/backend/requests/${r.id}/seal-cost`, {
                                             method: 'GET',
                                             headers: {
                                                 'Authorization': `Bearer ${token}`,
