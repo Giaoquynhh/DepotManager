@@ -180,6 +180,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				if (containerResponse.success && containerResponse.data) {
 					const containerData = containerResponse.data;
 					
+					// Tìm container trong search results để lấy request_type
+					const originalContainer = containerSearchResults.find(c => c.container_no === formData.containerNumber);
+					const isImportContainer = originalContainer?.request_type === 'IMPORT';
+					
+					console.log('Refresh - originalContainer:', originalContainer);
+					console.log('Refresh - isImportContainer:', isImportContainer);
+					
 					// Update selected container info with latest data
 					const updatedContainerInfo = {
 						container_no: formData.containerNumber,
@@ -188,11 +195,12 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 						yard_name: selectedContainerInfo?.yard_name || '',
 						tier: selectedContainerInfo?.tier,
 						placed_at: selectedContainerInfo?.placed_at || '',
-						customer: containerData.customer,
+						customer: isImportContainer ? null : containerData.customer, // Không set customer cho IMPORT
 						shipping_line: containerData.shipping_line,
 						container_type: containerData.container_type,
 						seal_number: containerData.seal_number,
-						dem_det: containerData.dem_det
+						dem_det: containerData.dem_det,
+						request_type: originalContainer?.request_type // Lấy request_type từ search results
 					};
 					
 					setSelectedContainerInfo(updatedContainerInfo);
@@ -202,9 +210,16 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 						handleInputChange('containerType', containerData.container_type.id);
 					}
 					
-					if (containerData.customer?.id) {
+					// Chỉ auto-fill customer nếu không phải IMPORT container
+					if (containerData.customer?.id && !isImportContainer) {
+						console.log('Refresh - Auto-filling customer for non-IMPORT container');
 						handleInputChange('customer', containerData.customer.id);
 						setSelectedCustomerName(containerData.customer.name);
+					} else if (isImportContainer) {
+						console.log('Refresh - Clearing customer field for IMPORT container');
+						// Clear customer field cho IMPORT containers
+						handleInputChange('customer', '');
+						setSelectedCustomerName('');
 					}
 				}
 			} catch (error) {
@@ -1095,10 +1110,25 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																	handleInputChange('containerType', containerData.container_type.id);
 																}
 																
-																// Auto-fill customer với dữ liệu mới nhất
-																if (containerData.customer?.id) {
+																// Auto-fill customer với dữ liệu mới nhất (chỉ cho EMPTY_IN_YARD, không cho IMPORT)
+																console.log('Debug - container.request_type:', container.request_type);
+																console.log('Debug - containerData.customer:', containerData.customer);
+																console.log('Debug - condition check:', {
+																	hasCustomer: !!containerData.customer?.id,
+																	requestType: container.request_type,
+																	isNotImport: container.request_type !== 'IMPORT',
+																	shouldAutoFill: containerData.customer?.id && container.request_type !== 'IMPORT'
+																});
+																
+																if (containerData.customer?.id && container.request_type !== 'IMPORT') {
+																	console.log('Auto-filling customer for non-IMPORT container');
 																	handleInputChange('customer', containerData.customer.id);
 																	setSelectedCustomerName(containerData.customer.name);
+																} else {
+																	console.log('Skipping customer auto-fill for IMPORT container');
+																	// Clear customer field for IMPORT containers
+																	handleInputChange('customer', '');
+																	setSelectedCustomerName('');
 																}
 																
 																// Cập nhật selectedContainerInfo với dữ liệu mới nhất từ database
@@ -1109,7 +1139,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																	yard_name: container.yard_name || '',
 																	tier: container.tier,
 																	placed_at: container.placed_at || '',
-																	customer: containerData.customer,
+																	customer: container.request_type === 'IMPORT' ? null : containerData.customer, // Không set customer cho IMPORT
 																	shipping_line: containerData.shipping_line,
 																	container_type: containerData.container_type,
 																	seal_number: containerData.seal_number,
@@ -1123,9 +1153,16 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																if (container.container_type?.id) {
 																	handleInputChange('containerType', container.container_type.id);
 																}
-																if (container.customer?.id) {
+																console.log('Fallback - container.request_type:', container.request_type);
+																if (container.customer?.id && container.request_type !== 'IMPORT') {
+																	console.log('Fallback - Auto-filling customer for non-IMPORT container');
 																	handleInputChange('customer', container.customer.id);
 																	setSelectedCustomerName(container.customer.name);
+																} else {
+																	console.log('Fallback - Skipping customer auto-fill for IMPORT container');
+																	// Clear customer field for IMPORT containers
+																	handleInputChange('customer', '');
+																	setSelectedCustomerName('');
 																}
 															}
 														} catch (error) {
@@ -1135,9 +1172,16 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 															if (container.container_type?.id) {
 																handleInputChange('containerType', container.container_type.id);
 															}
-															if (container.customer?.id) {
+															console.log('Error fallback - container.request_type:', container.request_type);
+															if (container.customer?.id && container.request_type !== 'IMPORT') {
+																console.log('Error fallback - Auto-filling customer for non-IMPORT container');
 																handleInputChange('customer', container.customer.id);
 																setSelectedCustomerName(container.customer.name);
+															} else {
+																console.log('Error fallback - Skipping customer auto-fill for IMPORT container');
+																// Clear customer field for IMPORT containers
+																handleInputChange('customer', '');
+																setSelectedCustomerName('');
 															}
 														}
 													}}

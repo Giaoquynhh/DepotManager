@@ -181,26 +181,39 @@ class ContainerController {
           }
         });
 
-        // Kiểm tra điều kiện 2: IN_YARD hoặc GATE_OUT với type IMPORT
+        // Kiểm tra điều kiện 2: IN_YARD hoặc GATE_OUT với type IMPORT và quality GOOD
         if (latestServiceRequest && 
             latestServiceRequest.type === 'IMPORT' &&
             (latestServiceRequest.status === 'IN_YARD' || latestServiceRequest.status === 'GATE_OUT')) {
           
-          result.push({
-            container_no,
-            slot_code: yardContainer.slot?.code || '',
-            block_code: yardContainer.slot?.block?.code || '',
-            yard_name: yardContainer.slot?.block?.yard?.name || '',
-            tier: yardContainer.tier,
-            placed_at: yardContainer.placed_at,
-            shipping_line: latestServiceRequest.shipping_line,
-            container_type: latestServiceRequest.container_type,
-            customer: latestServiceRequest.customer,
-            seal_number: latestServiceRequest.seal_number,
-            dem_det: latestServiceRequest.dem_det,
-            service_status: latestServiceRequest.status,
-            request_type: 'IMPORT'
+          // Kiểm tra container quality - phải có RepairTicket với status COMPLETE (GOOD)
+          const repairTicket = await prisma.repairTicket.findFirst({
+            where: { 
+              container_no,
+              status: 'COMPLETE' // Container quality GOOD
+            },
+            orderBy: { updatedAt: 'desc' }
           });
+
+          // Chỉ thêm vào kết quả nếu container có quality GOOD
+          if (repairTicket) {
+            result.push({
+              container_no,
+              slot_code: yardContainer.slot?.code || '',
+              block_code: yardContainer.slot?.block?.code || '',
+              yard_name: yardContainer.slot?.block?.yard?.name || '',
+              tier: yardContainer.tier,
+              placed_at: yardContainer.placed_at,
+              shipping_line: latestServiceRequest.shipping_line,
+              container_type: latestServiceRequest.container_type,
+              customer: latestServiceRequest.customer,
+              seal_number: latestServiceRequest.seal_number,
+              dem_det: latestServiceRequest.dem_det,
+              service_status: latestServiceRequest.status,
+              request_type: 'IMPORT',
+              container_quality: 'GOOD' // Thêm thông tin quality
+            });
+          }
           continue;
         }
 

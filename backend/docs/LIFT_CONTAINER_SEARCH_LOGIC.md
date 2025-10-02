@@ -16,11 +16,12 @@ Chỉ có **2 loại container** được phép nâng:
   - Trạng thái: `EMPTY_IN_YARD`
   - Nguồn: `SYSTEM_ADMIN_ADDED`
 
-### 2. IMPORT Containers (IN_YARD hoặc GATE_OUT)
-- **Mô tả**: Container từ yêu cầu IMPORT đã hoàn thành quy trình hạ
+### 2. IMPORT Containers (IN_YARD hoặc GATE_OUT) với Quality GOOD
+- **Mô tả**: Container từ yêu cầu IMPORT đã hoàn thành quy trình hạ và có chất lượng tốt
 - **Đặc điểm**:
   - Có ServiceRequest với `type = 'IMPORT'`
   - Trạng thái ServiceRequest: `IN_YARD` hoặc `GATE_OUT`
+  - **Có RepairTicket với `status = 'COMPLETE'` (Container quality GOOD)**
   - Đã hoàn thành quy trình import và sẵn sàng để nâng
 
 ## API Endpoint
@@ -63,7 +64,8 @@ GET /containers/yard/by-shipping-line/:shipping_line_id?q=search_query
       "seal_number": "SEAL123",
       "dem_det": "DEM/DET info",
       "service_status": "EMPTY_IN_YARD", // hoặc "IN_YARD" hoặc "GATE_OUT"
-      "request_type": "SYSTEM_ADMIN_ADDED" // hoặc "IMPORT"
+      "request_type": "SYSTEM_ADMIN_ADDED", // hoặc "IMPORT"
+      "container_quality": "GOOD" // Chỉ cho IMPORT containers
     }
   ],
   "total": 1
@@ -85,9 +87,14 @@ WHERE (
   -- Điều kiện 1: EMPTY_IN_YARD (SystemAdmin thêm)
   (ls.container_no IS NULL AND c.shipping_line_id = :shipping_line_id)
   OR
-  -- Điều kiện 2: IMPORT containers (IN_YARD hoặc GATE_OUT)
+  -- Điều kiện 2: IMPORT containers (IN_YARD hoặc GATE_OUT) với quality GOOD
   (ls.type = 'IMPORT' AND ls.shipping_line_id = :shipping_line_id 
-   AND (ls.service_status = 'IN_YARD' OR ls.service_status = 'GATE_OUT'))
+   AND (ls.service_status = 'IN_YARD' OR ls.service_status = 'GATE_OUT')
+   AND EXISTS (
+     SELECT 1 FROM "RepairTicket" rt 
+     WHERE rt.container_no = ls.container_no 
+     AND rt.status = 'COMPLETE'
+   ))
 )
 ```
 
@@ -100,17 +107,19 @@ WHERE (
 
 ### UI Improvements
 - Badge màu xanh cho EMPTY_IN_YARD
-- Badge màu xanh lá cho IN_YARD (IMPORT)
-- Badge màu đỏ cho GATE_OUT (IMPORT)
+- Badge màu xanh lá cho IN_YARD (IMPORT) với quality GOOD
+- Badge màu đỏ cho GATE_OUT (IMPORT) với quality GOOD
 - Badge tím cho containers do SystemAdmin thêm
+- **Badge vàng cho quality GOOD** (chỉ hiển thị với IMPORT containers)
 - Thông báo số lượng containers tìm thấy
 
 ## Lợi Ích
 
 1. **Performance**: Chỉ query containers cần thiết thay vì lấy tất cả rồi filter
 2. **Accuracy**: Đảm bảo chỉ containers đúng điều kiện được hiển thị
-3. **User Experience**: Hiển thị rõ ràng loại container và nguồn gốc
-4. **Maintainability**: Logic tập trung ở backend, dễ bảo trì
+3. **Quality Control**: Chỉ cho phép nâng containers có chất lượng tốt (GOOD)
+4. **User Experience**: Hiển thị rõ ràng loại container, nguồn gốc và chất lượng
+5. **Maintainability**: Logic tập trung ở backend, dễ bảo trì
 
 ## Testing
 
