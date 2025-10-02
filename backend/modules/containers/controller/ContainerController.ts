@@ -181,10 +181,10 @@ class ContainerController {
           }
         });
 
-        // Kiểm tra điều kiện 2: GATE_OUT với type IMPORT
+        // Kiểm tra điều kiện 2: IN_YARD hoặc GATE_OUT với type IMPORT
         if (latestServiceRequest && 
-            latestServiceRequest.status === 'GATE_OUT' && 
-            latestServiceRequest.type === 'IMPORT') {
+            latestServiceRequest.type === 'IMPORT' &&
+            (latestServiceRequest.status === 'IN_YARD' || latestServiceRequest.status === 'GATE_OUT')) {
           
           result.push({
             container_no,
@@ -198,7 +198,7 @@ class ContainerController {
             customer: latestServiceRequest.customer,
             seal_number: latestServiceRequest.seal_number,
             dem_det: latestServiceRequest.dem_det,
-            service_status: 'GATE_OUT',
+            service_status: latestServiceRequest.status,
             request_type: 'IMPORT'
           });
           continue;

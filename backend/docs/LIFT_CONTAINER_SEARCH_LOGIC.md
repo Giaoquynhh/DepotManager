@@ -16,11 +16,11 @@ Chỉ có **2 loại container** được phép nâng:
   - Trạng thái: `EMPTY_IN_YARD`
   - Nguồn: `SYSTEM_ADMIN_ADDED`
 
-### 2. GATE_OUT với type IMPORT
-- **Mô tả**: Container đã qua cổng ra (GATE_OUT) từ yêu cầu IMPORT
+### 2. IMPORT Containers (IN_YARD hoặc GATE_OUT)
+- **Mô tả**: Container từ yêu cầu IMPORT đã hoàn thành quy trình hạ
 - **Đặc điểm**:
   - Có ServiceRequest với `type = 'IMPORT'`
-  - Trạng thái ServiceRequest: `GATE_OUT`
+  - Trạng thái ServiceRequest: `IN_YARD` hoặc `GATE_OUT`
   - Đã hoàn thành quy trình import và sẵn sàng để nâng
 
 ## API Endpoint
@@ -62,7 +62,7 @@ GET /containers/yard/by-shipping-line/:shipping_line_id?q=search_query
       },
       "seal_number": "SEAL123",
       "dem_det": "DEM/DET info",
-      "service_status": "EMPTY_IN_YARD", // hoặc "GATE_OUT"
+      "service_status": "EMPTY_IN_YARD", // hoặc "IN_YARD" hoặc "GATE_OUT"
       "request_type": "SYSTEM_ADMIN_ADDED" // hoặc "IMPORT"
     }
   ],
@@ -85,8 +85,9 @@ WHERE (
   -- Điều kiện 1: EMPTY_IN_YARD (SystemAdmin thêm)
   (ls.container_no IS NULL AND c.shipping_line_id = :shipping_line_id)
   OR
-  -- Điều kiện 2: GATE_OUT với type IMPORT  
-  (ls.service_status = 'GATE_OUT' AND ls.type = 'IMPORT' AND ls.shipping_line_id = :shipping_line_id)
+  -- Điều kiện 2: IMPORT containers (IN_YARD hoặc GATE_OUT)
+  (ls.type = 'IMPORT' AND ls.shipping_line_id = :shipping_line_id 
+   AND (ls.service_status = 'IN_YARD' OR ls.service_status = 'GATE_OUT'))
 )
 ```
 
@@ -99,6 +100,7 @@ WHERE (
 
 ### UI Improvements
 - Badge màu xanh cho EMPTY_IN_YARD
+- Badge màu xanh lá cho IN_YARD (IMPORT)
 - Badge màu đỏ cho GATE_OUT (IMPORT)
 - Badge tím cho containers do SystemAdmin thêm
 - Thông báo số lượng containers tìm thấy
