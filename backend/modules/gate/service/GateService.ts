@@ -858,6 +858,174 @@ export class GateService {
 
     return updatedRequest;
   }
+
+  /**
+   * Generate EIR cho container
+   */
+  async generateEIR(requestId: string): Promise<{ success: boolean; data?: any; message?: string }> {
+    try {
+      console.log('📄 GateService: Generating EIR for request:', requestId);
+
+      // Lấy thông tin request với các thông tin liên quan
+      const request = await prisma.serviceRequest.findUnique({
+        where: { id: requestId },
+        include: {
+          customer: {
+            select: { id: true, name: true, code: true, address: true, tax_code: true, phone: true }
+          },
+          shipping_line: {
+            select: { id: true, name: true, code: true, template_eir: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
+          }
+        }
+      });
+
+      if (!request) {
+        return {
+          success: false,
+          message: 'Request không tồn tại'
+        };
+      }
+
+      if (request.status !== 'GATE_OUT') {
+        return {
+          success: false,
+          message: 'Chỉ có thể tạo EIR cho container ở trạng thái GATE_OUT'
+        };
+      }
+
+      console.log('📋 Request details:', {
+        container_no: request.container_no,
+        customer: request.customer?.name,
+        shipping_line: request.shipping_line?.name,
+        status: request.status
+      });
+
+      // Lấy template EIR từ shipping line
+      const templateEir = request.shipping_line?.template_eir;
+      if (!templateEir) {
+        return {
+          success: false,
+          message: 'Hãng tàu chưa có template EIR'
+        };
+      }
+
+      // Đọc template file
+      const path = require('path');
+      const fs = require('fs');
+      const XLSX = require('xlsx');
+      
+      const templatePath = path.join(__dirname, '../../../uploads/shipping-lines-eir', templateEir);
+      
+      if (!fs.existsSync(templatePath)) {
+        return {
+          success: false,
+          message: 'File template EIR không tồn tại'
+        };
+      }
+
+      console.log('📁 Template path:', templatePath);
+
+      // Đọc template Excel
+      const workbook = XLSX.readFile(templatePath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Chuyển đổi thành JSON để xem cấu trúc
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      
+      console.log('📋 Template structure loaded');
+
+      // Tạo dữ liệu mới với thông tin container
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      
+      const worksheetData = [
+        // Row 1: Tên công ty
+        ['', 'CÔNG TY CỔ PHẦN LOGISTICS THÁI BÌNH', '', '', '', '', '', '', '', ''],
+        
+        // Row 2: Địa chỉ
+        ['', 'Địa chỉ: KCN Thái Bình, Phường Trần Lãm, TP.Thái Bình, Tỉnh Thái Bình', '', '', '', '', '', '', '', ''],
+        
+        // Row 3: Tel và MST
+        ['', 'Tel: 0227.3745.678        MST: 3701587234', '', '', '', '', '', '', '', ''],
+        
+        // Row 4: Tiêu đề
+        ['', '', '', '', 'PHIẾU THÔNG TIN CONTAINER', '', '', '', '', ''],
+        
+        // Row 5: Ngày
+        ['', '', '', '', '', '', '', '', `Ngày ${day} tháng ${month} năm ${year}`, ''],
+        
+        // Row 6: Giao cho/Nhận của
+        ['Giao cho/Nhận của:', '', request.customer?.name || 'CÔNG TY TNHH FORD VIỆT NAM', '', '', '', '', '', '', ''],
+        
+        // Row 7: Hãng tàu và Tác nghiệp
+        ['Hãng tàu:', '', request.shipping_line?.code || 'KMTU', '', '', '', '', '', '', 'Tác nghiệp:'],
+        
+        // Row 8: Số container, seal, booking
+        ['Số container:', '', request.container_no, '', '', '', '', '', 'Số seal:', 'Số Booking/Bill:'],
+        
+        // Row 9: Ghi chú
+        ['GHI CHÚ\nEMPTY', '', '', '', '', '', '', '', '', ''],
+        
+        // Row 10: Số xe
+        ['Số xe:', '', request.license_plate || '67H-395.20', '', '', '', '', '', '', ''],
+        
+        // Row 11: Tài xế và CMND
+        [`Tài xế: ${request.driver_name || 'Trần Thị Bình'}`, '', '', '', '', '', `CMND: ${request.driver_phone || '714529869'}`, '', '', ''],
+        
+        // Row 12: Nhân viên giao nhận
+        ['Nhân viên giao nhận\nGate Check', '', '', '', '', '', 'Nhân viên kiểm hàng\nYard Check', '', '', '']
+      ];
+
+      // Tạo workbook mới
+      const newWorkbook = XLSX.utils.book_new();
+      const newWorksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      
+      // Thiết lập độ rộng cột
+      newWorksheet['!cols'] = [
+        { width: 15 },  // Cột A
+        { width: 20 },  // Cột B  
+        { width: 15 },  // Cột C
+        { width: 10 },   // Cột D
+        { width: 10 },  // Cột E
+        { width: 10 },  // Cột F
+        { width: 10 },  // Cột G
+        { width: 10 },  // Cột H
+        { width: 15 },  // Cột I
+        { width: 15 }   // Cột J
+      ];
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'EIR_Container');
+
+      // Tạo buffer
+      const buffer = XLSX.write(newWorkbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      const filename = `EIR_${request.container_no}_${Date.now()}.xlsx`;
+      
+      console.log('✅ EIR generated successfully:', filename);
+
+      return {
+        success: true,
+        data: {
+          filename,
+          fileBuffer: buffer
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error generating EIR:', error);
+      return {
+        success: false,
+        message: 'Lỗi khi tạo phiếu EIR: ' + (error instanceof Error ? error.message : 'Unknown error')
+      };
+    }
+  }
 }
 
 

@@ -831,6 +831,54 @@ export class SetupController {
     }
   }
 
+  // Update shipping line template EIR
+  async updateShippingLineTemplate(req: Request, res: Response) {
+    try {
+      const { shipping_line_id } = req.params;
+      const { template_eir } = req.body;
+      
+      if (!shipping_line_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Shipping line ID is required'
+        });
+      }
+
+      if (!template_eir) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Template EIR filename is required'
+        });
+      }
+
+      console.log('🔄 Update template EIR request:');
+      console.log('  - shipping_line_id:', shipping_line_id);
+      console.log('  - template_eir:', template_eir);
+
+      // Sử dụng service method
+      const result = await service.updateShippingLineTemplate(shipping_line_id, template_eir);
+      
+      if (!result.success) {
+        const statusCode = result.error === 'NOT_FOUND' ? 404 : 500;
+        console.log('❌ Update template failed:', result.message);
+        return res.status(statusCode).json(result);
+      }
+
+      console.log('✅ Template updated successfully');
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Error updating template:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
   // Download/view EIR file
   async downloadShippingLineEIR(req: Request, res: Response) {
     try {

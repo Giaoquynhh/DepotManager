@@ -98,6 +98,13 @@ router.get(
   gateController.getGateHistory.bind(gateController)
 );
 
+// Generate EIR cho container (YardManager, TechnicalDepartment, SystemAdmin)
+router.post(
+  '/requests/:id/generate-eir',
+  requireRoles('YardManager', 'TechnicalDepartment', 'SystemAdmin'),
+  gateController.generateEIR.bind(gateController)
+);
+
 // Cập nhật trạng thái kiểm tra container (MaintenanceManager, SystemAdmin)
 router.patch(
   '/requests/:requestId/inspection',

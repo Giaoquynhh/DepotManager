@@ -383,6 +383,41 @@ export class GateController {
       });
     }
   }
+
+  /**
+   * Generate EIR cho container
+   */
+  async generateEIR(req: Request, res: Response) {
+    try {
+      const requestId = req.params.id;
+      
+      console.log('📄 Generating EIR for request:', requestId);
+      
+      const result = await this.gateService.generateEIR(requestId);
+      
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result.message || 'Không thể tạo phiếu EIR'
+        });
+      }
+
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${result.data.filename}"`);
+      
+      // Send file buffer
+      res.send(result.data.fileBuffer);
+      
+    } catch (error: any) {
+      console.error('❌ Error generating EIR:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi tạo phiếu EIR',
+        error: error.message
+      });
+    }
+  }
 }
 
 export default new GateController();

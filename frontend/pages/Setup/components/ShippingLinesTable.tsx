@@ -7,6 +7,7 @@ export interface ShippingLine {
   code: string;
   name: string;
   eir: string;
+  template_eir?: string;  // File mẫu cố định
   note?: string;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +27,7 @@ interface ShippingLinesTableProps {
   onDelete: (id: string) => void;
   onUploadEIR: (shippingLine: { id: string; name: string }) => void;
   onDownloadEIR: (shippingLine: { id: string; name: string }) => void;
+  onUpdateTemplate: (shippingLine: { id: string; name: string }) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -38,6 +40,7 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
   onDelete,
   onUploadEIR,
   onDownloadEIR,
+  onUpdateTemplate,
   onPageChange
 }) => {
 
@@ -63,7 +66,7 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
                 {shippingLine.name}
               </td>
               <td>
-                {shippingLine.eir}
+                {shippingLine.template_eir || shippingLine.eir}
               </td>
               <td>
                 {shippingLine.note || '-'}
@@ -85,11 +88,19 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
                   >
                     📄 Upload
                   </button>
-                  {shippingLine.eir && (
+                  <button 
+                    className="btn btn-xs btn-outline" 
+                    onClick={() => onUpdateTemplate({ id: shippingLine.id, name: shippingLine.name })}
+                    title="Cập nhật Template"
+                    style={{color: '#7c3aed', borderColor: '#7c3aed'}}
+                  >
+                    🔄 Template
+                  </button>
+                  {shippingLine.template_eir && (
                     <button 
                       className="btn btn-xs btn-outline" 
                       onClick={() => onDownloadEIR({ id: shippingLine.id, name: shippingLine.name })}
-                      title="Download EIR"
+                      title="Download Template EIR"
                       style={{color: '#2563eb', borderColor: '#2563eb'}}
                     >
                       📥 Download

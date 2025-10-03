@@ -48,6 +48,7 @@ router.post('/shipping-lines/bulk', requireRoles('SystemAdmin', 'TechnicalDepart
 router.put('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateShippingLine);
 router.delete('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteShippingLine);
 router.post('/shipping-lines/upload-eir', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadShippingLineEIR);
+router.put('/shipping-lines/:shipping_line_id/update-template', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateShippingLineTemplate);
 router.get('/shipping-lines/:shipping_line_id/download-eir', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.downloadShippingLineEIR);
 
 // Transport Companies Routes

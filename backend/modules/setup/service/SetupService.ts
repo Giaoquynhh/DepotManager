@@ -110,6 +110,7 @@ export class SetupService {
         code: data.code.trim(),
         name: data.name.trim(),
         eir: data.eir.trim(),
+        template_eir: data.template_eir?.trim(),
         note: data.note?.trim()
       });
 
@@ -157,6 +158,7 @@ export class SetupService {
       if (data.code) updateData.code = data.code.trim();
       if (data.name) updateData.name = data.name.trim();
       if (data.eir) updateData.eir = data.eir.trim();
+      if (data.template_eir !== undefined) updateData.template_eir = data.template_eir?.trim() || null;
       if (data.note !== undefined) updateData.note = data.note?.trim() || null;
 
       const shippingLine = await repo.updateShippingLine(id, updateData);
@@ -1447,6 +1449,38 @@ export class SetupService {
     }
   }
 
+  // Update shipping line template EIR
+  async updateShippingLineTemplate(shippingLineId: string, templateEir: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('🔄 Updating template EIR for shipping line:', shippingLineId);
+      console.log('📄 New template file:', templateEir);
+
+      const updateResult = await this.updateShippingLine(shippingLineId, {
+        template_eir: templateEir
+      });
+      
+      if (!updateResult.success) {
+        console.log('❌ Template update failed:', updateResult.message);
+        return updateResult;
+      }
+      
+      console.log('✅ Template updated successfully');
+      return {
+        success: true,
+        data: updateResult.data,
+        message: 'Template EIR updated successfully'
+      };
+
+    } catch (error) {
+      console.error('Error updating template:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to update template EIR'
+      };
+    }
+  }
+
   // Upload EIR file for shipping line
   async uploadShippingLineEIR(file: Express.Multer.File, shippingLineId: string): Promise<ApiResponse<any>> {
     try {
@@ -1532,24 +1566,16 @@ export class SetupService {
         throw moveError;
       }
       
-      // Cập nhật database
-      console.log('💾 Updating database with filename:', newFilename);
-      const updateResult = await this.updateShippingLine(shippingLineId, {
-        eir: newFilename
-      });
-      
-      if (!updateResult.success) {
-        console.log('❌ Database update failed:', updateResult.message);
-        return updateResult;
-      }
-      console.log('✅ Database updated successfully');
+      // Không cập nhật database - chỉ lưu file
+      console.log('💾 File saved successfully without updating database');
+      console.log('📁 File location:', newFilePath);
 
       const result = {
         success: true,
         data: {
           filename: newFilename,
           file_path: newFilePath,
-          shipping_line: updateResult.data
+          message: 'File saved without updating database'
         },
         message: 'EIR file uploaded successfully'
       };

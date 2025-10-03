@@ -363,6 +363,19 @@ class SetupService {
     }
   }
 
+  // Update shipping line template EIR
+  async updateShippingLineTemplate(shippingLineId: string, templateFilename: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await api.put(`/api/setup/shipping-lines/${shippingLineId}/update-template`, {
+        template_eir: templateFilename
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating template:', error);
+      throw new Error('Failed to update template');
+    }
+  }
+
   // Upload transport company Excel file
   async uploadTransportCompanyExcel(file: FormData): Promise<ApiResponse<TransportCompany[]>> {
     try {

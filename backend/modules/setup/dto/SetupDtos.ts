@@ -4,6 +4,7 @@ export interface CreateShippingLineDto {
   code: string;
   name: string;
   eir: string;
+  template_eir?: string;
   note?: string;
 }
 
@@ -11,6 +12,7 @@ export interface UpdateShippingLineDto {
   code?: string;
   name?: string;
   eir?: string;
+  template_eir?: string;
   note?: string;
 }
 
@@ -49,6 +51,7 @@ export interface ShippingLineResponse {
   code: string;
   name: string;
   eir: string;
+  template_eir?: string;
   note?: string;
   createdAt: Date;
   updatedAt: Date;

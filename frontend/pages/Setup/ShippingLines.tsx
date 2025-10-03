@@ -11,6 +11,7 @@ import { SetupModals } from './components/SetupModals';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { EditShippingLineModal } from './components/EditShippingLineModal';
 import { UploadEIRModal } from './components/UploadEIRModal';
+import { UpdateTemplateModal } from './components/UpdateTemplateModal';
 
 // Import hooks and handlers
 import { useSetupState } from './hooks/useSetupState';
@@ -59,6 +60,13 @@ export default function ShippingLines() {
   // EIR Upload Modal State
   const [showEIRUploadModal, setShowEIRUploadModal] = useState(false);
   const [selectedShippingLineForEIR, setSelectedShippingLineForEIR] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  // Update Template Modal State
+  const [showUpdateTemplateModal, setShowUpdateTemplateModal] = useState(false);
+  const [selectedShippingLineForTemplate, setSelectedShippingLineForTemplate] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -112,6 +120,24 @@ export default function ShippingLines() {
     }
   };
 
+  // Update Template handlers
+  const handleUpdateTemplate = (shippingLine: { id: string; name: string }) => {
+    setSelectedShippingLineForTemplate(shippingLine);
+    setShowUpdateTemplateModal(true);
+  };
+
+  const handleUpdateTemplateSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowUpdateTemplateModal(false);
+    setSelectedShippingLineForTemplate(null);
+    // Reload data
+    shippingLineHandlers.loadShippingLines(1, shippingLinesPagination.limit);
+  };
+
+  const handleUpdateTemplateError = (message: string) => {
+    setErrorText(message);
+  };
+
   // Load data on component mount
   useEffect(() => {
     shippingLineHandlers.loadShippingLines(1, 14);
@@ -150,6 +176,7 @@ export default function ShippingLines() {
                 onDelete={shippingLineHandlers.handleDeleteShippingLine}
                 onUploadEIR={handleUploadEIR}
                 onDownloadEIR={handleDownloadEIR}
+                onUpdateTemplate={handleUpdateTemplate}
                 language={language}
                 translations={translations}
               />
@@ -253,6 +280,21 @@ export default function ShippingLines() {
           shippingLineName={selectedShippingLineForEIR.name}
           onSuccess={handleEIRUploadSuccess}
           onError={handleEIRUploadError}
+        />
+      )}
+
+      {/* Update Template Modal */}
+      {selectedShippingLineForTemplate && (
+        <UpdateTemplateModal
+          isOpen={showUpdateTemplateModal}
+          onClose={() => {
+            setShowUpdateTemplateModal(false);
+            setSelectedShippingLineForTemplate(null);
+          }}
+          shippingLineId={selectedShippingLineForTemplate.id}
+          shippingLineName={selectedShippingLineForTemplate.name}
+          onSuccess={handleUpdateTemplateSuccess}
+          onError={handleUpdateTemplateError}
         />
       )}
     </>

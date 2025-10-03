@@ -278,6 +278,47 @@ export default function GateActionButtons({
     }
   };
 
+  const handlePrintEIR = async () => {
+    try {
+      setIsLoading(true);
+      // Gọi API để tạo phiếu EIR
+      const response = await api.post(`/gate/requests/${requestId}/generate-eir`);
+      
+      if (response.data.success) {
+        // Tạo blob và download file
+        const blob = new Blob([response.data.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `EIR_${requestId}_${Date.now()}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        showSuccess(
+          '📄 Phiếu EIR đã được tạo',
+          'File EIR đã được tải xuống thành công.',
+          5000
+        );
+      } else {
+        showError(
+          'Lỗi khi tạo phiếu EIR',
+          response.data.message || 'Không thể tạo phiếu EIR'
+        );
+      }
+    } catch (error: any) {
+      showError(
+        'Lỗi khi tạo phiếu EIR',
+        error.response?.data?.message || error.message
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Hiển thị action Check-in, Check-out cho NEW_REQUEST và PENDING
   if (currentStatus === 'NEW_REQUEST' || currentStatus === 'PENDING') {
     return (
@@ -385,6 +426,39 @@ export default function GateActionButtons({
     );
   }
 
+  // Hiển thị nút "In phiếu EIR" cho trạng thái GATE_OUT
+  if (currentStatus === 'GATE_OUT') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'center' }}>
+        <button
+          onClick={handlePrintEIR}
+          disabled={isLoading}
+          className="action-btn action-btn-info"
+          style={{ 
+            backgroundColor: 'var(--color-blue-600)',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 'var(--font-weight-medium)'
+          }}
+          title="In phiếu EIR cho container"
+        >
+          {isLoading ? 'Đang tạo...' : '📄 In phiếu EIR'}
+        </button>
+        <span style={{ 
+          color: 'var(--color-gray-500)', 
+          fontSize: 'var(--font-size-xs)',
+          fontStyle: 'italic'
+        }}>
+          Đã cho phép ra
+        </span>
+      </div>
+    );
+  }
+
   // Chỉ hiển thị buttons khi status là FORWARDED
   // Với FORKLIFTING: coi như đã cho phép vào → hiển thị nhãn giống GATE_IN và không có hành động
   if (currentStatus !== 'FORWARDED') {
@@ -396,7 +470,6 @@ export default function GateActionButtons({
       }}>
         {currentStatus === 'GATE_IN' && 'Đã cho phép vào'}
         {currentStatus === 'FORKLIFTING' && 'Đã cho phép vào'}
-        {currentStatus === 'GATE_OUT' && 'Đã cho phép ra'}
         {currentStatus === 'GATE_REJECTED' && 'Đã từ chối'}
         {currentStatus === 'COMPLETED' && 'Hoàn tất'}
         {currentStatus === 'SCHEDULED' && 'Đã lên lịch'}

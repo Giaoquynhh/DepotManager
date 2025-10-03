@@ -70,6 +70,7 @@ export class SetupRepository {
         code: data.code,
         name: data.name,
         eir: data.eir,
+        template_eir: data.template_eir || null,
         note: data.note || null
       }
     }) as ShippingLineResponse;
