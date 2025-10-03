@@ -515,31 +515,48 @@ export class GateService {
    * Lấy danh sách chứng từ của request
    */
   async getRequestDocuments(requestId: string): Promise<any> {
-    const request = await prisma.serviceRequest.findUnique({
-      where: { id: requestId },
+    console.log('🔍 GateService.getRequestDocuments - Input requestId:', requestId);
+    
+    // Tìm request theo ID hoặc request_no
+    const request = await prisma.serviceRequest.findFirst({
+      where: {
+        OR: [
+          { id: requestId },
+          { request_no: requestId }
+        ]
+      },
       include: {
-        docs: {
+        attachments: {
           where: { deleted_at: null },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { uploaded_at: 'desc' }
         }
       }
     });
 
     if (!request) {
+      console.log('❌ Không tìm thấy request với ID/request_no:', requestId);
       throw new Error('Request không tồn tại');
     }
 
+    console.log('✅ Tìm thấy request:', {
+      id: request.id,
+      request_no: request.request_no,
+      container_no: request.container_no,
+      attachments_count: request.attachments.length
+    });
+
     return {
       request_id: request.id,
+      request_no: request.request_no,
       container_no: request.container_no,
-      documents: request.docs.map(doc => ({
-        id: doc.id,
-        type: doc.type,
-        name: doc.name,
-        size: doc.size,
-        version: doc.version,
-        created_at: doc.createdAt,
-        storage_key: doc.storage_key
+      documents: request.attachments.map(att => ({
+        id: att.id,
+        type: att.file_type,
+        name: att.file_name,
+        size: att.file_size,
+        version: 1,
+        created_at: att.uploaded_at,
+        storage_key: att.storage_url
       }))
     };
   }

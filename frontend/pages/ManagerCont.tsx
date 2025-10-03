@@ -154,6 +154,10 @@ export default function ManagerCont(){
   // Dữ liệu bảng từ database
   const [tableData, setTableData] = React.useState<TableData[]>([]);
   const [allData, setAllData] = React.useState<TableData[]>([]); // Lưu tất cả dữ liệu để phân trang
+  
+  // State để theo dõi thời gian container mất vị trí
+  const [containerPositionTimestamps, setContainerPositionTimestamps] = React.useState<Map<string, number>>(new Map());
+  const [positionCheckInterval, setPositionCheckInterval] = React.useState<NodeJS.Timeout | null>(null);
 
   // Tính toán dữ liệu hiển thị dựa trên trang hiện tại
   const paginatedData = React.useMemo(() => {
@@ -183,6 +187,71 @@ export default function ManagerCont(){
   React.useEffect(() => {
     fetchImportRequests();
   }, [refreshTrigger, includeEmptyInYard]);
+
+  // BỔ SUNG: Kiểm tra định kỳ container có vị trí trống và tự động xóa
+  React.useEffect(() => {
+    const checkPositionAndRemove = () => {
+      const now = Date.now();
+      const REMOVAL_DELAY = 5 * 60 * 1000; // 5 phút
+      
+      setAllData(prevData => {
+        const updatedData = prevData.filter(container => {
+          const hasPosition = container.yardName || container.blockCode || container.slotCode;
+          
+          if (!hasPosition) {
+            // Container không có vị trí - kiểm tra thời gian
+            const containerKey = container.containerNumber;
+            const lastSeenWithPosition = containerPositionTimestamps.get(containerKey);
+            
+            if (lastSeenWithPosition) {
+              const timeWithoutPosition = now - lastSeenWithPosition;
+              if (timeWithoutPosition >= REMOVAL_DELAY) {
+                console.log(`🗑️ Auto-removing container ${container.containerNumber} - no position for ${Math.round(timeWithoutPosition / 1000)}s`);
+                return false; // Xóa container
+              }
+            } else {
+              // Lần đầu tiên thấy container không có vị trí - ghi nhận thời gian
+              setContainerPositionTimestamps(prev => {
+                const newMap = new Map(prev);
+                newMap.set(containerKey, now);
+                return newMap;
+              });
+            }
+          } else {
+            // Container có vị trí - xóa khỏi danh sách theo dõi
+            setContainerPositionTimestamps(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(container.containerNumber);
+              return newMap;
+            });
+          }
+          
+          return true; // Giữ lại container
+        });
+        
+        return updatedData;
+      });
+    };
+
+    // Kiểm tra mỗi 30 giây
+    const interval = setInterval(checkPositionAndRemove, 30000);
+    setPositionCheckInterval(interval);
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [containerPositionTimestamps]);
+
+  // Cleanup interval khi component unmount
+  React.useEffect(() => {
+    return () => {
+      if (positionCheckInterval) {
+        clearInterval(positionCheckInterval);
+      }
+    };
+  }, [positionCheckInterval]);
 
   // Documents modal functions
   const openDocuments = async (row: TableData) => {
@@ -390,7 +459,15 @@ export default function ManagerCont(){
       // Xử lý container EMPTY_IN_YARD - bao gồm cả container không có ServiceRequest và container có GATE_OUT
        const emptyInYardData: TableData[] = await Promise.all(
          emptyInYardContainers
-           .filter((container: ContainerItem) => !containersWithServiceRequests.has(container.container_no))
+           .filter((container: ContainerItem) => {
+             // BỔ SUNG: Chỉ xử lý container có vị trí
+             const hasPosition = container.yard_name || container.block_code || container.slot_code;
+             if (!hasPosition) {
+               console.log(`🗑️ Skipping EMPTY_IN_YARD container ${container.container_no} - no position data`);
+               return false;
+             }
+             return !containersWithServiceRequests.has(container.container_no);
+           })
            .map(async (container: ContainerItem) => {
              // Lấy thông tin từ ServiceRequest GATE_OUT nếu có
              let serviceRequestData: any = null;
@@ -715,8 +792,17 @@ export default function ManagerCont(){
         })
       );
 
+      // BỔ SUNG: Lọc chỉ container có vị trí trước khi filter theo trạng thái
+      const serviceRequestContainersWithPosition = transformedData.filter(container => {
+        const hasPosition = container.yardName || container.blockCode || container.slotCode;
+        if (!hasPosition) {
+          console.log(`🗑️ Skipping ServiceRequest container ${container.containerNumber} - no position data`);
+        }
+        return hasPosition;
+      });
+
       // Lọc ẩn các record có trạng thái request là PENDING, GATE_IN, REJECTED
-      const filteredTransformedData = transformedData.filter(container => {
+      const filteredTransformedData = serviceRequestContainersWithPosition.filter(container => {
         const requestStatus = container.status;
         const shouldHide = ['PENDING', 'GATE_IN', 'REJECTED'].includes(requestStatus);
         
@@ -779,14 +865,24 @@ export default function ManagerCont(){
       
       const finalData = Array.from(uniqueDataMap.values());
       
+      // BỔ SUNG: Chỉ hiển thị container có vị trí (yardName, blockCode, hoặc slotCode)
+      const finalContainersWithPosition = finalData.filter(container => {
+        const hasPosition = container.yardName || container.blockCode || container.slotCode;
+        if (!hasPosition) {
+          console.log(`🗑️ Filtering out container ${container.containerNumber} - no position data`);
+        }
+        return hasPosition;
+      });
+      
       console.log('📊 Total data after combining:', finalData.length);
       console.log('📋 ServiceRequest data:', filteredTransformedData.length);
       console.log('📦 EMPTY_IN_YARD data:', emptyInYardData.length);
       console.log('🔄 Final unique data:', finalData.length);
+      console.log('📍 Containers with position:', finalContainersWithPosition.length);
       
-      // Lưu tất cả dữ liệu và cập nhật pagination
-      setAllData(finalData);
-      setTotalItems(finalData.length);
+      // Lưu tất cả dữ liệu và cập nhật pagination (chỉ container có vị trí)
+      setAllData(finalContainersWithPosition);
+      setTotalItems(finalContainersWithPosition.length);
       
       // Reset về trang 1 khi có dữ liệu mới
       setCurrentPage(1);

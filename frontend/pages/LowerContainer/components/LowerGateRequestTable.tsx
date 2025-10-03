@@ -90,6 +90,11 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
   };
 
   const handleViewDocuments = (request: GateRequest) => {
+    console.log('🔍 Opening documents modal for request:', {
+      id: request.id,
+      request_no: request.request_no,
+      container_no: request.container_no
+    });
     setSelectedRequest(request);
     setDocumentsModalOpen(true);
   };
@@ -257,7 +262,7 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
         <DocumentsModal
           isOpen={documentsModalOpen}
           onClose={closeDocumentsModal}
-          requestId={selectedRequest.id}
+          requestId={selectedRequest.request_no || selectedRequest.id}
           containerNo={selectedRequest.container_no}
         />
       )}

@@ -38,21 +38,35 @@ export default function DocumentViewer({
       fileType
     });
     
-    // Sử dụng URL trực tiếp đến backend như Depot
-    // Không cần token vì route này public
-    const url = `/backend/requests/documents/${documentId}`;
-    console.log('🚀 Generated URL:', url);
+    // documentId thực chất là storage_url từ RequestAttachment
+    // URL có dạng: /backend/uploads/requests/filename.jpg
+    // Frontend cần giữ nguyên /backend/ để proxy hoạt động đúng
+    let url = documentId;
+    
+    // Nếu URL không có /backend prefix, thêm vào
+    if (!url.startsWith('/backend/')) {
+      if (url.startsWith('/uploads/')) {
+        url = url.replace('/uploads/', '/backend/uploads/');
+      } else {
+        url = `/backend${url}`;
+      }
+    }
+    
+    console.log('🚀 Using proxy URL:', url);
     
     setFileUrl(url);
     setLoading(false); // Không cần loading vì URL đã sẵn sàng
   };
 
   const handleImageLoad = () => {
+    console.log('✅ Image loaded successfully:', fileUrl);
     setLoading(false);
   };
 
-  const handleImageError = () => {
+  const handleImageError = (e: any) => {
     setLoading(false);
+    console.error('❌ Image load error:', e);
+    console.error('❌ Image src:', fileUrl);
     setError('Không thể hiển thị hình ảnh');
   };
 

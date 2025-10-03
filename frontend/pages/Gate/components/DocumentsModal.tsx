@@ -39,6 +39,8 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
       setLoading(true);
       setError(null);
       
+      console.log('🔍 Fetching documents for requestId:', requestId);
+      
       // Lấy token từ localStorage
       const token = localStorage.getItem('token');
       if (!token) {
@@ -51,9 +53,16 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      console.log('📄 Documents response:', response.data);
+      console.log('📋 Request info:', {
+        request_id: response.data.data.request_id,
+        request_no: response.data.data.request_no,
+        container_no: response.data.data.container_no
+      });
       setDocuments(response.data.data.documents);
     } catch (error: any) {
-      console.error('Lỗi khi tải danh sách chứng từ:', error);
+      console.error('❌ Lỗi khi tải danh sách chứng từ:', error);
       setError(error.response?.data?.message || t('pages.gate.messages.fetchDocumentsError'));
     } finally {
       setLoading(false);
@@ -79,14 +88,18 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
   };
 
   const getDocumentTypeIcon = (type: string): string => {
-    switch (type.toUpperCase()) {
-      case 'EIR':
-        return '📋';
-      case 'LOLO':
+    switch (type.toLowerCase()) {
+      case 'image':
+        return '🖼️';
+      case 'pdf':
         return '📄';
-      case 'INVOICE':
+      case 'eir':
+        return '📋';
+      case 'lolo':
+        return '📄';
+      case 'invoice':
         return '🧾';
-      case 'SUPPLEMENT':
+      case 'supplement':
         return '📎';
       default:
         return '📄';
@@ -109,7 +122,10 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content documents-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h3>{t('pages.gate.tableHeaders.documents')} - {t('pages.gate.tableHeaders.container')} {containerNo}</h3>
+            <h3>📄 Chứng từ - Container {containerNo}</h3>
+            <div className="request-info">
+              <span className="request-id">Request ID: {requestId}</span>
+            </div>
             <button className="modal-close" onClick={onClose}>×</button>
           </div>
 
@@ -128,15 +144,36 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
               </div>
             ) : documents.length === 0 ? (
               <div className="no-documents">
-                <p>📭 {t('pages.gate.messages.noDocumentsForRequest')}</p>
+                <div className="no-documents-icon">📭</div>
+                <p>Không có chứng từ nào cho request này</p>
               </div>
             ) : (
               <div className="documents-list">
+                <div className="documents-header">
+                  <h4>📋 Danh sách chứng từ ({documents.length} tài liệu)</h4>
+                </div>
                 {documents.map((doc) => (
                   <div key={doc.id} className="document-item">
                     <div className="document-info">
                       <div className="document-icon">
-                        {getDocumentTypeIcon(doc.type)}
+                        {doc.type === 'image' ? (
+                          <img 
+                            src={doc.storage_key.startsWith('/backend/') ? doc.storage_key : `/backend${doc.storage_key}`}
+                            alt={doc.name}
+                            className="document-thumbnail"
+                            onError={(e) => {
+                              // Fallback to icon if image fails to load
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling.style.display = 'block';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className="document-icon-fallback" 
+                          style={{ display: doc.type === 'image' ? 'none' : 'block' }}
+                        >
+                          {getDocumentTypeIcon(doc.type)}
+                        </div>
                       </div>
                       <div className="document-details">
                         <div className="document-name">{doc.name}</div>
@@ -154,9 +191,9 @@ export default function DocumentsModal({ isOpen, onClose, requestId, containerNo
                       <button
                         className="view-btn"
                         onClick={() => handleViewDocument(doc)}
-                        title={t('pages.gate.viewDetail')}
+                        title="Xem chi tiết"
                       >
-                        👁️ {t('pages.gate.viewDetail')}
+                        👁️ Xem
                       </button>
                     </div>
                   </div>
