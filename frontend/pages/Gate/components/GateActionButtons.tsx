@@ -190,16 +190,25 @@ export default function GateActionButtons({
       const normalizedDriver = driverName.trim();
       const normalizedPhone = driverPhone.trim();
 
-      // Nới lỏng validation để không chặn dữ liệu demo/ngắn
+      // Validation theo yêu cầu mới:
+      // - Số xe (required)
+      // - Tài xế (optional) 
+      // - SDT tài xế (required)
+      
+      if (!normalizedPlate) {
+        showError('Số xe không được để trống', 'Vui lòng nhập số xe');
+        return;
+      }
       if (!/^[A-Z0-9\-\s\.]{1,20}$/.test(normalizedPlate)) {
         showError('Biển số xe không hợp lệ', 'Biển số xe phải có 1-20 ký tự hợp lệ');
         return;
       }
-      if (normalizedDriver.length < 1) {
-        showError('Tên tài xế không hợp lệ', 'Tên tài xế không được để trống');
+      
+      if (!normalizedPhone) {
+        showError('SDT tài xế không được để trống', 'Vui lòng nhập số điện thoại tài xế');
         return;
       }
-      if (normalizedPhone && !/^[0-9+\-\s]{1,20}$/.test(normalizedPhone)) {
+      if (!/^[0-9+\-\s]{1,20}$/.test(normalizedPhone)) {
         showError('SĐT không hợp lệ', 'SĐT tài xế chỉ chứa số/khoảng trắng/+/- và tối đa 20 ký tự');
         return;
       }
@@ -209,8 +218,8 @@ export default function GateActionButtons({
       // 1) Cập nhật thông tin tài xế lên request
       await api.patch(`/requests/${requestId}`, {
         license_plate: normalizedPlate,  // Backend giờ nhận field license_plate trực tiếp
-        driver_name: normalizedDriver,
-        driver_phone: normalizedPhone || undefined
+        driver_name: normalizedDriver || undefined, // Tài xế là optional
+        driver_phone: normalizedPhone
       });
 
       // 2) Thực hiện check-in
@@ -305,12 +314,12 @@ export default function GateActionButtons({
               </div>
 
               <div style={{ marginBottom: 'var(--space-3)' }}>
-                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Tài xế *</label>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Tài xế</label>
                 <input type="text" value={driverName} onChange={(e) => setDriverName(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
               </div>
 
               <div style={{ marginBottom: 'var(--space-5)' }}>
-                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>SDT tài xế</label>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>SDT tài xế *</label>
                 <input type="text" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
               </div>
 

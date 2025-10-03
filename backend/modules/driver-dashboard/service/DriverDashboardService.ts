@@ -286,8 +286,8 @@ export class DriverDashboardService {
                     if (latestRequest.type === 'EXPORT' && latestRequest.status === 'GATE_IN') {
                         // Export request: GATE_IN → FORKLIFTING
                         newStatus = 'FORKLIFTING';
-                    } else if (latestRequest.type === 'IMPORT' && (latestRequest.status === 'POSITIONED' || latestRequest.status === 'CHECKED')) {
-                        // Import request: Cho phép chuyển POSITIONED/CHECKED → FORKLIFTING
+                    } else if (latestRequest.type === 'IMPORT' && latestRequest.status === 'CHECKED') {
+                        // Import request: CHECKED → FORKLIFTING (theo luồng mới)
                         newStatus = 'FORKLIFTING';
                     } else {
 						// Các trường hợp khác: không thay đổi

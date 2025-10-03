@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import GateActionButtons from '../../Gate/components/GateActionButtons';
 import DocumentsModal from '../../Gate/components/DocumentsModal';
 import { useTranslation } from '../../../hooks/useTranslation';
+// import { useToast } from '../../../hooks/useToastHook'; // Không cần nữa
 
 interface GateRequest {
   id: string;
@@ -40,7 +41,7 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const { t, currentLanguage } = useTranslation();
 
-  // Logic hiển thị trạng thái theo yêu cầu debug
+  // Logic hiển thị trạng thái theo chuẩn Gate system
   const statusLabel = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -49,14 +50,18 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
         return 'Đang nâng hạ';
       case 'GATE_OUT':
         return 'Đã ra khỏi depot';
-      case 'CHECKED':
       case 'GATE_IN':
-      case 'IN_YARD':
-      case 'FORWARDED':
-      case 'NEW_REQUEST':
-      default:
-        // Tất cả trạng thái khác PENDING và GATE_OUT
         return 'Đã vào cổng';
+      case 'IN_YARD':
+        return 'Trong bãi';
+      case 'FORWARDED':
+        return 'Đã chuyển tiếp';
+      case 'CHECKED':
+        return 'Đã kiểm tra';
+      case 'NEW_REQUEST':
+        return 'Yêu cầu mới';
+      default:
+        return status;
     }
   };
 
@@ -69,11 +74,16 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
         return 'status-forklifting';
       case 'GATE_OUT':
         return 'status-gate-out';
-      case 'CHECKED':
       case 'GATE_IN':
+        return 'status-gate-in';
       case 'IN_YARD':
+        return 'status-in-yard';
       case 'FORWARDED':
+        return 'status-forwarded';
+      case 'CHECKED':
+        return 'status-checked';
       case 'NEW_REQUEST':
+        return 'status-new-request';
       default:
         return 'status-other';
     }
@@ -251,6 +261,8 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
           containerNo={selectedRequest.container_no}
         />
       )}
+      
+      {/* ToastContainer đã được render ở component cha */}
     </>
   );
 }

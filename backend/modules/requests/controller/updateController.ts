@@ -105,4 +105,69 @@ export const updateRequest = async (req: Request, res: Response) => {
     }
 };
 
+// Update reuse status
+export const updateReuseStatus = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { reuseStatus } = req.body;
+        const updatedBy = (req as any).user?._id;
+
+        if (typeof reuseStatus !== 'boolean') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'reuseStatus phải là boolean (true/false)' 
+            });
+        }
+
+        const existingRequest = await prisma.serviceRequest.findUnique({
+            where: {
+                id,
+                depot_deleted_at: null
+            }
+        });
+
+        if (!existingRequest) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy yêu cầu' });
+        }
+
+        const updatedRequest = await prisma.serviceRequest.update({
+            where: { id },
+            data: { 
+                reuse_status: reuseStatus,
+                updatedAt: new Date()
+            }
+        });
+
+        // Ghi log audit
+        await prisma.auditLog.create({
+            data: {
+                actor_id: updatedBy,
+                action: 'REUSE_STATUS_UPDATED',
+                entity: 'ServiceRequest',
+                entity_id: id,
+                meta: {
+                    oldReuseStatus: existingRequest.reuse_status,
+                    newReuseStatus: reuseStatus,
+                    containerNo: existingRequest.container_no,
+                    requestType: existingRequest.type,
+                    timestamp: new Date()
+                }
+            }
+        });
+
+        return res.json({ 
+            success: true, 
+            data: updatedRequest, 
+            message: `Trạng thái reuse đã được ${reuseStatus ? 'bật' : 'tắt'} thành công` 
+        });
+
+    } catch (error: any) {
+        console.error('Update reuse status error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message || 'Có lỗi xảy ra khi cập nhật trạng thái reuse' 
+        });
+    }
+};
+
 

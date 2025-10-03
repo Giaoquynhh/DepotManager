@@ -286,6 +286,45 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
         setShowDeleteModal(true);
     };
 
+    // Function để toggle reuse status
+    const handleToggleReuse = async (requestId: string, newReuseStatus: boolean) => {
+        try {
+            // Update local state immediately for better UX
+            setRows(prevRows => 
+                prevRows.map(row => 
+                    row.id === requestId 
+                        ? { ...row, reuseStatus: newReuseStatus }
+                        : row
+                )
+            );
+
+            // Call API to update reuse status
+            const response = await requestService.updateReuseStatus(requestId, newReuseStatus);
+            
+            showSuccess(
+                'Cập nhật trạng thái reuse thành công!',
+                `Trạng thái đã được ${newReuseStatus ? 'bật' : 'tắt'} reuse`,
+                2000
+            );
+        } catch (error: any) {
+            console.error('Error toggling reuse status:', error);
+            showError(
+                '❌ Không thể cập nhật trạng thái reuse',
+                error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật',
+                3000
+            );
+            
+            // Revert local state on error
+            setRows(prevRows => 
+                prevRows.map(row => 
+                    row.id === requestId 
+                        ? { ...row, reuseStatus: !newReuseStatus }
+                        : row
+                )
+            );
+        }
+    };
+
     // Function để xử lý xóa yêu cầu
     const handleDeleteRequest = async () => {
         if (!deleteRequestId) return;
@@ -473,35 +512,58 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                         <td style={{...tdStyle, minWidth: '120px'}}>Nâng container</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{statusLabel(r.status)}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>
-                                            {r.reuseStatus ? (
-                                                <span style={{ 
-                                                    display: 'inline-flex', 
-                                                    alignItems: 'center', 
-                                                    padding: '4px 8px', 
-                                                    borderRadius: '12px', 
-                                                    fontSize: '12px', 
-                                                    fontWeight: '600',
-                                                    background: '#dcfce7',
-                                                    color: '#166534',
-                                                    border: '1px solid #bbf7d0'
+                                            {/* Toggle Reuse Status */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label style={{ 
+                                                    position: 'relative',
+                                                    display: 'inline-block',
+                                                    width: '50px',
+                                                    height: '24px'
                                                 }}>
-                                                    ✅ Có reuse
-                                                </span>
-                                            ) : (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={r.reuseStatus || false}
+                                                        onChange={(e) => handleToggleReuse(r.id, e.target.checked)}
+                                                        style={{ 
+                                                            opacity: 0,
+                                                            width: 0,
+                                                            height: 0
+                                                        }}
+                                                    />
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        cursor: 'pointer',
+                                                        top: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        bottom: 0,
+                                                        backgroundColor: r.reuseStatus ? '#10b981' : '#ef4444',
+                                                        transition: '0.3s',
+                                                        borderRadius: '24px',
+                                                        border: '1px solid #d1d5db'
+                                                    }}>
+                                                        <span style={{
+                                                            position: 'absolute',
+                                                            content: '""',
+                                                            height: '18px',
+                                                            width: '18px',
+                                                            left: r.reuseStatus ? '26px' : '2px',
+                                                            bottom: '2px',
+                                                            backgroundColor: 'white',
+                                                            transition: '0.3s',
+                                                            borderRadius: '50%',
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                        }}></span>
+                                                    </span>
+                                                </label>
                                                 <span style={{ 
-                                                    display: 'inline-flex', 
-                                                    alignItems: 'center', 
-                                                    padding: '4px 8px', 
-                                                    borderRadius: '12px', 
                                                     fontSize: '12px', 
-                                                    fontWeight: '600',
-                                                    background: '#fef2f2',
-                                                    color: '#991b1b',
-                                                    border: '1px solid #fecaca'
+                                                    fontWeight: '500',
+                                                    color: r.reuseStatus ? '#10b981' : '#ef4444'
                                                 }}>
-                                                    ❌ Không reuse
+                                                    {r.reuseStatus ? 'Có reuse' : 'Không reuse'}
                                                 </span>
-                                            )}
+                                            </div>
                                         </td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.customer}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>{r.transportCompany}</td>
@@ -635,15 +697,18 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                             Tạo yêu cầu thanh toán
                         </button>
                     )}
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-danger" 
-                                                style={{ padding: '6px 10px', fontSize: 12 }}
-                                                onClick={() => handleDeleteClick(r.id)}
-                                                disabled={processingIds.has(r.id) || loading}
-                                            >
-                                                {processingIds.has(r.id) ? 'Đang xử lý...' : 'Xóa'}
-                                            </button>
+                                            {/* Nút xóa - chỉ hiển thị khi status là NEW_REQUEST */}
+                                            {r.status === 'NEW_REQUEST' && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-danger" 
+                                                    style={{ padding: '6px 10px', fontSize: 12 }}
+                                                    onClick={() => handleDeleteClick(r.id)}
+                                                    disabled={processingIds.has(r.id) || loading}
+                                                >
+                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : 'Xóa'}
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

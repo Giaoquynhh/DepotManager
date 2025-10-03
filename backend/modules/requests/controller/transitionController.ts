@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from './dependencies';
 
-// Move from PENDING to GATE_IN
+// Move from PENDING to GATE_IN (theo luồng mới)
 export const moveToGate = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -27,6 +27,7 @@ export const moveToGate = async (req: Request, res: Response) => {
                 status: 'GATE_IN',
                 gate_checked_at: new Date(),
                 gate_checked_by: user._id,
+                time_in: new Date(),
                 updatedAt: new Date(),
                 history: {
                     ...(request.history as any || {}),
@@ -35,7 +36,7 @@ export const moveToGate = async (req: Request, res: Response) => {
                         action: 'MOVE_TO_GATE',
                         from_status: 'PENDING',
                         to_status: 'GATE_IN',
-                        note: 'Chuyển trực tiếp từ PENDING sang GATE_IN'
+                        note: 'Chuyển từ PENDING sang GATE_IN (xe đã vào cổng)'
                     }
                 }
             }

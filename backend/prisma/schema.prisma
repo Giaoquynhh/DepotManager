@@ -127,8 +127,10 @@ model ServiceRequest {
   driver_phone              String?
   isCheck                   Boolean             @default(false)
   isRepair                  Boolean             @default(false)
+  isRepairRejected          Boolean             @default(false)
   dem_det                   String?
   seal_number               String?
+  reuse_status              Boolean             @default(false)
   chatRoom                  ChatRoom?
   docs                      DocumentFile[]
   invoices                  Invoice[]
@@ -243,6 +245,7 @@ model YardSlot {
   tier_capacity         Int             @default(5)
   from_tasks            ForkliftTask[]  @relation("from_slot")
   to_tasks              ForkliftTask[]  @relation("to_slot")
+  fixed_location_tasks  ForkliftTask[]  @relation("fixed_location_slot")
   placements            YardPlacement[]
   block                 YardBlock       @relation(fields: [block_id], references: [id])
 
@@ -305,22 +308,24 @@ model ContainerMeta {
 }
 
 model ForkliftTask {
-  id                 String    @id @default(cuid())
-  container_no       String
-  from_slot_id       String?
-  to_slot_id         String?
-  status             String
-  assigned_driver_id String?
-  created_by         String
-  cancel_reason      String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  cost               Float?    @default(0)
-  report_status      String?
-  report_image       String?
-  from_slot          YardSlot? @relation("from_slot", fields: [from_slot_id], references: [id])
-  to_slot            YardSlot? @relation("to_slot", fields: [to_slot_id], references: [id])
-  reportImages       ForkliftTaskReportImage[]
+  id                     String    @id @default(cuid())
+  container_no           String
+  from_slot_id           String?
+  to_slot_id             String?
+  fixed_location_slot_id String?
+  status                 String
+  assigned_driver_id     String?
+  created_by             String
+  cancel_reason          String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  cost                   Float?    @default(0)
+  report_status          String?
+  report_image           String?
+  from_slot              YardSlot? @relation("from_slot", fields: [from_slot_id], references: [id])
+  to_slot                YardSlot? @relation("to_slot", fields: [to_slot_id], references: [id])
+  fixed_location_slot    YardSlot? @relation("fixed_location_slot", fields: [fixed_location_slot_id], references: [id])
+  reportImages           ForkliftTaskReportImage[]
 }
 
 model ForkliftTaskReportImage {

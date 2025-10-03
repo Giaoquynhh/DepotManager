@@ -4,6 +4,7 @@ import { setupService, type ShippingLine, type TransportCompany, type ContainerT
 import { requestService } from '../../../services/requests';
 import { generateLowerRequestNumber } from '../../../utils/requestNumberGenerator';
 import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
+import DateTimeInput from '../../../components/DateTimeInput';
 
 interface CreateLowerRequestModalProps {
 	isOpen: boolean;
@@ -1166,11 +1167,11 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 							<label style={formLabelStyle}>
 								Thời gian hẹn
 							</label>
-							<input
-								type="datetime-local"
-								style={formInputStyle}
+							<DateTimeInput
 								value={formData.appointmentTime}
-								onChange={(e) => handleInputChange('appointmentTime', e.target.value)}
+								onChange={(value) => handleInputChange('appointmentTime', value)}
+								placeholder="dd/mm/yyyy hh:mm"
+								style={formInputStyle}
 							/>
 						</div>
 

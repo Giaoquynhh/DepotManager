@@ -538,17 +538,19 @@ export const ImportRequest: React.FC<ImportRequestProps> = ({
                                             {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                                           </button>
                                           
-                                          {/* Nút xóa */}
-                                          <button 
-                                            type="button" 
-                                            className="btn btn-danger" 
-                                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                            onClick={() => handleDeleteClick(r.id)}
-                                            disabled={loading}
-                                            title="Xóa yêu cầu"
-                                          >
-                                            Xóa
-                                          </button>
+                                          {/* Nút xóa - chỉ hiển thị khi status là NEW_REQUEST */}
+                                          {r.status === 'NEW_REQUEST' && (
+                                            <button 
+                                              type="button" 
+                                              className="btn btn-danger" 
+                                              style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                              onClick={() => handleDeleteClick(r.id)}
+                                              disabled={loading}
+                                              title="Xóa yêu cầu"
+                                            >
+                                              Xóa
+                                            </button>
+                                          )}
                                           {r.status !== 'PENDING' && (isReject || r.isRepairRejected) && (
                                             <button 
                                               type="button" 

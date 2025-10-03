@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EditLowerRequestData } from './EditLowerRequestModal.types';
 import type { ShippingLine, TransportCompany, ContainerType, Customer } from '../../../services/setupService';
+import DateTimeInput from '../../../components/DateTimeInput';
 
 interface LowerRequestFormFieldsProps {
 	formData: EditLowerRequestData;
@@ -224,10 +225,10 @@ export const LowerRequestFormFields: React.FC<LowerRequestFormFieldsProps> = ({
 					<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
 						Thời gian hẹn
 					</label>
-					<input
-						type="datetime-local"
+					<DateTimeInput
 						value={formData.appointmentTime || ''}
-						onChange={(e) => handleInputChange('appointmentTime', e.target.value)}
+						onChange={(value) => handleInputChange('appointmentTime', value)}
+						placeholder="dd/mm/yyyy hh:mm"
 						style={{
 							width: '100%',
 							padding: '12px',

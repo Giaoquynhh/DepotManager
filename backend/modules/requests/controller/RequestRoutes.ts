@@ -5,6 +5,7 @@ import * as controller from './RequestController';
 import { updateAllInvoicesWithSealCost, updateInvoiceWithSealCost } from './updateInvoiceWithSealCostController';
 import { getSealCost } from './getSealCostController';
 import { getRepairCost } from './getRepairCostController';
+import { updateReuseStatus } from './updateController';
 import FileUploadService from '../service/FileUploadService';
 
 const router = Router();
@@ -110,6 +111,12 @@ router.post('/update-all-invoices-with-seal-cost',
 router.post('/:requestId/update-invoice-with-seal-cost',
     requireRoles('SystemAdmin', 'BusinessAdmin'),
     updateInvoiceWithSealCost
+);
+
+// Update reuse status
+router.patch('/:id/reuse-status',
+    requireRoles('TechnicalDepartment', 'Accountant', 'SystemAdmin', 'BusinessAdmin'),
+    updateReuseStatus
 );
 
 export default router;

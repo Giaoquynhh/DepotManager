@@ -18,6 +18,14 @@ export const deleteRequest = async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, message: 'Không tìm thấy yêu cầu' });
         }
 
+        // Kiểm tra trạng thái - chỉ cho phép xóa khi status là NEW_REQUEST
+        if (request.status !== 'NEW_REQUEST') {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Không thể xóa yêu cầu. Chỉ có thể xóa khi trạng thái là NEW_REQUEST (hiện tại: ${request.status})` 
+            });
+        }
+
         const result = await prisma.$transaction(async (tx) => {
             // 1) Soft-delete yêu cầu ở Depot
             const deletedRequest = await tx.serviceRequest.update({

@@ -7,7 +7,7 @@ import { useRouteRefresh } from '../../hooks/useRouteRefresh';
 
 export default function LowerContainerGatePage() {
   const router = useRouter();
-  const { ToastContainer } = useToast();
+  const { ToastContainer, showSuccess, showError } = useToast();
   const refreshKey = useRouteRefresh();
   const [forceRefresh, setForceRefresh] = useState(0);
 
@@ -35,7 +35,11 @@ export default function LowerContainerGatePage() {
   return (
     <>
       <Header />
-      <LowerGateDashboard key={`lower-gate-dashboard-${refreshKey}-${forceRefresh}`} />
+      <LowerGateDashboard 
+        key={`lower-gate-dashboard-${refreshKey}-${forceRefresh}`}
+        showSuccess={showSuccess}
+        showError={showError}
+      />
       <ToastContainer />
     </>
   );

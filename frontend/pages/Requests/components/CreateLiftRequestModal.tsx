@@ -4,6 +4,7 @@ import { setupService, type ShippingLine, type TransportCompany, type ContainerT
 import { requestService } from '../../../services/requests';
 import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
 import { containersApi } from '../../../services/containers';
+import DateTimeInput from '../../../components/DateTimeInput';
 
 export interface ContainerSearchResult {
 	container_no: string;
@@ -1661,11 +1662,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							<label style={formLabelStyle}>
 								Thời gian hẹn
 							</label>
-							<input
-								type="datetime-local"
+							<DateTimeInput
+								value={formData.appointmentTime || ''}
+								onChange={(value) => handleInputChange('appointmentTime', value)}
+								placeholder="dd/mm/yyyy hh:mm"
 								style={formInputStyle}
-								value={formData.appointmentTime}
-								onChange={(e) => handleInputChange('appointmentTime', e.target.value)}
 							/>
 						</div>
 

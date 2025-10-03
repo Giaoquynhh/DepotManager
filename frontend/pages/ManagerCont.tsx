@@ -656,8 +656,17 @@ export default function ManagerCont(){
         })
       );
 
-      // Tạm thời bỏ lọc trạng thái để debug - hiển thị tất cả container
-      const filteredTransformedData = transformedData;
+      // Lọc ẩn các record có trạng thái request là PENDING, GATE_IN, REJECTED
+      const filteredTransformedData = transformedData.filter(container => {
+        const requestStatus = container.status;
+        const shouldHide = ['PENDING', 'GATE_IN', 'REJECTED'].includes(requestStatus);
+        
+        if (shouldHide) {
+          console.log(`🚫 Hiding container ${container.containerNumber} with status: ${requestStatus}`);
+        }
+        
+        return !shouldHide;
+      });
       
       console.log('🔍 Filtering containers by request status:');
       console.log('📊 Total requests before filter:', transformedData.length);

@@ -49,6 +49,31 @@ interface ForkliftTask {
       };
     };
   } | null;
+  fixed_location?: {
+    id: string;
+    tier: number;
+    status: string;
+    slot: {
+      id: string;
+      code: string;
+      block: {
+        code: string;
+        yard: {
+          name: string;
+        };
+      };
+    };
+  } | null;
+  display_location?: {
+    id: string;
+    code: string;
+    block: {
+      code: string;
+      yard: {
+        name: string;
+      };
+    };
+  } | null;
   from_slot?: {
     id: string;
     code: string;
@@ -101,8 +126,6 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ForkliftTask | null>(null);
   const [costModalOpen, setCostModalOpen] = useState(false);
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
 
   // Modal styles
   const modalStyles = {
@@ -220,13 +243,17 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
         setLoading(true);
       }
       
-      const response = await api.get('/forklift/jobs');
+      // Thêm type filter vào API call
+      const params = new URLSearchParams();
+      if (typeFilter) {
+        params.append('type', typeFilter);
+      }
+      
+      const response = await api.get(`/forklift/jobs?${params.toString()}`);
       const allTasks: ForkliftTask[] = response.data.data || [];
-      // Hiển thị đầy đủ các trạng thái (bao gồm COMPLETED/CANCELLED) và chỉ ẩn task không có dữ liệu request liên kết
-      const visibleTasks = allTasks.filter(task => !!task.container_info);
-      const newTasks = typeFilter 
-        ? visibleTasks.filter(task => task.container_info?.type === typeFilter)
-        : visibleTasks;
+      
+      // Backend đã filter, không cần filter thêm ở frontend
+      const newTasks = allTasks;
       
       // Chỉ cập nhật state nếu có thay đổi thực sự
       setTasks(prevTasks => {
@@ -320,29 +347,6 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
     }
   };
 
-  const handleCancelJob = async (taskId: string) => {
-    setSelectedTask(tasks.find(task => task.id === taskId) || null);
-    setCancelReason('');
-    setCancelModalOpen(true);
-  };
-
-  const confirmCancelJob = async () => {
-    if (!selectedTask || !cancelReason.trim()) {
-      showError(t('pages.forklift.messages.pleaseEnterReason'));
-      return;
-    }
-
-    try {
-      await api.patch(`/forklift/jobs/${selectedTask.id}/cancel`, { reason: cancelReason.trim() });
-      loadForkliftTasks();
-      setCancelModalOpen(false);
-      setSelectedTask(null);
-      setCancelReason('');
-      showSuccess(t('pages.forklift.messages.cancelSuccess'));
-    } catch (err: any) {
-      showError(t('pages.forklift.messages.cancelJobError'), err?.response?.data?.message || t('pages.forklift.messages.cancelJobError'));
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -494,7 +498,15 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
                         <td data-column="driver">{task.container_info?.driver_name || '-'}</td>
                         <td data-column="driverPhone">{task.container_info?.driver_phone || '-'}</td>
                         <td data-column="location">
-                          {task.actual_location ? (
+                          {task.display_location ? (
+                            <span className="location-badge">
+                              {`${task.display_location.block.yard.name} / ${task.display_location.block.code} / ${task.display_location.code}`}
+                            </span>
+                          ) : task.fixed_location ? (
+                            <span className="location-badge">
+                              {`${task.fixed_location.slot.block.yard.name} / ${task.fixed_location.slot.block.code} / ${task.fixed_location.slot.code}`}
+                            </span>
+                          ) : task.actual_location ? (
                             <span className="location-badge">
                               {`${task.actual_location.slot.block.yard.name} / ${task.actual_location.slot.block.code} / ${task.actual_location.slot.code}`}
                             </span>
@@ -541,14 +553,6 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
                             </div>
                           ) : (
                             <div className="action-buttons">
-                              {task.status === 'PENDING' && !task.assigned_driver_id && (
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => handleCancelJob(task.id)}
-                                >
-                                  {t('pages.forklift.actions.cancel')}
-                                </button>
-                              )}
                               
                               {task.status === 'ASSIGNED' && (
                                 <div className="action-info">
@@ -751,141 +755,6 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
         </div>
       )}
 
-      {/* Cancel Job Modal */}
-      {selectedTask && cancelModalOpen && (
-        <div style={modalStyles.modal}>
-          <div style={modalStyles.modalContent}>
-            <div style={modalStyles.modalHeader}>
-              <h3 style={modalStyles.modalTitle}>
-                <span style={{ color: '#dc2626', marginRight: '8px' }}>⚠️</span>
-                {t('pages.forklift.modal.cancelJobTitle')}
-              </h3>
-              <button
-                style={modalStyles.modalClose}
-                onClick={() => {
-                  setCancelModalOpen(false);
-                  setSelectedTask(null);
-                  setCancelReason('');
-                }}
-              >
-                ×
-              </button>
-            </div>
-            <div style={modalStyles.modalBody}>
-              <div style={{
-                marginBottom: '20px',
-                padding: '16px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '8px',
-                borderLeft: '4px solid #dc2626'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '8px'
-                }}>
-                  <span style={{ 
-                    color: '#dc2626', 
-                    fontWeight: '600',
-                    fontSize: '14px'
-                  }}>
-                    {t('pages.forklift.modal.cancelJobWarning')}
-                  </span>
-                </div>
-                <div style={{
-                  color: '#7f1d1d',
-                  fontSize: '13px',
-                  lineHeight: '1.5'
-                }}>
-                  <div style={{ marginBottom: '4px' }}>
-                    <strong>{t('pages.forklift.modal.containerNo')}:</strong> {selectedTask.container_no}
-                  </div>
-                  <div style={{ marginBottom: '4px' }}>
-                    <strong>{t('pages.forklift.modal.status')}:</strong> {getStatusText(selectedTask.status)}
-                  </div>
-                  <div>
-                    <strong>{t('pages.forklift.modal.createdAt')}:</strong> {formatDate(selectedTask.createdAt)}
-                  </div>
-                </div>
-              </div>
-
-              <div style={modalStyles.formGroup}>
-                <label htmlFor="cancelReason" style={modalStyles.formLabel}>
-                  <span style={{ color: '#dc2626', marginRight: '4px' }}>*</span>
-                  {t('pages.forklift.modal.cancelReasonLabel')}
-                </label>
-                <textarea
-                  id="cancelReason"
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  style={{
-                    ...modalStyles.formInput,
-                    minHeight: '100px',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
-                  placeholder={t('pages.forklift.modal.cancelReasonPlaceholder')}
-                  maxLength={500}
-                />
-                <div style={{
-                  marginTop: '4px',
-                  fontSize: '12px',
-                  color: '#6b7280',
-                  textAlign: 'right'
-                }}>
-                  {cancelReason.length}/500 {t('common.characters')}
-                </div>
-              </div>
-
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                fontSize: '12px',
-                color: '#64748b'
-              }}>
-                <div style={{ fontWeight: '600', marginBottom: '4px' }}>💡 {t('pages.forklift.modal.cancelReasonTips')}:</div>
-                <div style={{ marginBottom: '2px' }}>• {t('pages.forklift.modal.cancelReasonTip1')}</div>
-                <div style={{ marginBottom: '2px' }}>• {t('pages.forklift.modal.cancelReasonTip2')}</div>
-                <div>• {t('pages.forklift.modal.cancelReasonTip3')}</div>
-              </div>
-            </div>
-            <div style={modalStyles.modalFooter}>
-              <button
-                className="btn btn-outline"
-                onClick={() => {
-                  setCancelModalOpen(false);
-                  setSelectedTask(null);
-                  setCancelReason('');
-                }}
-                style={{
-                  backgroundColor: '#f3f4f6',
-                  borderColor: '#d1d5db',
-                  color: '#374151'
-                }}
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                className="btn"
-                onClick={confirmCancelJob}
-                style={{
-                  backgroundColor: '#dc2626',
-                  borderColor: '#dc2626',
-                  color: 'white',
-                  fontWeight: '600'
-                }}
-                disabled={!cancelReason.trim()}
-              >
-                <span style={{ marginRight: '6px' }}>🗑️</span>
-                {t('pages.forklift.modal.confirmCancel')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <ToastContainer />
     </>

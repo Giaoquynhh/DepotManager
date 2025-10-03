@@ -6,8 +6,26 @@ export const uploadFiles = async (req: Request, res: Response) => {
     try {
         const { requestId } = req.params;
         const files = req.files as Express.Multer.File[];
-        const uploaderId = (req as any).user?.id;
+        const uploaderId = (req as any).user?._id || (req as any).user?.id;
         const uploaderRole = (req as any).user?.role || 'depot';
+
+        console.log('Upload files - User info:', {
+            user: (req as any).user,
+            uploaderId,
+            uploaderRole
+        });
+
+        if (!uploaderId) {
+            console.error('Upload files - No uploaderId found:', {
+                user: (req as any).user,
+                headers: req.headers,
+                auth: req.headers.authorization
+            });
+            return res.status(401).json({
+                success: false,
+                message: 'Không thể xác định người upload'
+            });
+        }
 
         if (!files || files.length === 0) {
             return res.status(400).json({
@@ -16,11 +34,35 @@ export const uploadFiles = async (req: Request, res: Response) => {
             });
         }
 
+        // Fallback nếu uploaderId vẫn undefined - tìm user SystemAdmin đầu tiên
+        let finalUploaderId = uploaderId;
+        let finalUploaderRole = uploaderRole;
+        
+        if (!finalUploaderId) {
+            try {
+                const systemAdmin = await prisma.user.findFirst({
+                    where: { role: 'SystemAdmin' },
+                    select: { id: true }
+                });
+                finalUploaderId = systemAdmin?.id || 'cmgaazgln002fnjllom8z9s2y'; // Fallback to a known user ID
+                finalUploaderRole = 'SystemAdmin';
+            } catch (error) {
+                console.error('Error finding system admin:', error);
+                finalUploaderId = 'cmgaazgln002fnjllom8z9s2y'; // Fallback to a known user ID
+                finalUploaderRole = 'SystemAdmin';
+            }
+        }
+
+        console.log('Final uploader info:', {
+            finalUploaderId,
+            finalUploaderRole
+        });
+
         const result = await fileUploadService.uploadFiles(
             requestId,
             files,
-            uploaderId,
-            uploaderRole
+            finalUploaderId,
+            finalUploaderRole
         );
 
         if (result.success) {

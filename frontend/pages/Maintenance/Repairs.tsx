@@ -384,31 +384,7 @@ export default function RepairsPage() {
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'center', minWidth: '200px' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          {(repair.status === 'REJECT' || repair.status === 'REJECTED' || repair.status === 'COMPLETE' || repair.status === 'COMPLETE_NEEDREPAIR' || repair.status === 'COMPLETE_NEED_REPAIR') ? (
-                            <button
-                              style={{
-                                padding: '4px 8px',
-                                backgroundColor: '#6b7280',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                whiteSpace: 'nowrap'
-                              }}
-                              onClick={async () => {
-                                if (!window.confirm('Bạn có chắc muốn xóa phiếu sửa chữa này?')) return;
-                                try {
-                                  await api.delete(`/maintenance/repairs/${repair.id}`);
-                                  showSuccess('Xóa phiếu sửa chữa thành công!');
-                                  fetchRepairs();
-                                } catch (e) { 
-                                  console.error(e);
-                                  showError('Có lỗi xảy ra khi xóa phiếu sửa chữa');
-                                }
-                              }}
-                            >Xóa</button>
-                          ) : (
+                          {repair.status === 'PENDING' && (
                             <>
                               <button
                                 style={{

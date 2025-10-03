@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 export interface SimpleToastProps {
   id: string;
@@ -20,6 +20,13 @@ export default function SimpleToast({
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose(id);
+    }, 300);
+  }, [onClose, id]);
+
   useEffect(() => {
     // Trigger entrance animation
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -33,14 +40,7 @@ export default function SimpleToast({
       clearTimeout(timer);
       clearTimeout(autoCloseTimer);
     };
-  }, [duration]);
-
-  const handleClose = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose(id);
-    }, 300);
-  };
+  }, [duration, handleClose]);
 
   const getIcon = () => {
     switch (type) {

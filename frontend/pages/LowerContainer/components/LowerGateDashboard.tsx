@@ -5,7 +5,7 @@ import LowerGateRequestTable from './LowerGateRequestTable';
 import GateSearchBar from '../../Gate/components/GateSearchBar';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { useDataRefresh } from '../../../hooks/useRouteRefresh';
-import { useToast } from '../../../hooks/useToastHook';
+// import { useToast } from '../../../hooks/useToastHook'; // Không cần nữa
 import Link from 'next/link';
 
 interface GateRequest {
@@ -24,14 +24,18 @@ interface GateRequest {
   attachments: any[];
 }
 
-export default function LowerGateDashboard() {
+interface LowerGateDashboardProps {
+  showSuccess: (title: string, message?: string, duration?: number) => void;
+  showError: (title: string, message?: string, duration?: number) => void;
+}
+
+export default function LowerGateDashboard({ showSuccess, showError }: LowerGateDashboardProps) {
   const router = useRouter();
   const [requests, setRequests] = useState<GateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
   const { shouldRefresh, resetRefresh } = useDataRefresh();
   const [componentKey, setComponentKey] = useState(0);
-  const { showSuccess, showError } = useToast();
 
   const [searchParams, setSearchParams] = useState({
     status: '',
@@ -51,11 +55,8 @@ export default function LowerGateDashboard() {
       // Tạo bản sao của searchParams để xử lý
       const paramsSource = { ...searchParams };
       
-      // Mặc định ẩn GATE_OUT (xe đã ra khỏi depot) nếu không có filter status cụ thể
-      if (!String(paramsSource.status || '').trim() && !String(paramsSource.statuses || '').trim()) {
-        // Chỉ hiển thị các trạng thái còn trong depot, loại bỏ GATE_OUT
-        params.append('statuses', 'NEW_REQUEST,PENDING,CHECKED,FORWARDED,GATE_IN,IN_YARD,FORKLIFTING');
-      }
+      // Không tự động ẩn GATE_OUT nữa, để người dùng có thể chọn hiển thị "Đã ra cổng"
+      // Logic filter sẽ được xử lý bởi GateSearchBar component
       
       Object.entries(paramsSource).forEach(([key, value]) => {
         if (key === 'page' || key === 'limit') {
@@ -120,6 +121,7 @@ export default function LowerGateDashboard() {
   const handleLicensePlateChange = (license_plate: string) => {
     setSearchParams(prev => ({ ...prev, license_plate, page: 1 }));
   };
+
 
   return (
     <main className="container gate-page">

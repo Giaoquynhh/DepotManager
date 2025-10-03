@@ -100,6 +100,22 @@ export class RepairController {
         statusUpdate = canRepair ? 'COMPLETE_NEEDREPAIR' : 'COMPLETE';
       }
 
+      // Khi từ chối repair ticket, cập nhật ServiceRequest để hiển thị button "Hủy"
+      if (decision === 'REJECT' && request) {
+        // Cập nhật ServiceRequest để có thể hiển thị button "Hủy" ở trang LowerContainer
+        await prisma.serviceRequest.update({
+          where: { id: request.id },
+          data: {
+            // Thêm flag để frontend biết có thể hiển thị button "Hủy"
+            isRepairRejected: true,
+            // Cập nhật lý do từ chối mặc định
+            rejected_reason: 'Container xấu không thể sửa chữa',
+            rejected_by: req.user?._id,
+            rejected_at: new Date()
+          }
+        });
+      }
+
       // Tính toán chi phí sửa chữa từ repairServices
       let estimatedCost = 0;
       let laborCost = 0;
@@ -125,15 +141,23 @@ export class RepairController {
       ];
       if (request) {
         // Đồng bộ ImportRequest theo yêu cầu nghiệp vụ:
-        // - isCheck = true
-        // - isRepair = true
-        // - status = 'CHECKED'
-        txCalls.push(
-          prisma.serviceRequest.update({
-            where: { id: request.id },
-            data: { isCheck: true, isRepair: true, status: 'CHECKED', updatedAt: new Date() }
-          })
-        );
+        if (decision === 'ACCEPT') {
+          // Khi chấp nhận: isCheck = true, isRepair = true, status = 'CHECKED'
+          txCalls.push(
+            prisma.serviceRequest.update({
+              where: { id: request.id },
+              data: { isCheck: true, isRepair: true, status: 'CHECKED', updatedAt: new Date() }
+            })
+          );
+        } else if (decision === 'REJECT') {
+          // Khi từ chối: isCheck = true, isRepair = false, status = 'REJECTED'
+          txCalls.push(
+            prisma.serviceRequest.update({
+              where: { id: request.id },
+              data: { isCheck: true, isRepair: false, status: 'REJECTED', updatedAt: new Date() }
+            })
+          );
+        }
       }
       const [updatedTicket] = await prisma.$transaction(txCalls as any);
 

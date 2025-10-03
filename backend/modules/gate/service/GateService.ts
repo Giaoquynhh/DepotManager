@@ -42,7 +42,7 @@ export class GateService {
   }
 
   /**
-   * Gate chấp nhận xe vào
+   * Gate chấp nhận xe vào (chuyển từ GATE_IN sang CHECKED)
    */
   async acceptGate(requestId: string, actorId: string, driverInfo: GateAcceptData): Promise<any> {
     const request = await prisma.serviceRequest.findUnique({
@@ -53,14 +53,14 @@ export class GateService {
       throw new Error('Request không tồn tại');
     }
 
-    if (request.status !== 'FORWARDED') {
-      throw new Error('Chỉ có thể chấp nhận request có trạng thái FORWARDED');
+    if (request.status !== 'GATE_IN') {
+      throw new Error('Chỉ có thể chấp nhận request có trạng thái GATE_IN');
     }
 
     const updatedRequest = await prisma.serviceRequest.update({
       where: { id: requestId },
       data: {
-        status: 'GATE_IN',
+        status: 'CHECKED',
         gate_checked_at: new Date(),
         gate_checked_by: actorId,
         driver_name: driverInfo.driver_name,
@@ -79,7 +79,7 @@ export class GateService {
     // Audit log
     await audit(actorId, 'REQUEST.GATE_ACCEPTED', 'ServiceRequest', requestId, {
       previous_status: request.status,
-      new_status: 'GATE_IN',
+      new_status: 'CHECKED',
       driver_info: driverInfo
     });
 
@@ -87,7 +87,7 @@ export class GateService {
   }
 
   /**
-   * Gate approve request (Import → GATE_IN, Export → GATE_OUT)
+   * Gate approve request (chuyển từ FORWARDED sang GATE_IN)
    */
   async approveGate(requestId: string, actorId: string, data?: GateApproveData): Promise<any> {
     const request = await prisma.serviceRequest.findUnique({
@@ -103,15 +103,8 @@ export class GateService {
       throw new Error('Chỉ có thể approve request có trạng thái FORWARDED');
     }
 
-    // Xác định trạng thái mới dựa trên loại request
-    let newStatus: string;
-    if (request.type === 'IMPORT') {
-      newStatus = 'GATE_IN';
-    } else if (request.type === 'EXPORT') {
-      newStatus = 'GATE_IN'; // Thay đổi từ GATE_OUT thành GATE_IN để phù hợp với logic
-    } else {
-      newStatus = 'GATE_IN'; // Default cho các loại khác
-    }
+    // Luôn chuyển sang GATE_IN cho cả IMPORT và EXPORT
+    const newStatus = 'GATE_IN';
 
     const currentTime = new Date();
     
@@ -122,7 +115,7 @@ export class GateService {
         gate_checked_at: currentTime,
         gate_checked_by: actorId,
         // Tự động điền thời gian vào khi chuyển sang GATE_IN
-        time_in: newStatus === 'GATE_IN' ? currentTime : null,
+        time_in: currentTime,
         // Lưu thông tin tài xế và biển số xe
         driver_name: data?.driver_name || null,
         license_plate: data?.license_plate || null,
@@ -133,7 +126,7 @@ export class GateService {
             driver_name: data?.driver_name || null,
             license_plate: data?.license_plate || null,
             approved_at: currentTime.toISOString(),
-            time_in: newStatus === 'GATE_IN' ? currentTime.toISOString() : null
+            time_in: currentTime.toISOString()
           }
         }
       }
@@ -164,13 +157,16 @@ export class GateService {
    * Tự động tạo ForkliftTask cho EXPORT requests khi chuyển sang GATE_IN
    */
   private async createForkliftTaskForExport(containerNo: string, actorId: string): Promise<void> {
-    // Kiểm tra xem đã có ForkliftTask cho container này chưa
-    const existingTask = await prisma.forkliftTask.findFirst({
-      where: { container_no: containerNo }
+    // Kiểm tra xem đã có ForkliftTask ACTIVE cho container này chưa
+    const existingActiveTask = await prisma.forkliftTask.findFirst({
+      where: { 
+        container_no: containerNo,
+        status: { in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_APPROVAL'] }
+      }
     });
 
-    if (existingTask) {
-      console.log(`ForkliftTask already exists for container ${containerNo}`);
+    if (existingActiveTask) {
+      console.log(`Active ForkliftTask already exists for container ${containerNo}`);
       return;
     }
 
@@ -192,6 +188,12 @@ export class GateService {
         } 
       }
     });
+
+    // Kiểm tra container có trong bãi không
+    if (!currentLocation) {
+      console.log(`Container ${containerNo} not found in yard, cannot create forklift task`);
+      return;
+    }
 
     // Tìm hoặc tạo slot đặc biệt cho gate (vị trí đích)
     let gateSlot = await prisma.yardSlot.findFirst({
@@ -690,8 +692,8 @@ export class GateService {
       throw new Error('Request không tồn tại');
     }
 
-    if (request.status !== 'NEW_REQUEST') {
-      throw new Error('Chỉ có thể Check-out từ trạng thái NEW_REQUEST');
+    if (request.status !== 'NEW_REQUEST' && request.status !== 'PENDING') {
+      throw new Error('Chỉ có thể Check-out từ trạng thái NEW_REQUEST hoặc PENDING');
     }
 
     const currentTime = new Date();
@@ -746,8 +748,11 @@ export class GateService {
 
     // Tạo điều kiện where
     const where: any = {
-      // Trang lịch sử: hiển thị tất cả xe đã có time_in
-      NOT: { time_in: null }
+      // Trang lịch sử: hiển thị tất cả xe đã có time_in HOẶC time_out (đã check-in hoặc check-out)
+      OR: [
+        { time_in: { not: null } },
+        { time_out: { not: null } }
+      ]
     };
 
     // Nếu vẫn truyền status (tùy biến), áp dụng thêm bộ lọc

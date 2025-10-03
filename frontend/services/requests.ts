@@ -150,5 +150,10 @@ export const requestService = {
   // Get repair cost for a container
   async getRepairCost(containerNo: string) {
     return api.get(`/requests/repair-cost/${encodeURIComponent(containerNo)}`);
+  },
+
+  // Update reuse status
+  async updateReuseStatus(requestId: string, reuseStatus: boolean) {
+    return api.patch(`/requests/${requestId}/reuse-status`, { reuseStatus });
   }
 };

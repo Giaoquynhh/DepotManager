@@ -4,7 +4,7 @@
 
 ### **Luồng trạng thái:**
 ```
-PENDING → CHECKED → GATE_IN → FORKLIFTING → IN_YARD → [GATE_OUT] → IN_YARD
+PENDING → GATE_IN → CHECKED → FORKLIFTING → IN_YARD → [GATE_OUT] → IN_YARD
 ```
 
 ### **Chi tiết từng trạng thái:**
@@ -13,13 +13,13 @@ PENDING → CHECKED → GATE_IN → FORKLIFTING → IN_YARD → [GATE_OUT] → I
    - Container vừa được tạo yêu cầu hạ
    - Chưa được xử lý
 
-2. **CHECKED** - "Chấp nhận" 
-   - Container đã được kiểm tra và chấp nhận
-   - Sẵn sàng để vào cổng
-
-3. **GATE_IN** - "Đã vào cổng"
+2. **GATE_IN** - "Đã vào cổng"
    - Xe đã vào cổng với container
-   - Đang chờ hạ xuống bãi
+   - Đang chờ kiểm tra và chấp nhận
+
+3. **CHECKED** - "Chấp nhận" 
+   - Container đã được kiểm tra và chấp nhận
+   - Sẵn sàng để hạ xuống bãi
 
 4. **FORKLIFTING** - "Đang hạ container"
    - Container đang được hạ xuống bãi
@@ -35,7 +35,7 @@ PENDING → CHECKED → GATE_IN → FORKLIFTING → IN_YARD → [GATE_OUT] → I
    - **Tự động chuyển về IN_YARD** khi container được hạ xuống
 
 ### **Hiển thị trong LowerContainer:**
-- ✅ Hiển thị: PENDING, CHECKED, GATE_IN, FORKLIFTING, IN_YARD
+- ✅ Hiển thị: PENDING, GATE_IN, CHECKED, FORKLIFTING, IN_YARD
 - ❌ Không hiển thị: GATE_OUT (đã được lọc bỏ)
 
 ---

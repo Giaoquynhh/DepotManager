@@ -16,7 +16,9 @@ export function useToast() {
     const newToast: SimpleToastProps = {
       id,
       ...options,
-      onClose: removeToast
+      onClose: (id: string) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+      }
     };
     
     setToasts(prev => [...prev, newToast]);

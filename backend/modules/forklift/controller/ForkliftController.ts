@@ -6,10 +6,25 @@ import { AuthRequest } from '../../../shared/middlewares/auth';
 export class ForkliftController {
 	async listJobs(req: Request, res: Response) {
 		try {
-			const { container_no, status } = req.query;
+			const { container_no, status, type } = req.query;
 			
 			// Build where clause
 			const where: any = {};
+			
+			// Logic filtering khác nhau cho IMPORT vs EXPORT
+			if (type === 'EXPORT') {
+				// EXPORT: hiển thị tất cả task (bao gồm COMPLETED cho LiftContainer)
+				// Không filter theo status
+			} else if (type === 'IMPORT') {
+				// IMPORT: hiển thị tất cả task (bao gồm COMPLETED cho LowerContainer)
+				// Không filter theo status
+			} else {
+				// Mặc định: chỉ hiển thị task chưa hoàn thành
+				where.status = { 
+					in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_APPROVAL'] 
+				};
+			}
+			
 			if (container_no) {
 				where.container_no = container_no as string;
 			}
@@ -19,10 +34,62 @@ export class ForkliftController {
 			
 			const jobs = await prisma.forkliftTask.findMany({
 				where,
+				include: {
+					fixed_location_slot: {
+						include: {
+							block: {
+								include: {
+									yard: true
+								}
+							}
+						}
+					}
+				},
 				orderBy: {
 					createdAt: 'desc'
 				}
 			});
+
+			// Auto-fix: Lưu fixed_location_slot_id cho các task IMPORT đã completed nhưng chưa có fixed location
+			await Promise.all(jobs.map(async (job) => {
+				if (job.status === 'COMPLETED' && !job.fixed_location_slot_id && job.to_slot_id) {
+					try {
+						// Tìm ServiceRequest tương ứng để kiểm tra type
+						const requests = await prisma.serviceRequest.findMany({
+							where: { container_no: job.container_no },
+							orderBy: { createdAt: 'desc' }
+						});
+						
+						if (requests.length > 0) {
+							// Tìm request gần nhất với task
+							const taskCreatedAt = job.createdAt;
+							let closestRequest = requests[0];
+							let minTimeDiff = Math.abs(taskCreatedAt.getTime() - requests[0].createdAt.getTime());
+							
+							for (const request of requests) {
+								const timeDiff = Math.abs(taskCreatedAt.getTime() - request.createdAt.getTime());
+								if (timeDiff < minTimeDiff) {
+									minTimeDiff = timeDiff;
+									closestRequest = request;
+								}
+							}
+							
+							// Chỉ lưu fixed location cho IMPORT request
+							if (closestRequest.type === 'IMPORT') {
+								await prisma.forkliftTask.update({
+									where: { id: job.id },
+									data: { 
+										fixed_location_slot_id: job.to_slot_id
+									}
+								});
+								console.log(`Auto-fixed fixed_location_slot_id for task ${job.id} (${job.container_no})`);
+							}
+						}
+					} catch (error) {
+						console.log(`Could not auto-fix task ${job.id}:`, error);
+					}
+				}
+			}));
 
 			// Get driver information and container details for each job
 			const jobsWithDetails = await Promise.all(
@@ -42,7 +109,9 @@ export class ForkliftController {
 					// Get container information including driver name and license plate
                     let containerInfo = null;
 					try {
-						containerInfo = await prisma.serviceRequest.findFirst({
+						// Tìm ServiceRequest phù hợp với ForkliftTask dựa trên thời gian tạo
+						// ForkliftTask được tạo gần thời gian nào thì lấy ServiceRequest đó
+						const allRequests = await prisma.serviceRequest.findMany({
 							where: { container_no: job.container_no },
 							select: {
 								driver_name: true,
@@ -51,52 +120,182 @@ export class ForkliftController {
 								status: true,
                                 type: true,
                                 request_no: true,
+                                createdAt: true,
                                 container_type: {
                                     select: { code: true }
                                 }
 							},
 							orderBy: { createdAt: 'desc' }
 						});
+
+						// Tìm ServiceRequest có thời gian tạo gần nhất với ForkliftTask
+						if (allRequests.length > 0) {
+							const jobCreatedAt = job.createdAt;
+							let closestRequest = allRequests[0];
+							let minTimeDiff = Math.abs(jobCreatedAt.getTime() - allRequests[0].createdAt.getTime());
+
+							for (const request of allRequests) {
+								const timeDiff = Math.abs(jobCreatedAt.getTime() - request.createdAt.getTime());
+								if (timeDiff < minTimeDiff) {
+									minTimeDiff = timeDiff;
+									closestRequest = request;
+								}
+							}
+							containerInfo = closestRequest;
+						}
 					} catch (error) {
 						console.log(`Could not find container info for ${job.container_no}:`, error);
 					}
 
-					// Get actual container location from yard
-					let actualLocation = null;
+					// Filter theo type nếu có
+					if (type && containerInfo?.type !== type) {
+						return null; // Loại bỏ task không đúng type
+					}
+
+					// Xác định loại task dựa trên ServiceRequest tương ứng với thời gian tạo task
+					let taskType = null;
 					try {
-						actualLocation = await prisma.yardPlacement.findFirst({
-							where: { 
-								container_no: job.container_no, 
-								status: { in: ['HOLD', 'OCCUPIED'] } 
-							},
-							include: { 
-								slot: { 
-									include: { 
-										block: { 
-											include: { 
-												yard: true 
+						// Tìm request có thời gian tạo gần nhất với forklift task
+						const allRequests = await prisma.serviceRequest.findMany({
+							where: { container_no: job.container_no },
+							orderBy: { createdAt: 'desc' }
+						});
+						
+						if (allRequests.length > 0) {
+							const jobCreatedAt = job.createdAt;
+							let closestRequest = allRequests[0];
+							let minTimeDiff = Math.abs(jobCreatedAt.getTime() - allRequests[0].createdAt.getTime());
+
+							for (const request of allRequests) {
+								const timeDiff = Math.abs(jobCreatedAt.getTime() - request.createdAt.getTime());
+								if (timeDiff < minTimeDiff) {
+									minTimeDiff = timeDiff;
+									closestRequest = request;
+								}
+							}
+							taskType = closestRequest.type;
+						}
+					} catch (error) {
+						console.log(`Could not find request type for ${job.container_no}:`, error);
+					}
+
+					// Logic hiển thị vị trí khác nhau cho IMPORT vs EXPORT
+					let display_location = null;
+					
+					if (taskType === 'IMPORT') {
+						// IMPORT task: ưu tiên vị trí cố định từ fixed_location_slot
+						if (job.fixed_location_slot) {
+							display_location = {
+								id: job.fixed_location_slot.id,
+								code: job.fixed_location_slot.code,
+								block: {
+									code: job.fixed_location_slot.block.code,
+									yard: {
+										name: job.fixed_location_slot.block.yard.name
+									}
+								}
+							};
+						} else {
+							// Fallback: tìm vị trí từ IN_YARD request
+							try {
+								const inYardRequest = await prisma.serviceRequest.findFirst({
+									where: { 
+										container_no: job.container_no,
+										status: 'IN_YARD',
+										type: 'IMPORT'
+									},
+									orderBy: { createdAt: 'desc' }
+								});
+								
+								if (inYardRequest) {
+									const actualLocation = await prisma.yardPlacement.findFirst({
+										where: { 
+											container_no: job.container_no,
+											status: { in: ['HOLD', 'OCCUPIED'] }
+										},
+										include: { 
+											slot: { 
+												include: { 
+													block: { 
+														include: { 
+															yard: true 
+														} 
+													} 
+												} 
+											} 
+										}
+									});
+									
+									if (actualLocation && actualLocation.slot) {
+										display_location = {
+											id: actualLocation.slot.id,
+											code: actualLocation.slot.code,
+											block: {
+												code: actualLocation.slot.block.code,
+												yard: {
+													name: actualLocation.slot.block.yard.name
+												}
+											}
+										};
+									}
+								}
+							} catch (error) {
+								console.log(`Could not find IN_YARD location for ${job.container_no}:`, error);
+							}
+						}
+					} else if (taskType === 'EXPORT') {
+						// EXPORT task: hiển thị vị trí thực tế hiện tại
+						try {
+							const actualLocation = await prisma.yardPlacement.findFirst({
+								where: { 
+									container_no: job.container_no, 
+									status: { in: ['HOLD', 'OCCUPIED'] } 
+								},
+								include: { 
+									slot: { 
+										include: { 
+											block: { 
+												include: { 
+													yard: true 
+												} 
 											} 
 										} 
 									} 
-								} 
+								}
+							});
+							
+							if (actualLocation && actualLocation.slot) {
+								display_location = {
+									id: actualLocation.slot.id,
+									code: actualLocation.slot.code,
+									block: {
+										code: actualLocation.slot.block.code,
+										yard: {
+											name: actualLocation.slot.block.yard.name
+										}
+									}
+								};
 							}
-						});
-					} catch (error) {
-						console.log(`Could not find actual location for ${job.container_no}:`, error);
+						} catch (error) {
+							console.log(`Could not find actual location for ${job.container_no}:`, error);
+						}
 					}
 
 					return {
 						...job,
 						driver,
 						container_info: containerInfo,
-						actual_location: actualLocation
+						display_location: display_location
 					};
 				})
 			);
 
+			// Loại bỏ null values (task không đúng type)
+			const filteredJobs = jobsWithDetails.filter(job => job !== null);
+
 			return res.json({
 				success: true,
-				data: jobsWithDetails
+				data: filteredJobs
 			});
 		} catch (error) {
 			console.error('Error listing forklift jobs:', error);
@@ -113,10 +312,62 @@ export class ForkliftController {
 				where: {
 					assigned_driver_id: driverId
 				},
+				include: {
+					fixed_location_slot: {
+						include: {
+							block: {
+								include: {
+									yard: true
+								}
+							}
+						}
+					}
+				},
 				orderBy: {
 					createdAt: 'desc'
 				}
 			});
+
+			// Auto-fix: Lưu fixed_location_slot_id cho các task IMPORT đã completed nhưng chưa có fixed location
+			await Promise.all(jobs.map(async (job) => {
+				if (job.status === 'COMPLETED' && !job.fixed_location_slot_id && job.to_slot_id) {
+					try {
+						// Tìm ServiceRequest tương ứng để kiểm tra type
+						const requests = await prisma.serviceRequest.findMany({
+							where: { container_no: job.container_no },
+							orderBy: { createdAt: 'desc' }
+						});
+						
+						if (requests.length > 0) {
+							// Tìm request gần nhất với task
+							const taskCreatedAt = job.createdAt;
+							let closestRequest = requests[0];
+							let minTimeDiff = Math.abs(taskCreatedAt.getTime() - requests[0].createdAt.getTime());
+							
+							for (const request of requests) {
+								const timeDiff = Math.abs(taskCreatedAt.getTime() - request.createdAt.getTime());
+								if (timeDiff < minTimeDiff) {
+									minTimeDiff = timeDiff;
+									closestRequest = request;
+								}
+							}
+							
+							// Chỉ lưu fixed location cho IMPORT request
+							if (closestRequest.type === 'IMPORT') {
+								await prisma.forkliftTask.update({
+									where: { id: job.id },
+									data: { 
+										fixed_location_slot_id: job.to_slot_id
+									}
+								});
+								console.log(`Auto-fixed fixed_location_slot_id for task ${job.id} (${job.container_no})`);
+							}
+						}
+					} catch (error) {
+						console.log(`Could not auto-fix task ${job.id}:`, error);
+					}
+				}
+			}));
 
 			// Get detailed information for each job
 			const jobsWithDetails = await Promise.all(
@@ -176,28 +427,91 @@ export class ForkliftController {
 						}
 					}
 
-					// Get actual container location from yard
-					let actualLocation = null;
+					// Xác định loại task dựa trên ServiceRequest tương ứng với thời gian tạo task
+					let taskType = null;
 					try {
-						actualLocation = await prisma.yardPlacement.findFirst({
-							where: { 
-								container_no: job.container_no, 
-								status: { in: ['HOLD', 'OCCUPIED'] } 
-							},
-							include: { 
-								slot: { 
-									include: { 
-										block: { 
-											include: { 
-												yard: true 
+						// Tìm request có thời gian tạo gần nhất với forklift task
+						const allRequests = await prisma.serviceRequest.findMany({
+							where: { container_no: job.container_no },
+							orderBy: { createdAt: 'desc' }
+						});
+						
+						if (allRequests.length > 0) {
+							const jobCreatedAt = job.createdAt;
+							let closestRequest = allRequests[0];
+							let minTimeDiff = Math.abs(jobCreatedAt.getTime() - allRequests[0].createdAt.getTime());
+
+							for (const request of allRequests) {
+								const timeDiff = Math.abs(jobCreatedAt.getTime() - request.createdAt.getTime());
+								if (timeDiff < minTimeDiff) {
+									minTimeDiff = timeDiff;
+									closestRequest = request;
+								}
+							}
+							taskType = closestRequest.type;
+						}
+					} catch (error) {
+						console.log(`Could not find request type for ${job.container_no}:`, error);
+						// Fallback to containerInfo type
+						taskType = containerInfo?.type;
+					}
+
+					// Logic hiển thị vị trí khác nhau cho IMPORT vs EXPORT
+					let display_location = null;
+					
+					if (taskType === 'IMPORT') {
+						// IMPORT task: ưu tiên vị trí cố định từ fixed_location_slot
+						if (job.fixed_location_slot) {
+							display_location = {
+								id: job.fixed_location_slot.id,
+								code: job.fixed_location_slot.code,
+								block: {
+									code: job.fixed_location_slot.block.code,
+									yard: {
+										name: job.fixed_location_slot.block.yard.name
+									}
+								}
+							};
+						} else if (toLocation) {
+							// Fallback to to_location for IMPORT tasks
+							display_location = toLocation;
+						}
+					} else if (taskType === 'EXPORT') {
+						// EXPORT task: hiển thị vị trí thực tế hiện tại
+						try {
+							const actualLocation = await prisma.yardPlacement.findFirst({
+								where: { 
+									container_no: job.container_no, 
+									status: { in: ['HOLD', 'OCCUPIED'] } 
+								},
+								include: { 
+									slot: { 
+										include: { 
+											block: { 
+												include: { 
+													yard: true 
+												} 
 											} 
 										} 
 									} 
-								} 
+								}
+							});
+							
+							if (actualLocation && actualLocation.slot) {
+								display_location = {
+									id: actualLocation.slot.id,
+									code: actualLocation.slot.code,
+									block: {
+										code: actualLocation.slot.block.code,
+										yard: {
+											name: actualLocation.slot.block.yard.name
+										}
+									}
+								};
 							}
-						});
-					} catch (error) {
-						console.log(`Could not find actual location for ${job.container_no}:`, error);
+						} catch (error) {
+							console.log(`Could not find actual location for ${job.container_no}:`, error);
+						}
 					}
 
 					return {
@@ -205,7 +519,7 @@ export class ForkliftController {
 						container_info: containerInfo,
 						from_location: fromLocation,
 						to_location: toLocation,
-						actual_location: actualLocation
+						display_location: display_location
 					};
 				})
 			);
@@ -487,11 +801,27 @@ export class ForkliftController {
 
 			// Thực hiện transaction để cập nhật cả forklift task, service request và yard placement
 			const updatedJob = await prisma.$transaction(async (tx) => {
-				// Cập nhật trạng thái forklift task sang COMPLETED
+				// Lưu vị trí cố định chỉ cho IMPORT request
+				let fixedLocationSlotId = null;
+				if (job.to_slot_id) {
+					// Lấy thông tin ServiceRequest để kiểm tra type
+					const latestRequest = await tx.serviceRequest.findFirst({
+						where: { container_no: job.container_no },
+						orderBy: { createdAt: 'desc' }
+					});
+
+					// Chỉ lưu vị trí cố định cho IMPORT request
+					if (latestRequest && latestRequest.type === 'IMPORT') {
+						fixedLocationSlotId = job.to_slot_id;
+					}
+				}
+
+				// Cập nhật trạng thái forklift task sang COMPLETED và lưu vị trí cố định
 				const updatedForkliftTask = await tx.forkliftTask.update({
 					where: { id: jobId },
 					data: { 
 						status: 'COMPLETED',
+						fixed_location_slot_id: fixedLocationSlotId,
 						updatedAt: new Date()
 					}
 				});

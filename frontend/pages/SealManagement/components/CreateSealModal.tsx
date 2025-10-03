@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { setupService, type ShippingLine } from '../../../services/setupService';
 import { sealsApi, type CreateSealData, type Seal } from '../../../services/seals';
+import { DateInput } from '../../../components/DateInput';
 
 interface CreateSealModalProps {
 	isOpen: boolean;
@@ -132,6 +133,12 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 		}
 		if (!formData.purchase_date.trim()) {
 			newErrors.purchase_date = 'Ngày mua là bắt buộc';
+		} else {
+			// Validate ISO date format
+			const date = new Date(formData.purchase_date);
+			if (isNaN(date.getTime())) {
+				newErrors.purchase_date = 'Ngày không hợp lệ';
+			}
 		}
 		if (!formData.quantity_purchased || formData.quantity_purchased <= 0) {
 			newErrors.quantity_purchased = 'Số lượng mua phải lớn hơn 0';
@@ -164,8 +171,8 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 				const selectedShippingLine = shippingLines.find(line => line.id === formData.shipping_company);
 				const shippingCompanyName = selectedShippingLine ? selectedShippingLine.name : formData.shipping_company;
 
-				// Chuyển đổi ngày thành ISO-8601 DateTime đầy đủ
-				const purchaseDate = new Date(formData.purchase_date + 'T00:00:00.000Z').toISOString();
+				// DateInput đã trả về ISO format, chỉ cần sử dụng trực tiếp
+				const purchaseDate = formData.purchase_date;
 
 				const createData: CreateSealData = {
 					...formData,
@@ -558,11 +565,11 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 							<label style={requiredLabelStyle}>
 								Ngày mua <span style={requiredAsteriskStyle}>*</span>
 							</label>
-							<input
-								type="date"
-								style={errors.purchase_date ? formInputErrorStyle : formInputStyle}
+							<DateInput
 								value={formData.purchase_date}
-								onChange={(e) => handleInputChange('purchase_date', e.target.value)}
+								onChange={(value) => handleInputChange('purchase_date', value)}
+								placeholder="dd/mm/yyyy"
+								style={errors.purchase_date ? formInputErrorStyle : formInputStyle}
 							/>
 							{errors.purchase_date && <span style={errorMessageStyle}>{errors.purchase_date}</span>}
 						</div>

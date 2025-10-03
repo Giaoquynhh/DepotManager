@@ -33,6 +33,8 @@ interface TableData {
   documentsCount?: number; // Số lượng chứng từ
   demDet: string; // Dem/Det
   notes: string; // Ghi chú
+  rejectedReason?: string; // Lý do hủy
+  isRepairRejected?: boolean; // Repair bị từ chối
 }
 
 export default function NewSubmenu() {
@@ -68,6 +70,15 @@ export default function NewSubmenu() {
   const [editRequestData, setEditRequestData] = React.useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deleteRequestId, setDeleteRequestId] = React.useState<string | null>(null);
+  
+  // Cancel states
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
+  const [cancelRequestId, setCancelRequestId] = React.useState<string | null>(null);
+  const [cancelReason, setCancelReason] = React.useState<string>('');
+
+  // View Reason states
+  const [showReasonModal, setShowReasonModal] = React.useState(false);
+  const [displayReason, setDisplayReason] = React.useState<string>('');
 
   // Force refresh when route changes to ensure fresh data
   React.useEffect(() => {
@@ -183,17 +194,41 @@ export default function NewSubmenu() {
   // Function để xử lý cập nhật yêu cầu
   const handleUpdateRequest = async (data: any) => {
     try {
-      // Hiển thị thông báo thành công với toast notification
-      showSuccess(
-        'Yêu cầu đã được cập nhật thành công!',
-        `Thông tin yêu cầu đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
-      );
+      console.log('Modal callback with data:', data);
       
-      // Refresh data after update
-      fetchImportRequests();
-    } catch (error) {
-      console.error('Error updating request:', error);
-      showSuccess('❌ Có lỗi xảy ra', 'Không thể cập nhật thông tin yêu cầu');
+      // Modal đã tự cập nhật thông tin request, chỉ cần xử lý upload files nếu có
+      if (data.documents && data.documents.length > 0) {
+        console.log('Uploading files:', data.documents);
+        try {
+          await requestService.uploadFiles(editRequestData.id, data.documents);
+          console.log('Files uploaded successfully');
+          
+          // Hiển thị thông báo thành công
+          showSuccess(
+            '✅ Yêu cầu đã được cập nhật thành công!',
+            `Thông tin yêu cầu và chứng từ đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
+          );
+        } catch (uploadError: any) {
+          console.error('Error uploading files:', uploadError);
+          showSuccess(
+            '⚠️ Cập nhật thành công nhưng có lỗi khi upload files', 
+            'Thông tin đã được cập nhật nhưng files có thể chưa được upload: ' + (uploadError.response?.data?.message || uploadError.message)
+          );
+        }
+      } else {
+        // Hiển thị thông báo thành công
+        showSuccess(
+          '✅ Yêu cầu đã được cập nhật thành công!',
+          `Thông tin yêu cầu đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
+        );
+      }
+      
+      // Refresh data after update để cập nhật số lượng chứng từ
+      await fetchImportRequests();
+      
+    } catch (error: any) {
+      console.error('Error in update callback:', error);
+      showSuccess('❌ Có lỗi xảy ra', 'Không thể xử lý cập nhật: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -260,6 +295,101 @@ export default function NewSubmenu() {
     }
   };
 
+  // Function để mở modal hủy
+  const handleCancelClick = (requestId: string) => {
+    setCancelRequestId(requestId);
+    
+    // Tìm request để kiểm tra xem có phải từ repair rejection không
+    const request = tableData.find(r => r.id === requestId);
+    console.log('Cancel click - request:', request);
+    console.log('Cancel click - isRepairRejected:', request?.isRepairRejected);
+    
+    if (request?.isRepairRejected) {
+      // Nếu là từ repair rejection, set lý do mặc định
+      console.log('Setting default reason for repair rejection');
+      setCancelReason('Container xấu không thể sửa chữa');
+    } else {
+      // Nếu không, reset lý do
+      console.log('Resetting reason for normal cancel');
+      setCancelReason('');
+    }
+    
+    setShowCancelModal(true);
+  };
+
+  // Function để xử lý hủy yêu cầu
+  const handleCancelRequest = async () => {
+    if (!cancelRequestId) return;
+    
+    console.log('Cancel request - ID:', cancelRequestId);
+    console.log('Cancel request - Reason:', cancelReason);
+    
+    setProcessingIds(prev => new Set(prev).add(cancelRequestId));
+    try {
+      console.log('Cancelling request:', cancelRequestId);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showSuccess('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này');
+        setProcessingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(cancelRequestId);
+          return newSet;
+        });
+        setShowCancelModal(false);
+        return;
+      }
+      
+      // Gọi API để hủy request (cập nhật status thành REJECTED)
+      const response = await requestService.cancelRequest(cancelRequestId, cancelReason);
+      console.log('Cancel API response:', response);
+      
+      if (response.data.success) {
+        // Hiển thị thông báo thành công với toast notification
+        showSuccess(
+          '❌ Yêu cầu đã được hủy thành công!',
+          `Yêu cầu đã được đánh dấu là REJECTED\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
+        );
+        
+        // Refresh data after cancellation
+        fetchImportRequests();
+      } else {
+        showSuccess('❌ Không thể hủy yêu cầu', response.data.message || 'Có lỗi xảy ra khi hủy yêu cầu');
+      }
+    } catch (error: any) {
+      console.error('Error cancelling request:', error);
+      console.error('Error response:', error.response);
+      console.error('Error data:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        showSuccess('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        showSuccess('❌ Có lỗi xảy ra', 'Không thể hủy yêu cầu: ' + (error.response?.data?.message || error.message));
+      }
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(cancelRequestId);
+        return newSet;
+      });
+      setShowCancelModal(false);
+      setCancelRequestId(null);
+      setCancelReason(''); // Reset lý do hủy
+    }
+  };
+
+  // Function để xem lý do hủy
+  const handleViewReasonClick = (reason: string) => {
+    setDisplayReason(reason || 'Không có lý do được cung cấp');
+    setShowReasonModal(true);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -279,6 +409,7 @@ export default function NewSubmenu() {
     // Trạng thái mới cho Import: hiển thị ngay sau FORKLIFTING
     if (normalized === 'IN_YARD') return 'Đã hạ thành công';
     if (normalized === 'GATE_OUT') return 'Xe đã rời khỏi bãi';
+    if (normalized === 'REJECTED') return 'Đã hủy';
     return status;
   };
 
@@ -352,7 +483,9 @@ export default function NewSubmenu() {
             documents: request.attachments?.map((att: any) => att.file_name).join(', ') || '',
             documentsCount: request.attachments?.length || 0,
             demDet: request.dem_det || '',
-            notes: request.appointment_note || ''
+            notes: request.appointment_note || '',
+            rejectedReason: request.rejected_reason || '',
+            isRepairRejected: request.isRepairRejected || false
           };
         }));
         setTableData(transformedData);
@@ -679,16 +812,55 @@ export default function NewSubmenu() {
                       <td style={tdStyle}>{row.demDet || '-'}</td>
                       <td style={tdStyle}>{row.notes || '-'}</td>
                       <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                        <button 
-                          type="button" 
-                          className="btn btn-primary" 
-                          style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                          onClick={() => handleUpdateInfo(row.id)}
-                          disabled={processingIds.has(row.id) || loading || row.status !== 'PENDING'}
-                          title={row.status !== 'PENDING' ? 'Chỉ cho phép cập nhật khi trạng thái là Chờ xử lý' : 'Cập nhật thông tin'}
-                        >
-                          {processingIds.has(row.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
-                        </button>
+                        {/* Debug log cho tất cả request */}
+                        {(() => {
+                          console.log('Debug request:', {
+                            requestNumber: row.requestNumber,
+                            status: row.status,
+                            isRepairRejected: row.isRepairRejected,
+                            rejectedReason: row.rejectedReason
+                          });
+                          return null;
+                        })()}
+                        
+                        {/* Button cập nhật hiển thị ở tất cả trạng thái trừ REJECTED */}
+                        {row.status !== 'REJECTED' && (
+                          <button 
+                            type="button" 
+                            className="btn btn-primary" 
+                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                            onClick={() => handleUpdateInfo(row.id)}
+                            disabled={processingIds.has(row.id) || loading}
+                            title="Cập nhật thông tin"
+                          >
+                            {processingIds.has(row.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
+                          </button>
+                        )}
+                        {/* Button hủy hiển thị khi trạng thái là PENDING hoặc khi repair bị từ chối (nhưng không phải REJECTED) */}
+                        {(row.status === 'PENDING' || (row.isRepairRejected && row.status !== 'REJECTED')) && (
+                          <button 
+                            type="button" 
+                            className="btn btn-danger" 
+                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                            onClick={() => handleCancelClick(row.id)}
+                            disabled={processingIds.has(row.id) || loading}
+                            title="Hủy yêu cầu"
+                          >
+                            {processingIds.has(row.id) ? 'Đang xử lý...' : 'Hủy'}
+                          </button>
+                        )}
+                        {/* Button xem lý do chỉ hiển thị khi trạng thái là REJECTED */}
+                        {row.status === 'REJECTED' && (
+                          <button 
+                            type="button" 
+                            className="btn btn-outline" 
+                            style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                            onClick={() => handleViewReasonClick(row.rejectedReason || '')}
+                            title="Xem lý do hủy"
+                          >
+                            Xem lý do
+                          </button>
+                        )}
                         {(row.status === 'IN_YARD') && row.paymentStatus !== 'Đã thanh toán' && (
                           <button
                             type="button"
@@ -750,16 +922,19 @@ export default function NewSubmenu() {
                             Tạo yêu cầu thanh toán
                           </button>
                         )}
-                        <button 
-                          type="button" 
-                          className="btn btn-danger" 
-                          style={{ padding: '6px 10px', fontSize: 12 }}
-                          onClick={() => handleDeleteClick(row.id)}
-                          disabled={processingIds.has(row.id) || loading}
-                          title="Xóa yêu cầu"
-                        >
-                          {processingIds.has(row.id) ? 'Đang xử lý...' : 'Xóa'}
-                        </button>
+                        {/* Chỉ hiển thị nút Xóa khi trạng thái là PENDING (Thêm mới) */}
+                        {row.status === 'NEW_REQUEST' && (
+                          <button 
+                            type="button" 
+                            className="btn btn-danger" 
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            onClick={() => handleDeleteClick(row.id)}
+                            disabled={processingIds.has(row.id) || loading}
+                            title="Xóa yêu cầu"
+                          >
+                            {processingIds.has(row.id) ? 'Đang xử lý...' : 'Xóa'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -959,6 +1134,289 @@ export default function NewSubmenu() {
                   }}
                 >
                   {processingIds.has(deleteRequestId || '') ? 'Đang xóa...' : 'Xóa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Confirmation Modal */}
+        {showCancelModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            <div style={{
+              background: 'white',
+              padding: '32px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center',
+              animation: 'modalSlideIn 0.2s ease-out'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: '#fef3c7',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+                fontSize: '32px',
+                color: '#f59e0b'
+              }}>
+                ⚠️
+              </div>
+              
+              <h3 style={{
+                margin: '0 0 12px 0',
+                color: '#1f2937',
+                fontSize: '20px',
+                fontWeight: '600',
+                lineHeight: '1.2'
+              }}>
+                Xác nhận hủy yêu cầu
+              </h3>
+              
+              <p style={{
+                margin: '0 0 16px 0',
+                color: '#6b7280',
+                fontSize: '14px',
+                lineHeight: '1.5'
+              }}>
+                Bạn có chắc chắn muốn hủy yêu cầu này?<br/>
+                <strong style={{ color: '#f59e0b' }}>Yêu cầu sẽ được đánh dấu là REJECTED.</strong>
+              </p>
+              
+              {/* Input lý do hủy */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151'
+                }}>
+                  Lý do hủy <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Nhập lý do hủy yêu cầu..."
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                {!cancelReason || !cancelReason.trim() ? (
+                  <p style={{
+                    margin: '4px 0 0 0',
+                    fontSize: '12px',
+                    color: '#ef4444'
+                  }}>
+                    Vui lòng nhập lý do hủy
+                  </p>
+                ) : null}
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancelRequestId(null);
+                    setCancelReason('');
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    border: '1px solid #d1d5db',
+                    background: 'white',
+                    color: '#374151',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: '80px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  Không
+                </button>
+                
+                <button
+                  onClick={handleCancelRequest}
+                  disabled={processingIds.has(cancelRequestId || '') || !cancelReason || !cancelReason.trim()}
+                  style={{
+                    padding: '10px 20px',
+                    border: 'none',
+                    background: (processingIds.has(cancelRequestId || '') || !cancelReason || !cancelReason.trim()) ? '#9ca3af' : '#f59e0b',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: (processingIds.has(cancelRequestId || '') || !cancelReason || !cancelReason.trim()) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: '80px'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!processingIds.has(cancelRequestId || '') && cancelReason && cancelReason.trim()) {
+                      e.currentTarget.style.background = '#d97706';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!processingIds.has(cancelRequestId || '') && cancelReason && cancelReason.trim()) {
+                      e.currentTarget.style.background = '#f59e0b';
+                    }
+                  }}
+                >
+                  {processingIds.has(cancelRequestId || '') ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Reason Modal */}
+        {showReasonModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}>
+            <div style={{
+              background: 'white',
+              padding: '32px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              maxWidth: '500px',
+              width: '90%',
+              textAlign: 'center',
+              animation: 'modalSlideIn 0.2s ease-out'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: '#fef2f2',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+                fontSize: '32px',
+                color: '#ef4444'
+              }}>
+                📋
+              </div>
+              
+              <h3 style={{
+                margin: '0 0 16px 0',
+                color: '#1f2937',
+                fontSize: '20px',
+                fontWeight: '600',
+                lineHeight: '1.2'
+              }}>
+                Lý do hủy yêu cầu
+              </h3>
+              
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '24px',
+                textAlign: 'left'
+              }}>
+                <p style={{
+                  margin: '0',
+                  color: '#374151',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}>
+                  {displayReason}
+                </p>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowReasonModal(false);
+                    setDisplayReason('');
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    border: '1px solid #d1d5db',
+                    background: 'white',
+                    color: '#374151',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: '80px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  Đóng
                 </button>
               </div>
             </div>
