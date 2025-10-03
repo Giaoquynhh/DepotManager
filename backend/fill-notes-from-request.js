@@ -5,69 +5,16 @@ const fs = require('fs');
 
 const prisma = new PrismaClient();
 
-async function fillEIRWithInvoiceRequestNumber() {
+async function fillNotesFromRequest() {
   try {
-    console.log('📄 ĐIỀN PHIẾU EIR VỚI SỐ YÊU CẦU TỪ HÓA ĐƠN');
+    console.log('📝 ĐIỀN GHI CHÚ TỪ REQUEST TƯƠNG ỨNG');
     console.log('=' .repeat(60));
 
-    const containerNo = 'OO11';
-
-    // Lấy thông tin ServiceRequest mới nhất (EXPORT với status GATE_OUT)
-    const latestRequest = await prisma.serviceRequest.findFirst({
-      where: { 
-        container_no: containerNo,
-        type: 'EXPORT',
-        status: 'GATE_OUT'
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        customer: {
-          select: { id: true, name: true, code: true }
-        },
-        shipping_line: {
-          select: { id: true, name: true, code: true }
-        },
-        container_type: {
-          select: { id: true, code: true, description: true }
-        }
-      }
-    });
-
-    if (!latestRequest) {
-      console.log('❌ Không tìm thấy ServiceRequest EXPORT với status GATE_OUT cho container OO11');
-      return;
-    }
-
-    console.log('✅ Tìm thấy ServiceRequest:');
-    console.log(`   - Request ID: ${latestRequest.id}`);
-    console.log(`   - Container: ${latestRequest.container_no}`);
-    console.log(`   - Type: ${latestRequest.type}`);
-    console.log(`   - Khách hàng: ${latestRequest.customer?.name || 'N/A'}`);
-
-    // Tìm hóa đơn tương ứng với ServiceRequest
-    const invoice = await prisma.invoice.findFirst({
-      where: {
-        source_id: latestRequest.id
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    if (!invoice) {
-      console.log('❌ Không tìm thấy hóa đơn tương ứng với ServiceRequest');
-      console.log('   Sử dụng Request ID làm số yêu cầu');
-      var requestNumber = latestRequest.id;
-    } else {
-      console.log('✅ Tìm thấy hóa đơn tương ứng:');
-      console.log(`   - Số hóa đơn: ${invoice.invoice_no || 'N/A'}`);
-      console.log(`   - Số yêu cầu: ${invoice.invoice_no || 'N/A'}`);
-      requestNumber = invoice.invoice_no || latestRequest.id;
-    }
-
-    // Sử dụng file hoàn chỉnh
-    const templatePath = path.join(__dirname, 'uploads/generated-eir/EIR_OO11_COMPLETE_2025-10-03T18-00-21.xlsx');
+    // Sử dụng file cuối cùng đã sửa
+    const templatePath = path.join(__dirname, 'uploads/generated-eir/EIR_OO11_FINAL_CORRECTED_2025-10-03T21-43-09.xlsx');
     
     if (!fs.existsSync(templatePath)) {
-      console.log('❌ File hoàn chỉnh không tồn tại:', templatePath);
+      console.log('❌ File cuối cùng đã sửa không tồn tại:', templatePath);
       return;
     }
 
@@ -82,6 +29,50 @@ async function fillEIRWithInvoiceRequestNumber() {
     // Lấy worksheet đầu tiên
     const worksheet = workbook.getWorksheet(1);
     console.log(`📊 Worksheet: ${worksheet.name}, có ${worksheet.rowCount} hàng, ${worksheet.columnCount} cột`);
+
+    // Lấy giá trị từ K4:L4 để tìm request tương ứng
+    const cellK4 = worksheet.getCell(4, 11); // K=11
+    const cellL4 = worksheet.getCell(4, 12); // L=12
+    const requestNumber = cellK4.value || cellL4.value;
+
+    console.log(`🔍 Tìm request với số yêu cầu: "${requestNumber}"`);
+
+    if (!requestNumber) {
+      console.log('❌ Không tìm thấy số yêu cầu trong K4:L4');
+      return;
+    }
+
+    // Tìm request tương ứng
+    const request = await prisma.serviceRequest.findFirst({
+      where: {
+        OR: [
+          { request_no: requestNumber },
+          { id: requestNumber }
+        ]
+      },
+      include: {
+        customer: {
+          select: { id: true, name: true, code: true }
+        },
+        shipping_line: {
+          select: { id: true, name: true, code: true }
+        },
+        container_type: {
+          select: { id: true, code: true, description: true }
+        }
+      }
+    });
+
+    if (!request) {
+      console.log(`❌ Không tìm thấy request với số yêu cầu: ${requestNumber}`);
+      return;
+    }
+
+    console.log('✅ Tìm thấy request:');
+    console.log(`   - Request ID: ${request.id}`);
+    console.log(`   - Request No: ${request.request_no}`);
+    console.log(`   - Container: ${request.container_no}`);
+    console.log(`   - Ghi chú: "${request.notes || 'Không có ghi chú'}"`);
 
     // Lưu lại tất cả thuộc tính định dạng gốc
     const originalProperties = {
@@ -114,21 +105,22 @@ async function fillEIRWithInvoiceRequestNumber() {
 
     console.log(`📐 Đã lưu ${originalProperties.cols.length} cột và ${originalProperties.rows.length} hàng`);
 
-    // Cập nhật số yêu cầu từ hóa đơn
-    let updatedCells = 0;
+    // Điền ghi chú vào C10:L10
+    let filledCells = 0;
+    const notes = request.notes || '';
 
-    console.log('\n📝 CẬP NHẬT SỐ YÊU CẦU TỪ HÓA ĐƠN:');
+    console.log('\n📝 ĐIỀN GHI CHÚ TỪ REQUEST:');
     console.log('=' .repeat(50));
 
-    // K4:L4 - Cập nhật số yêu cầu từ hóa đơn
-    for (let col = 11; col <= 12; col++) { // K=11, L=12 (không fill M4)
-      const cell = worksheet.getCell(4, col);
-      cell.value = requestNumber;
-      updatedCells++;
+    // C10:L10 - Ghi chú từ request
+    for (let col = 3; col <= 12; col++) { // C=3, D=4, E=5, F=6, G=7, H=8, I=9, J=10, K=11, L=12
+      const cell = worksheet.getCell(10, col);
+      cell.value = notes;
+      filledCells++;
     }
-    console.log(`   ✅ K4:L4 - Số yêu cầu từ hóa đơn: "${requestNumber}"`);
+    console.log(`   ✅ C10:L10 - Ghi chú: "${notes}"`);
 
-    console.log(`\n📊 Đã cập nhật ${updatedCells} ô dữ liệu`);
+    console.log(`\n📊 Đã điền ${filledCells} ô dữ liệu`);
 
     // Khôi phục lại tất cả thuộc tính định dạng gốc
     console.log('🔄 Khôi phục định dạng gốc...');
@@ -180,7 +172,7 @@ async function fillEIRWithInvoiceRequestNumber() {
 
     // Tạo tên file
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `EIR_OO11_WITH_INVOICE_REQUEST_${timestamp}.xlsx`;
+    const filename = `EIR_OO11_WITH_NOTES_${timestamp}.xlsx`;
 
     // Tạo thư mục output nếu chưa có
     const outputDir = path.join(__dirname, 'uploads/generated-eir');
@@ -193,15 +185,17 @@ async function fillEIRWithInvoiceRequestNumber() {
     // Ghi file với ExcelJS (giữ nguyên 100% định dạng)
     await workbook.xlsx.writeFile(outputPath);
 
-    console.log('✅ Phiếu EIR với số yêu cầu từ hóa đơn đã được tạo thành công!');
+    console.log('✅ Phiếu EIR với ghi chú đã được tạo thành công!');
     console.log(`📁 File: ${outputPath}`);
     console.log(`📄 Filename: ${filename}`);
 
-    console.log('\n📋 THÔNG TIN ĐÃ CẬP NHẬT:');
-    console.log(`   - K4:L4: Số yêu cầu từ hóa đơn: "${requestNumber}"`);
+    console.log('\n📋 THÔNG TIN ĐÃ ĐIỀN:');
+    console.log(`   - C10:L10: Ghi chú: "${notes}"`);
+    console.log(`   - Request: ${request.request_no || request.id}`);
+    console.log(`   - Container: ${request.container_no}`);
 
-    console.log('\n🎯 ĐẶC ĐIỂM FILE VỚI SỐ YÊU CẦU TỪ HÓA ĐƠN:');
-    console.log('   ✅ Sử dụng số yêu cầu từ hóa đơn thay vì Request ID');
+    console.log('\n🎯 ĐẶC ĐIỂM FILE VỚI GHI CHÚ:');
+    console.log('   ✅ Điền ghi chú từ request tương ứng');
     console.log('   ✅ Giữ nguyên 100% kích thước cột và hàng');
     console.log('   ✅ Giữ nguyên logo và hình ảnh');
     console.log('   ✅ Giữ nguyên định dạng cells (font, màu sắc, border)');
@@ -211,10 +205,10 @@ async function fillEIRWithInvoiceRequestNumber() {
     console.log('   ✅ Giữ nguyên layout và spacing');
 
   } catch (error) {
-    console.error('❌ Lỗi khi cập nhật số yêu cầu từ hóa đơn:', error);
+    console.error('❌ Lỗi khi điền ghi chú từ request:', error);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-fillEIRWithInvoiceRequestNumber();
+fillNotesFromRequest();
