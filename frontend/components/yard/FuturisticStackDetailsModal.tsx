@@ -141,7 +141,7 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
       setFilterLoading(true);
       const data = await containersApi.list({
         service_status: 'CHECKED',
-        // Bỏ not_in_yard để hiển thị tất cả container phù hợp (cả đã vào bãi và chưa vào bãi)
+        not_in_yard: true, // Lọc container chưa vào bãi ở backend
         page: page,
         pageSize: pageSize
       });
