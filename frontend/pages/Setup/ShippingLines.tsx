@@ -10,6 +10,7 @@ import { SuccessMessage } from './components/SuccessMessage';
 import { SetupModals } from './components/SetupModals';
 import { ConfirmDeleteModal } from './components/ConfirmDeleteModal';
 import { EditShippingLineModal } from './components/EditShippingLineModal';
+import { UploadEIRModal } from './components/UploadEIRModal';
 
 // Import hooks and handlers
 import { useSetupState } from './hooks/useSetupState';
@@ -55,6 +56,13 @@ export default function ShippingLines() {
     setSuccessMessage
   } = useSetupState();
 
+  // EIR Upload Modal State
+  const [showEIRUploadModal, setShowEIRUploadModal] = useState(false);
+  const [selectedShippingLineForEIR, setSelectedShippingLineForEIR] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   // Create handlers
   const shippingLineHandlers = createShippingLineHandlers(
     setShippingLines,
@@ -74,6 +82,35 @@ export default function ShippingLines() {
     language,
     translations
   );
+
+  // EIR Upload handlers
+  const handleUploadEIR = (shippingLine: { id: string; name: string }) => {
+    setSelectedShippingLineForEIR(shippingLine);
+    setShowEIRUploadModal(true);
+  };
+
+  const handleEIRUploadSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowEIRUploadModal(false);
+    setSelectedShippingLineForEIR(null);
+    // Reload data
+    shippingLineHandlers.loadShippingLines(1, shippingLinesPagination.limit);
+  };
+
+  const handleEIRUploadError = (message: string) => {
+    setErrorText(message);
+  };
+
+  // EIR Download handler
+  const handleDownloadEIR = async (shippingLine: { id: string; name: string }) => {
+    try {
+      const { setupService } = await import('../../services/setupService');
+      await setupService.downloadShippingLineEIR(shippingLine.id);
+    } catch (error) {
+      console.error('Error downloading EIR:', error);
+      setErrorText('Failed to download EIR file');
+    }
+  };
 
   // Load data on component mount
   useEffect(() => {
@@ -100,6 +137,7 @@ export default function ShippingLines() {
                 onUploadContainerTypeExcel={() => {}}
               />
 
+
               {/* Success Message */}
               <SuccessMessage message={successMessage} />
 
@@ -110,6 +148,8 @@ export default function ShippingLines() {
                 onPageChange={shippingLineHandlers.handlePageChange}
                 onEdit={shippingLineHandlers.handleEditShippingLine}
                 onDelete={shippingLineHandlers.handleDeleteShippingLine}
+                onUploadEIR={handleUploadEIR}
+                onDownloadEIR={handleDownloadEIR}
                 language={language}
                 translations={translations}
               />
@@ -200,6 +240,21 @@ export default function ShippingLines() {
         language={language}
         translations={translations}
       />
+
+      {/* EIR Upload Modal */}
+      {selectedShippingLineForEIR && (
+        <UploadEIRModal
+          isOpen={showEIRUploadModal}
+          onClose={() => {
+            setShowEIRUploadModal(false);
+            setSelectedShippingLineForEIR(null);
+          }}
+          shippingLineId={selectedShippingLineForEIR.id}
+          shippingLineName={selectedShippingLineForEIR.name}
+          onSuccess={handleEIRUploadSuccess}
+          onError={handleEIRUploadError}
+        />
+      )}
     </>
   );
 }

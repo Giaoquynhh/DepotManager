@@ -331,8 +331,8 @@ export class GateService {
       const statusArray = statuses.split(',').map(s => s.trim());
       where.status = { in: statusArray };
     } else {
-      // Default: bao gồm PENDING để thấy yêu cầu mới tạo ở LowerContainer và GATE_OUT để debug
-      where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN', 'GATE_OUT', 'CHECKED'] };
+      // Default: bao gồm PENDING để thấy yêu cầu mới tạo ở LowerContainer, loại bỏ GATE_OUT vì đã được lưu trong lịch sử
+      where.status = { in: ['PENDING', 'NEW_REQUEST', 'FORWARDED', 'IN_YARD', 'IN_CAR', 'GATE_IN', 'CHECKED'] };
     }
 
     if (container_no && container_no.trim()) {

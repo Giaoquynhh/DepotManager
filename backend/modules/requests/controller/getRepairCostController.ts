@@ -45,8 +45,6 @@ export const getRepairCost = async (req: Request, res: Response) => {
     const laborCost = Number(repairTicket.labor_cost || 0);
     const repairCost = estimatedCost + laborCost;
 
-    console.log(`🔍 Repair cost cho container ${containerNo}: estimated=${estimatedCost}, labor=${laborCost}, total=${repairCost}`);
-
     return res.json({ 
       success: true, 
       data: { 

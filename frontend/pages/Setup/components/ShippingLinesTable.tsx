@@ -24,6 +24,8 @@ interface ShippingLinesTableProps {
   translations: any;
   onEdit: (shippingLine: ShippingLine) => void;
   onDelete: (id: string) => void;
+  onUploadEIR: (shippingLine: { id: string; name: string }) => void;
+  onDownloadEIR: (shippingLine: { id: string; name: string }) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -34,6 +36,8 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
   translations,
   onEdit,
   onDelete,
+  onUploadEIR,
+  onDownloadEIR,
   onPageChange
 }) => {
 
@@ -65,7 +69,7 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
                 {shippingLine.note || '-'}
               </td>
               <td>
-                <div style={{display:'flex', gap:8}}>
+                <div style={{display:'flex', gap:8, flexWrap: 'wrap'}}>
                   <button 
                     className="btn btn-xs" 
                     onClick={() => onEdit(shippingLine)}
@@ -73,6 +77,24 @@ export const ShippingLinesTable: React.FC<ShippingLinesTableProps> = ({
                   >
                     {translations[language].edit}
                   </button>
+                  <button 
+                    className="btn btn-xs btn-outline" 
+                    onClick={() => onUploadEIR({ id: shippingLine.id, name: shippingLine.name })}
+                    title="Upload EIR"
+                    style={{color: '#059669', borderColor: '#059669'}}
+                  >
+                    📄 Upload
+                  </button>
+                  {shippingLine.eir && (
+                    <button 
+                      className="btn btn-xs btn-outline" 
+                      onClick={() => onDownloadEIR({ id: shippingLine.id, name: shippingLine.name })}
+                      title="Download EIR"
+                      style={{color: '#2563eb', borderColor: '#2563eb'}}
+                    >
+                      📥 Download
+                    </button>
+                  )}
                   <button 
                     className="btn btn-xs btn-outline" 
                     onClick={() => onDelete(shippingLine.id)}

@@ -132,7 +132,6 @@ export class RepairCostService {
 
         if (existingRepairItem) {
           // Cập nhật repair cost hiện có
-          console.log('🔄 Cập nhật repair cost hiện có:', existingRepairItem.id);
           await prisma.invoiceLineItem.update({
             where: { id: existingRepairItem.id },
             data: {
@@ -141,10 +140,8 @@ export class RepairCostService {
               total_line_amount: repairCost as any
             }
           });
-          console.log('✅ Đã cập nhật repair cost hiện có');
         } else {
           // Thêm repair cost mới (luôn thêm, ngay cả khi = 0)
-          console.log('➕ Thêm repair cost mới vào invoice');
           await prisma.invoiceLineItem.create({
             data: {
               org_id: null,
@@ -160,7 +157,6 @@ export class RepairCostService {
               total_line_amount: repairCost as any
             }
           });
-          console.log('✅ Đã thêm repair cost mới');
         }
 
         // Tính lại tổng tiền cho invoice

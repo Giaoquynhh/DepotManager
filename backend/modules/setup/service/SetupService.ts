@@ -383,8 +383,10 @@ export class SetupService {
   // Upload transport company Excel file
   async uploadTransportCompanyExcel(file: Express.Multer.File): Promise<ApiResponse<TransportCompanyResponse[]>> {
     try {
-      // Read Excel file
-      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      // Read file from disk path
+      const fs = require('fs');
+      const fileBuffer = fs.readFileSync(file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
@@ -484,7 +486,10 @@ export class SetupService {
   // Upload customer Excel file
   async uploadCustomerExcel(file: Express.Multer.File): Promise<ApiResponse<CustomerResponse[]>> {
     try {
-      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      // Read file from disk path
+      const fs = require('fs');
+      const fileBuffer = fs.readFileSync(file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
 
@@ -581,7 +586,10 @@ export class SetupService {
   // Upload container type Excel file
   async uploadContainerTypeExcel(file: Express.Multer.File): Promise<ApiResponse<ContainerTypeResponse[]>> {
     try {
-      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      // Read file from disk path
+      const fs = require('fs');
+      const fileBuffer = fs.readFileSync(file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
 
@@ -649,6 +657,16 @@ export class SetupService {
         };
       }
 
+      // Clean up temporary file
+      try {
+        const fs = require('fs');
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp file:', cleanupError);
+      }
+
       return {
         success: true,
         data: containerTypes,
@@ -656,6 +674,17 @@ export class SetupService {
       };
     } catch (error) {
       console.error('Error uploading container type Excel:', error);
+      
+      // Clean up temporary file on error
+      try {
+        const fs = require('fs');
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp file:', cleanupError);
+      }
+      
       return {
         success: false,
         error: 'INTERNAL_SERVER_ERROR',
@@ -1285,8 +1314,10 @@ export class SetupService {
   // Upload price list Excel file
   async uploadPriceListExcel(file: Express.Multer.File): Promise<ApiResponse<PriceListResponse[]>> {
     try {
-      // Read Excel file
-      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      // Read file from disk path
+      const fs = require('fs');
+      const fileBuffer = fs.readFileSync(file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
@@ -1412,6 +1443,126 @@ export class SetupService {
         success: false,
         error: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to process Excel file'
+      };
+    }
+  }
+
+  // Upload EIR file for shipping line
+  async uploadShippingLineEIR(file: Express.Multer.File, shippingLineId: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('🔧 Service: uploadShippingLineEIR called');
+      console.log('  - file:', file ? {
+        filename: file.filename,
+        originalname: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        path: file.path
+      } : 'No file');
+      console.log('  - shippingLineId:', shippingLineId);
+
+      // Kiểm tra file có tồn tại không
+      if (!file) {
+        console.log('❌ No file provided');
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No file provided'
+        };
+      }
+
+      // Kiểm tra định dạng file
+      const allowedMimeTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel' // .xls
+      ];
+      
+      console.log('📋 Checking file type:', file.mimetype);
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        console.log('❌ Invalid file type:', file.mimetype);
+        return {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Only Excel files (.xlsx, .xls) are allowed'
+        };
+      }
+      console.log('✅ File type valid');
+
+      // Kiểm tra shipping line có tồn tại không
+      console.log('🔍 Checking shipping line:', shippingLineId);
+      const shippingLine = await this.getShippingLineById(shippingLineId);
+      if (!shippingLine.success || !shippingLine.data) {
+        console.log('❌ Shipping line not found');
+        return {
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Shipping line not found'
+        };
+      }
+      console.log('✅ Shipping line found:', shippingLine.data.name);
+
+      // Tạo tên file mới
+      const shippingLineCode = shippingLine.data.code;
+      const timestamp = Date.now();
+      const fileExtension = file.originalname.split('.').pop();
+      const newFilename = `EIR_${shippingLineCode}_${timestamp}.${fileExtension}`;
+      
+      console.log('📝 Creating new filename:', newFilename);
+      
+      // Di chuyển file
+      const fs = require('fs');
+      const path = require('path');
+      const eirUploadDir = path.join(__dirname, '../../../uploads/shipping-lines-eir');
+      
+      console.log('📁 EIR upload directory:', eirUploadDir);
+      
+      // Tạo thư mục nếu chưa có
+      if (!fs.existsSync(eirUploadDir)) {
+        console.log('📁 Creating directory:', eirUploadDir);
+        fs.mkdirSync(eirUploadDir, { recursive: true });
+      }
+      
+      const newFilePath = path.join(eirUploadDir, newFilename);
+      console.log('📁 Moving file from:', file.path, 'to:', newFilePath);
+      
+      try {
+        fs.renameSync(file.path, newFilePath);
+        console.log('✅ File moved successfully');
+      } catch (moveError) {
+        console.error('❌ Error moving file:', moveError);
+        throw moveError;
+      }
+      
+      // Cập nhật database
+      console.log('💾 Updating database with filename:', newFilename);
+      const updateResult = await this.updateShippingLine(shippingLineId, {
+        eir: newFilename
+      });
+      
+      if (!updateResult.success) {
+        console.log('❌ Database update failed:', updateResult.message);
+        return updateResult;
+      }
+      console.log('✅ Database updated successfully');
+
+      const result = {
+        success: true,
+        data: {
+          filename: newFilename,
+          file_path: newFilePath,
+          shipping_line: updateResult.data
+        },
+        message: 'EIR file uploaded successfully'
+      };
+      
+      console.log('🎉 Upload completed successfully:', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error uploading EIR file:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to upload EIR file'
       };
     }
   }

@@ -87,7 +87,6 @@ export const markPaid = async (req: Request, res: Response) => {
               qty: 1,
               unit_price: repairCost
             });
-            console.log(`💰 Đã thêm repair cost: ${repairCost} VND vào invoice`);
           }
         }
       }
@@ -180,7 +179,6 @@ export const markPaid = async (req: Request, res: Response) => {
                 total_line_amount: repairCost as any
               }
             });
-            console.log(`💰 Đã thêm repair cost: ${repairCost} VND vào invoice ${existingInvoice.id}`);
             needsUpdate = true;
           }
         }

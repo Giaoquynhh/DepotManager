@@ -55,8 +55,8 @@ export default function LowerGateDashboard({ showSuccess, showError }: LowerGate
       // Tạo bản sao của searchParams để xử lý
       const paramsSource = { ...searchParams };
       
-      // Không tự động ẩn GATE_OUT nữa, để người dùng có thể chọn hiển thị "Đã ra cổng"
-      // Logic filter sẽ được xử lý bởi GateSearchBar component
+      // GATE_OUT đã được ẩn khỏi danh sách mặc định vì đã được lưu trong lịch sử ra vào
+      // Logic filter được xử lý bởi backend GateService
       
       Object.entries(paramsSource).forEach(([key, value]) => {
         if (key === 'page' || key === 'limit') {

@@ -3,12 +3,19 @@ import { prisma } from './dependencies';
 // Get list of requests
 export const getRequests = async (req: any, res: any) => {
     try {
-        const { type, status, page = 1, limit = 20 } = req.query;
+        const { type, status, statuses, page = 1, limit = 20 } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(limit);
 
         const where: any = { depot_deleted_at: null };
         if (type) { where.type = type; }
-        if (status) { where.status = status; }
+        if (status) { 
+            where.status = status; 
+        } else if (statuses) {
+            // Hỗ trợ multiple statuses (comma-separated)
+            const statusArray = statuses.split(',').map((s: string) => s.trim());
+            where.status = { in: statusArray };
+        }
+        // Không thêm filter mặc định để các trang khác vẫn hoạt động bình thường
 
         const requests = await prisma.serviceRequest.findMany({
             where,

@@ -71,13 +71,13 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 			
 			setFormData({
 				requestNo: requestData.request_no || '',
-				shippingLine: requestData.shipping_line?.name || '',
+				shippingLine: requestData.shipping_line?.id || '',
 				bookingBill: requestData.booking_bill || '',
 				containerNumber: requestData.container_no || '',
-				containerType: requestData.container_type?.code || '',
+				containerType: requestData.container_type?.id || '',
 				serviceType: 'Nâng container',
-				customer: requestData.customer?.name || '',
-				vehicleCompany: requestData.vehicle_company?.name || '',
+				customer: requestData.customer?.id || '',
+				vehicleCompany: requestData.vehicle_company?.id || '',
 				vehicleNumber: requestData.license_plate || '',
 				driver: requestData.driver_name || '',
 				driverPhone: requestData.driver_phone || '',
@@ -175,11 +175,11 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 		setSubmitting(true);
 
 		try {
-			// Find IDs for selected options
-			const shippingLineId = Array.isArray(shippingLines) ? shippingLines.find(sl => sl.name === formData.shippingLine)?.id : undefined;
-			const containerTypeId = Array.isArray(containerTypes) ? containerTypes.find(ct => ct.code === formData.containerType)?.id : undefined;
-			const customerId = Array.isArray(customers) ? customers.find(c => c.name === formData.customer)?.id : undefined;
-			const vehicleCompanyId = Array.isArray(transportCompanies) ? transportCompanies.find(tc => tc.name === formData.vehicleCompany)?.id : undefined;
+			// Use IDs directly since formData now contains IDs
+			const shippingLineId = formData.shippingLine;
+			const containerTypeId = formData.containerType;
+			const customerId = formData.customer;
+			const vehicleCompanyId = formData.vehicleCompany;
 
 			const updateData = {
 				type: requestData.type || 'EXPORT', // Giữ nguyên type của request hiện tại, mặc định là EXPORT cho trang nâng container
@@ -198,7 +198,14 @@ export const EditLiftRequestModal: React.FC<EditLiftRequestModalProps> = ({
 				files: formData.documents
 			};
 
+			// Update request data first
 			await requestService.updateRequest(requestData.id, updateData);
+			
+			// Upload files if there are any new documents
+			if (formData.documents && formData.documents.length > 0) {
+				await requestService.uploadFiles(requestData.id, formData.documents);
+			}
+			
 			onSubmit(formData);
 			onClose();
 		} catch (error) {

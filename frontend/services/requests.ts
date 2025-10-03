@@ -95,10 +95,11 @@ export const requestService = {
   },
 
   // Get list of requests
-  async getRequests(type?: 'IMPORT' | 'EXPORT', status?: string) {
+  async getRequests(type?: 'IMPORT' | 'EXPORT', status?: string, statuses?: string) {
     const params = new URLSearchParams();
     if (type) params.append('type', type);
     if (status) params.append('status', status);
+    if (statuses) params.append('statuses', statuses);
     
     return api.get(`/requests?${params.toString()}`);
   },

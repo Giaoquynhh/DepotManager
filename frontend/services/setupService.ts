@@ -306,6 +306,63 @@ class SetupService {
     }
   }
 
+  // Upload EIR file for shipping line
+  async uploadShippingLineEIR(shippingLineId: string, file: File): Promise<ApiResponse<any>> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('shipping_line_id', shippingLineId);
+
+      const response = await api.post('/api/setup/shipping-lines/upload-eir', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 seconds timeout
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error uploading EIR file:', error);
+      
+      // Log chi tiết lỗi
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      } else if (error.request) {
+        console.error('Request error:', error.request);
+      } else {
+        console.error('Error message:', error.message);
+      }
+      
+      return {
+        success: false,
+        error: 'UPLOAD_ERROR',
+        message: error.response?.data?.message || error.message || 'Failed to upload EIR file'
+      };
+    }
+  }
+
+  // Download EIR file for shipping line
+  async downloadShippingLineEIR(shippingLineId: string): Promise<void> {
+    try {
+      const response = await api.get(`/api/setup/shipping-lines/${shippingLineId}/download-eir`, {
+        responseType: 'blob',
+      });
+      
+      // Tạo URL để download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `EIR_${shippingLineId}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Error downloading EIR file:', error);
+      throw new Error(error.response?.data?.message || 'Failed to download EIR file');
+    }
+  }
+
   // Upload transport company Excel file
   async uploadTransportCompanyExcel(file: FormData): Promise<ApiResponse<TransportCompany[]>> {
     try {

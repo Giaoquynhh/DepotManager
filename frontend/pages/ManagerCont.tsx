@@ -114,7 +114,7 @@ export default function ManagerCont(){
       'DONE_LIFTING': 'Đã nâng xong',
       'GATE_OUT': 'Xe đã rời khỏi bãi',
       'IN_YARD': 'Đã hạ thành công', // Chỉ dành cho IMPORT
-      'EMPTY_IN_YARD': 'Container rỗng trong bãi'
+      'EMPTY_IN_YARD': 'Container trong bãi'
     };
     return map[status] || status;
   };
@@ -324,9 +324,10 @@ export default function ManagerCont(){
     setLoading(true);
     try {
       // Lấy cả IMPORT và EXPORT requests để hiển thị đầy đủ trạng thái
+      // Loại bỏ containers đã hoàn thành hoặc bị reject để chỉ hiển thị containers đang trong quy trình quản lý
       const [importResponse, exportResponse] = await Promise.all([
-        requestService.getRequests('IMPORT'),
-        requestService.getRequests('EXPORT')
+        requestService.getRequests('IMPORT', undefined, 'PENDING,NEW_REQUEST,FORWARDED,GATE_IN,IN_YARD,IN_CAR,FORKLIFTING,CHECKED'),
+        requestService.getRequests('EXPORT', undefined, 'PENDING,NEW_REQUEST,FORWARDED,GATE_IN,IN_YARD,IN_CAR,FORKLIFTING,CHECKED')
       ]);
       
       const importRequests = importResponse?.data?.success ? (importResponse.data.data || []) : [];
@@ -386,36 +387,88 @@ export default function ManagerCont(){
         requests.map((req: any) => req.container_no)
       );
       
-      // Xử lý container EMPTY_IN_YARD - chỉ hiển thị container không có ServiceRequest
-      const emptyInYardData: TableData[] = emptyInYardContainers
-        .filter((container: ContainerItem) => !containersWithServiceRequests.has(container.container_no))
-        .map((container: ContainerItem) => ({
-          id: `empty_${container.container_no}`, // ID giả để phân biệt
-          shippingLine: container.shipping_line?.name || '',
-          containerNumber: container.container_no || '',
-          containerType: container.container_type?.code || '',
-          status: 'EMPTY_IN_YARD',
-          repairTicketStatus: undefined, // Không có repair ticket cho empty containers
-          customer: container.customer?.name || '',
-          documents: '',
-          documentsCount: 0,
-          repairImagesCount: 0,
-          repairTicketId: undefined,
-          position: (() => {
-            if (container.yard_name || container.block_code || container.slot_code) {
-              const pos = `${container.block_code || ''} / ${container.slot_code || ''}`;
-              return container.yard_name ? `${container.yard_name} • ${pos}` : pos;
-            }
-            return '';
-          })(),
-          yardName: container.yard_name,
-          blockCode: container.block_code,
-          slotCode: container.slot_code,
-          sealNumber: container.seal_number || '',
-          demDet: container.dem_det || '',
-          containerQuality: 'GOOD' as const, // Không có request nên hiển thị "Container tốt"
-          requestType: undefined // EMPTY_IN_YARD không có requestType
-        }));
+      // Xử lý container EMPTY_IN_YARD - bao gồm cả container không có ServiceRequest và container có GATE_OUT
+       const emptyInYardData: TableData[] = await Promise.all(
+         emptyInYardContainers
+           .filter((container: ContainerItem) => !containersWithServiceRequests.has(container.container_no))
+           .map(async (container: ContainerItem) => {
+             // Lấy thông tin từ ServiceRequest GATE_OUT nếu có
+             let serviceRequestData: any = null;
+             try {
+               const gateOutResponse = await requestService.getRequests('IMPORT', 'GATE_OUT');
+               if (gateOutResponse?.data?.success) {
+                 const gateOutRequests = gateOutResponse.data.data || [];
+                 const matchingRequest = gateOutRequests.find((req: any) => req.container_no === container.container_no);
+                 if (matchingRequest) {
+                   serviceRequestData = matchingRequest;
+                   console.log(`🔍 Found GATE_OUT ServiceRequest for ${container.container_no}:`, serviceRequestData);
+                 }
+               }
+             } catch (error) {
+               console.log(`⚠️ Error fetching ServiceRequest for ${container.container_no}:`, error);
+             }
+             // Kiểm tra RepairTicket cho emptyInYard containers để giữ nguyên trạng thái
+             let containerQuality: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN' = 'GOOD'; // Mặc định GOOD
+             let repairTicketStatus: string | undefined = undefined;
+             let repairTicketId: string | undefined = undefined;
+             let repairImagesCount = 0;
+             
+             try {
+               const tickets = await maintenanceApi.listRepairs({ container_no: container.container_no });
+               if (tickets.data && tickets.data.length > 0) {
+                 const latest = tickets.data[0];
+                 repairTicketStatus = latest.status;
+                 repairTicketId = latest.id;
+                 
+                 if (repairTicketStatus === 'COMPLETE') {
+                   containerQuality = 'GOOD';
+                 } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
+                   containerQuality = 'NEED_REPAIR';
+                 } else {
+                   containerQuality = 'UNKNOWN';
+                 }
+                 
+                 // Lấy số lượng ảnh kiểm tra
+                 try {
+                   const imgs = await maintenanceApi.getRepairImages(latest.id);
+                   repairImagesCount = Array.isArray(imgs?.data) ? imgs.data.length : 0;
+                 } catch {}
+                 
+                 console.log(`🔍 EmptyInYard container ${container.container_no}: RepairTicket=${repairTicketStatus}, Quality=${containerQuality}`);
+               }
+             } catch (error) {
+               console.log(`⚠️ No repair tickets found for emptyInYard container ${container.container_no}`);
+             }
+             
+             return {
+               id: `empty_${container.container_no}`, // ID giả để phân biệt
+               shippingLine: serviceRequestData?.shipping_line?.name || container.shipping_line?.name || '',
+               containerNumber: container.container_no || '',
+               containerType: serviceRequestData?.container_type?.code || container.container_type?.code || '',
+               status: 'EMPTY_IN_YARD',
+               repairTicketStatus: repairTicketStatus,
+               customer: serviceRequestData?.customer?.name || container.customer?.name || '',
+               documents: '',
+               documentsCount: 0,
+               repairImagesCount: repairImagesCount,
+               repairTicketId: repairTicketId,
+               position: (() => {
+                 if (container.yard_name || container.block_code || container.slot_code) {
+                   const pos = `${container.block_code || ''} / ${container.slot_code || ''}`;
+                   return container.yard_name ? `${container.yard_name} • ${pos}` : pos;
+                 }
+                 return '';
+               })(),
+               yardName: container.yard_name,
+               blockCode: container.block_code,
+               slotCode: container.slot_code,
+               sealNumber: serviceRequestData?.seal_number || container.seal_number || '',
+               demDet: serviceRequestData?.dem_det || container.dem_det || '',
+               containerQuality: containerQuality, // Sử dụng containerQuality từ RepairTicket
+               requestType: serviceRequestData?.type || undefined // Sử dụng type từ ServiceRequest nếu có
+             };
+           })
+       );
 
       const transformedData: TableData[] = await Promise.all(
         requests.map(async (request: any) => {
@@ -514,22 +567,28 @@ export default function ManagerCont(){
                 repairTicketStatus = latest.status;
                 // Áp dụng logic: if repairTicket.status == COMPLETE then "Container tốt" else "Cần sửa chữa"
                 // Chỉ áp dụng cho IMPORT requests
-                containerQuality = (repairTicketStatus === 'COMPLETE') ? 'GOOD' : 'NEED_REPAIR';
+                if (repairTicketStatus === 'COMPLETE') {
+                  containerQuality = 'GOOD';
+                } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
+                  containerQuality = 'NEED_REPAIR';
+                } else {
+                  containerQuality = 'UNKNOWN';
+                }
                 console.log(`✅ Selected repair ticket for ${request.container_no}: ID=${latest.id}, Status=${latest.status}, Quality=${containerQuality}`);
                 try {
                   const imgs = await maintenanceApi.getRepairImages(latest.id);
                   repairImagesCount = Array.isArray(imgs?.data) ? imgs.data.length : 0;
                 } catch {}
               } else {
-                // Không có repair ticket cho IMPORT, hiển thị "Container tốt" (mặc định)
-                containerQuality = 'GOOD';
+                // Không có repair ticket cho IMPORT, hiển thị "Không xác định" (mặc định)
+                containerQuality = 'UNKNOWN';
                 repairTicketStatus = undefined; // Không set status khi không có repair ticket
-                console.log(`⚠️ No repair tickets found for ${request.container_no}, using GOOD status`);
-                console.log(`⚠️ This means the container will show as "CONTAINER TỐT"`);
+                console.log(`⚠️ No repair tickets found for ${request.container_no}, using UNKNOWN status`);
+                console.log(`⚠️ This means the container will show as "Không xác định"`);
               }
             } catch (error: any) {
-              // Lỗi khi lấy repair ticket cho IMPORT, hiển thị "Container tốt" (mặc định)
-              containerQuality = 'GOOD';
+              // Lỗi khi lấy repair ticket cho IMPORT, hiển thị "Không xác định" (mặc định)
+              containerQuality = 'UNKNOWN';
               repairTicketStatus = undefined; // Không set status khi có lỗi
               console.log(`❌ Error fetching repair tickets for ${request.container_no}:`, error);
               console.log(`❌ Error details:`, {
@@ -1601,30 +1660,43 @@ export default function ManagerCont(){
                         
                         // Gọi API cập nhật thông tin container
                         const updateData: any = {};
-                        if (selectedCustomerId) {
+                        
+                        // Debug: Log các giá trị để kiểm tra
+                        console.log('🔍 Debug update data:');
+                        console.log('  selectedCustomerId:', selectedCustomerId);
+                        console.log('  selectedShippingLineId:', selectedShippingLineId);
+                        console.log('  selectedContainerTypeId:', selectedContainerTypeId);
+                        console.log('  selectedStatus:', selectedStatus, 'vs selectedRow.containerQuality:', selectedRow.containerQuality);
+                        console.log('  selectedSealNumber:', selectedSealNumber, 'vs selectedRow.sealNumber:', selectedRow.sealNumber);
+                        console.log('  selectedDemDet:', selectedDemDet, 'vs selectedRow.demDet:', selectedRow.demDet);
+                        
+                        // Luôn cập nhật nếu có giá trị được chọn (không cần so sánh)
+                        if (selectedCustomerId && selectedCustomerId !== '') {
                           updateData.customer_id = selectedCustomerId;
                         }
-                        if (selectedShippingLineId) {
+                        if (selectedShippingLineId && selectedShippingLineId !== '') {
                           updateData.shipping_line_id = selectedShippingLineId;
                         }
-                        if (selectedContainerTypeId) {
+                        if (selectedContainerTypeId && selectedContainerTypeId !== '') {
                           updateData.container_type_id = selectedContainerTypeId;
                         }
-                        if (selectedStatus !== selectedRow.containerQuality) {
+                        if (selectedStatus && selectedStatus !== '') {
                           updateData.container_quality = selectedStatus;
                         }
-                        if (selectedSealNumber !== selectedRow.sealNumber) {
+                        if (selectedSealNumber && selectedSealNumber.trim() !== '') {
                           // Kiểm tra nếu có seal number nhưng chưa có hãng tàu (cả mới chọn và hiện tại)
                           const hasShippingLine = (selectedShippingLineId && selectedShippingLineId !== '') || (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '');
-                          if (selectedSealNumber && selectedSealNumber.trim() !== '' && !hasShippingLine) {
+                          if (!hasShippingLine) {
                             showError('Cần cập nhật hãng tàu trước khi nhập số seal!', undefined, 3000);
                             return;
                           }
                           updateData.seal_number = selectedSealNumber;
                         }
-                        if (selectedDemDet !== (selectedRow.demDet === 'Không có' ? '' : selectedRow.demDet || '')) {
+                        if (selectedDemDet && selectedDemDet.trim() !== '') {
                           updateData.dem_det = selectedDemDet;
                         }
+                        
+                        console.log('📤 Update data to send:', updateData);
                         
                         const response = await containersApi.update(selectedRow.containerNumber, updateData);
                         console.log('✅ API response:', response);
@@ -1658,21 +1730,40 @@ export default function ManagerCont(){
                           }
                         }
                         
-                         // Cập nhật local state cho allData - luôn cập nhật tất cả trường
-                         const updatedAllData = allData.map(item => 
-                           item.containerNumber === selectedRow.containerNumber 
-                             ? { 
-                                 ...item, 
-                                 customer: selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.name || '' : item.customer,
-                                 shippingLine: selectedShippingLineId ? shippingLines.find(sl => sl.id === selectedShippingLineId)?.name || '' : item.shippingLine,
-                                 containerType: selectedContainerTypeId ? containerTypes.find(ct => ct.id === selectedContainerTypeId)?.code || '' : item.containerType,
-                                 containerQuality: selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN",
-                                 sealNumber: selectedSealNumber,
-                                 demDet: selectedDemDet
-                               }
-                             : item
-                         );
+                         // Cập nhật local state cho allData - chỉ cập nhật các trường có thay đổi
+                         const updatedAllData = allData.map(item => {
+                           if (item.containerNumber === selectedRow.containerNumber) {
+                             const updatedItem = { ...item };
+                             
+                             // Chỉ cập nhật nếu có giá trị mới
+                             if (selectedCustomerId && selectedCustomerId !== '') {
+                               updatedItem.customer = customers.find(c => c.id === selectedCustomerId)?.name || item.customer;
+                             }
+                             if (selectedShippingLineId && selectedShippingLineId !== '') {
+                               updatedItem.shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId)?.name || item.shippingLine;
+                             }
+                             if (selectedContainerTypeId && selectedContainerTypeId !== '') {
+                               updatedItem.containerType = containerTypes.find(ct => ct.id === selectedContainerTypeId)?.code || item.containerType;
+                             }
+                             if (selectedStatus && selectedStatus !== '') {
+                               updatedItem.containerQuality = selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN";
+                             }
+                             if (selectedSealNumber && selectedSealNumber.trim() !== '') {
+                               updatedItem.sealNumber = selectedSealNumber;
+                             }
+                             if (selectedDemDet && selectedDemDet.trim() !== '') {
+                               updatedItem.demDet = selectedDemDet;
+                             }
+                             
+                             return updatedItem;
+                           }
+                           return item;
+                         });
                         setAllData(updatedAllData);
+                        
+                        // Refresh data từ server để đảm bảo đồng bộ
+                        console.log('🔄 Refreshing data from server...');
+                        await fetchImportRequests();
                         
                         const updatedFields = [];
                         if (selectedCustomerId && selectedCustomerId !== '') updatedFields.push('khách hàng');

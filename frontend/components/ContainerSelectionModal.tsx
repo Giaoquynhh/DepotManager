@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { requestsApi, AvailableContainer } from '@services/requests';
+import { requestService } from '@services/requests';
 
-interface Container {
+interface AvailableContainer {
   container_no: string;
   location: string;
   status: string;
   placed_at: string;
+}
+
+interface Container {
+  container_no: string;
+  location?: string;
+  position?: string;
+  status: string;
+  placed_at?: string;
 }
 
 interface ContainerSelectionModalProps {
@@ -42,16 +50,25 @@ export default function ContainerSelectionModal({
   const loadContainers = async () => {
     setLoading(true);
     try {
-      // Sử dụng API mới để lấy danh sách container available cho EXPORT
-      const response = await requestsApi.getAvailableContainersForExport(searchQuery || undefined);
-      const containers = response.data as AvailableContainer[];
+      // Sử dụng API để lấy danh sách container available cho EXPORT
+      const response = await requestService.getRequests('IMPORT', 'EMPTY_IN_YARD');
+      const allContainers = response.data?.data || [];
       
-      setContainers(containers);
+      // Filter containers based on search query
+      let filteredContainers = allContainers;
+      if (searchQuery && searchQuery.trim()) {
+        filteredContainers = allContainers.filter((container: any) => 
+          container.container_no.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
+      setContainers(filteredContainers);
       setTotalPages(1); // API mới không có pagination
       
       // Debug log
-        count: containers.length,
-        sampleItems: containers.slice(0, 3)
+      console.log('📦 Loaded containers:', {
+        count: filteredContainers.length,
+        sampleItems: filteredContainers.slice(0, 3)
       });
     } catch (error) {
       console.error('Error loading available containers:', error);
@@ -139,7 +156,7 @@ export default function ContainerSelectionModal({
                       <tr key={container.container_no}>
                         <td style={{ fontWeight: '700' }}>{container.container_no}</td>
                         <td>
-                          {container.location || '-'}
+                          {container.position || container.location || '-'}
                         </td>
                         <td>
                           <span
@@ -152,7 +169,7 @@ export default function ContainerSelectionModal({
                               fontSize: '12px'
                             }}
                           >
-                            {container.status}
+                            {container.status || 'EMPTY_IN_YARD'}
                           </span>
                         </td>
                         <td>

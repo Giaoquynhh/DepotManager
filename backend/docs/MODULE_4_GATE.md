@@ -158,7 +158,8 @@ Role: YardManager | TechnicalDepartment
 - `limit`: Số item mỗi trang (default: 20)
 
 Ghi chú hành vi mặc định:
-- Nếu không truyền `status` hoặc `statuses`, backend sẽ hiển thị nhóm trạng thái mặc định: `PENDING`, `NEW_REQUEST`, `FORWARDED`, `IN_YARD`, `IN_CAR`, `GATE_IN`.
+- Nếu không truyền `status` hoặc `statuses`, backend sẽ hiển thị nhóm trạng thái mặc định: `PENDING`, `NEW_REQUEST`, `FORWARDED`, `IN_YARD`, `IN_CAR`, `GATE_IN`, `CHECKED`.
+- `GATE_OUT` đã được loại bỏ khỏi danh sách mặc định vì đã được lưu trong lịch sử ra vào.
 
 Ánh xạ code:
 ```24:63:manageContainer/backend/modules/gate/dto/GateDtos.ts

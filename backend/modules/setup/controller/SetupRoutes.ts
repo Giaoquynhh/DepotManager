@@ -6,7 +6,7 @@ import multer from 'multer';
 
 // Configure multer for Excel file uploads
 const upload = multer({
-  storage: multer.memoryStorage(), // Store in memory for processing
+  dest: 'uploads/temp/', // Store temporarily for processing
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
@@ -47,6 +47,8 @@ router.post('/shipping-lines', requireRoles('SystemAdmin', 'TechnicalDepartment'
 router.post('/shipping-lines/bulk', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.bulkCreateShippingLines);
 router.put('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.updateShippingLine);
 router.delete('/shipping-lines/:id', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.deleteShippingLine);
+router.post('/shipping-lines/upload-eir', requireRoles('SystemAdmin', 'TechnicalDepartment'), upload.single('file'), controller.uploadShippingLineEIR);
+router.get('/shipping-lines/:shipping_line_id/download-eir', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.downloadShippingLineEIR);
 
 // Transport Companies Routes
 router.get('/transport-companies', requireRoles('SystemAdmin', 'TechnicalDepartment'), controller.getTransportCompanies);

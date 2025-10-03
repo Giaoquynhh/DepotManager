@@ -199,7 +199,6 @@ export class RepairController {
         
         // Lưu repair cost vào RepairTicket để sử dụng sau này khi thanh toán
         const repairCost = this.repairCostService.calculateRepairCost(updatedTicket);
-        console.log(`💰 Repair cost đã được lưu: ${repairCost} VND`);
       }
 
       return res.json({ success: true, data: updatedTicket });

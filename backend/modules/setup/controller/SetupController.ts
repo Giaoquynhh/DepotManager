@@ -772,6 +772,129 @@ export class SetupController {
   }
 
   // Removed: uploadPriceListExcel
+
+  // Upload EIR file for shipping line
+  async uploadShippingLineEIR(req: Request, res: Response) {
+    try {
+      console.log('📤 Upload EIR request received:');
+      console.log('  - req.file:', req.file ? {
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      } : 'No file');
+      console.log('  - req.body:', req.body);
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'No file uploaded'
+        });
+      }
+
+      const { shipping_line_id } = req.body;
+      
+      if (!shipping_line_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Shipping line ID is required'
+        });
+      }
+
+      console.log('📋 Processing upload for shipping line:', shipping_line_id);
+
+      // Sử dụng service method
+      const result = await service.uploadShippingLineEIR(req.file, shipping_line_id);
+      
+      console.log('📊 Service result:', result);
+
+      if (!result.success) {
+        const statusCode = result.error === 'VALIDATION_ERROR' ? 400 : 
+                          result.error === 'NOT_FOUND' ? 404 : 500;
+        console.log('❌ Upload failed:', result.message);
+        return res.status(statusCode).json(result);
+      }
+
+      console.log('✅ Upload successful');
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Error uploading EIR file:', error);
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
+
+  // Download/view EIR file
+  async downloadShippingLineEIR(req: Request, res: Response) {
+    try {
+      const { shipping_line_id } = req.params;
+      
+      if (!shipping_line_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Shipping line ID is required'
+        });
+      }
+
+      // Lấy thông tin shipping line
+      const shippingLine = await service.getShippingLineById(shipping_line_id);
+      if (!shippingLine.success || !shippingLine.data) {
+        return res.status(404).json({
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'Shipping line not found'
+        });
+      }
+
+      const eirFilename = shippingLine.data.eir;
+      if (!eirFilename) {
+        return res.status(404).json({
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'EIR file not found for this shipping line'
+        });
+      }
+
+      // Đường dẫn file EIR
+      const path = require('path');
+      const fs = require('fs');
+      const eirUploadDir = path.join(__dirname, '../../../uploads/shipping-lines-eir');
+      const filePath = path.join(eirUploadDir, eirFilename);
+
+      // Kiểm tra file có tồn tại không
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'NOT_FOUND',
+          message: 'EIR file not found on server'
+        });
+      }
+
+      // Set headers cho download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${eirFilename}"`);
+      
+      // Stream file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+
+    } catch (error) {
+      console.error('Error downloading EIR file:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred'
+      });
+    }
+  }
 }
 
 export default new SetupController();

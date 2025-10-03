@@ -58,6 +58,7 @@ export default function NewSubmenu() {
 
   // Dữ liệu bảng từ database
   const [tableData, setTableData] = React.useState<TableData[]>([]);
+  const [allTableData, setAllTableData] = React.useState<TableData[]>([]); // Lưu tất cả dữ liệu gốc
   
   const [showPaymentModal, setShowPaymentModal] = React.useState(false);
   const [paymentAmount, setPaymentAmount] = React.useState<number>(0);
@@ -96,6 +97,45 @@ export default function NewSubmenu() {
   React.useEffect(() => {
     fetchImportRequests();
   }, [refreshTrigger]);
+
+  // Effect để filter dữ liệu theo trạng thái và tìm kiếm
+  React.useEffect(() => {
+    console.log('🔍 LowerContainer Filter effect triggered:', { localStatus, localSearch, allTableDataCount: allTableData.length });
+    
+    // Chỉ filter khi có dữ liệu
+    if (allTableData.length === 0) {
+      console.log('🔍 No data to filter yet');
+      return;
+    }
+    
+    let filteredData = [...allTableData];
+
+    // Filter theo trạng thái
+    if (localStatus && localStatus !== 'all') {
+      console.log('🔍 Filtering by status:', localStatus);
+      filteredData = filteredData.filter(row => {
+        const matches = row.status === localStatus;
+        console.log(`🔍 Row ${row.containerNumber} status: ${row.status}, matches: ${matches}`);
+        return matches;
+      });
+    }
+
+    // Filter theo tìm kiếm
+    if (localSearch && localSearch.trim()) {
+      const searchTerm = localSearch.trim().toLowerCase();
+      console.log('🔍 Filtering by search term:', searchTerm);
+      filteredData = filteredData.filter(row => 
+        row.containerNumber.toLowerCase().includes(searchTerm) ||
+        row.requestNumber.toLowerCase().includes(searchTerm) ||
+        row.customer.toLowerCase().includes(searchTerm) ||
+        row.driverName.toLowerCase().includes(searchTerm) ||
+        row.truckNumber.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    console.log('🔍 Filtered data count:', filteredData.length);
+    setTableData(filteredData);
+  }, [allTableData, localStatus, localSearch]);
 
 
   const handleCreateNew = () => {
@@ -488,7 +528,8 @@ export default function NewSubmenu() {
             isRepairRejected: request.isRepairRejected || false
           };
         }));
-        setTableData(transformedData);
+        setAllTableData(transformedData); // Lưu tất cả dữ liệu gốc
+        setTableData(transformedData); // Hiển thị ban đầu
       }
     } catch (error) {
       console.error('Error fetching import requests:', error);
@@ -710,12 +751,13 @@ export default function NewSubmenu() {
                 onChange={(e) => setLocalStatus(e.target.value)}
               >
                 <option value="all">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ xử lý</option>
-                <option value="SCHEDULED">Đã lên lịch</option>
-                <option value="IN_PROGRESS">Đang thực hiện</option>
-                <option value="GATE_IN">Gate-in</option>
-                <option value="COMPLETED">Hoàn thành</option>
-                <option value="CANCELLED">Đã hủy</option>
+                <option value="PENDING">⏳ Chờ xử lý</option>
+                <option value="CHECKED">✅ Chấp nhận</option>
+                <option value="GATE_IN">🟢 Đã vào cổng</option>
+                <option value="FORKLIFTING">🟡 Đang hạ container</option>
+                <option value="IN_YARD">🏗️ Đã hạ thành công</option>
+                <option value="GATE_OUT">🟣 Xe đã rời khỏi bãi</option>
+                <option value="REJECTED">❌ Đã hủy</option>
               </select>
             </div>
             <div className="action-group">
@@ -823,8 +865,8 @@ export default function NewSubmenu() {
                           return null;
                         })()}
                         
-                        {/* Button cập nhật hiển thị ở tất cả trạng thái trừ REJECTED */}
-                        {row.status !== 'REJECTED' && (
+                        {/* Button cập nhật chỉ hiển thị khi trạng thái là PENDING */}
+                        {row.status === 'PENDING' && (
                           <button 
                             type="button" 
                             className="btn btn-primary" 

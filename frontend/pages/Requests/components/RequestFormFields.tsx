@@ -64,7 +64,7 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 					>
 						<option value="">Chọn hãng tàu</option>
 						{Array.isArray(shippingLines) && shippingLines.map(line => (
-							<option key={line.id} value={line.name}>{line.name}</option>
+							<option key={line.id} value={line.id}>{line.name}</option>
 						))}
 					</select>
 				</div>
@@ -107,7 +107,7 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 					>
 						<option value="">Chọn loại container</option>
 						{Array.isArray(containerTypes) && containerTypes.map(type => (
-							<option key={type.id} value={type.code}>{type.code} - {type.name}</option>
+							<option key={type.id} value={type.id}>{type.code} - {type.description}</option>
 						))}
 					</select>
 				</div>
@@ -150,7 +150,7 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 					>
 						<option value="">Chọn khách hàng</option>
 						{Array.isArray(customers) && customers.map(customer => (
-							<option key={customer.id} value={customer.name}>{customer.name}</option>
+							<option key={customer.id} value={customer.id}>{customer.name}</option>
 						))}
 					</select>
 				</div>
@@ -175,7 +175,7 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 					>
 						<option value="">Chọn nhà xe</option>
 						{Array.isArray(transportCompanies) && transportCompanies.map(company => (
-							<option key={company.id} value={company.name}>{company.name}</option>
+							<option key={company.id} value={company.id}>{company.name}</option>
 						))}
 					</select>
 				</div>

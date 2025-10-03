@@ -3,7 +3,7 @@ import Header from '@components/Header';
 import { useTranslation } from '../hooks/useTranslation';
 import { useToast } from '../hooks/useToastHook';
 import { ExportRequest } from './Requests/components/ExportRequest';
-import { CreateLiftRequestModal, LiftRequestData } from './Requests/components';
+import { CreateLiftRequestModal, LiftRequestData } from './Requests/components/CreateLiftRequestModal';
 
 export default function LiftContainer() {
 	const { t } = useTranslation();
