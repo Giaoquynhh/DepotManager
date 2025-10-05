@@ -946,8 +946,8 @@ export default function NewSubmenu() {
                             Xem lý do
                           </button>
                         )}
-                        {/* Button In phiếu EIR chỉ hiển thị khi trạng thái là GATE_OUT */}
-                        {row.status === 'GATE_OUT' && (
+                        {/* Button In phiếu EIR hiển thị khi đã thanh toán hoặc ở trạng thái GATE_OUT */}
+                        {(row.paymentStatus === 'Đã thanh toán' || row.status === 'GATE_OUT') && (
                           <button 
                             type="button" 
                             className="btn btn-info" 

@@ -3,6 +3,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { useToast } from '../../../hooks/useToastHook';
 import { requestService } from '../../../services/requests';
 import { setupService } from '../../../services/setupService';
+import { api } from '../../../services/api';
 import { EditLiftRequestModal } from './EditLiftRequestModal';
 
 interface ExportRequestProps {
@@ -277,6 +278,49 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
         } catch (error) {
             console.error('Error updating request:', error);
             showError('❌ Có lỗi xảy ra', 'Không thể cập nhật thông tin yêu cầu', 3000);
+        }
+    };
+
+    // Function để in phiếu EIR
+    const handlePrintEIR = async (requestId: string) => {
+        try {
+            setProcessingIds(prev => new Set(prev).add(requestId));
+            
+            // Gọi API để tạo phiếu EIR
+            const response = await api.post(`/gate/requests/${requestId}/generate-eir`, {}, {
+                responseType: 'blob'
+            });
+            
+            // Tạo blob và download file
+            const blob = new Blob([response.data], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `EIR_${requestId}_${Date.now()}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccess(
+                '📄 Phiếu EIR đã được tạo',
+                'File EIR đã được tải xuống thành công.',
+                5000
+            );
+        } catch (error: any) {
+            console.error('Error generating EIR:', error);
+            showError(
+                '❌ Lỗi khi tạo phiếu EIR',
+                error.response?.data?.message || error.message
+            );
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(requestId);
+                return newSet;
+            });
         }
     };
 
@@ -697,6 +741,28 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                             Tạo yêu cầu thanh toán
                         </button>
                     )}
+                                            {/* Nút In phiếu EIR - hiển thị khi status là IN_CAR hoặc GATE_OUT và đã thanh toán */}
+                                            {(r.status === 'IN_CAR' || r.status === 'GATE_OUT') && r.paymentStatus === 'Đã thanh toán' && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-info" 
+                                                    style={{ 
+                                                        padding: '6px 10px', 
+                                                        fontSize: 12, 
+                                                        marginRight: 8,
+                                                        backgroundColor: '#3b82f6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                    onClick={() => handlePrintEIR(r.id)}
+                                                    disabled={processingIds.has(r.id) || loading}
+                                                    title="In phiếu EIR"
+                                                >
+                                                    {processingIds.has(r.id) ? 'Đang tạo...' : '📄 In phiếu EIR'}
+                                                </button>
+                                            )}
+
                                             {/* Nút xóa - chỉ hiển thị khi status là NEW_REQUEST */}
                                             {r.status === 'NEW_REQUEST' && (
                                                 <button 

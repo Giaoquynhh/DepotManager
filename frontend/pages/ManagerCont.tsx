@@ -431,14 +431,15 @@ export default function ManagerCont(){
       let emptyInYardContainers: ContainerItem[] = [];
       if (includeEmptyInYard) {
         try {
-          console.log('🔍 Fetching EMPTY_IN_YARD containers...');
+          console.log('🔍 Fetching containers in yard...');
+          // BỔ SUNG: Lấy tất cả container trong yard, không chỉ SYSTEM_ADMIN_ADDED
           const emptyResponse = await reportsService.getContainers({
-            service_status: 'SYSTEM_ADMIN_ADDED',
+            // Không filter theo service_status để lấy tất cả container trong yard
             page: 1,
             pageSize: 200
           });
           emptyInYardContainers = emptyResponse.data.items || [];
-          console.log('📦 EMPTY_IN_YARD containers found:', emptyInYardContainers.length);
+          console.log('📦 Containers in yard found:', emptyInYardContainers.length);
           console.log('📋 Container details:', emptyInYardContainers.map(c => ({
             container_no: c.container_no,
             service_status: c.service_status,
@@ -447,7 +448,7 @@ export default function ManagerCont(){
             slot_code: c.slot_code
           })));
         } catch (error) {
-          console.error('❌ Error fetching EMPTY_IN_YARD containers:', error);
+          console.error('❌ Error fetching containers in yard:', error);
         }
       }
 
@@ -456,7 +457,7 @@ export default function ManagerCont(){
         requests.map((req: any) => req.container_no)
       );
       
-      // Xử lý container EMPTY_IN_YARD - bao gồm cả container không có ServiceRequest và container có GATE_OUT
+      // Xử lý container trong yard - bao gồm cả container không có ServiceRequest và container có GATE_OUT
        const emptyInYardData: TableData[] = await Promise.all(
          emptyInYardContainers
            .filter((container: ContainerItem) => {
@@ -801,22 +802,29 @@ export default function ManagerCont(){
         return hasPosition;
       });
 
-      // Lọc ẩn các record có trạng thái request là PENDING, GATE_IN, REJECTED
+      // BỔ SUNG: Lọc ẩn các record có trạng thái request là PENDING, REJECTED
+      // GATE_IN được giữ lại nếu container có vị trí trong yard
       const filteredTransformedData = serviceRequestContainersWithPosition.filter(container => {
         const requestStatus = container.status;
-        const shouldHide = ['PENDING', 'GATE_IN', 'REJECTED'].includes(requestStatus);
+        const hasPosition = container.yardName || container.blockCode || container.slotCode;
+        
+        // Chỉ ẩn PENDING và REJECTED
+        // GATE_IN được hiển thị nếu có vị trí trong yard
+        const shouldHide = ['PENDING', 'REJECTED'].includes(requestStatus);
         
         if (shouldHide) {
           console.log(`🚫 Hiding container ${container.containerNumber} with status: ${requestStatus}`);
+        } else if (requestStatus === 'GATE_IN' && hasPosition) {
+          console.log(`✅ Showing GATE_IN container ${container.containerNumber} with position: ${container.yardName || 'N/A'}`);
         }
         
         return !shouldHide;
       });
       
-      console.log('🔍 Filtering containers by request status:');
-      console.log('📊 Total requests before filter:', transformedData.length);
+      console.log('🔍 Filtering containers by request status (PENDING, REJECTED hidden; GATE_IN with position shown):');
+      console.log('📊 Total requests before filter:', serviceRequestContainersWithPosition.length);
       console.log('📊 Total requests after filter:', filteredTransformedData.length);
-      console.log('📋 All request statuses before filter:', transformedData.map(r => ({ 
+      console.log('📋 All request statuses before filter:', serviceRequestContainersWithPosition.map(r => ({ 
         container: r.containerNumber, 
         status: r.status
       })));
