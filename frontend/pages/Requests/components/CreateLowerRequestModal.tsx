@@ -227,30 +227,11 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		}
 	};
 
-	// Check if container number already exists
+	// Check if container number already exists - Disabled to allow any container input
 	const checkContainerExists = React.useCallback(async (containerNo: string) => {
-		if (!containerNo.trim()) {
-			setContainerValidationError('');
-			return;
-		}
-
-		setIsCheckingContainer(true);
+		// Disabled container validation to allow any container input
 		setContainerValidationError('');
-
-		try {
-			const response = await requestService.checkContainerExists(containerNo);
-			
-			if (response.data.success && response.data.exists) {
-				setContainerValidationError(response.data.message);
-			} else {
-				setContainerValidationError('');
-			}
-		} catch (error: any) {
-			console.error('Error checking container:', error);
-			setContainerValidationError('Lỗi khi kiểm tra container. Vui lòng thử lại.');
-		} finally {
-			setIsCheckingContainer(false);
-		}
+		setIsCheckingContainer(false);
 	}, []);
 
 	// Debounced container check
@@ -282,15 +263,8 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			newErrors.customer = 'Khách hàng là bắt buộc';
 		}
 
-		// Check container validation error
-		if (containerValidationError) {
-			newErrors.containerNumber = containerValidationError;
-		}
-
-		// Check if container validation is still in progress
-		if (isCheckingContainer) {
-			newErrors.containerNumber = 'Đang kiểm tra container...';
-		}
+		// Container validation disabled - allow any container input
+		// No validation checks for container number
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;

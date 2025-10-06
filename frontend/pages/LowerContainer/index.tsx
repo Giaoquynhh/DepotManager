@@ -520,19 +520,36 @@ export default function NewSubmenu() {
   };
 
 
-  // Map hiển thị trạng thái thân thiện
+  // Map hiển thị trạng thái thân thiện - Updated to match LiftContainer style
   const renderStatusText = (status: string) => {
     if (!status) return '';
     const normalized = String(status).toUpperCase();
-    if (normalized === 'PENDING') return 'Thêm mới';
-    if (normalized === 'CHECKED') return 'Chấp nhận';
-    if (normalized === 'GATE_IN') return 'Đã vào cổng';
-    if (normalized === 'FORKLIFTING') return 'Đang hạ container';
-    // Trạng thái mới cho Import: hiển thị ngay sau FORKLIFTING
-    if (normalized === 'IN_YARD') return 'Đã hạ thành công';
-    if (normalized === 'GATE_OUT') return 'Xe đã rời khỏi bãi';
-    if (normalized === 'REJECTED') return 'Đã hủy';
-    return status;
+    switch (normalized) {
+      case 'NEW_REQUEST':
+        return '🆕 Thêm mới';
+      case 'PENDING':
+        return '⏳ Chờ xử lý';
+      case 'SCHEDULED':
+        return '📅 Đã lên lịch';
+      case 'FORWARDED':
+        return '📤 Đã chuyển tiếp';
+      case 'CHECKED':
+        return '✅ Chấp nhận';
+      case 'GATE_IN':
+        return '🟢 Đã vào cổng';
+      case 'FORKLIFTING':
+        return '🟡 Đang hạ container';
+      case 'IN_YARD':
+        return '✅ Đã hạ thành công';
+      case 'GATE_OUT':
+        return '🟣 Xe đã rời khỏi bãi';
+      case 'REJECTED':
+        return '⛔ Đã hủy';
+      case 'COMPLETED':
+        return '✅ Hoàn tất';
+      default:
+        return status;
+    }
   };
 
   // Function để fetch import requests từ API
@@ -833,13 +850,17 @@ export default function NewSubmenu() {
                 onChange={(e) => setLocalStatus(e.target.value)}
               >
                 <option value="all">Tất cả trạng thái</option>
+                <option value="NEW_REQUEST">🆕 Thêm mới</option>
                 <option value="PENDING">⏳ Chờ xử lý</option>
+                <option value="SCHEDULED">📅 Đã lên lịch</option>
+                <option value="FORWARDED">📤 Đã chuyển tiếp</option>
                 <option value="CHECKED">✅ Chấp nhận</option>
                 <option value="GATE_IN">🟢 Đã vào cổng</option>
                 <option value="FORKLIFTING">🟡 Đang hạ container</option>
-                <option value="IN_YARD">🏗️ Đã hạ thành công</option>
+                <option value="IN_YARD">✅ Đã hạ thành công</option>
                 <option value="GATE_OUT">🟣 Xe đã rời khỏi bãi</option>
-                <option value="REJECTED">❌ Đã hủy</option>
+                <option value="REJECTED">⛔ Đã hủy</option>
+                <option value="COMPLETED">✅ Hoàn tất</option>
               </select>
             </div>
             <div className="action-group">

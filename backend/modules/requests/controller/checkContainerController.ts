@@ -14,7 +14,8 @@ export const checkContainerExists = async (req: Request, res: Response) => {
         }
 
         // Kiểm tra container có tồn tại trong hệ thống không
-        const existingContainer = await prisma.serviceRequest.findFirst({
+        // Tìm container IMPORT đang active (không phải COMPLETED, REJECTED, GATE_REJECTED)
+        const existingImportContainer = await prisma.serviceRequest.findFirst({
             where: {
                 container_no: container_no as string,
                 type: 'IMPORT',
@@ -32,17 +33,47 @@ export const checkContainerExists = async (req: Request, res: Response) => {
             }
         });
 
-        if (existingContainer) {
+        // Nếu có container IMPORT đang active
+        if (existingImportContainer) {
+            // Kiểm tra xem có container EXPORT nào đang active không
+            const existingExportContainer = await prisma.serviceRequest.findFirst({
+                where: {
+                    container_no: container_no as string,
+                    type: 'EXPORT',
+                    status: {
+                        notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    container_no: true,
+                    status: true,
+                    request_no: true,
+                    createdAt: true
+                }
+            });
+
+            // Nếu có cả IMPORT và EXPORT đang active, cho phép tạo request mới
+            if (existingExportContainer) {
+                return res.json({
+                    success: true,
+                    exists: false,
+                    message: `Container ${container_no} có cả IMPORT và EXPORT đang active - có thể tạo request mới`
+                });
+            }
+
+            // Chỉ có IMPORT active - không cho phép tạo request mới
             return res.json({
                 success: true,
                 exists: true,
                 data: {
-                    container_no: existingContainer.container_no,
-                    status: existingContainer.status,
-                    request_no: existingContainer.request_no,
-                    created_at: existingContainer.createdAt
+                    container_no: existingImportContainer.container_no,
+                    status: existingImportContainer.status,
+                    request_no: existingImportContainer.request_no,
+                    created_at: existingImportContainer.createdAt
                 },
-                message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingContainer.status}`
+                message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingImportContainer.status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống.`
             });
         }
 

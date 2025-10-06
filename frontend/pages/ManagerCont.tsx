@@ -528,7 +528,7 @@ export default function ManagerCont(){
                containerType: serviceRequestData?.container_type?.code || container.container_type?.code || '',
                status: 'EMPTY_IN_YARD',
                repairTicketStatus: repairTicketStatus,
-               customer: '', // Không tự động fill trường khách hàng
+                customer: '', // Không tự động fill trường khách hàng
                documents: '',
                documentsCount: 0,
                repairImagesCount: repairImagesCount,
@@ -1842,7 +1842,10 @@ export default function ManagerCont(){
                              
                              // Chỉ cập nhật nếu có giá trị mới
                              if (selectedCustomerId && selectedCustomerId !== '') {
-                               updatedItem.customer = customers.find(c => c.id === selectedCustomerId)?.name || item.customer;
+                               const customerName = customers.find(c => c.id === selectedCustomerId)?.name;
+                               if (customerName) {
+                                 updatedItem.customer = customerName;
+                               }
                              }
                              if (selectedShippingLineId && selectedShippingLineId !== '') {
                                updatedItem.shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId)?.name || item.shippingLine;
@@ -1866,9 +1869,8 @@ export default function ManagerCont(){
                          });
                         setAllData(updatedAllData);
                         
-                        // Refresh data từ server để đảm bảo đồng bộ
-                        console.log('🔄 Refreshing data from server...');
-                        await fetchImportRequests();
+                        // Không cần refresh data từ server vì đã cập nhật local state
+                        // await fetchImportRequests(); // Comment out để tránh ghi đè local state
                         
                         const updatedFields = [];
                         if (selectedCustomerId && selectedCustomerId !== '') updatedFields.push('khách hàng');

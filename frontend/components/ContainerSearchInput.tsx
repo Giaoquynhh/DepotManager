@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { containersApi } from '../services/containers';
+import { requestService } from '../services/requests';
 
 export interface ContainerSearchResult {
 	container_no: string;
@@ -58,6 +59,59 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 	const [searchQuery, setSearchQuery] = useState('');
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+
+	// Container validation states
+	const [isCheckingContainer, setIsCheckingContainer] = useState(false);
+	const [containerValidationError, setContainerValidationError] = useState<string>('');
+	const [containerValidationSuccess, setContainerValidationSuccess] = useState<string>('');
+	const containerCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	// Check if container number already exists
+	const checkContainerExists = React.useCallback(async (containerNo: string) => {
+		if (!containerNo.trim()) {
+			setContainerValidationError('');
+			setContainerValidationSuccess('');
+			return;
+		}
+
+		setIsCheckingContainer(true);
+		setContainerValidationError('');
+		setContainerValidationSuccess('');
+
+		try {
+			const response = await requestService.checkContainerExists(containerNo);
+			
+			if (response.data.success && response.data.exists) {
+				setContainerValidationError(response.data.message);
+				setContainerValidationSuccess('');
+			} else if (response.data.success && !response.data.exists) {
+				// Container có thể tạo request mới - hiển thị thông báo tích cực
+				setContainerValidationError('');
+				setContainerValidationSuccess(response.data.message || 'Container có thể tạo request mới');
+			} else {
+				setContainerValidationError('');
+				setContainerValidationSuccess('');
+			}
+		} catch (error: any) {
+			console.error('Error checking container:', error);
+			setContainerValidationError('Lỗi khi kiểm tra container. Vui lòng thử lại.');
+		} finally {
+			setIsCheckingContainer(false);
+		}
+	}, []);
+
+	// Debounced container check
+	const debouncedCheckContainer = React.useCallback((containerNo: string) => {
+		// Clear previous timeout
+		if (containerCheckTimeoutRef.current) {
+			clearTimeout(containerCheckTimeoutRef.current);
+		}
+		
+		// Set new timeout
+		containerCheckTimeoutRef.current = setTimeout(() => {
+			checkContainerExists(containerNo);
+		}, 1000); // 1000ms delay
+	}, [checkContainerExists]);
 
 	// Search containers based on shipping line and container type
 	const searchContainers = async (query: string = '') => {
@@ -128,6 +182,15 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 		onChange(newValue);
 		setSearchQuery(newValue);
 		setIsOpen(true);
+		
+		// Clear container validation error when user starts typing
+		if (containerValidationError || containerValidationSuccess) {
+			setContainerValidationError('');
+			setContainerValidationSuccess('');
+		}
+		
+		// Check container existence with debounce
+		debouncedCheckContainer(newValue);
 	};
 
 	const handleInputFocus = () => {
@@ -150,8 +213,24 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 		onSelect?.(null);
 	};
 
+	// Cleanup container check timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (containerCheckTimeoutRef.current) {
+				clearTimeout(containerCheckTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	return (
-		<div style={{ position: 'relative', width: '100%' }} ref={dropdownRef}>
+		<>
+			<style>{`
+				@keyframes spin {
+					0% { transform: rotate(0deg); }
+					100% { transform: rotate(360deg); }
+				}
+			`}</style>
+			<div style={{ position: 'relative', width: '100%' }} ref={dropdownRef}>
 			<input
 				ref={inputRef}
 				type="text"
@@ -209,33 +288,6 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 					maxHeight: '300px',
 					overflow: 'auto'
 				}}>
-					{/* Header */}
-					<div style={{
-						padding: '8px 12px',
-						borderBottom: '1px solid #e2e8f0',
-						background: '#f8fafc'
-					}}>
-						<span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-							{searchQuery.length > 0 ? `Tìm kiếm: "${searchQuery}"` : 'Danh sách container'}
-						</span>
-						<button
-							type="button"
-							onClick={(e) => {
-								e.stopPropagation();
-								setIsOpen(false);
-							}}
-							style={{
-								float: 'right',
-								background: 'none',
-								border: 'none',
-								color: '#6b7280',
-								cursor: 'pointer',
-								fontSize: '16px'
-							}}
-						>
-							×
-						</button>
-					</div>
 
 					{/* Content */}
 					{isSearching ? (
@@ -279,31 +331,59 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 								</div>
 							))}
 						</div>
-					) : searchQuery.length >= 2 ? (
-						<div style={{ padding: '12px 16px', color: '#64748b', textAlign: 'center' }}>
-							Không tìm thấy container nào phù hợp
-						</div>
-					) : (
-						<div style={{ padding: '12px 16px', color: '#64748b', textAlign: 'center' }}>
-							{!shippingLineId ? 'Vui lòng chọn hãng tàu' : 
-							 !containerTypeId ? 'Vui lòng chọn loại container' :
-							 'Không có container nào có thể nâng'}
-						</div>
-					)}
+					) : null}
 				</div>
 			)}
 
-			{/* Status messages */}
-			{!shippingLineId && (
-				<div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
-					⚠️ Vui lòng chọn hãng tàu để xem danh sách container
+			{/* Container validation warning */}
+			{isCheckingContainer && (
+				<div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+					<div style={{ width: '12px', height: '12px', border: '2px solid #f59e0b', borderTop: '2px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+					Đang kiểm tra container...
 				</div>
 			)}
-			{shippingLineId && !containerTypeId && (
-				<div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px' }}>
-					⚠️ Vui lòng chọn loại container để lọc danh sách
+			{containerValidationError && (
+				<div style={{ 
+					fontSize: '12px', 
+					color: '#ef4444', 
+					marginTop: '4px', 
+					padding: '8px 12px',
+					background: '#fef2f2',
+					border: '1px solid #fecaca',
+					borderRadius: '6px',
+					display: 'flex',
+					alignItems: 'flex-start',
+					gap: '6px'
+				}}>
+					<span style={{ fontSize: '14px', marginTop: '-1px' }}>⚠️</span>
+					<div>
+						<div style={{ fontWeight: '600', marginBottom: '2px' }}>Container đã tồn tại!</div>
+						<div style={{ fontSize: '11px', lineHeight: '1.4' }}>{containerValidationError}</div>
+					</div>
 				</div>
 			)}
+			{containerValidationSuccess && (
+				<div style={{ 
+					fontSize: '12px', 
+					color: '#059669', 
+					marginTop: '4px', 
+					padding: '8px 12px',
+					background: '#f0fdf4',
+					border: '1px solid #bbf7d0',
+					borderRadius: '6px',
+					display: 'flex',
+					alignItems: 'flex-start',
+					gap: '6px'
+				}}>
+					<span style={{ fontSize: '14px', marginTop: '-1px' }}>✅</span>
+					<div>
+						<div style={{ fontWeight: '600', marginBottom: '2px' }}>Container có thể tạo request!</div>
+						<div style={{ fontSize: '11px', lineHeight: '1.4' }}>{containerValidationSuccess}</div>
+					</div>
+				</div>
+			)}
+
+			{/* Status messages - Removed warnings to allow any container input */}
 			{shippingLineId && containerTypeId && searchResults.length > 0 && (
 				<div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
 					✅ Tìm thấy {searchResults.length} container có thể nâng (EMPTY_IN_YARD hoặc GATE_OUT-IMPORT)
@@ -315,5 +395,6 @@ export const ContainerSearchInput: React.FC<ContainerSearchInputProps> = ({
 				</div>
 			)}
 		</div>
+		</>
 	);
 };

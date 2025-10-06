@@ -738,17 +738,19 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                 </div>
                                             )}
                                             
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-primary" 
-                                                style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
-                                                onClick={() => handleUpdateClick(r.id)}
-                                                disabled={processingIds.has(r.id) || loading || r.status !== 'NEW_REQUEST'}
-                                                title={r.status !== 'NEW_REQUEST' ? 'Chỉ cho phép cập nhật khi trạng thái là Thêm mới' : 
-                                                       !r.containerNo ? 'Cần cập nhật số container trước khi xử lý' : undefined}
-                                            >
-                                                {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
-                                            </button>
+                                            {/* Chỉ hiển thị nút "Cập nhật thông tin" khi status là NEW_REQUEST */}
+                                            {r.status === 'NEW_REQUEST' && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn btn-primary" 
+                                                    style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
+                                                    onClick={() => handleUpdateClick(r.id)}
+                                                    disabled={processingIds.has(r.id) || loading}
+                                                    title={!r.containerNo ? 'Cần cập nhật số container trước khi xử lý' : undefined}
+                                                >
+                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
+                                                </button>
+                                            )}
                     {(r.status === 'DONE_LIFTING') && r.paymentStatus !== 'Đã thanh toán' && (
                         <button
                             type="button"

@@ -63,7 +63,8 @@ export const createRequest = async (req: Request, res: Response) => {
 
         // Validation: Kiểm tra container number trùng lặp cho IMPORT requests
         if (type === 'IMPORT' && container_no) {
-            const existingContainer = await prisma.serviceRequest.findFirst({
+            // Tìm container IMPORT đang active
+            const activeImportRequest = await prisma.serviceRequest.findFirst({
                 where: {
                     container_no: container_no,
                     type: 'IMPORT',
@@ -74,11 +75,31 @@ export const createRequest = async (req: Request, res: Response) => {
                 orderBy: { createdAt: 'desc' }
             });
 
-            if (existingContainer) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingContainer.status}. Chỉ có thể tạo request mới khi container không còn trong hệ thống.` 
+            // Nếu có container IMPORT đang active
+            if (activeImportRequest) {
+                // Kiểm tra xem có container EXPORT nào đang active không
+                const activeExportRequest = await prisma.serviceRequest.findFirst({
+                    where: {
+                        container_no: container_no,
+                        type: 'EXPORT',
+                        status: {
+                            notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
                 });
+
+                // Nếu có cả IMPORT và EXPORT đang active, cho phép tạo request mới
+                if (activeExportRequest) {
+                    // Allow creation, do nothing here, proceed to create new request
+                    console.log(`✅ Container ${container_no} has both IMPORT and EXPORT active - allowing new request creation`);
+                } else {
+                    // Chỉ có IMPORT active - không cho phép tạo request mới
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${activeImportRequest.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc có cả IMPORT và EXPORT đang active.` 
+                    });
+                }
             }
         }
 
