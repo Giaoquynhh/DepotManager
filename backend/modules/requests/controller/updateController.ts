@@ -12,6 +12,7 @@ export const updateRequest = async (req: Request, res: Response) => {
             shipping_line_id,
             container_type_id,
             customer_id,
+            lower_customer_id,
             vehicle_company_id,
             license_plate,
             driver_name,
@@ -56,6 +57,13 @@ export const updateRequest = async (req: Request, res: Response) => {
             }
         }
 
+        if (lower_customer_id && lower_customer_id !== 'null') {
+            const lowerCustomer = await prisma.customer.findUnique({ where: { id: lower_customer_id } });
+            if (!lowerCustomer) {
+                return res.status(400).json({ success: false, message: 'Lower customer not found' });
+            }
+        }
+
         if (vehicle_company_id) {
             const vehicleCompany = await prisma.transportCompany.findUnique({ where: { id: vehicle_company_id } });
             if (!vehicleCompany) {
@@ -71,6 +79,7 @@ export const updateRequest = async (req: Request, res: Response) => {
                 shipping_line_id: shipping_line_id || existingRequest.shipping_line_id,
                 container_type_id: container_type_id || existingRequest.container_type_id,
                 customer_id: customer_id || existingRequest.customer_id,
+                lower_customer_id: lower_customer_id || existingRequest.lower_customer_id,
                 vehicle_company_id: vehicle_company_id || existingRequest.vehicle_company_id,
                 eta: eta ? new Date(eta) : existingRequest.eta,
                 appointment_time: appointment_time ? new Date(appointment_time) : existingRequest.appointment_time,

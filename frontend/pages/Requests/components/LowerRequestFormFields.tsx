@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EditLowerRequestData } from './EditLowerRequestModal.types';
-import type { ShippingLine, TransportCompany, ContainerType, Customer } from '../../../services/setupService';
+import type { Customer } from '../../../services/setupService';
 import DateTimeInput from '../../../components/DateTimeInput';
 
 interface LowerRequestFormFieldsProps {
@@ -128,12 +128,16 @@ export const LowerRequestFormFields: React.FC<LowerRequestFormFieldsProps> = ({
 							padding: '12px',
 							border: '1px solid #d1d5db',
 							borderRadius: '8px',
-							fontSize: '14px'
+							fontSize: '14px',
+							maxHeight: '200px',
+							overflowY: 'auto'
 						}}
 					>
 						<option value="">Chọn khách hàng</option>
 						{Array.isArray(customers) && customers.map(customer => (
-							<option key={customer.id} value={customer.name}>{customer.name}</option>
+							<option key={customer.id} value={customer.id}>
+								{customer.code} - {customer.name}
+							</option>
 						))}
 					</select>
 				</div>

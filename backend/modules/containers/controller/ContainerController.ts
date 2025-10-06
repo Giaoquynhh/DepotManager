@@ -508,16 +508,19 @@ class ContainerController {
         customer = updatedRequest.customer;
         
         // BỔ SUNG: Cập nhật tất cả ServiceRequest của container này để đảm bảo tính nhất quán
-        if (seal_number !== undefined || dem_det !== undefined) {
+        if (customer_id || shipping_line_id || container_type_id || seal_number !== undefined || dem_det !== undefined) {
           await prisma.serviceRequest.updateMany({
             where: { container_no },
             data: {
+              ...(customer_id && { customer_id }),
+              ...(shipping_line_id && { shipping_line_id }),
+              ...(container_type_id && { container_type_id }),
               ...(seal_number !== undefined && { seal_number }),
               ...(dem_det !== undefined && { dem_det }),
               updatedAt: new Date()
             }
           });
-          console.log(`✅ Đã cập nhật seal_number và dem_det cho tất cả ServiceRequest của container ${container_no}`);
+          console.log(`✅ Đã cập nhật customer_id, shipping_line_id, container_type_id, seal_number và dem_det cho tất cả ServiceRequest của container ${container_no}`);
         }
       } else {
         // Container không có ServiceRequest - chỉ cập nhật Container model

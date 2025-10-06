@@ -23,6 +23,7 @@ export const getRequests = async (req: any, res: any) => {
                 shipping_line: { select: { name: true } },
                 container_type: { select: { code: true } },
                 customer: { select: { name: true } },
+                lower_customer: { select: { id: true, name: true } },
                 vehicle_company: { select: { name: true } },
                 attachments: {
                     where: { deleted_at: null },

@@ -528,7 +528,7 @@ export default function ManagerCont(){
                containerType: serviceRequestData?.container_type?.code || container.container_type?.code || '',
                status: 'EMPTY_IN_YARD',
                repairTicketStatus: repairTicketStatus,
-                customer: '', // Không tự động fill trường khách hàng
+                customer: serviceRequestData?.customer?.name || container.customer?.name || '', // Hiển thị customer cho cả IMPORT và EXPORT
                documents: '',
                documentsCount: 0,
                repairImagesCount: repairImagesCount,
@@ -557,7 +557,8 @@ export default function ManagerCont(){
           console.log(`📋 Request details:`, {
             type: request.type,
             status: request.status,
-            container_no: request.container_no
+            container_no: request.container_no,
+            customer: request.customer
           });
           
           try {
@@ -729,7 +730,7 @@ export default function ManagerCont(){
             containerNumber: request.container_no || '',
             containerType: request.container_type?.code || '',
             status: request.status === 'DONE_LIFTING' ? 'GATE_OUT' : (request.status || ''),
-            customer: '', // Không tự động fill trường khách hàng
+            customer: request.customer?.name || '', // Hiển thị customer cho cả IMPORT và EXPORT
             documents: documentsList.map((att: any) => att.file_name).join(', '),
             documentsCount,
             repairImagesCount,
@@ -756,7 +757,8 @@ export default function ManagerCont(){
             status: result.status,
             repairTicketStatus: result.repairTicketStatus,
             containerQuality: result.containerQuality,
-            repairTicketId: result.repairTicketId
+            repairTicketId: result.repairTicketId,
+            customer: result.customer
           });
           
           // Debug: Kiểm tra kết quả cuối cùng
@@ -777,7 +779,7 @@ export default function ManagerCont(){
               containerNumber: request.container_no || '',
               containerType: request.container_type?.code || '',
               status: request.status || '',
-              customer: '', // Không tự động fill trường khách hàng
+              customer: request.customer?.name || '', // Hiển thị customer cho cả IMPORT và EXPORT
               documents: '',
               documentsCount: 0,
               repairImagesCount: 0,
@@ -1777,6 +1779,7 @@ export default function ManagerCont(){
                         console.log('  selectedStatus:', selectedStatus, 'vs selectedRow.containerQuality:', selectedRow.containerQuality);
                         console.log('  selectedSealNumber:', selectedSealNumber, 'vs selectedRow.sealNumber:', selectedRow.sealNumber);
                         console.log('  selectedDemDet:', selectedDemDet, 'vs selectedRow.demDet:', selectedRow.demDet);
+                        console.log('  Container Number:', selectedRow.containerNumber);
                         
                         // Luôn cập nhật nếu có giá trị được chọn (không cần so sánh)
                         if (selectedCustomerId && selectedCustomerId !== '') {
@@ -1801,8 +1804,28 @@ export default function ManagerCont(){
                         
                         console.log('📤 Update data to send:', updateData);
                         
+                        // Kiểm tra có dữ liệu để cập nhật không
+                        if (Object.keys(updateData).length === 0) {
+                          console.log('⚠️ No data to update, skipping API call');
+                          showSuccess('Không có thông tin nào để cập nhật!', undefined, 2000);
+                          return;
+                        }
+                        
+                        console.log('🚀 Calling containersApi.update with:', {
+                          containerNumber: selectedRow.containerNumber,
+                          updateData: updateData
+                        });
+                        
                         const response = await containersApi.update(selectedRow.containerNumber, updateData);
                         console.log('✅ API response:', response);
+                        
+                        // Kiểm tra response có thành công không
+                        if (!response || !response.success) {
+                          console.error('❌ API call failed:', response);
+                          throw new Error(`API call failed: ${response?.message || 'Unknown error'}`);
+                        }
+                        
+                        console.log('✅ API call successful, response data:', response.data);
 
                         // Cập nhật số lượng đã xuất seal nếu có nhập số seal mới và có hãng tàu
                         if (selectedSealNumber && selectedSealNumber !== selectedRow.sealNumber && selectedSealNumber.trim() !== '') {

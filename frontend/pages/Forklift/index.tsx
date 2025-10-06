@@ -552,51 +552,55 @@ export default function Forklift({ typeFilter }: { typeFilter?: 'IMPORT' | 'EXPO
                               {t('pages.forklift.actions.inProgress')}
                             </div>
                           ) : (
-                            <div className="action-buttons">
-                              
+                            <>
                               {task.status === 'ASSIGNED' && (
-                                <div className="action-info">
-                                  {t('pages.forklift.actions.driverAssigned')}
+                                <div className="action-buttons">
+                                  <div className="action-info">
+                                    {t('pages.forklift.actions.driverAssigned')}
+                                  </div>
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => handleBeginWork(task.id)}
+                                  >
+                                    {t('pages.forklift.actions.startWork')}
+                                  </button>
                                 </div>
                               )}
                               
-                              {task.status === 'ASSIGNED' && (
-                                <button
-                                  className="btn btn-sm btn-primary"
-                                  onClick={() => handleBeginWork(task.id)}
-                                >
-                                  {t('pages.forklift.actions.startWork')}
-                                </button>
-                              )}
-                              
                               {task.status === 'PENDING_APPROVAL' && (
-                                <button
-                                  className="btn btn-sm btn-success"
-                                  onClick={() => handleApproveJob(task.id)}
-                                  title={t('pages.forklift.actions.approveTitle')}
-                                >
-                                  {t('pages.forklift.actions.approve')}
-                                </button>
+                                <div className="action-buttons">
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleApproveJob(task.id)}
+                                    title={t('pages.forklift.actions.approveTitle')}
+                                  >
+                                    {t('pages.forklift.actions.approve')}
+                                  </button>
+                                </div>
                               )}
                               
                               {task.status === 'PENDING' && !task.assigned_driver_id && (
-                                <button
-                                  className="btn btn-sm btn-info"
-                                  onClick={() => handleAssignDriver(task)}
-                                >
-                                  {t('pages.forklift.actions.assignDriver')}
-                                </button>
+                                <div className="action-buttons">
+                                  <button
+                                    className="btn btn-sm btn-info"
+                                    onClick={() => handleAssignDriver(task)}
+                                  >
+                                    {t('pages.forklift.actions.assignDriver')}
+                                  </button>
+                                </div>
                               )}
                               
                               {task.status === 'PENDING' && task.assigned_driver_id && (
-                                <button
-                                  className="btn btn-sm btn-warning"
-                                  onClick={() => handleAssignDriver(task)}
-                                >
-                                  {t('pages.forklift.actions.reassignDriver')}
-                                </button>
+                                <div className="action-buttons">
+                                  <button
+                                    className="btn btn-sm btn-warning"
+                                    onClick={() => handleAssignDriver(task)}
+                                  >
+                                    {t('pages.forklift.actions.reassignDriver')}
+                                  </button>
+                                </div>
                               )}
-                            </div>
+                            </>
                           )}
                         </td>
                       </tr>

@@ -57,7 +57,9 @@ model Customer {
   phone           String?
   serviceRequests ServiceRequest[]
   containers      Container[]
+  lowerServiceRequests ServiceRequest[] @relation("LowerCustomerRequests")
 }
+
 
 model Partner {
   id            String   @id @default(cuid())
@@ -120,6 +122,7 @@ model ServiceRequest {
   time_out                  DateTime?
   container_type_id         String?
   customer_id               String?
+  lower_customer_id         String?
   request_no                String?
   shipping_line_id          String?
   vehicle_company_id        String?
@@ -139,6 +142,7 @@ model ServiceRequest {
   attachments               RequestAttachment[]
   container_type            ContainerType?      @relation(fields: [container_type_id], references: [id])
   customer                  Customer?           @relation(fields: [customer_id], references: [id])
+  lower_customer            Customer?           @relation("LowerCustomerRequests", fields: [lower_customer_id], references: [id])
   shipping_line             ShippingLine?       @relation(fields: [shipping_line_id], references: [id])
   vehicle_company           TransportCompany?   @relation(fields: [vehicle_company_id], references: [id])
 
@@ -148,6 +152,7 @@ model ServiceRequest {
   @@index([appointment_time])
   @@index([has_invoice])
   @@index([is_paid])
+  @@index([lower_customer_id])
 }
 
 model DocumentFile {

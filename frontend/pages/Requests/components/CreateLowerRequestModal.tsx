@@ -90,25 +90,30 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	useEffect(() => {
 		(async () => {
 			try {
+				console.log('🔍 Loading data for CreateLowerRequestModal...');
+				console.log('🔑 Token from localStorage:', localStorage.getItem('token'));
+				
 				const [slRes, tcRes, ctRes, custRes] = await Promise.all([
 					setupService.getShippingLines({ page: 1, limit: 100 }),
 					setupService.getTransportCompanies({ page: 1, limit: 100 }),
 					setupService.getContainerTypes({ page: 1, limit: 100 }),
-					setupService.getCustomers()
+					setupService.getCustomers({ page: 1, limit: 1000 })
 				]);
+				
+				console.log('📊 All API responses:', { slRes, tcRes, ctRes, custRes });
+				
 				if (slRes.success && slRes.data) setShippingLines(slRes.data.data);
 				if (tcRes.success && tcRes.data) setTransportCompanies(tcRes.data.data);
 				if (ctRes.success && ctRes.data) setContainerTypes(ctRes.data.data);
-				console.log('Customer API response:', custRes);
 				if (custRes.success && custRes.data) {
-					console.log('Customers loaded:', custRes.data);
-					console.log('Customers data:', custRes.data.data);
+					console.log('✅ Customers loaded:', custRes.data.data);
 					setCustomers(custRes.data.data || []);
 				} else {
-					console.log('Failed to load customers:', custRes);
-					console.log('Error details:', custRes.message || custRes.error);
+					console.log('❌ Failed to load customers:', custRes);
 				}
-			} catch (_) {}
+			} catch (error) {
+				console.error('💥 Error loading data:', error);
+			}
 		})();
 	}, []);
 
@@ -289,7 +294,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
                 eta: formData.appointmentTime,
                 shipping_line_id: formData.shippingLine || undefined,
                 container_type_id: formData.containerType || undefined,
-                customer_id: formData.customer || undefined,
+                lower_customer_id: formData.customer || undefined,
                 vehicle_company_id: formData.vehicleCompany || undefined,
                 license_plate: formData.vehicleNumber,
                 driver_name: formData.driver,
@@ -299,9 +304,8 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
                 files: formData.documents || []
             };
 
-				// Debug logging
-				console.log('Creating export request with data:', requestData);
-				console.log('Token from localStorage:', localStorage.getItem('token'));
+            console.log('Creating export request with data:', requestData);
+            console.log('Token from localStorage:', localStorage.getItem('token'));
 
 				// Call API to create request with files
 				const response = await requestService.createRequest(requestData);
@@ -1142,7 +1146,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 								Thời gian hẹn
 							</label>
 							<DateTimeInput
-								value={formData.appointmentTime}
+								value={formData.appointmentTime || ''}
 								onChange={(value) => handleInputChange('appointmentTime', value)}
 								placeholder="dd/mm/yyyy hh:mm"
 								style={formInputStyle}

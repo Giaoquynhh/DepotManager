@@ -9,6 +9,7 @@ export interface CreateRequestData {
   shipping_line_id?: string;
   container_type_id?: string;
   customer_id?: string;
+  lower_customer_id?: string;
   vehicle_company_id?: string;
   license_plate?: string;
   driver_name?: string;
@@ -45,6 +46,7 @@ export const requestService = {
     if (data.shipping_line_id) formData.append('shipping_line_id', data.shipping_line_id);
     if (data.container_type_id) formData.append('container_type_id', data.container_type_id);
     if (data.customer_id) formData.append('customer_id', data.customer_id);
+    if (data.lower_customer_id) formData.append('lower_customer_id', data.lower_customer_id);
     if (data.vehicle_company_id) formData.append('vehicle_company_id', data.vehicle_company_id);
     if (data.license_plate) formData.append('license_plate', data.license_plate);
     if (data.driver_name) formData.append('driver_name', data.driver_name);

@@ -15,6 +15,7 @@ export const getRequest = async (req: Request, res: Response) => {
                 shipping_line: { select: { id: true, name: true } },
                 container_type: { select: { id: true, code: true } },
                 customer: { select: { id: true, name: true } },
+                lower_customer: { select: { id: true, name: true } },
                 vehicle_company: { select: { id: true, name: true } },
                 attachments: {
                     select: {

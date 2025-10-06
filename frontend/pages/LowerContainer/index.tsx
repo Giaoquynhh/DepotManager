@@ -327,7 +327,7 @@ export default function NewSubmenu() {
           
           // Hiển thị thông báo thành công
           showSuccess(
-            '✅ Yêu cầu đã được cập nhật thành công!',
+            'Yêu cầu đã được cập nhật thành công!',
             `Thông tin yêu cầu và chứng từ đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
           );
         } catch (uploadError: any) {
@@ -340,7 +340,7 @@ export default function NewSubmenu() {
       } else {
         // Hiển thị thông báo thành công
         showSuccess(
-          '✅ Yêu cầu đã được cập nhật thành công!',
+          'Yêu cầu đã được cập nhật thành công!',
           `Thông tin yêu cầu đã được cập nhật\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`
         );
       }
@@ -569,7 +569,6 @@ export default function NewSubmenu() {
       }
 
       const response = await requestService.getRequests('IMPORT');
-      console.log('API Response:', response.data);
       
       if (response.data.success) {
         // Transform data từ API thành format của table
@@ -601,6 +600,7 @@ export default function NewSubmenu() {
             totalAmount = (Number.isFinite(lowerTotalLocal) ? lowerTotalLocal : 0) + repairCost;
           }
 
+
           return {
             id: request.id,
             shippingLine: request.shipping_line?.name || '',
@@ -609,7 +609,7 @@ export default function NewSubmenu() {
             containerType: request.container_type?.code || '',
             serviceType: 'Hạ cont', // Mặc định cho import request
             status: request.status || '',
-            customer: request.customer?.name || '',
+            customer: request.lower_customer?.name || '',
             truckCompany: request.vehicle_company?.name || '',
             truckNumber: request.license_plate || '',
             driverName: request.driver_name || '',

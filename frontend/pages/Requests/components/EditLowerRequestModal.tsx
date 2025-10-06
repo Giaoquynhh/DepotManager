@@ -63,8 +63,15 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 				requestData,
 				shippingLine: requestData.shipping_line?.name,
 				containerType: requestData.container_type?.code,
-				customer: requestData.customer?.name,
-				vehicleCompany: requestData.vehicle_company?.name
+				customer: requestData.lower_customer?.name,
+				vehicleCompany: requestData.vehicle_company?.name,
+				lower_customer: requestData.lower_customer,
+				lower_customer_id: requestData.lower_customer?.id
+			});
+			
+			console.log('🔍 Debugging formData.customer initialization:', {
+				requestData_lower_customer: requestData.lower_customer,
+				requestData_lower_customer_id: requestData.lower_customer?.id
 			});
 			
 			setFormData({
@@ -73,7 +80,7 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 				containerNumber: requestData.container_no || '',
 				containerType: requestData.container_type?.code || '',
 				serviceType: 'Hạ container',
-				customer: requestData.customer?.name || '',
+				customer: requestData.lower_customer?.id || requestData.customer?.id || '',
 				vehicleCompany: requestData.vehicle_company?.name || '',
 				vehicleNumber: requestData.license_plate || '',
 				driver: requestData.driver_name || '',
@@ -103,10 +110,7 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 					console.error('Error loading container types:', err);
 					return { data: { data: [] } };
 				}),
-				setupService.getCustomers().catch(err => {
-					console.error('Error loading customers:', err);
-					return { data: { data: [] } };
-				})
+					setupService.getCustomers({ limit: 1000 })
 			]);
 
 			console.log('Raw API responses:', {
@@ -175,7 +179,8 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 			// Find IDs for selected options
 			const shippingLineId = Array.isArray(shippingLines) ? shippingLines.find(sl => sl.name === formData.shippingLine)?.id : undefined;
 			const containerTypeId = Array.isArray(containerTypes) ? containerTypes.find(ct => ct.code === formData.containerType)?.id : undefined;
-			const customerId = Array.isArray(customers) ? customers.find(c => c.name === formData.customer)?.id : undefined;
+			
+			const customerId = Array.isArray(customers) ? customers.find(c => c.id === formData.customer)?.id : undefined;
 			const vehicleCompanyId = Array.isArray(transportCompanies) ? transportCompanies.find(tc => tc.name === formData.vehicleCompany)?.id : undefined;
 
 			const updateData = {
@@ -184,7 +189,7 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 				container_no: formData.containerNumber,
 				shipping_line_id: shippingLineId,
 				container_type_id: containerTypeId,
-				customer_id: customerId,
+				lower_customer_id: customerId,
 				vehicle_company_id: vehicleCompanyId,
 				license_plate: formData.vehicleNumber,
 				driver_name: formData.driver,
@@ -242,14 +247,19 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 						</div>
 					) : (
 						<div style={{ display: 'grid', gap: '24px' }}>
-							<LowerRequestFormFields
-								formData={formData}
-								handleInputChange={handleInputChange}
-								shippingLines={shippingLines as ShippingLine[]}
-								transportCompanies={transportCompanies as TransportCompany[]}
-								containerTypes={containerTypes as ContainerType[]}
-								customers={customers as Customer[]}
-							/>
+						{console.log('🔍 EditLowerRequestModal rendering LowerRequestFormFields with:', {
+							formData_customer: formData.customer,
+							customers_length: Array.isArray(customers) ? customers.length : 'not array',
+							first_customer_id: Array.isArray(customers) && customers.length > 0 ? customers[0].id : 'N/A'
+						})}
+						<LowerRequestFormFields
+							formData={formData}
+							handleInputChange={handleInputChange}
+							shippingLines={shippingLines as ShippingLine[]}
+							transportCompanies={transportCompanies as TransportCompany[]}
+							containerTypes={containerTypes as ContainerType[]}
+							customers={customers as Customer[]}
+						/>
 
 							<DocumentsUploader
 								formData={formData}

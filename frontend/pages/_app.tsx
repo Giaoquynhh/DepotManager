@@ -55,6 +55,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 		<>
 			<Head>
 				<title>Smartlog Depot Management</title>
+				<link rel="icon" href="/sml_logo.png" />
 				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 			</Head>
 						{/* <Toaster position="top-right" richColors /> */} {/* Đã xóa để tránh thông báo trùng lặp */}
