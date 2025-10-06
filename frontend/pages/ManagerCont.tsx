@@ -1364,7 +1364,7 @@ export default function ManagerCont(){
                               <small className="muted">{row.blockCode || ''} / {row.slotCode || ''}</small>
                             </div>
                           </td>
-                          <td>{row.sealNumber || ''}</td>
+                          <td>{row.sealNumber || 'Không có'}</td>
                           <td>{row.customer || ''}</td>
                           <td>{row.demDet || ''}</td>
                           <td>
@@ -1699,46 +1699,31 @@ export default function ManagerCont(){
                        type="text"
                        value={selectedSealNumber}
                        onChange={(e) => {
-                         // Chỉ cho phép nhập số nguyên không âm
-                         const value = e.target.value.replace(/[^0-9]/g, '');
-                         setSelectedSealNumber(value);
+                         // Cho phép nhập text tự do, không giới hạn chỉ số
+                         setSelectedSealNumber(e.target.value);
                        }}
-                       disabled={(!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')}
+                       disabled={false}
                        style={{ 
                          width: '100%', 
                          padding: '8px 12px', 
                          border: '1px solid #d1d5db', 
                          borderRadius: 6,
-                         backgroundColor: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? '#f9fafb' : 'white',
-                         color: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? '#9ca3af' : '#374151',
-                         cursor: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'not-allowed' : 'text'
+                         backgroundColor: 'white',
+                         color: '#374151',
+                         cursor: 'text'
                        }}
-                       placeholder={((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'Cần chọn hãng tàu trước' : 'Nhập số seal (chỉ số nguyên)'}
+                       placeholder="Nhập số seal (có thể là text hoặc số)"
                      />
-                     {((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? (
-                       <div style={{ 
-                         fontSize: 12, 
-                         color: '#ef4444', 
-                         marginTop: 4,
-                         display: 'flex',
-                         alignItems: 'center',
-                         gap: '4px',
-                         fontWeight: '500'
-                       }}>
-                         🔒 Cần chọn hãng tàu trước để mở khóa trường số seal
-                       </div>
-                     ) : (
-                       <div style={{ 
-                         fontSize: 12, 
-                         color: '#f59e0b', 
-                         marginTop: 4,
-                         display: 'flex',
-                         alignItems: 'center',
-                         gap: '4px'
-                       }}>
-                         ⚠️ Cần có số booking từ Yêu cầu nâng để cập nhật số seal
-                       </div>
-                     )}
+                     <div style={{ 
+                       fontSize: 12, 
+                       color: '#6b7280', 
+                       marginTop: 4,
+                       display: 'flex',
+                       alignItems: 'center',
+                       gap: '4px'
+                     }}>
+                       💡 Có thể nhập số seal dạng text hoặc số (không bắt buộc)
+                     </div>
                    </div>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>DEM/DET (dd/mm/yyyy)</label>
@@ -1807,12 +1792,7 @@ export default function ManagerCont(){
                           updateData.container_quality = selectedStatus;
                         }
                         if (selectedSealNumber && selectedSealNumber.trim() !== '') {
-                          // Kiểm tra nếu có seal number nhưng chưa có hãng tàu (cả mới chọn và hiện tại)
-                          const hasShippingLine = (selectedShippingLineId && selectedShippingLineId !== '') || (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '');
-                          if (!hasShippingLine) {
-                            showError('Cần cập nhật hãng tàu trước khi nhập số seal!', undefined, 3000);
-                            return;
-                          }
+                          // Cho phép cập nhật seal number mà không cần bắt buộc có hãng tàu
                           updateData.seal_number = selectedSealNumber;
                         }
                         if (selectedDemDet && selectedDemDet.trim() !== '') {
@@ -1824,7 +1804,7 @@ export default function ManagerCont(){
                         const response = await containersApi.update(selectedRow.containerNumber, updateData);
                         console.log('✅ API response:', response);
 
-                        // Cập nhật số lượng đã xuất seal nếu có nhập số seal mới
+                        // Cập nhật số lượng đã xuất seal nếu có nhập số seal mới và có hãng tàu
                         if (selectedSealNumber && selectedSealNumber !== selectedRow.sealNumber && selectedSealNumber.trim() !== '') {
                           try {
                             // Lấy tên hãng tàu từ selectedShippingLineId hoặc từ selectedRow
@@ -1845,6 +1825,8 @@ export default function ManagerCont(){
                                 selectedRow.id // Sử dụng request ID để lấy booking từ ServiceRequest
                               );
                               console.log('✅ Seal exported quantity updated successfully');
+                            } else {
+                              console.log('ℹ️ Seal number updated but no shipping company found - skipping seal quantity update');
                             }
                           } catch (sealError: any) {
                             console.error('❌ Error updating seal exported quantity:', sealError);

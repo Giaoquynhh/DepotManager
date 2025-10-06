@@ -82,6 +82,37 @@ export const createRequest = async (req: Request, res: Response) => {
             }
         }
 
+        // BỔ SUNG: Tìm seal_number hiện có của container trước khi tạo request mới
+        let existingSealNumber = null;
+        if (container_no) {
+            try {
+                // Tìm ServiceRequest mới nhất của container này để lấy seal_number
+                const latestRequest = await prisma.serviceRequest.findFirst({
+                    where: { container_no },
+                    orderBy: { createdAt: 'desc' },
+                    select: { seal_number: true }
+                });
+                
+                if (latestRequest?.seal_number) {
+                    existingSealNumber = latestRequest.seal_number;
+                    console.log(`🔍 Found existing seal_number for container ${container_no}: ${existingSealNumber}`);
+                } else {
+                    // Fallback: tìm trong Container table
+                    const container = await prisma.container.findUnique({
+                        where: { container_no },
+                        select: { seal_number: true }
+                    });
+                    
+                    if (container?.seal_number) {
+                        existingSealNumber = container.seal_number;
+                        console.log(`🔍 Found existing seal_number in Container table for ${container_no}: ${existingSealNumber}`);
+                    }
+                }
+            } catch (error) {
+                console.log(`⚠️ Error finding existing seal_number for container ${container_no}:`, error);
+            }
+        }
+
         const request = await prisma.serviceRequest.create({
             data: {
                 created_by: createdBy,
@@ -106,7 +137,8 @@ export const createRequest = async (req: Request, res: Response) => {
                 has_invoice: false,
                 is_paid: false,
                 is_pick: false,
-                seal_number: seal_number || null,
+                // BỔ SUNG: Ưu tiên seal_number từ request mới, nếu không có thì dùng seal_number hiện có
+                seal_number: seal_number || existingSealNumber || null,
                 dem_det: dem_det || null
             }
         });

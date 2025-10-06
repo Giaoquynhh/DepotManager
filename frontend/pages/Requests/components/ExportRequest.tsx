@@ -178,7 +178,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                         timeOut: request.time_out ? new Date(request.time_out).toLocaleString('vi-VN') : '',
                         totalAmount: Number.isFinite(liftTotalLocal) ? liftTotalLocal : 0,
                         paymentStatus: request.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán',
-                        documentsCount: request.attachments_count || 0,
+                        documentsCount: request.attachments?.length || 0,
                         notes: request.appointment_note || '',
                         reuseStatus: request.reuse_status || false
                     };
