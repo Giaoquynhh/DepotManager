@@ -322,6 +322,9 @@ export class GateService {
 
     const where: any = { depot_deleted_at: null, customer_deleted_at: null };
 
+    // Thêm validation: chỉ hiển thị requests có container_no
+    where.container_no = { not: null };
+
     // Xử lý status filter
     if (status) {
       // Nếu có status cụ thể, sử dụng nó
@@ -336,7 +339,11 @@ export class GateService {
     }
 
     if (container_no && container_no.trim()) {
-      where.container_no = { contains: container_no.trim(), mode: 'insensitive' };
+      where.container_no = { 
+        not: null,
+        contains: container_no.trim(), 
+        mode: 'insensitive' 
+      };
     }
 
     if (license_plate && license_plate.trim()) {

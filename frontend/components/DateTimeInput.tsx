@@ -23,8 +23,7 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
 }) => {
   const [dateValue, setDateValue] = useState('');
   const [timeValue, setTimeValue] = useState('');
-  const [displayValue, setDisplayValue] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
+  const [displayDateValue, setDisplayDateValue] = useState('');
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   // Convert ISO datetime string to separate date and time values
@@ -39,19 +38,21 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
           const hours = String(date.getHours()).padStart(2, '0');
           const minutes = String(date.getMinutes()).padStart(2, '0');
           
+          // Format date as YYYY-MM-DD for HTML input[type="date"]
           setDateValue(`${year}-${month}-${day}`);
           setTimeValue(`${hours}:${minutes}`);
-          setDisplayValue(`${day}/${month}/${year} ${hours}:${minutes}`);
+          // Format display date as DD/MM/YYYY for Vietnamese format
+          setDisplayDateValue(`${day}/${month}/${year}`);
         }
       } catch (error) {
         setDateValue('');
         setTimeValue('');
-        setDisplayValue('');
+        setDisplayDateValue('');
       }
     } else {
       setDateValue('');
       setTimeValue('');
-      setDisplayValue('');
+      setDisplayDateValue('');
     }
   }, [value]);
 
@@ -59,23 +60,22 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
     const newDate = e.target.value;
     setDateValue(newDate);
     
+    // Update display date format (DD/MM/YYYY)
+    if (newDate) {
+      const [year, month, day] = newDate.split('-');
+      setDisplayDateValue(`${day}/${month}/${year}`);
+    } else {
+      setDisplayDateValue('');
+    }
+    
     if (newDate && timeValue) {
       const isoValue = `${newDate}T${timeValue}`;
       onChange(isoValue);
-      
-      // Update display value
-      const [year, month, day] = newDate.split('-');
-      setDisplayValue(`${day}/${month}/${year} ${timeValue}`);
     } else if (newDate) {
       const isoValue = `${newDate}T00:00`;
       onChange(isoValue);
-      
-      // Update display value
-      const [year, month, day] = newDate.split('-');
-      setDisplayValue(`${day}/${month}/${year} 00:00`);
     } else {
       onChange('');
-      setDisplayValue('');
     }
   };
 
@@ -86,76 +86,156 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
     if (dateValue && newTime) {
       const isoValue = `${dateValue}T${newTime}`;
       onChange(isoValue);
-      
-      // Update display value
-      const [year, month, day] = dateValue.split('-');
-      setDisplayValue(`${day}/${month}/${year} ${newTime}`);
     } else if (dateValue) {
       const isoValue = `${dateValue}T00:00`;
       onChange(isoValue);
-      
-      // Update display value
-      const [year, month, day] = dateValue.split('-');
-      setDisplayValue(`${day}/${month}/${year} 00:00`);
     } else {
       onChange('');
-      setDisplayValue('');
     }
   };
 
-  const handleDisplayClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker();
-    }
-  };
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Hidden date input for calendar functionality */}
-      <input
-        ref={dateInputRef}
-        type="date"
-        value={dateValue}
-        onChange={handleDateChange}
-        style={{
-          position: 'absolute',
-          opacity: 0,
-          pointerEvents: 'none',
-          width: 0,
-          height: 0
-        }}
-        disabled={disabled}
-        min={min}
-        max={max}
-      />
-      
-      {/* Display input that shows Vietnamese format */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      {/* Date input - separate field */}
+      <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            value={displayDateValue}
+            readOnly
+            style={{
+              ...style,
+              width: '100%',
+              padding: '12px 40px 12px 16px',
+              border: '2px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#374151',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              background: 'white'
+            }}
+            className={className}
+            disabled={disabled}
+            placeholder="dd/mm/yyyy"
+          />
+          {/* Calendar icon */}
+          <div 
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              color: '#64748b',
+              transition: 'color 0.2s ease',
+              padding: '4px',
+              borderRadius: '4px'
+            }}
+            onMouseEnter={(e) => {
+              if (!disabled) {
+                e.currentTarget.style.color = '#3b82f6';
+                e.currentTarget.style.background = '#f1f5f9';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!disabled) {
+                e.currentTarget.style.color = '#64748b';
+                e.currentTarget.style.background = 'transparent';
+              }
+            }}
+            onClick={() => {
+              if (!disabled && dateInputRef.current) {
+                dateInputRef.current.showPicker();
+              }
+            }}
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              style={{
+                transition: 'color 0.2s ease'
+              }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+        </div>
         <input
-          type="text"
-          value={displayValue}
-          onClick={handleDisplayClick}
-          readOnly
-          placeholder={placeholder}
+          ref={dateInputRef}
+          type="date"
+          value={dateValue}
+          onChange={handleDateChange}
           style={{
-            ...style,
-            flex: 1,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
             cursor: disabled ? 'not-allowed' : 'pointer'
           }}
-          className={className}
           disabled={disabled}
+          min={min}
+          max={max}
         />
+        <label style={{
+          position: 'absolute',
+          top: '-8px',
+          left: '12px',
+          background: 'white',
+          padding: '0 4px',
+          fontSize: '12px',
+          color: '#64748b',
+          fontWeight: '500'
+        }}>
+          Ngày
+        </label>
+      </div>
+      
+      {/* Time input - separate field */}
+      <div style={{ flex: 1, position: 'relative' }}>
         <input
           type="time"
           value={timeValue}
           onChange={handleTimeChange}
           style={{
             ...style,
-            flex: 1
+            width: '100%',
+            padding: '12px 16px',
+            border: '2px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: '#374151',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            outline: 'none'
           }}
           className={className}
           disabled={disabled}
+          placeholder="Chọn giờ"
         />
+        <label style={{
+          position: 'absolute',
+          top: '-8px',
+          left: '12px',
+          background: 'white',
+          padding: '0 4px',
+          fontSize: '12px',
+          color: '#64748b',
+          fontWeight: '500'
+        }}>
+          Giờ
+        </label>
       </div>
     </div>
   );

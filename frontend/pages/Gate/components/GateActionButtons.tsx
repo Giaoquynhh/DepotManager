@@ -426,8 +426,8 @@ export default function GateActionButtons({
     );
   }
 
-  // Hiển thị nút "In phiếu EIR" cho trạng thái GATE_OUT
-  if (currentStatus === 'GATE_OUT') {
+  // Hiển thị nút "In phiếu EIR" CHỈ khi đã thanh toán VÀ trạng thái GATE_OUT hoặc IN_YARD
+  if (isPaid && (currentStatus === 'GATE_OUT' || currentStatus === 'IN_YARD')) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'center' }}>
         <button
@@ -453,7 +453,7 @@ export default function GateActionButtons({
           fontSize: 'var(--font-size-xs)',
           fontStyle: 'italic'
         }}>
-          Đã cho phép ra
+          {currentStatus === 'GATE_OUT' ? 'Đã cho phép ra' : 'Đã hạ thành công'}
         </span>
       </div>
     );

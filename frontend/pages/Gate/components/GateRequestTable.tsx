@@ -116,6 +116,17 @@ export default function GateRequestTable({ requests, loading, onRefresh, showSuc
         </div>
         <h3>{t('pages.gate.noData')}</h3>
         <p>{t('pages.gate.noRequestsToDisplay')}</p>
+        <div className="validation-info" style={{ 
+          marginTop: '16px', 
+          padding: '12px', 
+          backgroundColor: '#f8f9fa', 
+          border: '1px solid #e9ecef', 
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#6c757d'
+        }}>
+          <strong>📋 Lưu ý:</strong> Chỉ hiển thị các yêu cầu có số container. Các yêu cầu không có số container sẽ không được hiển thị trong bảng này.
+        </div>
       </div>
     );
   }

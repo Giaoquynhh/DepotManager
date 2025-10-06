@@ -130,6 +130,14 @@ export const updateReuseStatus = async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, message: 'Không tìm thấy yêu cầu' });
         }
 
+        // Kiểm tra trạng thái request - không cho phép thay đổi reuse status khi ở trạng thái IN_CAR hoặc GATE_OUT
+        if (existingRequest.status === 'IN_CAR' || existingRequest.status === 'GATE_OUT') {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Không thể thay đổi trạng thái reuse khi request đang ở trạng thái ${existingRequest.status === 'IN_CAR' ? 'IN_CAR' : 'GATE_OUT'}` 
+            });
+        }
+
         const updatedRequest = await prisma.serviceRequest.update({
             where: { id },
             data: { 

@@ -28,6 +28,13 @@ router.get('/yard/by-shipping-line/:shipping_line_id', (req, res) => {
   controller.getContainersInYardByShippingLine(req as any, res, shipping_line_id, searchQuery as string);
 });
 
+// Route để lấy containers trong yard theo shipping line và container type cho edit modal
+router.get('/yard/by-shipping-line-and-type/:shipping_line_id', (req, res) => {
+  const { shipping_line_id } = req.params;
+  const { q: searchQuery, container_type_id } = req.query;
+  controller.getContainersInYardByShippingLineAndType(req as any, res, shipping_line_id, container_type_id as string, searchQuery as string);
+});
+
 router.get('/:container_no', (req, res) => controller.get(req as any, res));
 router.put('/:container_no', (req, res) => controller.updateContainer(req, res));
 router.get('/alerts/list', (req, res) => controller.alerts(req as any, res));

@@ -37,10 +37,18 @@ class EnhancedEIRService {
         };
       }
 
-      if (request.status !== 'GATE_OUT') {
+      if (request.status !== 'GATE_OUT' && request.status !== 'IN_YARD' && request.status !== 'IN_CAR') {
         return {
           success: false,
-          message: 'Chỉ có thể tạo EIR cho container ở trạng thái GATE_OUT'
+          message: 'Chỉ có thể tạo EIR cho container ở trạng thái GATE_OUT, IN_YARD hoặc IN_CAR'
+        };
+      }
+
+      // Kiểm tra trạng thái thanh toán
+      if (!request.is_paid) {
+        return {
+          success: false,
+          message: 'Chỉ có thể tạo EIR cho container đã thanh toán'
         };
       }
 

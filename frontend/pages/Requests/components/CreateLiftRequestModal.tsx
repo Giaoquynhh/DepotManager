@@ -118,6 +118,9 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	const [containerSearchQuery, setContainerSearchQuery] = useState('');
 	const [isSearchingContainers, setIsSearchingContainers] = useState(false);
 	const [isRefreshingContainerInfo, setIsRefreshingContainerInfo] = useState(false);
+	
+	// State để track việc container đã được chọn từ danh sách và có sẵn loại container
+	const [isContainerTypeDisabled, setIsContainerTypeDisabled] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -455,6 +458,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				...prev,
 				containerNumber: ''
 			}));
+			// Reset container type disabled state
+			setIsContainerTypeDisabled(false);
+		}
+		
+		// Reset container type disabled state when container number changes manually
+		if (field === 'containerNumber') {
+			setIsContainerTypeDisabled(false);
 		}
 	};
 
@@ -473,6 +483,12 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		if (!formData.customer.trim()) {
 			newErrors.customer = 'Khách hàng là bắt buộc';
 		}
+		
+		// Cảnh báo nếu không có số container (không bắt buộc nhưng nên có)
+		if (!formData.containerNumber?.trim()) {
+			// Không thêm vào errors để không block submit, chỉ hiển thị warning
+			console.warn('⚠️ Cảnh báo: Chưa nhập số container. Bạn có thể cập nhật sau.');
+		}
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -482,6 +498,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		e.preventDefault();
 		
 		if (validateForm()) {
+			// Hiển thị cảnh báo nếu không có số container
+			if (!formData.containerNumber?.trim()) {
+				const shouldContinue = window.confirm(
+					'⚠️ Cảnh báo: Bạn chưa nhập số container.\n\n' +
+					'Bạn có thể tạo yêu cầu trước và cập nhật số container sau.\n\n' +
+					'Bạn có muốn tiếp tục tạo yêu cầu không?'
+				);
+				if (!shouldContinue) {
+					return;
+				}
+			}
+			
 			try {
 				setIsUploading(true);
 				
@@ -519,6 +547,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 						...formData,
 						requestNo: requestNumber // Include auto-generated request number
 					});
+					
+					// Hiển thị thông báo thành công với cảnh báo nếu cần
+					if (!formData.containerNumber?.trim()) {
+						console.warn('✅ Yêu cầu đã được tạo thành công nhưng chưa có số container. Vui lòng cập nhật sau.');
+					}
 					
 					// Reset form
 					setFormData({
@@ -570,6 +603,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		setSelectedContainerInfo(null);
 		setUploadedFiles([]);
 		setPreviewUrls([]);
+		setIsContainerTypeDisabled(false);
 		onClose();
 	};
 
@@ -983,6 +1017,20 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 						<div style={formGroupStyle}>
 							<label style={formLabelStyle}>
 								Số container
+								{!formData.containerNumber?.trim() && (
+									<span style={{ 
+										marginLeft: '8px',
+										fontSize: '11px',
+										color: '#f59e0b',
+										fontWeight: '500',
+										background: '#fef3c7',
+										padding: '2px 6px',
+										borderRadius: '4px',
+										border: '1px solid #f59e0b'
+									}}>
+										⚠️ Khuyến nghị nhập
+									</span>
+								)}
 							</label>
 							<div className="container-search-dropdown" style={{ position: 'relative' }}>
 								<input
@@ -1109,6 +1157,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																// Auto-fill container type với dữ liệu mới nhất
 																if (containerData.container_type?.id) {
 																	handleInputChange('containerType', containerData.container_type.id);
+																	// Disable trường loại container vì đã có sẵn từ container được chọn
+																	setIsContainerTypeDisabled(true);
 																}
 																
 																// Auto-fill customer với dữ liệu mới nhất (chỉ cho EMPTY_IN_YARD, không cho IMPORT)
@@ -1153,6 +1203,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																setSelectedContainerInfo(container);
 																if (container.container_type?.id) {
 																	handleInputChange('containerType', container.container_type.id);
+																	// Disable trường loại container vì đã có sẵn từ container được chọn
+																	setIsContainerTypeDisabled(true);
 																}
 																console.log('Fallback - container.request_type:', container.request_type);
 																if (container.customer?.id && container.request_type !== 'IMPORT') {
@@ -1172,6 +1224,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 															setSelectedContainerInfo(container);
 															if (container.container_type?.id) {
 																handleInputChange('containerType', container.container_type.id);
+																// Disable trường loại container vì đã có sẵn từ container được chọn
+																setIsContainerTypeDisabled(true);
 															}
 															console.log('Error fallback - container.request_type:', container.request_type);
 															if (container.customer?.id && container.request_type !== 'IMPORT') {
@@ -1198,14 +1252,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 													</div>
 													<div style={{ fontSize: '11px', marginTop: '2px', display: 'flex', gap: '8px' }}>
 														<span style={{ 
-															color: container.service_status === 'EMPTY_IN_YARD' ? '#059669' : '#dc2626',
+															color: container.service_status === 'EMPTY_IN_YARD' ? '#059669' : 
+																   container.service_status === 'DELETED_REQUEST' ? '#f59e0b' : '#dc2626',
 															fontWeight: '500',
-															backgroundColor: container.service_status === 'EMPTY_IN_YARD' ? '#ecfdf5' : '#fef2f2',
+															backgroundColor: container.service_status === 'EMPTY_IN_YARD' ? '#ecfdf5' : 
+																			container.service_status === 'DELETED_REQUEST' ? '#fef3c7' : '#fef2f2',
 															padding: '2px 6px',
 															borderRadius: '4px',
-															border: `1px solid ${container.service_status === 'EMPTY_IN_YARD' ? '#10b981' : '#ef4444'}`
+															border: `1px solid ${container.service_status === 'EMPTY_IN_YARD' ? '#10b981' : 
+																	container.service_status === 'DELETED_REQUEST' ? '#f59e0b' : '#ef4444'}`
 														}}>
-															{container.service_status === 'EMPTY_IN_YARD' ? 'EMPTY_IN_YARD' : 'GATE_OUT (IMPORT)'}
+															{container.service_status === 'EMPTY_IN_YARD' ? 'EMPTY_IN_YARD' : 
+															 container.service_status === 'DELETED_REQUEST' ? 'DELETED_REQUEST' : 'GATE_OUT (IMPORT)'}
 														</span>
 														{container.request_type === 'SYSTEM_ADMIN_ADDED' && (
 															<span style={{ 
@@ -1217,6 +1275,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 																border: '1px solid #9ca3af'
 															}}>
 																SystemAdmin
+															</span>
+														)}
+														{container.request_type === 'DELETED_REQUEST' && (
+															<span style={{ 
+																color: '#f59e0b',
+																fontWeight: '500',
+																backgroundColor: '#fef3c7',
+																padding: '2px 6px',
+																borderRadius: '4px',
+																border: '1px solid #f59e0b'
+															}}>
+																Request đã xóa
 															</span>
 														)}
 													</div>
@@ -1336,13 +1406,21 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 								<button
 									type="button"
 									className={`custom-dropdown-button ${errors.containerType ? 'error' : ''}`}
+									disabled={isContainerTypeDisabled}
 									onClick={() => {
-										closeAllDropdowns();
-										setIsContainerTypeOpen(!isContainerTypeOpen);
-										if (!isContainerTypeOpen) {
-											setContainerTypeSearch('');
+										if (!isContainerTypeDisabled) {
+											closeAllDropdowns();
+											setIsContainerTypeOpen(!isContainerTypeOpen);
+											if (!isContainerTypeOpen) {
+												setContainerTypeSearch('');
+											}
 										}
 									}}
+									style={isContainerTypeDisabled ? {
+										backgroundColor: '#f8f9fa',
+										cursor: 'not-allowed',
+										opacity: 0.6
+									} : {}}
 								>
 									<span>
 										{formData.containerType 
@@ -1397,6 +1475,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							{formData.containerType && (
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
 									Mô tả: {containerTypes.find(ct => ct.id === formData.containerType)?.description}
+								</div>
+							)}
+							{isContainerTypeDisabled && (
+								<div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', fontWeight: '500' }}>
+									🔒 Loại container đã được tự động điền từ container được chọn và không thể thay đổi
 								</div>
 							)}
 							{errors.containerType && <span style={errorMessageStyle}>{errors.containerType}</span>}

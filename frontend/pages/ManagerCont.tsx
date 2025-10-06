@@ -415,7 +415,10 @@ export default function ManagerCont(){
       const latestRequestsMap = new Map<string, any>();
       allRequests.forEach((req: any) => {
         const existingReq = latestRequestsMap.get(req.container_no);
-        if (!existingReq || new Date(req.createdAt) > new Date(existingReq.createdAt)) {
+        // Sử dụng updatedAt thay vì createdAt để lấy request được cập nhật gần nhất
+        const reqTime = new Date(req.updatedAt || req.createdAt);
+        const existingTime = new Date(existingReq?.updatedAt || existingReq?.createdAt);
+        if (!existingReq || reqTime > existingTime) {
           latestRequestsMap.set(req.container_no, req);
         }
       });
@@ -525,7 +528,7 @@ export default function ManagerCont(){
                containerType: serviceRequestData?.container_type?.code || container.container_type?.code || '',
                status: 'EMPTY_IN_YARD',
                repairTicketStatus: repairTicketStatus,
-               customer: serviceRequestData?.customer?.name || container.customer?.name || '',
+               customer: '', // Không tự động fill trường khách hàng
                documents: '',
                documentsCount: 0,
                repairImagesCount: repairImagesCount,
@@ -726,7 +729,7 @@ export default function ManagerCont(){
             containerNumber: request.container_no || '',
             containerType: request.container_type?.code || '',
             status: request.status === 'DONE_LIFTING' ? 'GATE_OUT' : (request.status || ''),
-            customer: request.customer?.name || '',
+            customer: '', // Không tự động fill trường khách hàng
             documents: documentsList.map((att: any) => att.file_name).join(', '),
             documentsCount,
             repairImagesCount,
@@ -774,7 +777,7 @@ export default function ManagerCont(){
               containerNumber: request.container_no || '',
               containerType: request.container_type?.code || '',
               status: request.status || '',
-              customer: request.customer?.name || '',
+              customer: '', // Không tự động fill trường khách hàng
               documents: '',
               documentsCount: 0,
               repairImagesCount: 0,
@@ -1289,7 +1292,7 @@ export default function ManagerCont(){
                       <th>Số Cont</th>
                       <th>Loại Cont</th>
                       <th>Trạng thái</th>
-                      <th>Trạng thái Request</th>
+                      <th style={{ display: 'none' }}>Trạng thái Request</th>
                       <th>Hình ảnh</th>
                       <th>Vị trí</th>
                       <th>Số seal</th>
@@ -1301,7 +1304,7 @@ export default function ManagerCont(){
                   <tbody>
                     {tableData.length === 0 ? (
                       <tr>
-                        <td colSpan={11} className="no-data">
+                        <td colSpan={10} className="no-data">
                           Không có dữ liệu
                         </td>
                       </tr>
@@ -1328,7 +1331,7 @@ export default function ManagerCont(){
                               );
                             })()}
                           </td>
-                          <td>
+                          <td style={{ display: 'none' }}>
                             <span className={`status-badge ${getRequestStatusBadgeClass(row.status)}`}>
                               {getRequestStatusLabel(row.status, row.requestType)}
                             </span>
@@ -1606,13 +1609,17 @@ export default function ManagerCont(){
                     <select
                       value={selectedShippingLineId}
                       onChange={(e) => setSelectedShippingLineId(e.target.value)}
+                      disabled={selectedRow.shippingLine && selectedRow.shippingLine.trim() !== ''}
                       style={{ 
                         width: '100%', 
                         padding: '8px 12px', 
                         border: '1px solid #d1d5db', 
                         borderRadius: 6,
                         maxHeight: '200px',
-                        overflowY: 'auto'
+                        overflowY: 'auto',
+                        backgroundColor: (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') ? '#f9fafb' : 'white',
+                        color: (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') ? '#6b7280' : '#374151',
+                        cursor: (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') ? 'not-allowed' : 'pointer'
                       }}
                     >
                       <option value="">{selectedRow.shippingLine || 'Chưa có hãng tàu'}</option>
@@ -1623,7 +1630,9 @@ export default function ManagerCont(){
                       ))}
                     </select>
                     <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
-                      {selectedShippingLineId ? 'Sẽ cập nhật hãng tàu khi lưu' : 'Giữ nguyên hãng tàu hiện tại'}
+                      {(selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') 
+                        ? '🔒 Không thể chỉnh sửa hãng tàu (đã có dữ liệu)' 
+                        : 'Có thể cập nhật hãng tàu mới'}
                     </div>
                   </div>
                   
@@ -1632,13 +1641,17 @@ export default function ManagerCont(){
                     <select
                       value={selectedContainerTypeId}
                       onChange={(e) => setSelectedContainerTypeId(e.target.value)}
+                      disabled={selectedRow.containerType && selectedRow.containerType.trim() !== ''}
                       style={{ 
                         width: '100%', 
                         padding: '8px 12px', 
                         border: '1px solid #d1d5db', 
                         borderRadius: 6,
                         maxHeight: '200px',
-                        overflowY: 'auto'
+                        overflowY: 'auto',
+                        backgroundColor: (selectedRow.containerType && selectedRow.containerType.trim() !== '') ? '#f9fafb' : 'white',
+                        color: (selectedRow.containerType && selectedRow.containerType.trim() !== '') ? '#6b7280' : '#374151',
+                        cursor: (selectedRow.containerType && selectedRow.containerType.trim() !== '') ? 'not-allowed' : 'pointer'
                       }}
                     >
                       <option value="">{selectedRow.containerType || 'Chưa có loại container'}</option>
@@ -1649,7 +1662,9 @@ export default function ManagerCont(){
                       ))}
                     </select>
                     <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
-                      {selectedContainerTypeId ? 'Sẽ cập nhật loại container khi lưu' : 'Giữ nguyên loại container hiện tại'}
+                      {(selectedRow.containerType && selectedRow.containerType.trim() !== '') 
+                        ? '🔒 Không thể chỉnh sửa loại container (đã có dữ liệu)' 
+                        : 'Có thể cập nhật loại container mới'}
                     </div>
                   </div>
                   
@@ -1683,7 +1698,11 @@ export default function ManagerCont(){
                      <input
                        type="text"
                        value={selectedSealNumber}
-                       onChange={(e) => setSelectedSealNumber(e.target.value)}
+                       onChange={(e) => {
+                         // Chỉ cho phép nhập số nguyên không âm
+                         const value = e.target.value.replace(/[^0-9]/g, '');
+                         setSelectedSealNumber(value);
+                       }}
                        disabled={(!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')}
                        style={{ 
                          width: '100%', 
@@ -1694,7 +1713,7 @@ export default function ManagerCont(){
                          color: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? '#9ca3af' : '#374151',
                          cursor: ((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'not-allowed' : 'text'
                        }}
-                       placeholder={((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'Cần chọn hãng tàu trước' : 'Nhập số seal'}
+                       placeholder={((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? 'Cần chọn hãng tàu trước' : 'Nhập số seal (chỉ số nguyên)'}
                      />
                      {((!selectedShippingLineId || selectedShippingLineId === '') && (!selectedRow.shippingLine || selectedRow.shippingLine.trim() === '')) ? (
                        <div style={{ 

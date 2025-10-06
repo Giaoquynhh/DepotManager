@@ -18,7 +18,9 @@ export const createRequest = async (req: Request, res: Response) => {
             appointment_time,
             booking_bill,
             notes,
-            status
+            status,
+            seal_number,
+            dem_det
         } = req.body;
 
         const files = req.files as Express.Multer.File[];
@@ -103,7 +105,9 @@ export const createRequest = async (req: Request, res: Response) => {
                 locked_attachments: false,
                 has_invoice: false,
                 is_paid: false,
-                is_pick: false
+                is_pick: false,
+                seal_number: seal_number || null,
+                dem_det: dem_det || null
             }
         });
 

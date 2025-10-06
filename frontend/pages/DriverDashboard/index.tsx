@@ -592,8 +592,16 @@ export default function DriverDashboard() {
                               )}
                               {task.status === 'IN_PROGRESS' && (
                                 <button 
-                                  className={'btn btn-sm btn-success'}
-                                  onClick={() => handleStatusUpdate(task.id, 'COMPLETED')}
+                                  className={`btn btn-sm ${(task.report_images_count ?? 0) > 0 ? 'btn-success' : 'btn-disabled'}`}
+                                  disabled={(task.report_images_count ?? 0) === 0}
+                                  onClick={() => {
+                                    if ((task.report_images_count ?? 0) === 0) {
+                                      showError('Vui lòng tải ảnh kiểm tra trước khi hoàn thành công việc');
+                                      return;
+                                    }
+                                    handleStatusUpdate(task.id, 'COMPLETED');
+                                  }}
+                                  title={(task.report_images_count ?? 0) === 0 ? 'Vui lòng tải ảnh kiểm tra trước khi hoàn thành' : 'Hoàn thành công việc'}
                                 >
                                   {t('pages.driverDashboard.actions.complete')}
                                 </button>

@@ -236,34 +236,73 @@ export default function NewSubmenu() {
     try {
       setProcessingIds(prev => new Set(prev).add(requestId));
       
+      console.log('🔄 Đang tạo phiếu EIR cho request:', requestId);
+      
       // Gọi API để tạo phiếu EIR
       const response = await api.post(`/gate/requests/${requestId}/generate-eir`, {}, {
         responseType: 'blob'
       });
       
-      // Tạo blob và download file
-      const blob = new Blob([response.data], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `EIR_${requestId}_${Date.now()}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      console.log('✅ API response received:', response.status);
+      
+      // Kiểm tra nếu response là JSON (lỗi) thay vì blob
+      if (response.data instanceof Blob) {
+        // Tạo blob và download file
+        const blob = new Blob([response.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `EIR_${requestId}_${Date.now()}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        showSuccess(
+          '📄 Phiếu EIR đã được tạo',
+          'File EIR đã được tải xuống thành công.',
+          5000
+        );
+      } else {
+        // Nếu không phải blob, có thể là JSON error
+        console.error('❌ Response không phải blob:', response.data);
+        showSuccess(
+          '❌ Lỗi khi tạo phiếu EIR',
+          'Server trả về dữ liệu không đúng định dạng'
+        );
+      }
+    } catch (error: any) {
+      console.error('❌ Error generating EIR:', error);
+      
+      // Xử lý các loại lỗi khác nhau
+      let errorMessage = 'Có lỗi xảy ra khi tạo phiếu EIR';
+      
+      if (error.response?.status === 400) {
+        const serverMessage = error.response?.data?.message;
+        if (serverMessage) {
+          errorMessage = serverMessage;
+        } else {
+          errorMessage = 'Không thể tạo phiếu EIR. Vui lòng kiểm tra:\n' +
+            '• Container phải đã thanh toán (Đã thanh toán)\n' +
+            '• Container phải ở trạng thái GATE_OUT hoặc IN_YARD\n' +
+            '• Hãng tàu phải có template EIR\n' +
+            '• Template file phải tồn tại';
+        }
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền tạo phiếu EIR.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Không tìm thấy yêu cầu này.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+      }
       
       showSuccess(
-        '📄 Phiếu EIR đã được tạo',
-        'File EIR đã được tải xuống thành công.',
-        5000
-      );
-    } catch (error: any) {
-      console.error('Error generating EIR:', error);
-      showSuccess(
         '❌ Lỗi khi tạo phiếu EIR',
-        error.response?.data?.message || error.message
+        errorMessage
       );
     } finally {
       setProcessingIds(prev => {
@@ -946,8 +985,8 @@ export default function NewSubmenu() {
                             Xem lý do
                           </button>
                         )}
-                        {/* Button In phiếu EIR hiển thị khi đã thanh toán hoặc ở trạng thái GATE_OUT */}
-                        {(row.paymentStatus === 'Đã thanh toán' || row.status === 'GATE_OUT') && (
+                        {/* Button In phiếu EIR CHỈ hiển thị khi đã thanh toán VÀ ở trạng thái GATE_OUT hoặc IN_YARD */}
+                        {(row.paymentStatus === 'Đã thanh toán' && (row.status === 'GATE_OUT' || row.status === 'IN_YARD')) && (
                           <button 
                             type="button" 
                             className="btn btn-info" 

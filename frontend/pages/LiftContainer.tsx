@@ -23,12 +23,20 @@ export default function LiftContainer() {
 		console.log('Auto-generated Request Number:', data.requestNo);
 		// TODO: Implement API call to create lift request
 		
-		// Hiển thị thông báo thành công đơn giản
-		showSuccess(
-			'Yêu cầu nâng container đã được tạo thành công!',
-			`Số yêu cầu: ${data.requestNo}`,
-			4000 // Hiển thị trong 4 giây
-		);
+		// Hiển thị thông báo thành công với cảnh báo nếu cần
+		if (!data.containerNumber?.trim()) {
+			showSuccess(
+				'Yêu cầu nâng container đã được tạo thành công!',
+				`Số yêu cầu: ${data.requestNo}\n⚠️ Lưu ý: Chưa có số container, vui lòng cập nhật sau`,
+				6000 // Hiển thị lâu hơn để user đọc cảnh báo
+			);
+		} else {
+			showSuccess(
+				'Yêu cầu nâng container đã được tạo thành công!',
+				`Số yêu cầu: ${data.requestNo}`,
+				4000 // Hiển thị trong 4 giây
+			);
+		}
 		
 		setIsCreateLiftModalOpen(false);
 		// Trigger refresh of the table

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { EditLiftRequestData } from './EditLiftRequestModal.types';
 import type { ShippingLine, TransportCompany, ContainerType, Customer } from '../../../services/setupService';
 import DateTimeInput from '../../../components/DateTimeInput';
+import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
 
 interface RequestFormFieldsProps {
 	formData: EditLiftRequestData;
@@ -20,6 +21,8 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 	containerTypes,
 	customers
 }) => {
+	const [selectedContainerInfo, setSelectedContainerInfo] = useState<ContainerSearchResult | null>(null);
+
 	return (
 		<div style={{ display: 'grid', gap: '24px' }}>
 			{/* Row 1: Request Number & Shipping Line */}
@@ -76,10 +79,25 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 					<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
 						Số container
 					</label>
-					<input
-						type="text"
+					<ContainerSearchInput
 						value={formData.containerNumber}
-						onChange={(e) => handleInputChange('containerNumber', e.target.value)}
+						onChange={(value) => handleInputChange('containerNumber', value)}
+						onSelect={(container) => {
+							setSelectedContainerInfo(container);
+							
+							// Auto-fill container type nếu container được chọn có thông tin
+							if (container?.container_type?.id) {
+								handleInputChange('containerType', container.container_type.id);
+							}
+							
+							// Auto-fill customer nếu container được chọn có thông tin và không phải IMPORT
+							if (container?.customer?.id && container.request_type !== 'IMPORT') {
+								handleInputChange('customer', container.customer.id);
+							}
+						}}
+						placeholder="Chọn container hoặc nhập để tìm kiếm"
+						shippingLineId={formData.shippingLine}
+						containerTypeId={formData.containerType}
 						style={{
 							width: '100%',
 							padding: '12px',
@@ -88,6 +106,12 @@ export const RequestFormFields: React.FC<RequestFormFieldsProps> = ({
 							fontSize: '14px'
 						}}
 					/>
+					{selectedContainerInfo && (
+						<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+							<div>Vị trí: {selectedContainerInfo.block_code}-{selectedContainerInfo.slot_code}{selectedContainerInfo.tier ? `, Tầng ${selectedContainerInfo.tier}` : ''}</div>
+							{selectedContainerInfo.yard_name && <div>Bãi: {selectedContainerInfo.yard_name}</div>}
+						</div>
+					)}
 				</div>
 				<div>
 					<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>

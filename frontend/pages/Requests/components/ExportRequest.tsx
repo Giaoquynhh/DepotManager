@@ -550,7 +550,25 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                     <tr key={r.id} style={{ borderTop: '1px solid #f1f5f9' }}>
                                         <td style={{...tdStyle, minWidth: '100px'}}>{r.shippingLine}</td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.requestNo}</td>
-                                        <td style={{...tdStyle, minWidth: '120px'}}>{r.containerNo}</td>
+                                        <td style={{...tdStyle, minWidth: '120px'}}>
+                                            {r.containerNo ? (
+                                                <span style={{ color: '#1f2937', fontWeight: '500' }}>{r.containerNo}</span>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <span style={{ 
+                                                        color: '#dc2626', 
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        background: '#fef2f2',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #fecaca'
+                                                    }}>
+                                                        ⚠️ Chưa có số container
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td style={{...tdStyle, minWidth: '100px'}}>{r.containerType}</td>
                                         <td style={{...tdStyle, minWidth: '140px'}}>{r.bookingBill}</td>
                                         <td style={{...tdStyle, minWidth: '120px'}}>Nâng container</td>
@@ -562,12 +580,25 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     position: 'relative',
                                                     display: 'inline-block',
                                                     width: '50px',
-                                                    height: '24px'
+                                                    height: '24px',
+                                                    opacity: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 0.5 : 1,
+                                                    cursor: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer'
                                                 }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={r.reuseStatus || false}
-                                                        onChange={(e) => handleToggleReuse(r.id, e.target.checked)}
+                                                        disabled={r.status === 'IN_CAR' || r.status === 'GATE_OUT'}
+                                                        onChange={(e) => {
+                                                            if (r.status === 'IN_CAR' || r.status === 'GATE_OUT') {
+                                                                showError(
+                                                                    'Không thể thay đổi trạng thái reuse',
+                                                                    `Request đang ở trạng thái ${r.status === 'IN_CAR' ? 'IN_CAR' : 'GATE_OUT'}, không thể thay đổi reuse status`,
+                                                                    3000
+                                                                );
+                                                                return;
+                                                            }
+                                                            handleToggleReuse(r.id, e.target.checked);
+                                                        }}
                                                         style={{ 
                                                             opacity: 0,
                                                             width: 0,
@@ -576,7 +607,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     />
                                                     <span style={{
                                                         position: 'absolute',
-                                                        cursor: 'pointer',
+                                                        cursor: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer',
                                                         top: 0,
                                                         left: 0,
                                                         right: 0,
@@ -606,6 +637,16 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     color: r.reuseStatus ? '#10b981' : '#ef4444'
                                                 }}>
                                                     {r.reuseStatus ? 'Có reuse' : 'Không reuse'}
+                                                    {(r.status === 'IN_CAR' || r.status === 'GATE_OUT') && (
+                                                        <div style={{ 
+                                                            fontSize: '10px', 
+                                                            color: '#f59e0b', 
+                                                            fontWeight: '400',
+                                                            marginTop: '2px'
+                                                        }}>
+                                                            (Không thể thay đổi)
+                                                        </div>
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>
@@ -677,13 +718,34 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                         </td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.notes || ''}</td>
                 <td style={{ ...tdStyle, minWidth: '320px', whiteSpace: 'nowrap' }}>
+                                            {/* Cảnh báo thiếu số container */}
+                                            {!r.containerNo && r.status === 'NEW_REQUEST' && (
+                                                <div style={{ 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '4px',
+                                                    background: '#fef3c7',
+                                                    border: '1px solid #f59e0b',
+                                                    borderRadius: '6px',
+                                                    padding: '4px 8px',
+                                                    marginRight: '8px',
+                                                    fontSize: '11px',
+                                                    color: '#92400e',
+                                                    fontWeight: '500'
+                                                }}>
+                                                    <span>⚠️</span>
+                                                    <span>Cần cập nhật số container</span>
+                                                </div>
+                                            )}
+                                            
                                             <button 
                                                 type="button" 
                                                 className="btn btn-primary" 
                                                 style={{ padding: '6px 10px', fontSize: 12, marginRight: 8 }}
                                                 onClick={() => handleUpdateClick(r.id)}
                                                 disabled={processingIds.has(r.id) || loading || r.status !== 'NEW_REQUEST'}
-                                                title={r.status !== 'NEW_REQUEST' ? 'Chỉ cho phép cập nhật khi trạng thái là Thêm mới' : undefined}
+                                                title={r.status !== 'NEW_REQUEST' ? 'Chỉ cho phép cập nhật khi trạng thái là Thêm mới' : 
+                                                       !r.containerNo ? 'Cần cập nhật số container trước khi xử lý' : undefined}
                                             >
                                                 {processingIds.has(r.id) ? 'Đang xử lý...' : 'Cập nhật thông tin'}
                                             </button>
@@ -741,8 +803,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                             Tạo yêu cầu thanh toán
                         </button>
                     )}
-                                            {/* Nút In phiếu EIR - hiển thị khi status là IN_CAR hoặc GATE_OUT và đã thanh toán */}
-                                            {(r.status === 'IN_CAR' || r.status === 'GATE_OUT') && r.paymentStatus === 'Đã thanh toán' && (
+                                            {/* Nút In phiếu EIR - CHỈ hiển thị khi đã thanh toán VÀ status là IN_CAR hoặc GATE_OUT hoặc IN_YARD */}
+                                            {r.paymentStatus === 'Đã thanh toán' && (r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'IN_YARD') && (
                                                 <button 
                                                     type="button" 
                                                     className="btn btn-info" 

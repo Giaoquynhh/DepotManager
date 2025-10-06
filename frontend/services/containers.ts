@@ -58,5 +58,15 @@ export const containersApi = {
     const params = searchQuery ? { q: searchQuery } : {};
     const { data } = await api.get(`/containers/yard/by-shipping-line/${shipping_line_id}`, { params });
     return data;
+  },
+
+  // API để lấy containers trong yard theo shipping line và container type cho edit modal
+  async getContainersInYardByShippingLineAndType(shipping_line_id: string, container_type_id?: string, searchQuery?: string) {
+    const params: any = {};
+    if (searchQuery) params.q = searchQuery;
+    if (container_type_id) params.container_type_id = container_type_id;
+    
+    const { data } = await api.get(`/containers/yard/by-shipping-line-and-type/${shipping_line_id}`, { params });
+    return data;
   }
 };
