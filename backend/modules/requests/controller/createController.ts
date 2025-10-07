@@ -71,6 +71,33 @@ export const createRequest = async (req: Request, res: Response) => {
 
         // Validation: Kiểm tra container number trùng lặp cho IMPORT requests
         if (type === 'IMPORT' && container_no) {
+            // BỔ SUNG: Kiểm tra container có EXPORT request với trạng thái khác GATE_OUT không
+            const activeExportRequest = await prisma.serviceRequest.findFirst({
+                where: {
+                    container_no: container_no,
+                    type: 'EXPORT',
+                    status: {
+                        notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED', 'GATE_OUT']
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    container_no: true,
+                    status: true,
+                    request_no: true,
+                    createdAt: true
+                }
+            });
+
+            // Nếu có EXPORT request với trạng thái khác GATE_OUT, không cho phép tạo IMPORT request
+            if (activeExportRequest) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Container ${container_no} đang có EXPORT request với trạng thái ${activeExportRequest.status} (khác GATE_OUT). Không thể tạo IMPORT request mới. Chỉ có thể tạo IMPORT request khi container có EXPORT request với trạng thái GATE_OUT hoặc không có EXPORT request nào.` 
+                });
+            }
+
             // Tìm container IMPORT đang active
             const activeImportRequest = await prisma.serviceRequest.findFirst({
                 where: {
@@ -83,31 +110,12 @@ export const createRequest = async (req: Request, res: Response) => {
                 orderBy: { createdAt: 'desc' }
             });
 
-            // Nếu có container IMPORT đang active
+            // Nếu có container IMPORT đang active, không cho phép tạo IMPORT request mới
             if (activeImportRequest) {
-                // Kiểm tra xem có container EXPORT nào đang active không
-                const activeExportRequest = await prisma.serviceRequest.findFirst({
-                    where: {
-                        container_no: container_no,
-                        type: 'EXPORT',
-                        status: {
-                            notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
-                        }
-                    },
-                    orderBy: { createdAt: 'desc' }
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${activeImportRequest.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống.` 
                 });
-
-                // Nếu có cả IMPORT và EXPORT đang active, cho phép tạo request mới
-                if (activeExportRequest) {
-                    // Allow creation, do nothing here, proceed to create new request
-                    console.log(`✅ Container ${container_no} has both IMPORT and EXPORT active - allowing new request creation`);
-                } else {
-                    // Chỉ có IMPORT active - không cho phép tạo request mới
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${activeImportRequest.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc có cả IMPORT và EXPORT đang active.` 
-                    });
-                }
             }
         }
 

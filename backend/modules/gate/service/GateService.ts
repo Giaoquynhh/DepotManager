@@ -154,8 +154,45 @@ export class GateService {
   }
 
   /**
-   * Tự động tạo ForkliftTask cho EXPORT requests khi chuyển sang GATE_IN
+   * Tự động tạo RepairTicket cho IMPORT requests khi check-in
    */
+  private async createRepairTicketForImport(containerNo: string, actorId: string, requestId: string): Promise<void> {
+    try {
+      // Kiểm tra xem đã có RepairTicket cho request này chưa (thay vì chỉ theo container_no)
+      const existingTicket = await prisma.repairTicket.findFirst({
+        where: { 
+          container_no: containerNo,
+          problem_description: {
+            contains: requestId
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (existingTicket) {
+        console.log(`ℹ️ Request ${requestId} đã có RepairTicket: ${existingTicket.id}`);
+        return;
+      }
+
+      // Tạo RepairTicket mới cho request này
+      const code = `RT-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${Math.floor(Math.random()*1000)}`;
+      const repairTicket = await prisma.repairTicket.create({
+        data: {
+          code,
+          container_no: containerNo,
+          created_by: actorId,
+          problem_description: `Auto-created from Gate Check-in (GATE_IN) - Request: ${requestId}`,
+          status: 'PENDING' // Explicitly set to PENDING to avoid auto-update from history
+        }
+      });
+
+      console.log(`✅ Đã tạo RepairTicket mới cho container ${containerNo} (Request: ${requestId}): ${repairTicket.id}`);
+    } catch (error) {
+      console.error(`❌ Lỗi khi tạo RepairTicket cho container ${containerNo} (Request: ${requestId}):`, error);
+      throw error;
+    }
+  }
+
   private async createForkliftTaskForExport(containerNo: string, actorId: string): Promise<void> {
     // Kiểm tra xem đã có ForkliftTask ACTIVE cho container này chưa
     const existingActiveTask = await prisma.forkliftTask.findFirst({
@@ -379,17 +416,23 @@ export class GateService {
     console.log('🔍 GateService.searchRequests - Found requests:', requests.length);
     console.log('🔍 GateService.searchRequests - Total count:', total);
 
-    // Với các IMPORT đã GATE_IN, tự động tạo RepairTicket nếu chưa có và đính kèm thông tin vào payload trả về
+    // Với các IMPORT đã GATE_IN, tự động tạo RepairTicket mới nếu chưa có
     const mapped = await Promise.all(requests.map(async (r: any) => {
       let repairTicket: any = null;
       if (r.type === 'IMPORT' && r.status === 'GATE_IN' && r.container_no) {
-        // Tìm repair ticket theo container_no
+        // Tìm repair ticket theo container_no và request_id (trong problem_description)
         repairTicket = await prisma.repairTicket.findFirst({
-          where: { container_no: r.container_no },
+          where: { 
+            container_no: r.container_no,
+            problem_description: {
+              contains: r.id
+            }
+          },
           orderBy: { createdAt: 'desc' }
         });
 
-        // Nếu chưa có thì tạo mới
+        // Tự động tạo RepairTicket mới nếu chưa có cho request này
+        // Đảm bảo RepairTicket mới luôn bắt đầu từ trạng thái PENDING
         if (!repairTicket) {
           const code = `RT-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${Math.floor(Math.random()*1000)}`;
           repairTicket = await prisma.repairTicket.create({
@@ -397,9 +440,11 @@ export class GateService {
               code,
               container_no: r.container_no,
               created_by: r.created_by || actorId,
-              problem_description: 'Auto-created from Gate (GATE_IN)'
+              problem_description: `Auto-created from Gate (GATE_IN) - Request: ${r.id}`,
+              status: 'PENDING' // Explicitly set to PENDING to avoid auto-update from history
             }
           });
+          console.log(`✅ Đã tạo RepairTicket mới cho container ${r.container_no} (Request: ${r.id}): ${repairTicket.id}`);
         }
       }
 
@@ -691,6 +736,15 @@ export class GateService {
         await this.createForkliftTaskForExport(request.container_no, actorId);
       } catch (error) {
         console.error('Error auto-creating forklift task on check-in:', error);
+      }
+    }
+
+    // Nếu là yêu cầu Hạ (IMPORT), tự động tạo RepairTicket khi xe đã vào cổng
+    if (request.type === 'IMPORT' && request.container_no) {
+      try {
+        await this.createRepairTicketForImport(request.container_no, actorId, requestId);
+      } catch (error) {
+        console.error('Error auto-creating repair ticket on check-in:', error);
       }
     }
 

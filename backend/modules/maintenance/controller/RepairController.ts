@@ -46,14 +46,30 @@ export class RepairController {
         repairTickets.map(async (ticket: any) => {
           let serviceRequest = null;
           if (ticket.container_no) {
-            serviceRequest = await prisma.serviceRequest.findFirst({
-              where: { container_no: ticket.container_no, type: 'IMPORT' },
-              include: {
-                container_type: { select: { code: true } },
-                attachments: true
-              },
-              orderBy: { createdAt: 'desc' }
-            });
+            // Tìm ServiceRequest tương ứng với RepairTicket này dựa trên request_id trong problem_description
+            const requestIdMatch = ticket.problem_description?.match(/Request: ([a-zA-Z0-9_-]+)/);
+            if (requestIdMatch && requestIdMatch[1]) {
+              // Tìm ServiceRequest theo ID cụ thể
+              serviceRequest = await prisma.serviceRequest.findUnique({
+                where: { id: requestIdMatch[1] },
+                include: {
+                  container_type: { select: { code: true } },
+                  attachments: true
+                }
+              });
+            }
+            
+            // Fallback: nếu không tìm thấy theo request_id, tìm theo container_no (logic cũ)
+            if (!serviceRequest) {
+              serviceRequest = await prisma.serviceRequest.findFirst({
+                where: { container_no: ticket.container_no, type: 'IMPORT' },
+                include: {
+                  container_type: { select: { code: true } },
+                  attachments: true
+                },
+                orderBy: { createdAt: 'desc' }
+              });
+            }
           }
 
           const imagesCount = await prisma.repairImage.count({ where: { repair_ticket_id: ticket.id } });

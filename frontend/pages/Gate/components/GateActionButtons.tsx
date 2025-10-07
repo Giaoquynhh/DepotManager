@@ -321,6 +321,109 @@ export default function GateActionButtons({
 
   // Hiển thị action Check-in, Check-out cho NEW_REQUEST và PENDING
   if (currentStatus === 'NEW_REQUEST' || currentStatus === 'PENDING') {
+    // Nếu là export request và trạng thái NEW_REQUEST, chỉ hiển thị Check-in
+    if (requestType === 'EXPORT' && currentStatus === 'NEW_REQUEST') {
+      return (
+        <>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <button
+              onClick={openCheckInModal}
+              disabled={isLoading}
+              className="action-btn action-btn-success"
+              style={{ backgroundColor: 'var(--color-green-600)' }}
+            >
+              {isLoading ? 'Đang xử lý...' : 'Check-in'}
+            </button>
+          </div>
+
+          {/* Check-in Modal (render trong nhánh này) */}
+          {isCheckInModalOpen && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'white', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '420px', boxShadow: 'var(--shadow-xl)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-4)' }}>Cập nhật thông tin trước khi Check-in</h3>
+
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Số xe *</label>
+                  <input type="text" value={plateNo} onChange={(e) => setPlateNo(e.target.value.toUpperCase())} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Tài xế</label>
+                  <input type="text" value={driverName} onChange={(e) => setDriverName(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ marginBottom: 'var(--space-5)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>SDT tài xế *</label>
+                  <input type="text" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+                  <button className="action-btn action-btn-secondary" disabled={isLoading} onClick={() => { setIsCheckInModalOpen(false); }}>
+                    Hủy
+                  </button>
+                  <button className="action-btn action-btn-primary" disabled={isLoading} onClick={confirmCheckIn}>
+                    {isLoading ? 'Đang xử lý...' : 'Xác nhận Check-in'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Nếu là import request và trạng thái PENDING, chỉ hiển thị Check-in
+    if (requestType === 'IMPORT' && currentStatus === 'PENDING') {
+      return (
+        <>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <button
+              onClick={openCheckInModal}
+              disabled={isLoading}
+              className="action-btn action-btn-success"
+              style={{ backgroundColor: 'var(--color-green-600)' }}
+            >
+              {isLoading ? 'Đang xử lý...' : 'Check-in'}
+            </button>
+          </div>
+
+          {/* Check-in Modal (render trong nhánh này) */}
+          {isCheckInModalOpen && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'white', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '420px', boxShadow: 'var(--shadow-xl)' }}>
+                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-4)' }}>Cập nhật thông tin trước khi Check-in</h3>
+
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Số xe *</label>
+                  <input type="text" value={plateNo} onChange={(e) => setPlateNo(e.target.value.toUpperCase())} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ marginBottom: 'var(--space-3)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Tài xế</label>
+                  <input type="text" value={driverName} onChange={(e) => setDriverName(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ marginBottom: 'var(--space-5)' }}>
+                  <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>SDT tài xế *</label>
+                  <input type="text" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+                  <button className="action-btn action-btn-secondary" disabled={isLoading} onClick={() => { setIsCheckInModalOpen(false); }}>
+                    Hủy
+                  </button>
+                  <button className="action-btn action-btn-primary" disabled={isLoading} onClick={confirmCheckIn}>
+                    {isLoading ? 'Đang xử lý...' : 'Xác nhận Check-in'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Logic cũ cho các trường hợp khác (NEW_REQUEST hoặc PENDING không phải import)
     return (
       <>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
@@ -350,17 +453,17 @@ export default function GateActionButtons({
               <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--space-4)' }}>Cập nhật thông tin trước khi Check-in</h3>
 
               <div style={{ marginBottom: 'var(--space-3)' }}>
-                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Số xe *</label>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Số xe *</label>
                 <input type="text" value={plateNo} onChange={(e) => setPlateNo(e.target.value.toUpperCase())} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
               </div>
 
               <div style={{ marginBottom: 'var(--space-3)' }}>
-                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>Tài xế</label>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>Tài xế</label>
                 <input type="text" value={driverName} onChange={(e) => setDriverName(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
               </div>
 
               <div style={{ marginBottom: 'var(--space-5)' }}>
-                <label style={{ display: 'block', marginBottom: 'var(--space-2)' }}>SDT tài xế *</label>
+                <label style={{ display: 'block', marginBottom: 'var(--space-2)', textAlign: 'left', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-gray-700)' }}>SDT tài xế *</label>
                 <input type="text" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className="form-input" style={{ width: '100%', padding: 'var(--space-3)', border: '2px solid var(--color-gray-200)', borderRadius: 'var(--radius-lg)' }} />
               </div>
 
@@ -534,7 +637,8 @@ export default function GateActionButtons({
                 fontSize: 'var(--font-size-sm)',
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-gray-700)',
-                marginBottom: 'var(--space-2)'
+                marginBottom: 'var(--space-2)',
+                textAlign: 'left'
               }}>
                 {t('pages.gate.tableHeaders.driverName')} *
               </label>
@@ -560,7 +664,8 @@ export default function GateActionButtons({
                 fontSize: 'var(--font-size-sm)',
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-gray-700)',
-                marginBottom: 'var(--space-2)'
+                marginBottom: 'var(--space-2)',
+                textAlign: 'left'
               }}>
                 {t('pages.gate.tableHeaders.licensePlate')} *
               </label>

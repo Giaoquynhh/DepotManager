@@ -581,18 +581,20 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     display: 'inline-block',
                                                     width: '50px',
                                                     height: '24px',
-                                                    opacity: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 0.5 : 1,
-                                                    cursor: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer'
+                                                    opacity: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 0.5 : 1,
+                                                    cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer'
                                                 }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={r.reuseStatus || false}
-                                                        disabled={r.status === 'IN_CAR' || r.status === 'GATE_OUT'}
+                                                        disabled={r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT'}
                                                         onChange={(e) => {
-                                                            if (r.status === 'IN_CAR' || r.status === 'GATE_OUT') {
+                                                            if (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') {
+                                                                const statusText = r.status === 'DONE_LIFTING' ? 'Nâng thành công' : 
+                                                                                   r.status === 'IN_CAR' ? 'IN_CAR' : 'GATE_OUT';
                                                                 showError(
                                                                     'Không thể thay đổi trạng thái reuse',
-                                                                    `Request đang ở trạng thái ${r.status === 'IN_CAR' ? 'IN_CAR' : 'GATE_OUT'}, không thể thay đổi reuse status`,
+                                                                    `Request đang ở trạng thái ${statusText}, không thể thay đổi reuse status`,
                                                                     3000
                                                                 );
                                                                 return;
@@ -607,7 +609,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     />
                                                     <span style={{
                                                         position: 'absolute',
-                                                        cursor: (r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer',
+                                                        cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer',
                                                         top: 0,
                                                         left: 0,
                                                         right: 0,
@@ -637,7 +639,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     color: r.reuseStatus ? '#10b981' : '#ef4444'
                                                 }}>
                                                     {r.reuseStatus ? 'Có reuse' : 'Không reuse'}
-                                                    {(r.status === 'IN_CAR' || r.status === 'GATE_OUT') && (
+                                                    {(r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') && (
                                                         <div style={{ 
                                                             fontSize: '10px', 
                                                             color: '#f59e0b', 
@@ -1355,11 +1357,25 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                         }
                                         setShowPaymentModal(false);
                                         if (paymentRequestInfo) {
-                                            setRows(prev => prev.map(r => r.id === paymentRequestInfo.id ? { ...r, paymentStatus: 'Đã thanh toán' } : r));
+                                            setRows(prev => prev.map(r => 
+                                                r.id === paymentRequestInfo.id 
+                                                    ? { 
+                                                        ...r, 
+                                                        paymentStatus: 'Đã thanh toán',
+                                                        // Cập nhật status để nút "In phiếu EIR" hiển thị ngay
+                                                        status: r.status === 'DONE_LIFTING' ? 'IN_CAR' : r.status
+                                                      } 
+                                                    : r
+                                            ));
                                         }
                                         setPaymentRequestInfo(null);
                                         setCurrentSealCost(0);
                                         showSuccess('Thanh toán thành công', 'Yêu cầu đã xuất hiện trong trang hóa đơn');
+                                        
+                                        // Refresh dữ liệu từ API để đảm bảo đồng bộ
+                                        setTimeout(() => {
+                                            fetchRequests();
+                                        }, 1000);
                                     } catch (e:any) {
                                         showError('Không thể xác nhận thanh toán', e?.response?.data?.message || 'Lỗi không xác định');
                                     }

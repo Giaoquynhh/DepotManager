@@ -564,13 +564,14 @@ class ContainerController {
 
       // Cập nhật container_quality bằng cách cập nhật RepairTicket
       if (container_quality) {
-        const repairTickets = await prisma.repairTicket.findMany({
+        // Tìm RepairTicket mới nhất của container này
+        const latestRepairTicket = await prisma.repairTicket.findFirst({
           where: { container_no },
           orderBy: { createdAt: 'desc' }
         });
 
-        if (repairTickets.length > 0) {
-          // Cập nhật tất cả RepairTicket của container này
+        if (latestRepairTicket) {
+          // Chỉ cập nhật RepairTicket mới nhất, không cập nhật tất cả
           let repairStatus: 'COMPLETE' | 'COMPLETE_NEEDREPAIR' | 'PENDING' = 'PENDING';
           if (container_quality === 'GOOD') {
             repairStatus = 'COMPLETE';
@@ -578,8 +579,8 @@ class ContainerController {
             repairStatus = 'COMPLETE_NEEDREPAIR';
           }
           
-          await prisma.repairTicket.updateMany({
-            where: { container_no },
+          await prisma.repairTicket.update({
+            where: { id: latestRepairTicket.id },
             data: { 
               status: repairStatus,
               updatedAt: new Date()
@@ -587,12 +588,13 @@ class ContainerController {
           });
         } else if (container_quality === 'NEED_REPAIR') {
           // Tạo RepairTicket mới nếu chưa có và cần sửa chữa
+          const code = `RT-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${Math.floor(Math.random()*1000)}`;
           await prisma.repairTicket.create({
             data: {
               container_no,
               status: 'COMPLETE_NEEDREPAIR',
-              problem_description: 'Container cần sửa chữa',
-              code: `RT-${Date.now()}`, // Tạo code unique
+              problem_description: 'Container cần sửa chữa - Manual creation',
+              code,
               created_by: req.user!._id,
               createdAt: new Date(),
               updatedAt: new Date()

@@ -485,6 +485,7 @@
 .gate-table td:last-child {
   min-width: 200px; /* Chiều rộng tối thiểu cho cột Actions */
   white-space: nowrap; /* Không xuống dòng */
+  text-align: center; /* Căn giữa nội dung trong cột Actions */
 }
 
 /* Chiều rộng tối thiểu cho các cột quan trọng */
@@ -1275,6 +1276,14 @@
   margin-right: var(--space-2);
   text-decoration: none;
   display: inline-block;
+}
+
+/* Container cho action buttons trong cột Actions */
+.gate-table td:last-child > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .action-btn-primary {

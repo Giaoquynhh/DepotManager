@@ -104,8 +104,14 @@ export class RequestBaseService {
 					repo.listDocs(r.id),
 					// Lấy thông tin viewquote từ RepairTicket nếu có container_no
 					r.container_no ? prisma.repairTicket.findFirst({
-						where: { container_no: r.container_no },
-						select: { viewquote: true }
+						where: { 
+							container_no: r.container_no,
+							problem_description: {
+								contains: r.id
+							}
+						},
+						select: { viewquote: true },
+						orderBy: { createdAt: 'desc' }
 					}) : Promise.resolve(null)
 				]);
 				return { 

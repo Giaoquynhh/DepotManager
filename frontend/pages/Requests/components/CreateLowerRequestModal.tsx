@@ -230,13 +230,41 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		if (field === 'containerNumber' && containerValidationError) {
 			setContainerValidationError('');
 		}
+
+		// Trigger container validation when container number changes
+		if (field === 'containerNumber' && value.trim()) {
+			debouncedCheckContainer(value);
+		}
 	};
 
-	// Check if container number already exists - Disabled to allow any container input
+	// Check if container number already exists - Re-enabled with new validation logic
 	const checkContainerExists = React.useCallback(async (containerNo: string) => {
-		// Disabled container validation to allow any container input
+		if (!containerNo.trim()) {
+			setContainerValidationError('');
+			setIsCheckingContainer(false);
+			return;
+		}
+
+		setIsCheckingContainer(true);
 		setContainerValidationError('');
-		setIsCheckingContainer(false);
+
+		try {
+			const response = await requestService.checkContainerExists(containerNo);
+			
+			if (response.data.success && response.data.exists) {
+				setContainerValidationError(response.data.message);
+			} else if (response.data.success && !response.data.exists) {
+				// Container có thể tạo request mới - clear error
+				setContainerValidationError('');
+			} else {
+				setContainerValidationError('');
+			}
+		} catch (error: any) {
+			console.error('Error checking container:', error);
+			setContainerValidationError('Lỗi khi kiểm tra container. Vui lòng thử lại.');
+		} finally {
+			setIsCheckingContainer(false);
+		}
 	}, []);
 
 	// Debounced container check
@@ -268,8 +296,10 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			newErrors.customer = 'Khách hàng là bắt buộc';
 		}
 
-		// Container validation disabled - allow any container input
-		// No validation checks for container number
+		// Container validation re-enabled - check for conflicts with export requests
+		if (containerValidationError) {
+			newErrors.containerNumber = containerValidationError;
+		}
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -810,6 +840,24 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
 									<div>Vị trí: {selectedContainerInfo.block_code}-{selectedContainerInfo.slot_code}{selectedContainerInfo.tier ? `, Tầng ${selectedContainerInfo.tier}` : ''}</div>
 									{selectedContainerInfo.yard_name && <div>Bãi: {selectedContainerInfo.yard_name}</div>}
+								</div>
+							)}
+							{/* Container validation error display */}
+							{containerValidationError && (
+								<div style={{
+									marginTop: '6px',
+									padding: '8px 12px',
+									background: '#fef2f2',
+									border: '1px solid #fecaca',
+									borderRadius: '6px',
+									fontSize: '12px',
+									color: '#dc2626',
+									lineHeight: '1.4'
+								}}>
+									<div style={{ fontWeight: '500', marginBottom: '2px' }}>
+										⚠️ Container không hợp lệ
+									</div>
+									<div style={{ fontSize: '11px' }}>{containerValidationError}</div>
 								</div>
 							)}
 							{errors.containerNumber && <span style={errorMessageStyle}>{errors.containerNumber}</span>}
