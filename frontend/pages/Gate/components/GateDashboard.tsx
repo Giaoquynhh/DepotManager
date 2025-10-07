@@ -30,6 +30,8 @@ interface GateRequest {
   };
   docs: any[];
   attachments: any[];
+  created_at?: string;        // Thời gian tạo record
+  updated_at?: string;        // Thời gian cập nhật record
 }
 
 interface GateDashboardProps {
@@ -165,7 +167,23 @@ export default function GateDashboard({ title, lockedType }: GateDashboardProps)
       // Luôn gọi API, backend sẽ hiển thị dữ liệu mặc định khi không có filter
       const response = await api.get(`/gate/requests/search?${params.toString()}`);
       
-      setRequests(response.data.data);
+      // Sắp xếp dữ liệu: record mới lên trên, record cũ xuống dưới
+      const sortedData = response.data.data.sort((a: GateRequest, b: GateRequest) => {
+        // Ưu tiên sắp xếp theo thời gian tạo (created_at) nếu có
+        if (a.created_at && b.created_at) {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+        
+        // Fallback: sắp xếp theo request_no giảm dần (mới nhất lên trên)
+        if (a.request_no && b.request_no) {
+          return b.request_no.localeCompare(a.request_no);
+        }
+        
+        // Fallback cuối: sắp xếp theo id giảm dần
+        return b.id.localeCompare(a.id);
+      });
+      
+      setRequests(sortedData);
       setPagination(response.data.pagination);
     } catch (error: any) {
       console.error('Lỗi khi tải danh sách requests:', error);

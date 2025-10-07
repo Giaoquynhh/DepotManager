@@ -98,24 +98,48 @@ export const createRequest = async (req: Request, res: Response) => {
                 });
             }
 
-            // Tìm container IMPORT đang active
-            const activeImportRequest = await prisma.serviceRequest.findFirst({
+            // Kiểm tra container có EXPORT request với status GATE_OUT không
+            // Nếu có EXPORT GATE_OUT, cho phép tạo IMPORT request mới (bỏ qua IMPORT request cũ)
+            const exportGateOutRequest = await prisma.serviceRequest.findFirst({
                 where: {
                     container_no: container_no,
-                    type: 'IMPORT',
-                    status: {
-                        notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
-                    }
+                    type: 'EXPORT',
+                    status: 'GATE_OUT'
                 },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    container_no: true,
+                    status: true,
+                    request_no: true,
+                    createdAt: true
+                }
             });
 
-            // Nếu có container IMPORT đang active, không cho phép tạo IMPORT request mới
-            if (activeImportRequest) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${activeImportRequest.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống.` 
+            // Nếu có EXPORT request với status GATE_OUT, cho phép tạo IMPORT request mới
+            if (exportGateOutRequest) {
+                // Cho phép tạo request - không return error
+                console.log(`Container ${container_no} có thể tạo IMPORT request mới vì đã có EXPORT request với trạng thái GATE_OUT (${exportGateOutRequest.request_no})`);
+            } else {
+                // Tìm container IMPORT đang active
+                const activeImportRequest = await prisma.serviceRequest.findFirst({
+                    where: {
+                        container_no: container_no,
+                        type: 'IMPORT',
+                        status: {
+                            notIn: ['COMPLETED', 'REJECTED', 'GATE_REJECTED']
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
                 });
+
+                // Nếu có container IMPORT đang active, không cho phép tạo IMPORT request mới
+                if (activeImportRequest) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${activeImportRequest.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã có EXPORT request với trạng thái GATE_OUT.` 
+                    });
+                }
             }
         }
 

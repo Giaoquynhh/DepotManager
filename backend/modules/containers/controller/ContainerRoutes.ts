@@ -35,6 +35,11 @@ router.get('/yard/by-shipping-line-and-type/:shipping_line_id', (req, res) => {
   controller.getContainersInYardByShippingLineAndType(req as any, res, shipping_line_id, container_type_id as string, searchQuery as string);
 });
 
+// Route để kiểm tra container có tồn tại trong bãi hay không
+router.get('/yard/check-exists/:container_no', (req, res) => {
+  controller.checkContainerExistsInYard(req as any, res);
+});
+
 router.get('/:container_no', (req, res) => controller.get(req as any, res));
 router.put('/:container_no', (req, res) => controller.updateContainer(req, res));
 router.get('/alerts/list', (req, res) => controller.alerts(req as any, res));

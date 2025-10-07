@@ -465,6 +465,74 @@ class ContainerController {
   }
 
   /**
+   * Kiểm tra container có tồn tại trong bãi hay không
+   */
+  async checkContainerExistsInYard(req: AuthRequest, res: Response) {
+    try {
+      const { container_no } = req.params;
+
+      if (!container_no) {
+        return res.status(400).json({
+          success: false,
+          message: 'Container number is required'
+        });
+      }
+
+      // Kiểm tra container có trong yard placement không
+      const yardPlacement = await prisma.yardPlacement.findFirst({
+        where: {
+          container_no,
+          status: 'OCCUPIED',
+          removed_at: null
+        },
+        include: {
+          slot: {
+            include: {
+              block: {
+                include: {
+                  yard: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (yardPlacement) {
+        return res.json({
+          success: true,
+          data: {
+            exists: true,
+            container_no,
+            slot_code: yardPlacement.slot?.code || '',
+            block_code: yardPlacement.slot?.block?.code || '',
+            yard_name: yardPlacement.slot?.block?.yard?.name || '',
+            tier: yardPlacement.tier,
+            placed_at: yardPlacement.placed_at
+          },
+          message: `Container ${container_no} có trong bãi`
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          exists: false,
+          container_no
+        },
+        message: `Container ${container_no} không có trong bãi`
+      });
+
+    } catch (error: any) {
+      console.error('Error checking container in yard:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Có lỗi xảy ra khi kiểm tra container trong bãi'
+      });
+    }
+  }
+
+  /**
    * Cập nhật thông tin container
    */
   async updateContainerInfo(req: AuthRequest, res: Response) {

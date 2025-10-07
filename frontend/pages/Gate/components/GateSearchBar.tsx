@@ -76,27 +76,32 @@ export default function GateSearchBar({
                 aria-label="Trạng thái"
                 value={searchParams.status || (searchParams.statuses ? 
                   (searchParams.statuses.includes('PENDING,NEW_REQUEST') ? 'PENDING_GROUP' : 
-                   searchParams.statuses.includes('GATE_OUT') ? 'GATE_OUT_GROUP' : 'ENTERED_GATE') : '')}
+                   searchParams.statuses.includes('GATE_OUT') ? 'GATE_OUT_GROUP' : 
+                   searchParams.statuses.includes('REJECTED') ? 'REJECTED_GROUP' : 'ENTERED_GATE') : '')}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === '') {
                     onSearch({ status: '', statuses: '', page: 1 });
                   } else if (val === 'PENDING_GROUP') {
-                    // PENDING = Đang tới
+                    // PENDING = Chờ xử lý
                     onSearch({ status: '', statuses: 'PENDING,NEW_REQUEST', page: 1 });
                   } else if (val === 'ENTERED_GATE') {
-                    // Các trạng thái khác PENDING và GATE_OUT = Đã vào cổng
-                    onSearch({ status: '', statuses: 'FORWARDED,GATE_IN,IN_YARD,IN_CAR,FORKLIFTING,COMPLETED', page: 1 });
+                    // Các trạng thái đã vào cổng và đang xử lý
+                    onSearch({ status: '', statuses: 'SCHEDULED,FORWARDED,CHECKED,GATE_IN,FORKLIFTING,IN_YARD,COMPLETED', page: 1 });
                   } else if (val === 'GATE_OUT_GROUP') {
                     // GATE_OUT = Đã ra cổng
                     onSearch({ status: '', statuses: 'GATE_OUT', page: 1 });
+                  } else if (val === 'REJECTED_GROUP') {
+                    // REJECTED = Đã hủy
+                    onSearch({ status: '', statuses: 'REJECTED', page: 1 });
                   }
                 }}
               >
                 <option value="">Tất cả trạng thái</option>
-                <option value="PENDING_GROUP">Đang tới</option>
-                <option value="ENTERED_GATE">Đã vào cổng</option>
-                <option value="GATE_OUT_GROUP">Đã ra cổng</option>
+                <option value="PENDING_GROUP">🆕 Chờ xử lý</option>
+                <option value="ENTERED_GATE">🟢 Đã vào cổng</option>
+                <option value="GATE_OUT_GROUP">🟣 Đã ra cổng</option>
+                <option value="REJECTED_GROUP">⛔ Đã hủy</option>
               </select>
             ) : (
               <select
@@ -106,10 +111,17 @@ export default function GateSearchBar({
                 onChange={(e) => onSearch({ status: e.target.value, page: 1 })}
               >
                 <option value="">{t('pages.gate.allStatuses')}</option>
-                <option value="FORWARDED">{t('pages.gate.statusForwarded')}</option>
-                <option value="GATE_IN">{t('pages.gate.statusGateIn')}</option>
-                <option value="IN_YARD">{t('pages.gate.statusInYard')}</option>
-                <option value="IN_CAR">{t('pages.gate.statusInCar')}</option>
+                <option value="NEW_REQUEST">🆕 Thêm mới</option>
+                <option value="PENDING">⏳ Chờ xử lý</option>
+                <option value="SCHEDULED">📅 Đã lên lịch</option>
+                <option value="FORWARDED">📤 Đã chuyển tiếp</option>
+                <option value="CHECKED">✅ Chấp nhận</option>
+                <option value="GATE_IN">🟢 Đã vào cổng</option>
+                <option value="FORKLIFTING">🟡 Đang hạ container</option>
+                <option value="IN_YARD">✅ Đã hạ thành công</option>
+                <option value="GATE_OUT">🟣 Xe đã rời khỏi bãi</option>
+                <option value="REJECTED">⛔ Đã hủy</option>
+                <option value="COMPLETED">✅ Hoàn tất</option>
               </select>
             )}
           </div>

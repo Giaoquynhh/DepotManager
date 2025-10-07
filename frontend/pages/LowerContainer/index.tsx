@@ -133,6 +133,16 @@ export default function NewSubmenu() {
       );
     }
 
+    // Sắp xếp theo thứ tự mới nhất lên trên (dựa trên requestNumber hoặc id)
+    filteredData.sort((a, b) => {
+      // Sắp xếp theo requestNumber giảm dần (mới nhất lên trên)
+      if (a.requestNumber && b.requestNumber) {
+        return b.requestNumber.localeCompare(a.requestNumber);
+      }
+      // Fallback: sắp xếp theo id giảm dần
+      return b.id.localeCompare(a.id);
+    });
+
     console.log('🔍 Filtered data count:', filteredData.length);
     setTableData(filteredData);
   }, [allTableData, localStatus, localSearch]);
@@ -520,7 +530,7 @@ export default function NewSubmenu() {
   };
 
 
-  // Map hiển thị trạng thái thân thiện - Updated to match LiftContainer style
+  // Map hiển thị trạng thái thân thiện - Updated to match actual database status values
   const renderStatusText = (status: string) => {
     if (!status) return '';
     const normalized = String(status).toUpperCase();
@@ -528,15 +538,15 @@ export default function NewSubmenu() {
       case 'NEW_REQUEST':
         return '🆕 Thêm mới';
       case 'PENDING':
-        return '⏳ Chờ xử lý';
+        return '🆕 Thêm mới';
       case 'SCHEDULED':
         return '📅 Đã lên lịch';
       case 'FORWARDED':
         return '📤 Đã chuyển tiếp';
-      case 'CHECKED':
-        return '✅ Chấp nhận';
       case 'GATE_IN':
         return '🟢 Đã vào cổng';
+      case 'CHECKED':
+        return '✅ Chấp nhận';
       case 'FORKLIFTING':
         return '🟡 Đang hạ container';
       case 'IN_YARD':
@@ -850,17 +860,13 @@ export default function NewSubmenu() {
                 onChange={(e) => setLocalStatus(e.target.value)}
               >
                 <option value="all">Tất cả trạng thái</option>
-                <option value="NEW_REQUEST">🆕 Thêm mới</option>
-                <option value="PENDING">⏳ Chờ xử lý</option>
-                <option value="SCHEDULED">📅 Đã lên lịch</option>
-                <option value="FORWARDED">📤 Đã chuyển tiếp</option>
-                <option value="CHECKED">✅ Chấp nhận</option>
+                <option value="PENDING">🆕 Thêm mới</option>
                 <option value="GATE_IN">🟢 Đã vào cổng</option>
+                <option value="CHECKED">✅ Chấp nhận</option>
                 <option value="FORKLIFTING">🟡 Đang hạ container</option>
                 <option value="IN_YARD">✅ Đã hạ thành công</option>
                 <option value="GATE_OUT">🟣 Xe đã rời khỏi bãi</option>
                 <option value="REJECTED">⛔ Đã hủy</option>
-                <option value="COMPLETED">✅ Hoàn tất</option>
               </select>
             </div>
             <div className="action-group">

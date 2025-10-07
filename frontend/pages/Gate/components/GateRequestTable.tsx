@@ -26,6 +26,8 @@ interface GateRequest {
   docs: any[];
   attachments: any[];
   isPaid?: boolean;          // Trạng thái thanh toán
+  created_at?: string;        // Thời gian tạo record
+  updated_at?: string;        // Thời gian cập nhật record
 }
 
 interface GateRequestTableProps {

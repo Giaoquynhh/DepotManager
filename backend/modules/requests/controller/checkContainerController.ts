@@ -47,6 +47,39 @@ export const checkContainerExists = async (req: Request, res: Response) => {
             });
         }
 
+        // Kiểm tra container có EXPORT request với status GATE_OUT không
+        // Nếu có EXPORT GATE_OUT, cho phép tạo IMPORT request mới (bỏ qua IMPORT request cũ)
+        const exportGateOutRequest = await prisma.serviceRequest.findFirst({
+            where: {
+                container_no: container_no as string,
+                type: 'EXPORT',
+                status: 'GATE_OUT'
+            },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                container_no: true,
+                status: true,
+                request_no: true,
+                createdAt: true
+            }
+        });
+
+        // Nếu có EXPORT request với status GATE_OUT, cho phép tạo IMPORT request mới
+        if (exportGateOutRequest) {
+            return res.json({
+                success: true,
+                exists: false,
+                data: {
+                    container_no: exportGateOutRequest.container_no,
+                    export_status: exportGateOutRequest.status,
+                    export_request_no: exportGateOutRequest.request_no,
+                    export_created_at: exportGateOutRequest.createdAt
+                },
+                message: `Container ${container_no} có thể tạo IMPORT request mới vì đã có EXPORT request với trạng thái GATE_OUT (${exportGateOutRequest.request_no}).`
+            });
+        }
+
         // Kiểm tra container có tồn tại trong hệ thống không
         // Tìm container IMPORT đang active (không phải COMPLETED, REJECTED, GATE_REJECTED)
         const existingImportContainer = await prisma.serviceRequest.findFirst({
@@ -78,7 +111,7 @@ export const checkContainerExists = async (req: Request, res: Response) => {
                     request_no: existingImportContainer.request_no,
                     created_at: existingImportContainer.createdAt
                 },
-                message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingImportContainer.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống.`
+                message: `Container ${container_no} đã tồn tại trong hệ thống với trạng thái ${existingImportContainer.status} (IMPORT). Chỉ có thể tạo request mới khi container không còn trong hệ thống hoặc đã có EXPORT request với trạng thái GATE_OUT.`
             });
         }
 

@@ -183,7 +183,19 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                         reuseStatus: request.reuse_status || false
                     };
                 });
-                setRows(transformedData);
+                
+                // Sắp xếp dữ liệu: record mới lên trên, record cũ xuống dưới
+                const sortedData = transformedData.sort((a, b) => {
+                    // Ưu tiên sắp xếp theo requestNo giảm dần (mới nhất lên trên)
+                    if (a.requestNo && b.requestNo) {
+                        return b.requestNo.localeCompare(a.requestNo);
+                    }
+                    
+                    // Fallback: sắp xếp theo id giảm dần
+                    return b.id.localeCompare(a.id);
+                });
+                
+                setRows(sortedData);
             }
         } catch (error) {
             console.error('Error fetching import requests:', error);
@@ -446,6 +458,24 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 					.gate-search-section .search-row { flex-wrap: wrap; }
 					.gate-search-section .action-group { margin-left: 0; width: 100%; display: flex; justify-content: flex-end; }
 				}
+
+				.payment-status {
+					display: inline-block;
+					padding: 0.25rem 0.5rem;
+					border-radius: 0.375rem;
+					font-size: 0.75rem;
+					font-weight: 500;
+				}
+
+				.payment-status.paid {
+					background: #d1fae5;
+					color: #065f46;
+				}
+
+				.payment-status.unpaid {
+					background: #fee2e2;
+					color: #991b1b;
+				}
 			`}</style>
 			<style>{`
 				.gate-table-container .table-scroll-container {
@@ -674,7 +704,11 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                 </div>
                                             ) : '-'}
                                         </td>
-                                        <td style={{...tdStyle, minWidth: '150px'}}>{r.paymentStatus || '-'}</td>
+                                        <td style={{...tdStyle, minWidth: '150px'}}>
+                                            <span className={`payment-status ${r.paymentStatus === 'Đã thanh toán' ? 'paid' : 'unpaid'}`}>
+                                                {r.paymentStatus || '-'}
+                                            </span>
+                                        </td>
                                         <td style={{...tdStyle, minWidth: '100px'}}>
                                             <button 
                                                 type="button" 

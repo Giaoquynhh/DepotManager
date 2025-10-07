@@ -68,5 +68,11 @@ export const containersApi = {
     
     const { data } = await api.get(`/containers/yard/by-shipping-line-and-type/${shipping_line_id}`, { params });
     return data;
+  },
+
+  // API để kiểm tra container có tồn tại trong bãi hay không
+  async checkContainerExistsInYard(container_no: string) {
+    const { data } = await api.get(`/containers/yard/check-exists/${encodeURIComponent(container_no)}`);
+    return data;
   }
 };

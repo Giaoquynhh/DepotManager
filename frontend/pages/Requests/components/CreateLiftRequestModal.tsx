@@ -80,6 +80,9 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	});
 
 	const [errors, setErrors] = useState<Partial<LiftRequestData>>({});
+	
+	// Container validation warning state
+	const [containerWarning, setContainerWarning] = useState<string>('');
 
 	// Shipping lines (from Setup page)
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
@@ -176,7 +179,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 	// Refresh selected container info with latest data
 	const refreshSelectedContainerInfo = async () => {
-		if (formData.containerNumber) {
+		if (formData.containerNumber && formData.containerNumber.length >= 4) {
 			setIsRefreshingContainerInfo(true);
 			try {
 				const containerResponse = await containersApi.get(formData.containerNumber);
@@ -315,7 +318,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 	// Refresh container info when shipping line changes (in case container was moved to different shipping line)
 	useEffect(() => {
-		if (formData.containerNumber && formData.shippingLine) {
+		if (formData.containerNumber && formData.containerNumber.length >= 4 && formData.shippingLine) {
 			// Refresh container info to get latest data including new shipping line info
 			refreshSelectedContainerInfo();
 		}
@@ -331,7 +334,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 	// Auto-refresh selected container info when modal opens
 	useEffect(() => {
-		if (isOpen && formData.containerNumber) {
+		if (isOpen && formData.containerNumber && formData.containerNumber.length >= 4) {
 			// Auto-refresh container info when modal opens to get latest data
 			refreshSelectedContainerInfo();
 		}
@@ -355,8 +358,9 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	}, [selectedContainerInfo]);
 
 	// Refresh container data when container number changes (user might have updated in ManagerCont)
+	// Chỉ gọi API khi container number có ít nhất 4 ký tự để tránh gọi API khi đang nhập
 	useEffect(() => {
-		if (formData.containerNumber && formData.shippingLine) {
+		if (formData.containerNumber && formData.containerNumber.length >= 4 && formData.shippingLine) {
 			// Refresh container data to get latest information
 			refreshContainerData();
 			// Also refresh the selected container info to get latest customer/container type data
@@ -447,6 +451,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				[field]: undefined
 			}));
 		}
+		
+		// Clear container warning when user changes container number
+		if (field === 'containerNumber' && containerWarning) {
+			setContainerWarning('');
+		}
 
 		// Reset container search when shipping line changes
 		if (field === 'shippingLine') {
@@ -506,6 +515,29 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 					'Bạn có muốn tiếp tục tạo yêu cầu không?'
 				);
 				if (!shouldContinue) {
+					return;
+				}
+			} else {
+				// Kiểm tra container number có độ dài hợp lý không
+				if (formData.containerNumber.trim().length < 4) {
+					setContainerWarning('⚠️ Số container phải có ít nhất 4 ký tự. Vui lòng nhập đầy đủ số container.');
+					return;
+				}
+				
+				// Kiểm tra container có tồn tại trong bãi hay không
+				try {
+					const containerCheckResponse = await containersApi.checkContainerExistsInYard(formData.containerNumber.trim());
+					
+					if (!containerCheckResponse.success || !containerCheckResponse.data.exists) {
+						setContainerWarning('⚠️ Container ' + formData.containerNumber + ' không có trong bãi. Vui lòng kiểm tra lại số container hoặc liên hệ quản lý bãi.');
+						return;
+					}
+					
+					// Nếu container có trong bãi, xóa cảnh báo
+					setContainerWarning('');
+				} catch (error: any) {
+					console.error('Error checking container in yard:', error);
+					setContainerWarning('⚠️ Không thể kiểm tra container trong bãi. Vui lòng thử lại hoặc liên hệ quản lý bãi.');
 					return;
 				}
 			}
@@ -571,6 +603,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 					});
 					setSelectedCustomerName('');
 					setUploadedFiles([]);
+					setContainerWarning(''); // Clear container warning
 					onClose();
 				} else {
 					alert('Có lỗi xảy ra: ' + response.data.message);
@@ -588,6 +621,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		// Revoke all preview URLs on close
 		previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
 		setErrors({});
+		setContainerWarning(''); // Clear container warning
 		setIsShippingLineOpen(false);
 		setIsContainerTypeOpen(false);
 		setIsTransportCompanyOpen(false);
@@ -1393,6 +1427,22 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							{formData.shippingLine && containerSearchResults.length === 0 && !isSearchingContainers && (
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
 									ℹ️ Không có container nào có thể nâng cho hãng tàu này
+								</div>
+							)}
+							
+							{/* Container warning message */}
+							{containerWarning && (
+								<div style={{ 
+									fontSize: '12px', 
+									color: '#dc2626', 
+									marginTop: '4px',
+									padding: '8px 12px',
+									background: '#fef2f2',
+									border: '1px solid #fecaca',
+									borderRadius: '6px',
+									fontWeight: '500'
+								}}>
+									{containerWarning}
 								</div>
 							)}
 						</div>

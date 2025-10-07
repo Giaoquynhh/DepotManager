@@ -406,7 +406,7 @@ export class GateService {
             }
           }
         },
-        orderBy: { forwarded_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit
       }),
