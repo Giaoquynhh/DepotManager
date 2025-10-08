@@ -1,12 +1,18 @@
 /* Forklift Table Styles - Sử dụng gate-table làm base */
 
 /* Header icons for Forklift table */
+.gate-table th[data-column="requestNo"]::before { content: "📋"; }
 .gate-table th[data-column="container"]::before { content: "📦"; }
-.gate-table th[data-column="pickup"]::before { content: "📍"; }
-.gate-table th[data-column="dropoff"]::before { content: "🎯"; }
+.gate-table th[data-column="ctype"]::before { content: "🏷️"; }
+.gate-table th[data-column="vehicle"]::before { content: "🚚"; }
+.gate-table th[data-column="driver"]::before { content: "👤"; }
+.gate-table th[data-column="driverPhone"]::before { content: "📞"; }
+.gate-table th[data-column="location"]::before { content: "📍"; }
 .gate-table th[data-column="status"]::before { content: "🔄"; }
 .gate-table th[data-column="forklift"]::before { content: "🚛"; }
-.gate-table th[data-column="created"]::before { content: "⏰"; }
+.gate-table th[data-column="start"]::before { content: "⏰"; }
+.gate-table th[data-column="end"]::before { content: "⏰"; }
+.gate-table th[data-column="image"]::before { content: "🖼️"; }
 .gate-table th[data-column="actions"]::before { content: "⚙️"; }
 
 /* Forklift specific styles */

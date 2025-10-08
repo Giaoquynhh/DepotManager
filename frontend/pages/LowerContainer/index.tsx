@@ -898,26 +898,26 @@ export default function NewSubmenu() {
               <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1800 }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
-                    <th style={{...thStyle, minWidth: '100px'}}>Hãng tàu</th>
-                    <th style={{...thStyle, minWidth: '150px'}}>Số yêu cầu</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Số Cont</th>
-                    <th style={{...thStyle, minWidth: '100px'}}>Loại cont</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
-                    <th style={{...thStyle, minWidth: '100px'}}>Tài xế</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>SDT Tài xế</th>
-                    <th style={{...thStyle, minWidth: '160px'}}>Thời gian hẹn</th>
-                    <th style={{...thStyle, minWidth: '160px'}}>Giờ vào thực tế</th>
-                    <th style={{...thStyle, minWidth: '160px'}}>Giờ ra thực tế</th>
-                    <th style={{...thStyle, minWidth: '120px'}}>Tổng tiền</th>
-                    <th style={{...thStyle, minWidth: '150px'}}>Trạng thái thanh toán</th>
-                    <th style={{...thStyle, minWidth: '100px'}}>Chứng từ</th>
-                    <th style={{...thStyle, minWidth: '100px'}}>Dem/Det</th>
-                    <th style={{...thStyle, minWidth: '150px'}}>Ghi chú</th>
-                    <th style={{...thStyle, minWidth: '200px'}}>Hành động</th>
+                    <th style={{...thStyle, minWidth: '100px'}} data-column="shipping-line">🚢 Hãng tàu</th>
+                    <th style={{...thStyle, minWidth: '150px'}} data-column="request-no">📋 Số yêu cầu</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="container">📦 Số Container</th>
+                    <th style={{...thStyle, minWidth: '100px'}} data-column="container-type">🏷️ Loại container</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="service-type">🔧 Loại dịch vụ</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="status">🔄 Trạng thái</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="customer">👥 Khách hàng</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="truck-company">🏢 Nhà xe</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="vehicle">🚚 Số xe</th>
+                    <th style={{...thStyle, minWidth: '100px'}} data-column="driver">👤 Tài xế</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="driver-phone">📞 SĐT Tài xế</th>
+                    <th style={{...thStyle, minWidth: '160px'}} data-column="appointment">📅 Thời gian hẹn</th>
+                    <th style={{...thStyle, minWidth: '160px'}} data-column="time-in">⏰ Giờ vào thực tế</th>
+                    <th style={{...thStyle, minWidth: '160px'}} data-column="time-out">⏰ Giờ ra thực tế</th>
+                    <th style={{...thStyle, minWidth: '120px'}} data-column="total-amount">💰 Tổng tiền</th>
+                    <th style={{...thStyle, minWidth: '150px'}} data-column="payment-status">💳 Trạng thái thanh toán</th>
+                    <th style={{...thStyle, minWidth: '100px'}} data-column="documents">📄 Chứng từ</th>
+                    <th style={{...thStyle, minWidth: '100px'}} data-column="dem-det">⏱️ Dem/Det</th>
+                    <th style={{...thStyle, minWidth: '150px'}} data-column="notes">📝 Ghi chú</th>
+                    <th style={{...thStyle, minWidth: '200px'}} data-column="actions">⚙️ Hành động</th>
                   </tr>
                 </thead>
                 <tbody>

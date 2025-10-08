@@ -98,7 +98,7 @@ export default function GateSearchBar({
                 }}
               >
                 <option value="">Tất cả trạng thái</option>
-                <option value="PENDING_GROUP">🆕 Chờ xử lý</option>
+                <option value="PENDING_GROUP">🆕 Đang tới</option>
                 <option value="ENTERED_GATE">🟢 Đã vào cổng</option>
                 <option value="GATE_OUT_GROUP">🟣 Đã ra cổng</option>
                 <option value="REJECTED_GROUP">⛔ Đã hủy</option>

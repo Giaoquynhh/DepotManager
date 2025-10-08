@@ -271,36 +271,10 @@ function SealManagement() {
           border-color: #0284c7;
         }
 
-        /* Table responsive styling */
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          background: white;
-        }
-
-        .table th {
-          background: #f8fafc;
-          padding: 12px 16px;
-          text-align: left;
-          font-weight: 600;
-          color: #374151;
-          border-bottom: 1px solid #e5e7eb;
-          font-size: 14px;
-        }
-
-        .table td {
-          padding: 12px 16px;
-          border-bottom: 1px solid #f3f4f6;
-          color: #374151;
-          font-size: 14px;
-        }
-
-        .table tbody tr:hover {
-          background-color: #f9fafb;
-        }
+        /* Sử dụng gate-table CSS từ gate.css */
       `}</style>
       <Header />
-      <main className="container depot-requests">
+      <main className="container gate-page">
         {/* Page Header */}
         <div className="page-header modern-header">
           <div className="header-content">
@@ -319,20 +293,19 @@ function SealManagement() {
         </div>
 
         {/* Seals Table */}
-        <Card>
-          <div style={{overflowX:'auto'}}>
-            <table className="table" style={{minWidth:'1000px'}}>
+        <div className="gate-table-container">
+          <table className="gate-table" style={{minWidth:'1000px'}}>
               <thead>
                 <tr>
-                  <th>Hãng Tàu</th>
-                  <th>Ngày mua</th>
-                  <th>Số lượng mua</th>
-                  <th>Số lượng đã xuất</th>
-                  <th>Số lượng còn lại</th>
-                  <th>Đơn giá</th>
-                  <th>Tổng tiền</th>
-                  <th>Nơi lấy</th>
-                  <th>Hành động</th>
+                  <th data-column="shipping-line">Hãng Tàu</th>
+                  <th data-column="purchase-date">Ngày mua</th>
+                  <th data-column="purchase-quantity">Số lượng mua</th>
+                  <th data-column="exported-quantity">Số lượng đã xuất</th>
+                  <th data-column="remaining-quantity">Số lượng còn lại</th>
+                  <th data-column="unit-price">Đơn giá</th>
+                  <th data-column="total-amount">Tổng tiền</th>
+                  <th data-column="pickup-location">Nơi lấy</th>
+                  <th data-column="actions">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,8 +360,7 @@ function SealManagement() {
                 )}
               </tbody>
             </table>
-          </div>
-        </Card>
+        </div>
 
         {/* Edit Seal Modal */}
         <EditSealModal

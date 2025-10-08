@@ -47,19 +47,19 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
       case 'PENDING':
         return 'Đang tới';
       case 'FORKLIFTING':
-        return 'Đang nâng hạ';
+        return 'Đã vào cổng';
       case 'GATE_OUT':
-        return 'Đã ra khỏi depot';
+        return 'Đã ra cổng';
       case 'GATE_IN':
         return 'Đã vào cổng';
       case 'IN_YARD':
-        return 'Trong bãi';
+        return 'Đã vào cổng';
       case 'FORWARDED':
-        return 'Đã chuyển tiếp';
+        return 'Đã vào cổng';
       case 'CHECKED':
-        return 'Đã kiểm tra';
+        return 'Đã vào cổng';
       case 'NEW_REQUEST':
-        return 'Yêu cầu mới';
+        return 'Đang tới';
       default:
         return status;
     }
@@ -133,18 +133,18 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
           <thead>
             <tr>
               <th data-column="request-no">Số yêu cầu</th>
-              <th data-column="container">Số cont</th>
-              <th data-column="container-type">Loại cont</th>
+              <th data-column="container">Số container</th>
+              <th data-column="container-type">Loại container</th>
               <th data-column="service-type">Loại dịch vụ</th>
-              <th data-column="vehicle">Số xe</th>
+              <th data-column="vehicle">Biển số xe</th>
               <th data-column="driver">Tài xế</th>
-              <th data-column="driver-phone">SDT tài xế</th>
+              <th data-column="driver-phone">SĐT tài xế</th>
               <th data-column="status">Trạng thái cổng</th>
               <th data-column="appointment">Thời gian hẹn</th>
               <th data-column="time-in">Thời gian vào</th>
               <th data-column="time-out">Thời gian ra</th>
               <th data-column="images">Hình ảnh</th>
-              <th data-column="actions">Action</th>
+              <th data-column="actions">Hành động</th>
             </tr>
           </thead>
           <tbody>

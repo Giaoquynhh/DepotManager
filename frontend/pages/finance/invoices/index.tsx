@@ -59,7 +59,7 @@ export default function InvoiceList(){
         }
       `}</style>
       <Header />
-      <main className="container depot-requests invoice-page">
+      <main className="container gate-page">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
@@ -70,39 +70,19 @@ export default function InvoiceList(){
           </div>
         </div>
 
-        <div className="search-filter-section modern-search" style={{display: 'flex !important', justifyContent: 'space-between !important', alignItems: 'center !important'}}>
-          <div className="filter-group">
-            <label className="filter-label">{t('pages.finance.invoices.filterByStatus')}</label>
-            <select 
-              value={status} 
-              onChange={e=>{ setStatus(e.target.value); mutate(key); }}
-              className="filter-select"
-            >
-              <option value="">{t('pages.finance.invoices.allStatuses')}</option>
-              <option value="DRAFT">{t('pages.finance.invoices.statusOptions.draft')}</option>
-              <option value="UNPAID">{t('pages.finance.invoices.statusOptions.unpaid')}</option>
-              <option value="PARTIALLY_PAID">{t('pages.finance.invoices.statusOptions.partiallyPaid')}</option>
-              <option value="PAID">{t('pages.finance.invoices.statusOptions.paid')}</option>
-              <option value="CANCELLED">{t('pages.finance.invoices.statusOptions.cancelled')}</option>
-            </select>
-          </div>
-          
-        </div>
 
-        <Card>
-            
-            <div style={{overflowX:'auto'}}>
-              <table className="table" style={{minWidth:'1000px'}}>
+        <div className="gate-table-container">
+          <table className="gate-table" style={{minWidth:'1000px'}}>
                 <thead>
                   <tr>
-                    <th>{t('pages.finance.invoices.tableHeaders.invoiceNumber')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.requestNumber')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.requestType')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.customer')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.taxCode')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.phoneNumber')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.totalAmount')}</th>
-                    <th>{t('pages.finance.invoices.tableHeaders.actions')}</th>
+                    <th data-column="invoice-number">{t('pages.finance.invoices.tableHeaders.invoiceNumber')}</th>
+                    <th data-column="request-number">{t('pages.finance.invoices.tableHeaders.requestNumber')}</th>
+                    <th data-column="request-type">{t('pages.finance.invoices.tableHeaders.requestType')}</th>
+                    <th data-column="customer">{t('pages.finance.invoices.tableHeaders.customer')}</th>
+                    <th data-column="tax-code">{t('pages.finance.invoices.tableHeaders.taxCode')}</th>
+                    <th data-column="phone-number">{t('pages.finance.invoices.tableHeaders.phoneNumber')}</th>
+                    <th data-column="total-amount">{t('pages.finance.invoices.tableHeaders.totalAmount')}</th>
+                    <th data-column="actions">{t('pages.finance.invoices.tableHeaders.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -133,14 +113,13 @@ export default function InvoiceList(){
                   ))}
                 </tbody>
               </table>
-            </div>
             
             {(!invoices || invoices.length === 0) && (
               <div style={{textAlign:'center', padding:'40px 20px', color:'#666'}}>
                 {t('pages.finance.invoices.messages.noInvoices')}
               </div>
             )}
-          </Card>
+        </div>
       </main>
       
       
@@ -152,21 +131,7 @@ export default function InvoiceList(){
         .status-unpaid {
           color: #f57c00;
         }
-        .table th {
-          background-color: #f5f5f5;
-          padding: 12px 8px;
-          text-align: left;
-          font-weight: 600;
-          border-bottom: 2px solid #ddd;
-        }
-        .table td {
-          padding: 12px 8px;
-          border-bottom: 1px solid #eee;
-          vertical-align: middle;
-        }
-        .table tr:hover {
-          background-color: #f9f9f9;
-        }
+        /* Sử dụng gate-table CSS từ gate.css */
         .btn-containers-need-invoice:hover {
           background-color: #218838 !important;
         }
