@@ -20,6 +20,7 @@ interface DashboardData {
 interface ForkliftTask {
   id: string;
   task_name: string;
+  container_no?: string;
   from_slot_id?: string;
   to_slot_id?: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'PENDING_APPROVAL' | 'COMPLETED' | 'CANCELLED';
@@ -62,9 +63,14 @@ interface ForkliftTask {
   container_info?: {
     container_no?: string;
     driver_name?: string;
+    driver_phone?: string;
     license_plate?: string;
     status?: string;
     type?: string;
+    request_no?: string;
+    container_type?: {
+      code?: string;
+    };
   };
   report_images_count?: number;
 }
@@ -282,14 +288,14 @@ export default function DriverDashboard() {
         <Card padding="lg" className="driver-card">
           <div className="quick-actions">
             {[
-              { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊', className: 'pill-btn pill-primary' },
-              { id: 'tasks', label: t('pages.driverDashboard.tabs.tasks'), icon: '📋', className: 'pill-btn pill-secondary' },
-              { id: 'history', label: t('pages.driverDashboard.tabs.history'), icon: '📚', className: 'pill-btn pill-secondary' }
+              { id: 'overview', label: t('pages.driverDashboard.tabs.overview'), icon: '📊' },
+              { id: 'tasks', label: t('pages.driverDashboard.tabs.tasks'), icon: '📋' },
+              { id: 'history', label: t('pages.driverDashboard.tabs.history'), icon: '📚' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={tab.className}
+                className={`pill-btn ${activeTab === tab.id ? 'pill-primary' : 'pill-secondary'}`}
                 onMouseDown={(e)=>{
                   const t=e.currentTarget;const r=document.createElement('span');const d=t.getBoundingClientRect();const x=e.clientX-d.left;const y=e.clientY-d.top;r.className='ripple';r.style.left=`${x}px`;r.style.top=`${y}px`;r.style.width=r.style.height=Math.max(d.width,d.height)+'px';t.appendChild(r);setTimeout(()=>r.remove(),650);
                 }}
@@ -371,19 +377,31 @@ export default function DriverDashboard() {
                   <table className="table-modern sticky-header">
                     <thead>
                       <tr>
-                        <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.report')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
-                        <th>{t('pages.driverDashboard.tableHeaders.actions')}</th>
+                        <th>📋 {t('pages.driverDashboard.tableHeaders.requestNo')}</th>
+                        <th>📦 {t('pages.driverDashboard.tableHeaders.container')}</th>
+                        <th>📦 {t('pages.driverDashboard.tableHeaders.containerType')}</th>
+                        <th>📍 {t('pages.driverDashboard.tableHeaders.from')}</th>
+                        <th>🎯 {t('pages.driverDashboard.tableHeaders.to')}</th>
+                        <th>📊 {t('pages.driverDashboard.tableHeaders.report')}</th>
+                        <th>⚡ {t('pages.driverDashboard.tableHeaders.status')}</th>
+                        <th>🔧 {t('pages.driverDashboard.tableHeaders.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {assignedTasks.map((task) => (
                         <tr key={task.id} className="table-row">
                           <td>
-                            <span className="container-id">{task.container_info?.container_no}</span>
+                            <span className="container-id">
+                              {task.container_info?.request_no || '-'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="container-id">{task.container_no || task.container_info?.container_no}</span>
+                          </td>
+                          <td>
+                            <span className="container-id">
+                              {task.container_info?.container_type?.code || '-'}
+                            </span>
                           </td>
                           
                           <td>
@@ -547,7 +565,7 @@ export default function DriverDashboard() {
                           </td>
                           
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
                             <span
                               role="button"
                               onClick={() => handleViewReportImages(task)}
@@ -624,7 +642,9 @@ export default function DriverDashboard() {
                   <table className="table-modern">
                     <thead>
                       <tr>
-                        <th>{t('pages.driverDashboard.tableHeaders.container')}</th>
+                        <th>📋 {t('pages.driverDashboard.tableHeaders.requestNo')}</th>
+                        <th>📦 {t('pages.driverDashboard.tableHeaders.container')}</th>
+                        <th>📦 {t('pages.driverDashboard.tableHeaders.containerType')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.from')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.to')}</th>
                         <th>{t('pages.driverDashboard.tableHeaders.status')}</th>
@@ -635,7 +655,17 @@ export default function DriverDashboard() {
                       {taskHistory.map((task) => (
                         <tr key={task.id} className="table-row">
                           <td>
-                            <span className="container-id">{task.container_info?.container_no}</span>
+                            <span className="container-id">
+                              {task.container_info?.request_no || '-'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="container-id">{task.container_no || task.container_info?.container_no}</span>
+                          </td>
+                          <td>
+                            <span className="container-id">
+                              {task.container_info?.container_type?.code || '-'}
+                            </span>
                           </td>
                           <td>
                             {/* Lịch sử: Từ vị trí theo quy tắc như Forklift */}

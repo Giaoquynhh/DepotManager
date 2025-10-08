@@ -219,6 +219,31 @@ export const createRequest = async (req: Request, res: Response) => {
             }
         }
 
+        // Đồng bộ booking với SealUsageHistory nếu có booking_bill và container_no
+        if (request.booking_bill && request.container_no) {
+            try {
+                console.log(`🔄 Đồng bộ booking cho ServiceRequest mới: ${request.id}, container: ${request.container_no}, booking: ${request.booking_bill}`);
+                
+                // Cập nhật tất cả SealUsageHistory có container_number tương ứng nhưng chưa có booking_number
+                const updatedSealHistory = await prisma.sealUsageHistory.updateMany({
+                    where: {
+                        container_number: request.container_no,
+                        booking_number: null
+                    },
+                    data: {
+                        booking_number: request.booking_bill
+                    }
+                });
+
+                if (updatedSealHistory.count > 0) {
+                    console.log(`✅ Đã đồng bộ ${updatedSealHistory.count} record trong SealUsageHistory với booking: ${request.booking_bill}`);
+                }
+            } catch (sealUpdateError) {
+                console.error('❌ Lỗi khi đồng bộ SealUsageHistory trong createController:', sealUpdateError);
+                // Không throw error để không ảnh hưởng đến việc tạo ServiceRequest
+            }
+        }
+
         res.status(201).json({ success: true, data: request, message: 'Tạo yêu cầu thành công' });
 
     } catch (error: any) {

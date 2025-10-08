@@ -797,7 +797,7 @@
         "notAssigned": "Chưa gán",
         "driverName": "Tài xế:",
         "licensePlate": "Biển số:",
-        "noInfo": "Chưa có thông tin"
+        "noInfo": "Bên ngoài"
       },
       "cost": {
         "hasCost": "VNĐ",
@@ -927,13 +927,15 @@
         "title": "Công việc được giao"
       },
       "tableHeaders": {
-        "container": "Container",
-        "from": "Từ vị trí",
-        "to": "Đến vị trí",
-        "cost": "Chi phí",
-        "report": "Báo cáo",
-        "status": "Trạng thái",
-        "actions": "Thao tác"
+        "requestNo": "SỐ YÊU CẦU",
+        "container": "SỐ CONTAINER",
+        "containerType": "LOẠI CONTAINER",
+        "from": "TỪ VỊ TRÍ",
+        "to": "ĐẾN VỊ TRÍ",
+        "cost": "CHI PHÍ",
+        "report": "BÁO CÁO",
+        "status": "TRẠNG THÁI",
+        "actions": "THAO TÁC"
       },
       "cost": {
         "inputPlaceholder": "Nhập chi phí",

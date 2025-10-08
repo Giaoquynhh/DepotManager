@@ -269,12 +269,13 @@ export class SealService {
             quantity_remaining: true
           }
         },
-        // creator: {
-        //   select: {
-        //     full_name: true,
-        //     username: true
-        //   }
-        // }
+        creator: {
+          select: {
+            full_name: true,
+            username: true,
+            email: true
+          }
+        }
       }
     });
 

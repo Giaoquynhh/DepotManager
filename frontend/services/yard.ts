@@ -19,6 +19,17 @@ export const yardApi = {
     return data;
   },
 
+  // Tìm kiếm container trong bãi với gợi ý
+  async searchContainers(query: string, limit: number = 10, shippingLineId?: string) {
+    // Tạo query string thủ công để tránh lỗi encoding
+    let queryString = `q=${encodeURIComponent(query)}&limit=${limit}`;
+    if (shippingLineId) {
+      queryString += `&shipping_line_id=${encodeURIComponent(shippingLineId)}`;
+    }
+    const { data } = await api.get(`/yard/search-containers?${queryString}`);
+    return data;
+  },
+
   // Chi tiết các tier của một slot
   async stackSlot(slotId: string) {
     const { data } = await api.get(`/yard/stack/slot/${encodeURIComponent(slotId)}`);

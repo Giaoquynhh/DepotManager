@@ -190,9 +190,16 @@ export class DriverDashboardService {
 							select: {
 								container_no: true,
 								driver_name: true,
+								driver_phone: true,
 								license_plate: true,
 								status: true,
-								type: true
+								type: true,
+								request_no: true,
+								container_type: {
+									select: {
+										code: true
+									}
+								}
 							},
 							orderBy: { createdAt: 'desc' }
 						}),
@@ -437,9 +444,16 @@ export class DriverDashboardService {
 							select: {
 								container_no: true,
 								driver_name: true,
+								driver_phone: true,
 								license_plate: true,
 								status: true,
-								type: true
+								type: true,
+								request_no: true,
+								container_type: {
+									select: {
+										code: true
+									}
+								}
 							},
 							orderBy: { createdAt: 'desc' }
 						}),

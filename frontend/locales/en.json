@@ -856,7 +856,7 @@
         "notAssigned": "Not Assigned",
         "driverName": "Driver:",
         "licensePlate": "License Plate:",
-        "noInfo": "No information"
+        "noInfo": "Outside"
       },
       "cost": {
         "hasCost": "VND",
@@ -985,13 +985,15 @@
         "title": "Assigned Tasks"
       },
       "tableHeaders": {
-        "container": "Container",
-        "from": "From",
-        "to": "To",
-        "cost": "Cost",
-        "report": "Report",
-        "status": "Status",
-        "actions": "Actions"
+        "requestNo": "REQUEST NUMBER",
+        "container": "CONTAINER NUMBER",
+        "containerType": "CONTAINER TYPE",
+        "from": "FROM LOCATION",
+        "to": "TO LOCATION",
+        "cost": "COST",
+        "report": "REPORT",
+        "status": "STATUS",
+        "actions": "ACTIONS"
       },
       "cost": {
         "inputPlaceholder": "Enter cost",

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@services/api';
 import { useTranslation } from '../../hooks/useTranslation';
+import { DateInput } from '../DateInput';
 
 interface AppointmentFormData {
   appointment_time: string;
@@ -185,20 +186,25 @@ export default function AppointmentForm({
           <label className="appointment-form-label" htmlFor="appointment_date">
             {t('pages.requests.appointmentDate')} *
           </label>
-          <input
-            type="date"
-            id="appointment_date"
-            className={`appointment-form-input ${errors.appointment_time ? 'error' : ''}`}
-            value={formData.appointment_time ? formData.appointment_time.split('T')[0] : (() => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, '0');
-              const day = String(now.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            })()}
-            onChange={(e) => {
+          <DateInput
+            value={formData.appointment_time || ''}
+            onChange={(value) => {
               const time = formData.appointment_time ? formData.appointment_time.split('T')[1] || '09:00' : '09:00';
-              handleInputChange('appointment_time', `${e.target.value}T${time}`);
+              const dateOnly = value.split('T')[0];
+              handleInputChange('appointment_time', `${dateOnly}T${time}`);
+            }}
+            placeholder="dd/mm/yyyy"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: `2px solid ${errors.appointment_time ? '#ef4444' : '#e2e8f0'}`,
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#374151',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              backgroundColor: 'white'
             }}
             min={(() => {
               const now = new Date();

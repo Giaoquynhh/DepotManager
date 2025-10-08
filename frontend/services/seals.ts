@@ -73,6 +73,11 @@ export interface SealUsageHistoryItem {
     shipping_company: string;
     quantity_remaining: number;
   };
+  creator?: {
+    full_name: string;
+    username: string;
+    email: string;
+  };
 }
 
 export const sealsApi = {

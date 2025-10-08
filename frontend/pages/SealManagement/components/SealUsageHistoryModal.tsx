@@ -265,7 +265,22 @@ export const SealUsageHistoryModal: React.FC<SealUsageHistoryModalProps> = ({
 													padding: '12px 16px',
 													color: '#374151',
 													fontSize: '14px'
-												}}>{item.created_by || 'N/A'}</td>
+												}}>
+													{item.creator ? (
+														<div>
+															<div style={{ fontWeight: '500' }}>
+																{item.creator.full_name || item.creator.username || 'N/A'}
+															</div>
+															{item.creator.username && item.creator.username !== item.creator.full_name && (
+																<div style={{ fontSize: '12px', color: '#64748b' }}>
+																	@{item.creator.username}
+																</div>
+															)}
+														</div>
+													) : (
+														item.created_by || 'N/A'
+													)}
+												</td>
 												<td style={{
 													padding: '12px 16px',
 													color: '#64748b',

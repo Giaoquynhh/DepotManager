@@ -787,57 +787,92 @@ export class YardService {
 	}
 
     async searchContainers(query: string, limit: number = 10, shippingLineId?: string) {
-        // Ưu tiên lấy từ ServiceRequest mới nhất để biết shipping_line_id và container_type_id
-        const results = await prisma.$queryRawUnsafe<any[]>(
-            `
-            WITH latest_sr AS (
-              SELECT DISTINCT ON (sr.container_no)
-                sr.container_no,
-                sr.shipping_line_id,
-                sr.container_type_id,
-                sr.status as service_status,
-                sr."createdAt"
-              FROM "ServiceRequest" sr
-              WHERE sr.container_no ILIKE $1
-              ORDER BY sr.container_no, sr."createdAt" DESC
-            )
-            SELECT 
-              yp.container_no,
-              ys.code as slot_code,
-              yb.code as block_code,
-              y.name as yard_name,
-              yp.tier,
-              yp.placed_at,
-              ls.shipping_line_id,
-              ls.container_type_id
-            FROM "YardPlacement" yp
-            LEFT JOIN "YardSlot" ys ON ys.id = yp.slot_id
-            LEFT JOIN "YardBlock" yb ON yb.id = ys.block_id
-            LEFT JOIN "Yard" y ON y.id = yb.yard_id
-            LEFT JOIN latest_sr ls ON ls.container_no = yp.container_no
-            WHERE yp.status = 'OCCUPIED' AND yp.removed_at IS NULL
-              AND yp.container_no ILIKE $1
-              AND (ls.service_status IS NULL 
-                   OR ls.service_status NOT IN ('IN_CAR', 'DONE_LIFTING') 
-                   OR (ls.service_status = 'GATE_OUT' AND ls.type = 'IMPORT'))
-              ${shippingLineId ? 'AND (ls.shipping_line_id = $2)' : ''}
-            ORDER BY yp.container_no ASC
-            LIMIT ${limit}
-            `,
-            `%${query}%`,
-            ...(shippingLineId ? [shippingLineId] as any : [])
-        );
+        try {
+            // Sử dụng Prisma query thay vì raw SQL để tránh lỗi
+            const yardPlacements = await prisma.yardPlacement.findMany({
+                where: {
+                    status: 'OCCUPIED',
+                    removed_at: null,
+                    container_no: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                },
+                include: {
+                    slot: {
+                        include: {
+                            block: {
+                                include: {
+                                    yard: true
+                                }
+                            }
+                        }
+                    }
+                },
+                take: limit,
+                orderBy: {
+                    container_no: 'asc'
+                }
+            });
 
-        return results.map(row => ({
-            container_no: row.container_no,
-            slot_code: row.slot_code,
-            block_code: row.block_code,
-            yard_name: row.yard_name,
-            tier: row.tier,
-            placed_at: row.placed_at,
-            shipping_line_id: row.shipping_line_id,
-            container_type_id: row.container_type_id
-        }));
+            // Lấy thông tin ServiceRequest cho các container
+            const containerNos = yardPlacements
+                .map(yp => yp.container_no)
+                .filter((containerNo): containerNo is string => containerNo !== null);
+            
+            const serviceRequests = await prisma.serviceRequest.findMany({
+                where: {
+                    container_no: {
+                        in: containerNos
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                distinct: ['container_no']
+            });
+
+            // Tạo map để lookup nhanh
+            const srMap = new Map();
+            serviceRequests.forEach(sr => {
+                if (!srMap.has(sr.container_no)) {
+                    srMap.set(sr.container_no, sr);
+                }
+            });
+
+            return yardPlacements.map(yp => {
+                const sr = srMap.get(yp.container_no);
+                
+                // Kiểm tra điều kiện service status
+                if (sr && (
+                    sr.status === 'IN_CAR' || 
+                    sr.status === 'DONE_LIFTING' ||
+                    (sr.status === 'GATE_OUT' && sr.type === 'EXPORT')
+                )) {
+                    return null; // Skip container đã rời bãi
+                }
+
+                // Kiểm tra shipping line filter
+                if (shippingLineId && sr && sr.shipping_line_id !== shippingLineId) {
+                    return null;
+                }
+
+                return {
+                    container_no: yp.container_no,
+                    slot_code: yp.slot?.code || '',
+                    block_code: yp.slot?.block?.code || '',
+                    yard_name: yp.slot?.block?.yard?.name || '',
+                    tier: yp.tier,
+                    placed_at: yp.placed_at,
+                    shipping_line_id: sr?.shipping_line_id || null,
+                    container_type_id: sr?.container_type_id || null
+                };
+            }).filter(Boolean); // Loại bỏ null values
+
+        } catch (error) {
+            console.error('Error in searchContainers:', error);
+            throw new Error('Không thể tìm kiếm container');
+        }
     }
 }
 

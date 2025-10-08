@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { yardApi } from '../../services/yard';
 
 interface SearchSuggestion {
   id: string;
@@ -38,7 +39,9 @@ export default function SmartSearch({
 
   // 🧠 Smart search with debouncing and fuzzy matching
   const performSearch = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
+    // Trim query
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery.length < 1) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -47,34 +50,29 @@ export default function SmartSearch({
     setIsSearching(true);
     
     try {
-      // Simulate API call for suggestions (replace with actual API)
-      const mockSuggestions: SearchSuggestion[] = [
-        {
-          id: '1',
-          code: searchQuery.toUpperCase(),
-          type: 'container',
-          status: 'OCCUPIED',
-          location: 'Block A1, Slot 15'
-        },
-        {
-          id: '2',
-          code: `${searchQuery.toUpperCase()}-ALT`,
-          type: 'container',
-          status: 'EMPTY',
-          location: 'Block B2, Slot 8'
-        }
-      ];
+      // Gọi API thực tế để tìm kiếm container trong bãi
+      const data = await yardApi.searchContainers(trimmedQuery, 10);
+      const containers = data.containers || [];
 
-      // Filter suggestions based on fuzzy matching
-      const filteredSuggestions = mockSuggestions.filter(suggestion =>
-        suggestion.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        suggestion.location?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      // Chuyển đổi dữ liệu từ API thành format SearchSuggestion
+      const realSuggestions: SearchSuggestion[] = containers.map((container: any, index: number) => ({
+        id: `container-${index}`,
+        code: container.container_no,
+        type: 'container' as const,
+        status: 'OCCUPIED',
+        location: `${container.block_code} - ${container.slot_code}${container.tier ? ` (Tier ${container.tier})` : ''}`
+      }));
 
-      setSuggestions(filteredSuggestions);
+      setSuggestions(realSuggestions);
       // Don't override showSuggestions here, let input change handle it
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
+      console.log('Error details:', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        query: trimmedQuery
+      });
       setSuggestions([]);
       // Don't override showSuggestions here
     } finally {
@@ -88,9 +86,15 @@ export default function SmartSearch({
       clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = setTimeout(() => {
-      performSearch(query);
-    }, 300);
+    // Chỉ gọi API khi có ít nhất 1 ký tự
+    if (query.trim().length >= 1) {
+      debounceRef.current = setTimeout(() => {
+        performSearch(query);
+      }, 300);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
 
     return () => {
       if (debounceRef.current) {
@@ -105,8 +109,8 @@ export default function SmartSearch({
     setQuery(value);
     setSelectedIndex(-1);
     
-    // Show suggestions when user types
-    if (value.length >= 2) {
+    // Show suggestions when user types (từ 1 ký tự)
+    if (value.length >= 1) {
       setShowSuggestions(true);
     } else {
       setShowSuggestions(false);

@@ -6,6 +6,7 @@ import { updateAllInvoicesWithSealCost, updateInvoiceWithSealCost } from './upda
 import { getSealCost } from './getSealCostController';
 import { getRepairCost } from './getRepairCostController';
 import { updateReuseStatus } from './updateController';
+import { syncSealBooking, syncAllSealBookings } from './syncSealBookingController';
 import FileUploadService from '../service/FileUploadService';
 
 const router = Router();
@@ -117,6 +118,18 @@ router.post('/:requestId/update-invoice-with-seal-cost',
 router.patch('/:id/reuse-status',
     requireRoles('TechnicalDepartment', 'Accountant', 'SystemAdmin', 'BusinessAdmin'),
     updateReuseStatus
+);
+
+// Sync seal booking for specific request
+router.post('/:requestId/sync-seal-booking',
+    requireRoles('TechnicalDepartment', 'SystemAdmin', 'BusinessAdmin'),
+    syncSealBooking
+);
+
+// Sync all seal bookings
+router.post('/sync-all-seal-bookings',
+    requireRoles('SystemAdmin', 'BusinessAdmin'),
+    syncAllSealBookings
 );
 
 export default router;

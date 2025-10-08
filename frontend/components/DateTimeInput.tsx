@@ -97,13 +97,33 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
 
   return (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-      {/* Date input - simple date picker */}
+      {/* Date input - custom text input with dd/mm/yyyy format */}
       <div style={{ flex: 1, position: 'relative' }}>
+        {/* Hidden date input for calendar functionality */}
         <input
           ref={dateInputRef}
           type="date"
           value={dateValue}
           onChange={handleDateChange}
+          style={{
+            position: 'absolute',
+            opacity: 0,
+            pointerEvents: 'none',
+            width: 0,
+            height: 0
+          }}
+          disabled={disabled}
+          min={min}
+          max={max}
+        />
+        
+        {/* Display input that shows Vietnamese format */}
+        <input
+          type="text"
+          value={displayDateValue}
+          onClick={() => !disabled && dateInputRef.current?.showPicker()}
+          readOnly
+          placeholder="dd/mm/yyyy"
           style={{
             ...style,
             width: '100%',
@@ -114,12 +134,11 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
             color: '#374151',
             cursor: disabled ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            outline: 'none'
+            outline: 'none',
+            backgroundColor: 'white'
           }}
           className={className}
           disabled={disabled}
-          min={min}
-          max={max}
         />
         <label style={{
           position: 'absolute',

@@ -71,6 +71,12 @@ export const updateRequest = async (req: Request, res: Response) => {
             }
         }
 
+        // Kiểm tra xem booking_bill và container_no có thay đổi không
+        const newBookingBill = booking_bill || existingRequest.booking_bill;
+        const newContainerNo = container_no || existingRequest.container_no;
+        const bookingBillChanged = booking_bill && booking_bill !== existingRequest.booking_bill;
+        const containerNoChanged = container_no && container_no !== existingRequest.container_no;
+
         const updatedRequest = await prisma.serviceRequest.update({
             where: { id },
             data: {
@@ -84,7 +90,7 @@ export const updateRequest = async (req: Request, res: Response) => {
                 eta: eta ? new Date(eta) : existingRequest.eta,
                 appointment_time: appointment_time ? new Date(appointment_time) : existingRequest.appointment_time,
                 appointment_note: notes || existingRequest.appointment_note,
-                booking_bill: booking_bill || existingRequest.booking_bill,
+                booking_bill: newBookingBill,
                 driver_name: driver_name || existingRequest.driver_name,
                 driver_phone: driver_phone || existingRequest.driver_phone,
                 license_plate: license_plate || existingRequest.license_plate,
@@ -92,6 +98,50 @@ export const updateRequest = async (req: Request, res: Response) => {
                 attachments_count: existingRequest.attachments_count + (files ? files.length : 0)
             }
         });
+
+        // Nếu booking_bill hoặc container_no được cập nhật, đồng bộ với SealUsageHistory
+        if ((bookingBillChanged && newBookingBill) || containerNoChanged) {
+            try {
+                if (bookingBillChanged && newBookingBill) {
+                    console.log(`🔄 Cập nhật booking_number trong SealUsageHistory cho container: ${existingRequest.container_no}, booking: ${newBookingBill}`);
+                    
+                    // Cập nhật tất cả SealUsageHistory có container_number tương ứng
+                    const updatedSealHistory = await prisma.sealUsageHistory.updateMany({
+                        where: {
+                            container_number: existingRequest.container_no,
+                            booking_number: null // Chỉ cập nhật những record chưa có booking_number
+                        },
+                        data: {
+                            booking_number: newBookingBill
+                        }
+                    });
+
+                    console.log(`✅ Đã cập nhật ${updatedSealHistory.count} record trong SealUsageHistory với booking: ${newBookingBill}`);
+                }
+
+                if (containerNoChanged && newContainerNo) {
+                    console.log(`🔄 Cập nhật container_number trong SealUsageHistory từ: ${existingRequest.container_no} sang: ${newContainerNo}`);
+                    
+                    // Cập nhật container_number trong SealUsageHistory nếu có booking_bill
+                    if (newBookingBill) {
+                        const updatedSealHistory = await prisma.sealUsageHistory.updateMany({
+                            where: {
+                                container_number: existingRequest.container_no,
+                                booking_number: newBookingBill
+                            },
+                            data: {
+                                container_number: newContainerNo
+                            }
+                        });
+
+                        console.log(`✅ Đã cập nhật ${updatedSealHistory.count} record trong SealUsageHistory với container mới: ${newContainerNo}`);
+                    }
+                }
+            } catch (sealUpdateError) {
+                console.error('❌ Lỗi khi cập nhật SealUsageHistory:', sealUpdateError);
+                // Không throw error để không ảnh hưởng đến việc cập nhật ServiceRequest
+            }
+        }
 
         if (files && files.length > 0) {
             const uploadResult = await fileUploadService.uploadFiles(
