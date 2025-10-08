@@ -173,7 +173,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	// Refresh container data
 	const refreshContainerData = async () => {
 		if (formData.shippingLine) {
-			await searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+			await searchContainersByShippingLine(formData.shippingLine, containerSearchQuery, formData.customer);
 		}
 	};
 
@@ -259,8 +259,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		customer.code.toLowerCase().includes(customerSearch.toLowerCase())
 	);
 
-	// Search containers by shipping line using new specialized API
-	const searchContainersByShippingLine = async (shippingLineId: string, query: string) => {
+	// Search containers by shipping line and optionally by customer
+	const searchContainersByShippingLine = async (shippingLineId: string, query: string, customerId?: string) => {
 		if (!shippingLineId) {
 			setContainerSearchResults([]);
 			return;
@@ -277,7 +277,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			
 			if (response.success && response.data) {
 				// Transform data thành format cần thiết cho ContainerSearchResult
-				const containersWithDetails = response.data.map((container: any) => ({
+				let containersWithDetails = response.data.map((container: any) => ({
 					container_no: container.container_no,
 					slot_code: container.slot_code || '',
 					block_code: container.block_code || '',
@@ -292,6 +292,13 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 					service_status: container.service_status,
 					request_type: container.request_type
 				}));
+
+				// Nếu có customerId, filter thêm theo khách hàng
+				if (customerId) {
+					containersWithDetails = containersWithDetails.filter((container: any) => 
+						container.customer && container.customer.id === customerId
+					);
+				}
 				
 				setContainerSearchResults(containersWithDetails);
 			} else {
@@ -308,13 +315,21 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	// Load containers when shipping line is selected
 	useEffect(() => {
 		if (formData.shippingLine) {
-			// Load all containers for the selected shipping line
-			searchContainersByShippingLine(formData.shippingLine, '');
+			// Load containers for the selected shipping line and customer (if selected)
+			searchContainersByShippingLine(formData.shippingLine, '', formData.customer);
 		} else {
 			setContainerSearchResults([]);
 			setIsContainerSearchOpen(false);
 		}
 	}, [formData.shippingLine]);
+
+	// Re-filter containers when customer changes (if shipping line is already selected)
+	useEffect(() => {
+		if (formData.shippingLine) {
+			// Re-filter containers when customer selection changes
+			searchContainersByShippingLine(formData.shippingLine, containerSearchQuery, formData.customer);
+		}
+	}, [formData.customer]);
 
 	// Refresh container info when shipping line changes (in case container was moved to different shipping line)
 	useEffect(() => {
@@ -328,7 +343,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	useEffect(() => {
 		if (isOpen && formData.shippingLine) {
 			// Refresh container data when modal opens
-			searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+			searchContainersByShippingLine(formData.shippingLine, containerSearchQuery, formData.customer);
 		}
 	}, [isOpen]);
 
@@ -372,10 +387,10 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
 			if (formData.shippingLine && containerSearchQuery.length >= 2) {
-				searchContainersByShippingLine(formData.shippingLine, containerSearchQuery);
+				searchContainersByShippingLine(formData.shippingLine, containerSearchQuery, formData.customer);
 			} else if (formData.shippingLine && containerSearchQuery.length === 0) {
 				// Show all containers when search is cleared
-				searchContainersByShippingLine(formData.shippingLine, '');
+				searchContainersByShippingLine(formData.shippingLine, '', formData.customer);
 			}
 		}, 300);
 
@@ -474,6 +489,21 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		// Reset container type disabled state when container number changes manually
 		if (field === 'containerNumber') {
 			setIsContainerTypeDisabled(false);
+		}
+
+		// Clear container number when customer changes if current container doesn't belong to new customer
+		if (field === 'customer' && formData.containerNumber) {
+			// Check if current container belongs to the new customer
+			const currentContainer = containerSearchResults.find(c => c.container_no === formData.containerNumber);
+			if (currentContainer && currentContainer.customer && currentContainer.customer.id !== value) {
+				// Clear container number if it doesn't belong to new customer
+				setFormData(prev => ({
+					...prev,
+					containerNumber: ''
+				}));
+				setSelectedContainerInfo(null);
+				setIsContainerTypeDisabled(false);
+			}
 		}
 	};
 
@@ -1421,12 +1451,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							)}
 							{formData.shippingLine && containerSearchResults.length > 0 && (
 								<div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
-									✅ Tìm thấy {containerSearchResults.length} container có thể nâng (EMPTY_IN_YARD hoặc GATE_OUT-IMPORT)
+									✅ Tìm thấy {containerSearchResults.length} container có thể nâng 
+									{formData.customer ? ' (theo hãng tàu và khách hàng đã chọn)' : ' (theo hãng tàu đã chọn)'}
+									<br />
+									<small style={{ color: '#64748b' }}>
+										(EMPTY_IN_YARD hoặc GATE_OUT-IMPORT)
+									</small>
 								</div>
 							)}
 							{formData.shippingLine && containerSearchResults.length === 0 && !isSearchingContainers && (
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-									ℹ️ Không có container nào có thể nâng cho hãng tàu này
+									ℹ️ Không có container nào có thể nâng 
+									{formData.customer ? ' cho hãng tàu và khách hàng này' : ' cho hãng tàu này'}
 								</div>
 							)}
 							
