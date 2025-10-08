@@ -19,6 +19,7 @@ export interface EditLowerRequestData {
 	driver?: string;
 	driverPhone?: string;
 	appointmentTime?: string;
+	demDet?: string; // DEM/DET field
 	documents?: File[];
 	notes?: string;
 }

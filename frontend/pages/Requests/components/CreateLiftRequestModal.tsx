@@ -83,6 +83,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	
 	// Container validation warning state
 	const [containerWarning, setContainerWarning] = useState<string>('');
+	const [containerValidationError, setContainerValidationError] = useState<string>('');
+	const [isContainerFromDropdown, setIsContainerFromDropdown] = useState<boolean>(false);
 
 	// Shipping lines (from Setup page)
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
@@ -177,64 +179,26 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		}
 	};
 
-	// Refresh selected container info with latest data
+	// Refresh selected container info with latest data - TẮT HOÀN TOÀN để tránh lỗi 404
 	const refreshSelectedContainerInfo = async () => {
-		if (formData.containerNumber && formData.containerNumber.length >= 4) {
+		// Tắt hoàn toàn function này để tránh lỗi 404 với container ngắn như "IM12"
+		console.log('refreshSelectedContainerInfo is disabled to prevent 404 errors with short container numbers');
+		return;
+		
+		// Code cũ đã được comment out để tránh lỗi 404
+		/*
+		if (formData.containerNumber && formData.containerNumber.trim().length > 0) {
 			setIsRefreshingContainerInfo(true);
 			try {
 				const containerResponse = await containersApi.get(formData.containerNumber);
-				
-				if (containerResponse.success && containerResponse.data) {
-					const containerData = containerResponse.data;
-					
-					// Tìm container trong search results để lấy request_type
-					const originalContainer = containerSearchResults.find(c => c.container_no === formData.containerNumber);
-					const isImportContainer = originalContainer?.request_type === 'IMPORT';
-					
-					console.log('Refresh - originalContainer:', originalContainer);
-					console.log('Refresh - isImportContainer:', isImportContainer);
-					
-					// Update selected container info with latest data
-					const updatedContainerInfo = {
-						container_no: formData.containerNumber,
-						slot_code: selectedContainerInfo?.slot_code || '',
-						block_code: selectedContainerInfo?.block_code || '',
-						yard_name: selectedContainerInfo?.yard_name || '',
-						tier: selectedContainerInfo?.tier,
-						placed_at: selectedContainerInfo?.placed_at || '',
-						customer: containerData.customer, // Auto-fill customer cho cả IMPORT và EXPORT
-						shipping_line: containerData.shipping_line,
-						container_type: containerData.container_type,
-						seal_number: containerData.seal_number,
-						dem_det: containerData.dem_det,
-						request_type: originalContainer?.request_type // Lấy request_type từ search results
-					};
-					
-					setSelectedContainerInfo(updatedContainerInfo);
-
-					// Update form data with latest information
-					if (containerData.container_type?.id) {
-						handleInputChange('containerType', containerData.container_type.id);
-					}
-					
-					// Auto-fill customer cho cả IMPORT và EXPORT
-					if (containerData.customer?.id) {
-						console.log('Refresh - Auto-filling customer for container');
-						handleInputChange('customer', containerData.customer.id);
-						setSelectedCustomerName(containerData.customer.name);
-					} else {
-						console.log('Refresh - No customer data available for container');
-						// Clear customer field if no data
-						handleInputChange('customer', '');
-						setSelectedCustomerName('');
-					}
-				}
-			} catch (error) {
-				console.error('Error refreshing container info:', error);
+				// ... rest of the code
+			} catch (error: any) {
+				// ... error handling
 			} finally {
 				setIsRefreshingContainerInfo(false);
 			}
 		}
+		*/
 	};
 
 	// Filter data based on search terms
@@ -333,7 +297,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 	// Refresh container info when shipping line changes (in case container was moved to different shipping line)
 	useEffect(() => {
-		if (formData.containerNumber && formData.containerNumber.length >= 4 && formData.shippingLine) {
+		if (formData.containerNumber && formData.containerNumber.trim().length > 0 && formData.shippingLine) {
 			// Refresh container info to get latest data including new shipping line info
 			refreshSelectedContainerInfo();
 		}
@@ -349,7 +313,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 	// Auto-refresh selected container info when modal opens
 	useEffect(() => {
-		if (isOpen && formData.containerNumber && formData.containerNumber.length >= 4) {
+		if (isOpen && formData.containerNumber && formData.containerNumber.trim().length > 0) {
 			// Auto-refresh container info when modal opens to get latest data
 			refreshSelectedContainerInfo();
 		}
@@ -372,10 +336,58 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		}
 	}, [selectedContainerInfo]);
 
+	// Function để validate container
+	const validateContainer = async (containerNumber: string) => {
+		if (!containerNumber || containerNumber.trim().length < 4) {
+			setContainerValidationError('');
+			return true; // Không validate nếu container quá ngắn
+		}
+
+		try {
+			// Kiểm tra container có tồn tại trong bãi hay không
+			const existsResponse = await containersApi.checkContainerExistsInYard(containerNumber.trim());
+			
+			if (!existsResponse.success || !existsResponse.data.exists) {
+				setContainerValidationError('⚠️ Container không có trong bãi');
+				return false;
+			}
+
+			// Kiểm tra container có đang được sử dụng cho export request khác hay không
+			// Sử dụng API có sẵn để kiểm tra
+			try {
+				const requestsResponse = await requestService.getRequests('EXPORT');
+				if (requestsResponse.data.success && requestsResponse.data.data) {
+					const existingRequests = requestsResponse.data.data;
+					const containerInUse = existingRequests.find((request: any) => 
+						request.container_no === containerNumber.trim() && 
+						request.status !== 'GATE_OUT' && 
+						request.status !== 'GATE_REJECTED'
+					);
+					
+					if (containerInUse) {
+						setContainerValidationError('⚠️ Container đã được nâng');
+						return false;
+					}
+				}
+			} catch (error) {
+				console.warn('Could not check if container is in use:', error);
+				// Không block validation nếu không thể kiểm tra
+			}
+
+			// Container hợp lệ
+			setContainerValidationError('');
+			return true;
+		} catch (error) {
+			console.error('Error validating container:', error);
+			setContainerValidationError('⚠️ Không thể kiểm tra container. Vui lòng thử lại.');
+			return false;
+		}
+	};
+
 	// Refresh container data when container number changes (user might have updated in ManagerCont)
-	// Chỉ gọi API khi container number có ít nhất 4 ký tự để tránh gọi API khi đang nhập
+	// Tắt validation 4 ký tự - cho phép gọi API với container ngắn hơn
 	useEffect(() => {
-		if (formData.containerNumber && formData.containerNumber.length >= 4 && formData.shippingLine) {
+		if (formData.containerNumber && formData.containerNumber.trim().length > 0 && formData.shippingLine) {
 			// Refresh container data to get latest information
 			refreshContainerData();
 			// Also refresh the selected container info to get latest customer/container type data
@@ -386,9 +398,9 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	// Debounced container search when typing
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
-			if (formData.shippingLine && containerSearchQuery.length >= 2) {
+			if (formData.shippingLine && containerSearchQuery.trim().length > 0) {
 				searchContainersByShippingLine(formData.shippingLine, containerSearchQuery, formData.customer);
-			} else if (formData.shippingLine && containerSearchQuery.length === 0) {
+			} else if (formData.shippingLine && containerSearchQuery.trim().length === 0) {
 				// Show all containers when search is cleared
 				searchContainersByShippingLine(formData.shippingLine, '', formData.customer);
 			}
@@ -396,6 +408,25 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 
 		return () => clearTimeout(timeoutId);
 	}, [containerSearchQuery]);
+
+	// Debounced container validation when typing
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			if (formData.containerNumber && formData.containerNumber.trim().length >= 4) {
+				// Chỉ validate nếu container không được chọn từ dropdown (tức là user tự nhập)
+				if (!isContainerFromDropdown) {
+					validateContainer(formData.containerNumber);
+				} else {
+					// Container được chọn từ dropdown, clear error
+					setContainerValidationError('');
+				}
+			} else {
+				setContainerValidationError('');
+			}
+		}, 500); // 500ms delay để tránh gọi API quá nhiều
+
+		return () => clearTimeout(timeoutId);
+	}, [formData.containerNumber, isContainerFromDropdown]);
 
 	// File upload handlers
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -467,9 +498,16 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 			}));
 		}
 		
-		// Clear container warning when user changes container number
-		if (field === 'containerNumber' && containerWarning) {
-			setContainerWarning('');
+		// Clear container warning and validation error when user changes container number
+		if (field === 'containerNumber') {
+			if (containerWarning) {
+				setContainerWarning('');
+			}
+			if (containerValidationError) {
+				setContainerValidationError('');
+			}
+			// Reset flag khi user tự nhập
+			setIsContainerFromDropdown(false);
 		}
 
 		// Reset container search when shipping line changes
@@ -521,6 +559,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		}
 		if (!formData.customer.trim()) {
 			newErrors.customer = 'Khách hàng là bắt buộc';
+		}
+		
+		// Kiểm tra container validation error
+		if (containerValidationError) {
+			newErrors.containerNumber = containerValidationError;
 		}
 		
 		// Cảnh báo nếu không có số container (không bắt buộc nhưng nên có)
@@ -652,6 +695,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		previewUrls.forEach(url => { if (url) { try { URL.revokeObjectURL(url); } catch {} } });
 		setErrors({});
 		setContainerWarning(''); // Clear container warning
+		setContainerValidationError(''); // Clear container validation error
+		setIsContainerFromDropdown(false); // Reset container from dropdown flag
 		setIsShippingLineOpen(false);
 		setIsContainerTypeOpen(false);
 		setIsTransportCompanyOpen(false);
@@ -1099,7 +1144,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 							<div className="container-search-dropdown" style={{ position: 'relative' }}>
 								<input
 									type="text"
-								style={formInputStyle}
+									style={errors.containerNumber ? formInputErrorStyle : formInputStyle}
 									value={formData.containerNumber || ''}
 									onChange={(e) => {
 										handleInputChange('containerNumber', e.target.value);
@@ -1210,6 +1255,11 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 														handleInputChange('containerNumber', container.container_no);
 														setIsContainerSearchOpen(false);
 														setContainerSearchQuery('');
+														
+														// Đánh dấu container được chọn từ dropdown
+														setIsContainerFromDropdown(true);
+														// Clear validation error khi chọn container từ dropdown
+														setContainerValidationError('');
 														
 														// Lấy thông tin chi tiết container để auto-fill
 														try {
@@ -1357,7 +1407,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 													</div>
 												))}
 											</div>
-										) : containerSearchQuery.length >= 2 ? (
+										) : containerSearchQuery.trim().length > 0 ? (
 											<div style={{ padding: '12px 16px', color: '#64748b', textAlign: 'center' }}>
 												Không tìm thấy container nào phù hợp
 											</div>
@@ -1463,6 +1513,22 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 								<div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
 									ℹ️ Không có container nào có thể nâng 
 									{formData.customer ? ' cho hãng tàu và khách hàng này' : ' cho hãng tàu này'}
+								</div>
+							)}
+							
+							{/* Container validation error message */}
+							{errors.containerNumber && (
+								<div style={{ 
+									fontSize: '12px', 
+									color: '#dc2626', 
+									marginTop: '4px',
+									padding: '8px 12px',
+									background: '#fef2f2',
+									border: '1px solid #fecaca',
+									borderRadius: '6px',
+									fontWeight: '500'
+								}}>
+									{errors.containerNumber}
 								</div>
 							)}
 							

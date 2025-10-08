@@ -24,6 +24,7 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 		driver: '',
 		driverPhone: '',
 		appointmentTime: '',
+		demDet: '',
 		documents: [],
 		notes: ''
 	});
@@ -86,6 +87,7 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 				driver: requestData.driver_name || '',
 				driverPhone: requestData.driver_phone || '',
 				appointmentTime: requestData.appointment_time ? new Date(requestData.appointment_time).toISOString().slice(0, 16) : '',
+				demDet: requestData.dem_det || '',
 				documents: [],
 				notes: requestData.appointment_note || ''
 			});
@@ -195,9 +197,13 @@ export const EditLowerRequestModal: React.FC<EditLowerRequestModalProps> = ({
 				driver_name: formData.driver,
 				driver_phone: formData.driverPhone,
 				appointment_time: formData.appointmentTime,
+				dem_det: formData.demDet, // Add DEM/DET field
 				notes: formData.notes,
 				files: formData.documents
 			};
+
+			console.log('🔍 EditLowerRequestModal updateData:', updateData);
+			console.log('🔍 DEM/DET value being sent:', updateData.dem_det);
 
 			await requestService.updateRequest(requestData.id, updateData);
 			onSubmit(formData);

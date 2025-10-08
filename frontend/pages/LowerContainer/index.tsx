@@ -159,10 +159,12 @@ export default function NewSubmenu() {
   const handleModalSubmit = async (data: LowerRequestData) => {
     // TODO: Implement submit logic
     console.log('Modal submitted with data:', data);
+    console.log('DEM/DET value:', data.demDet);
     showSuccess('Tạo yêu cầu hạ container thành công!');
     setIsModalOpen(false);
     
     // Refresh table to show new record
+    console.log('Refreshing table data...');
     await fetchImportRequests();
   };
 
@@ -588,6 +590,16 @@ export default function NewSubmenu() {
         });
         
         const transformedData: TableData[] = await Promise.all(filteredData.map(async (request: any) => {
+          // Debug log để kiểm tra dữ liệu từ API
+          console.log('Request data from API:', {
+            id: request.id,
+            container_no: request.container_no,
+            dem_det: request.dem_det,
+            request_no: request.request_no,
+            created_at: request.createdAt,
+            updated_at: request.updatedAt
+          });
+          
           // Lấy repair cost cho container này
           let repairCost = 0;
           try {
@@ -611,7 +623,7 @@ export default function NewSubmenu() {
           }
 
 
-          return {
+          const transformedRow = {
             id: request.id,
             shippingLine: request.shipping_line?.name || '',
             requestNumber: request.request_no || '',
@@ -636,6 +648,17 @@ export default function NewSubmenu() {
             rejectedReason: request.rejected_reason || '',
             isRepairRejected: request.isRepairRejected || false
           };
+          
+          // Debug log để kiểm tra transformed data
+          if (request.container_no === 'IM1238' || request.container_no === 'IM1239') {
+            console.log(`Transformed data for ${request.container_no}:`, {
+              original_dem_det: request.dem_det,
+              transformed_demDet: transformedRow.demDet,
+              full_transformed_row: transformedRow
+            });
+          }
+          
+          return transformedRow;
         }));
         setAllTableData(transformedData); // Lưu tất cả dữ liệu gốc
         setTableData(transformedData); // Hiển thị ban đầu

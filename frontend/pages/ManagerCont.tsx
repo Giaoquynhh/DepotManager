@@ -12,6 +12,7 @@ import { containersApi } from '../services/containers';
 import { yardApi } from '../services/yard';
 import { reportsService, ContainerItem } from '../services/reports';
 import { sealsApi } from '../services/seals';
+import { api } from '../services/api';
 
 // Interface cho dữ liệu bảng
 interface TableData {
@@ -411,9 +412,39 @@ export default function ManagerCont(){
       //   return;
       // }
 
-      // Nhóm requests theo container_no và chỉ lấy request mới nhất cho mỗi container
+      // LOGIC MỚI: Lọc theo trạng thái IN_YARD cho Import Request
+      console.log('🔍 Applying new logic: Only show containers with IMPORT request status IN_YARD');
+      
+      // Lọc requests theo logic mới
+      const filteredRequests = allRequests.filter((req: any) => {
+        // Nếu là IMPORT request và có trạng thái IN_YARD
+        if (req.type === 'IMPORT' && req.status === 'IN_YARD') {
+          console.log(`✅ Including IMPORT container ${req.container_no} with status IN_YARD`);
+          return true;
+        }
+        
+        // Nếu là EXPORT request, giữ nguyên logic cũ (hiển thị tất cả)
+        if (req.type === 'EXPORT') {
+          console.log(`✅ Including EXPORT container ${req.container_no} with status ${req.status}`);
+          return true;
+        }
+        
+        // Các trường hợp khác không fill vào table
+        console.log(`❌ Excluding container ${req.container_no} - type: ${req.type}, status: ${req.status}`);
+        return false;
+      });
+      
+      console.log(`📊 Filtered requests: ${filteredRequests.length} out of ${allRequests.length} total requests`);
+      console.log('📋 Filtered requests details:', filteredRequests.map(r => ({
+        id: r.id,
+        container_no: r.container_no,
+        status: r.status,
+        type: r.type
+      })));
+
+      // Nhóm requests đã được lọc theo container_no và chỉ lấy request mới nhất cho mỗi container
       const latestRequestsMap = new Map<string, any>();
-      allRequests.forEach((req: any) => {
+      filteredRequests.forEach((req: any) => {
         const existingReq = latestRequestsMap.get(req.container_no);
         // Sử dụng updatedAt thay vì createdAt để lấy request được cập nhật gần nhất
         const reqTime = new Date(req.updatedAt || req.createdAt);
@@ -427,7 +458,8 @@ export default function ManagerCont(){
         id: r.id,
         container_no: r.container_no,
         status: r.status,
-        type: r.type
+        type: r.type,
+        dem_det: r.dem_det
       })));
       
       // Lấy container EMPTY_IN_YARD nếu được bật
@@ -456,9 +488,13 @@ export default function ManagerCont(){
       }
 
       // Lọc ra tất cả container đã có ServiceRequest để tránh trùng lặp
+      // SỬA LỖI: Sử dụng allRequests thay vì requests để bao gồm tất cả containers có ServiceRequest
       const containersWithServiceRequests = new Set(
-        requests.map((req: any) => req.container_no)
+        allRequests.map((req: any) => req.container_no)
       );
+      
+      console.log('🔍 All containers with ServiceRequests:', Array.from(containersWithServiceRequests));
+      console.log('🔍 Filtered requests (IN_YARD only):', requests.map(r => r.container_no));
       
       // Xử lý container trong yard - bao gồm cả container không có ServiceRequest và container có GATE_OUT
        const emptyInYardData: TableData[] = await Promise.all(
@@ -577,6 +613,12 @@ export default function ManagerCont(){
           
           if (request.type === 'IMPORT') {
             // Với IMPORT: lấy DEM/DET từ request, nếu không có thì hiển thị "Không có"
+            console.log(`🔍 DEM/DET debug for ${request.container_no}:`, {
+              dem_det: request.dem_det,
+              demDet: request.demDet,
+              request_id: request.id,
+              request_type: request.type
+            });
             demDetValue = request.dem_det || request.demDet || 'Không có';
             
             // Luôn ưu tiên lấy từ maintenanceApi (trạng thái mới nhất)
@@ -701,14 +743,45 @@ export default function ManagerCont(){
             console.log(`❓ Unknown request type for ${request.container_no}: using GOOD status`);
           }
 
-          // Đếm chứng từ thực tế của request (đồng nhất với modal)
+          // Đếm chứng từ thực tế của request (đồng nhất với Maintenance/Repairs)
           try {
-            const filesRes = await requestService.getFiles(request.id);
-            if (filesRes?.data?.success) {
-              documentsList = filesRes.data.data || filesRes.data.attachments || [];
+            // Sử dụng logic tương tự Maintenance/Repairs để lấy TẤT CẢ attachments
+            // Thay vì chỉ lấy file chưa bị xóa như requestService.getFiles()
+            
+            // Gọi API trực tiếp để lấy tất cả attachments (kể cả deleted)
+            console.log(`🔍 DEBUG: Gọi API /requests/${request.id}/attachments-all cho ${request.container_no}`);
+            const allAttachmentsRes = await api.get(`/requests/${request.id}/attachments-all`);
+            console.log(`🔍 DEBUG: API response:`, allAttachmentsRes?.data);
+            
+            if (allAttachmentsRes?.data?.success) {
+              documentsList = allAttachmentsRes.data.data || [];
               documentsCount = documentsList.length;
+              console.log(`📄 ✅ Lấy ${documentsCount} attachments (tất cả) cho ${request.container_no}`);
+            } else {
+              console.log(`❌ API attachments-all failed, sử dụng fallback cho ${request.container_no}`);
+              // Fallback: Sử dụng requestService.getFiles() (chỉ active files)
+              const filesRes = await requestService.getFiles(request.id);
+              if (filesRes?.data?.success) {
+                documentsList = filesRes.data.data || filesRes.data.attachments || [];
+                documentsCount = documentsList.length;
+                console.log(`📄 ⚠️ Fallback: Lấy ${documentsCount} attachments (active only) cho ${request.container_no}`);
+              }
             }
-          } catch {}
+          } catch (error) {
+            console.log(`❌ Error getting attachments for ${request.container_no}:`, error);
+            console.log(`❌ Error details:`, {
+              message: error?.message,
+              response: error?.response?.data,
+              status: error?.response?.status,
+              url: error?.config?.url
+            });
+            // Fallback: Thử lấy từ request.attachments nếu có
+            if (request.attachments && Array.isArray(request.attachments)) {
+              documentsList = request.attachments;
+              documentsCount = documentsList.length;
+              console.log(`📄 Fallback after error: Lấy ${documentsCount} attachments từ request.attachments cho ${request.container_no}`);
+            }
+          }
 
           // Tính toán vị trí: ưu tiên dữ liệu từ request; nếu thiếu thì tra cứu từ Yard
           let yardNameCalc: string = request.yard_name || request.yard?.name || request.actual_location?.yard_name || '';
@@ -1240,7 +1313,7 @@ export default function ManagerCont(){
                       <th data-column="container">Số Cont</th>
                       <th data-column="container-type">Loại Cont</th>
                       <th data-column="status">Trạng thái</th>
-                      <th style={{ display: 'none' }}>Trạng thái Request</th>
+                      {/* <th data-column="request-status">Trạng thái Request</th> */}
                       <th data-column="images">Hình ảnh</th>
                       <th data-column="position">Vị trí</th>
                       <th data-column="seal">Số seal</th>
@@ -1252,7 +1325,7 @@ export default function ManagerCont(){
                   <tbody>
                     {tableData.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="no-data">
+                        <td colSpan={11} className="no-data">
                           Không có dữ liệu
                         </td>
                       </tr>
@@ -1279,11 +1352,11 @@ export default function ManagerCont(){
                               );
                             })()}
                           </td>
-                          <td style={{ display: 'none' }}>
+                          {/* <td>
                             <span className={`status-badge ${getRequestStatusBadgeClass(row.status)}`}>
                               {getRequestStatusLabel(row.status, row.requestType)}
                             </span>
-                          </td>
+                          </td> */}
                           <td>
                             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
                               <button

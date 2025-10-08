@@ -147,6 +147,33 @@ export class FileUploadService {
         }
     }
 
+    // Get ALL files for a request (including deleted) - for ManagerCont compatibility with Maintenance/Repairs
+    async getAllFiles(requestId: string) {
+        try {
+            const files = await this.prisma.requestAttachment.findMany({
+                where: {
+                    request_id: requestId
+                    // Không filter deleted_at để lấy tất cả files
+                },
+                orderBy: {
+                    uploaded_at: 'desc'
+                }
+            });
+
+            return {
+                success: true,
+                data: files
+            };
+
+        } catch (error: any) {
+            console.error('Get all files error:', error);
+            return {
+                success: false,
+                message: error.message || 'Có lỗi xảy ra khi lấy danh sách file'
+            };
+        }
+    }
+
     // Delete a file
     async deleteFile(fileId: string, deletedBy: string, reason?: string) {
         try {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../../../shared/middlewares/auth';
 import { requireRoles } from '../../../shared/middlewares/rbac';
 import * as controller from './RequestController';
+import * as filesController from './filesController';
 import { updateAllInvoicesWithSealCost, updateInvoiceWithSealCost } from './updateInvoiceWithSealCostController';
 import { getSealCost } from './getSealCostController';
 import { getRepairCost } from './getRepairCostController';
@@ -25,13 +26,19 @@ router.post('/:requestId/files',
 // Get files for a request
 router.get('/:requestId/files', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
-    controller.getFiles
+    filesController.getFiles
+);
+
+// Get ALL files for a request (including deleted) - for ManagerCont compatibility with Maintenance/Repairs
+router.get('/:requestId/attachments-all', 
+    requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
+    filesController.getAllFiles
 );
 
 // Delete a file
 router.delete('/files/:fileId', 
     requireRoles('TechnicalDepartment', 'Accountant', 'CustomerAdmin', 'CustomerUser', 'SystemAdmin', 'BusinessAdmin'),
-    controller.deleteFile
+    filesController.deleteFile
 );
 
 // Create a new request with files

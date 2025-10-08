@@ -5,6 +5,7 @@ import { requestService } from '../../../services/requests';
 import { generateLowerRequestNumber } from '../../../utils/requestNumberGenerator';
 import { ContainerSearchInput, type ContainerSearchResult } from '../../../components/ContainerSearchInput';
 import DateTimeInput from '../../../components/DateTimeInput';
+import DateInput from '../../../components/DateInput';
 
 interface CreateLowerRequestModalProps {
 	isOpen: boolean;
@@ -24,6 +25,7 @@ export interface LowerRequestData {
 	driver?: string;
 	driverPhone?: string;
 	appointmentTime?: string;
+	demDet?: string; // DEM/DET field
 	documents?: File[];
 	notes?: string;
 }
@@ -45,6 +47,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		driver: '',
 		driverPhone: '',
 		appointmentTime: '',
+		demDet: '',
 		documents: [],
 		notes: ''
 	});
@@ -213,6 +216,15 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 	};
 
 	const handleInputChange = (field: keyof LowerRequestData, value: string) => {
+		// Debug log cho DEM/DET
+		if (field === 'demDet') {
+			console.log('🔍 DEM/DET field changed:', {
+				field,
+				value,
+				previousValue: formData.demDet
+			});
+		}
+		
 		setFormData(prev => ({
 			...prev,
 			[field]: value
@@ -280,6 +292,47 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 		}, 1000); // 1000ms delay - tăng delay để tránh check quá nhiều
 	}, [checkContainerExists]);
 
+	// Helper function to format date input as user types
+	const formatDateInput = (value: string): string => {
+		// Remove all non-numeric characters
+		const numbers = value.replace(/\D/g, '');
+		
+		// Limit to 8 digits (ddmmyyyy)
+		const limitedNumbers = numbers.slice(0, 8);
+		
+		// Format as dd/mm/yyyy
+		if (limitedNumbers.length <= 2) {
+			return limitedNumbers;
+		} else if (limitedNumbers.length <= 4) {
+			return `${limitedNumbers.slice(0, 2)}/${limitedNumbers.slice(2)}`;
+		} else {
+			return `${limitedNumbers.slice(0, 2)}/${limitedNumbers.slice(2, 4)}/${limitedNumbers.slice(4)}`;
+		}
+	};
+
+	// Helper function to validate date format dd/mm/yyyy
+	const isValidDateFormat = (dateString: string): boolean => {
+		if (!dateString.trim()) return true; // Empty is valid (optional field)
+		
+		const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+		const match = dateString.match(dateRegex);
+		
+		if (!match) return false;
+		
+		const day = parseInt(match[1], 10);
+		const month = parseInt(match[2], 10);
+		const year = parseInt(match[3], 10);
+		
+		// Basic validation
+		if (day < 1 || day > 31) return false;
+		if (month < 1 || month > 12) return false;
+		if (year < 1900 || year > 2100) return false;
+		
+		// Create date object and check if it's valid
+		const date = new Date(year, month - 1, day);
+		return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+	};
+
 	const validateForm = (): boolean => {
 		const newErrors: Partial<LowerRequestData> = {};
 
@@ -296,6 +349,11 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 			newErrors.customer = 'Khách hàng là bắt buộc';
 		}
 
+		// Validate DEM/DET format if provided
+		if (formData.demDet && formData.demDet.trim() && !isValidDateFormat(formData.demDet.trim())) {
+			newErrors.demDet = 'Định dạng DEM/DET phải là dd/mm/yyyy';
+		}
+
 		// Container validation re-enabled - check for conflicts with export requests
 		if (containerValidationError) {
 			newErrors.containerNumber = containerValidationError;
@@ -307,6 +365,14 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		
+		// Debug log formData trước khi submit
+		console.log('🔍 FormData before submit:', {
+			containerNumber: formData.containerNumber,
+			demDet: formData.demDet,
+			appointmentTime: formData.appointmentTime,
+			allFormData: formData
+		});
 		
 		if (validateForm()) {
 			try {
@@ -330,11 +396,13 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
                 driver_name: formData.driver,
                 driver_phone: formData.driverPhone,
                 appointment_time: formData.appointmentTime,
+                dem_det: formData.demDet, // Add DEM/DET field
                 notes: formData.notes,
                 files: formData.documents || []
             };
 
             console.log('Creating export request with data:', requestData);
+            console.log('DEM/DET value being sent:', requestData.dem_det);
             console.log('Token from localStorage:', localStorage.getItem('token'));
 
 				// Call API to create request with files
@@ -359,6 +427,7 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 						driver: '',
 						driverPhone: '',
 						appointmentTime: '',
+						demDet: '',
 						documents: [],
 						notes: ''
 					});
@@ -1199,6 +1268,33 @@ export const CreateLowerRequestModal: React.FC<CreateLowerRequestModalProps> = (
 								placeholder="dd/mm/yyyy hh:mm"
 								style={formInputStyle}
 							/>
+						</div>
+
+						{/* DEM/DET - Optional */}
+						<div style={formGroupStyle}>
+							<label style={formLabelStyle}>
+								DEM/DET
+							</label>
+							<DateInput
+								value={formData.demDet || ''}
+								onChange={(value) => handleInputChange('demDet', value)}
+								placeholder="dd/mm/yyyy"
+								style={errors.demDet ? formInputErrorStyle : formInputStyle}
+							/>
+							{errors.demDet && (
+								<div style={{ 
+									fontSize: '12px', 
+									color: '#dc2626', 
+									marginTop: '4px',
+									padding: '8px 12px',
+									background: '#fef2f2',
+									border: '1px solid #fecaca',
+									borderRadius: '6px',
+									fontWeight: '500'
+								}}>
+									{errors.demDet}
+								</div>
+							)}
 						</div>
 
 						{/* Ghi chú - Optional */}

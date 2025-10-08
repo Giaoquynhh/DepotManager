@@ -74,5 +74,11 @@ export const containersApi = {
   async checkContainerExistsInYard(container_no: string) {
     const { data } = await api.get(`/containers/yard/check-exists/${encodeURIComponent(container_no)}`);
     return data;
+  },
+
+  // API để kiểm tra container có đang được sử dụng cho export request khác hay không
+  async checkContainerInUseForExport(container_no: string) {
+    const { data } = await api.get(`/containers/check-in-use-export/${encodeURIComponent(container_no)}`);
+    return data;
   }
 };

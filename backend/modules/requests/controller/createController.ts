@@ -24,6 +24,14 @@ export const createRequest = async (req: Request, res: Response) => {
             dem_det
         } = req.body;
 
+        // Debug log để kiểm tra dữ liệu nhận được
+        console.log('🔍 Backend received request data:', {
+            container_no,
+            dem_det,
+            type,
+            status
+        });
+
         const files = req.files as Express.Multer.File[];
         const createdBy = (req as any).user?._id;
 
@@ -174,35 +182,45 @@ export const createRequest = async (req: Request, res: Response) => {
             }
         }
 
+        const requestData = {
+            created_by: createdBy,
+            type: type || 'IMPORT',
+            request_no: req.body.request_no,
+            container_no,
+            shipping_line_id: shipping_line_id || null,
+            container_type_id: container_type_id || null,
+            customer_id: customer_id || null,
+            lower_customer_id: lower_customer_id || null,
+            vehicle_company_id: vehicle_company_id || null,
+            eta: eta ? new Date(eta) : null,
+            status: status || 'NEW_REQUEST',
+            appointment_time: appointment_time ? new Date(appointment_time) : null,
+            appointment_note: notes,
+            booking_bill: booking_bill || null,
+            driver_name,
+            driver_phone,
+            license_plate: license_plate,
+            tenant_id: null,
+            attachments_count: files ? files.length : 0,
+            locked_attachments: false,
+            has_invoice: false,
+            is_paid: false,
+            is_pick: false,
+            // BỔ SUNG: Ưu tiên seal_number từ request mới, nếu không có thì dùng seal_number hiện có
+            seal_number: seal_number || existingSealNumber || null,
+            dem_det: dem_det || null
+        };
+
+        // Debug log để kiểm tra dữ liệu được lưu
+        console.log('💾 Backend saving request data:', {
+            container_no: requestData.container_no,
+            dem_det: requestData.dem_det,
+            type: requestData.type,
+            status: requestData.status
+        });
+
         const request = await prisma.serviceRequest.create({
-            data: {
-                created_by: createdBy,
-                type: type || 'IMPORT',
-                request_no: req.body.request_no,
-                container_no,
-                shipping_line_id: shipping_line_id || null,
-                container_type_id: container_type_id || null,
-                customer_id: customer_id || null,
-                lower_customer_id: lower_customer_id || null,
-                vehicle_company_id: vehicle_company_id || null,
-                eta: eta ? new Date(eta) : null,
-                status: status || 'NEW_REQUEST',
-                appointment_time: appointment_time ? new Date(appointment_time) : null,
-                appointment_note: notes,
-                booking_bill: booking_bill || null,
-                driver_name,
-                driver_phone,
-                license_plate: license_plate,
-                tenant_id: null,
-                attachments_count: files ? files.length : 0,
-                locked_attachments: false,
-                has_invoice: false,
-                is_paid: false,
-                is_pick: false,
-                // BỔ SUNG: Ưu tiên seal_number từ request mới, nếu không có thì dùng seal_number hiện có
-                seal_number: seal_number || existingSealNumber || null,
-                dem_det: dem_det || null
-            }
+            data: requestData
         });
 
         if (files && files.length > 0) {

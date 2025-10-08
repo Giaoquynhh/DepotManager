@@ -22,30 +22,48 @@ export const DateInput: React.FC<DateInputProps> = ({
   disabled = false
 }) => {
   const [dateValue, setDateValue] = useState('');
-  const [displayValue, setDisplayValue] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
+  const [displayDateValue, setDisplayDateValue] = useState('');
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Convert ISO date string to separate date value and display format
+  // Convert DD/MM/YYYY string to separate date value
   useEffect(() => {
     if (value) {
       try {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          
-          setDateValue(`${year}-${month}-${day}`);
-          setDisplayValue(`${day}/${month}/${year}`);
+        // If value is in DD/MM/YYYY format, convert to YYYY-MM-DD
+        if (value.includes('/')) {
+          const [day, month, year] = value.split('/');
+          if (day && month && year) {
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            if (!isNaN(date.getTime())) {
+              const yearStr = date.getFullYear();
+              const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+              const dayStr = String(date.getDate()).padStart(2, '0');
+              
+              // Format date as YYYY-MM-DD for HTML input[type="date"]
+              setDateValue(`${yearStr}-${monthStr}-${dayStr}`);
+              // Format display date as DD/MM/YYYY for Vietnamese format
+              setDisplayDateValue(`${dayStr}/${monthStr}/${yearStr}`);
+            }
+          }
+        } else {
+          // If value is already in YYYY-MM-DD format
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            setDateValue(`${year}-${month}-${day}`);
+            setDisplayDateValue(`${day}/${month}/${year}`);
+          }
         }
       } catch (error) {
         setDateValue('');
-        setDisplayValue('');
+        setDisplayDateValue('');
       }
     } else {
       setDateValue('');
-      setDisplayValue('');
+      setDisplayDateValue('');
     }
   }, [value]);
 
@@ -53,35 +71,20 @@ export const DateInput: React.FC<DateInputProps> = ({
     const newDate = e.target.value;
     setDateValue(newDate);
     
+    // Update display date format (DD/MM/YYYY)
     if (newDate) {
-      const isoValue = `${newDate}T00:00:00.000Z`;
-      onChange(isoValue);
-      
-      // Update display value
       const [year, month, day] = newDate.split('-');
-      setDisplayValue(`${day}/${month}/${year}`);
+      const formattedDate = `${day}/${month}/${year}`;
+      setDisplayDateValue(formattedDate);
+      onChange(formattedDate);
     } else {
+      setDisplayDateValue('');
       onChange('');
-      setDisplayValue('');
     }
-  };
-
-  const handleDisplayClick = () => {
-    if (!disabled) {
-      dateInputRef.current?.showPicker();
-    }
-  };
-
-  const handleDisplayFocus = () => {
-    setIsFocused(true);
-  };
-
-  const handleDisplayBlur = () => {
-    setIsFocused(false);
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ flex: 1, position: 'relative' }}>
       {/* Hidden date input for calendar functionality */}
       <input
         ref={dateInputRef}
@@ -103,19 +106,38 @@ export const DateInput: React.FC<DateInputProps> = ({
       {/* Display input that shows Vietnamese format */}
       <input
         type="text"
-        value={displayValue}
-        onClick={handleDisplayClick}
-        onFocus={handleDisplayFocus}
-        onBlur={handleDisplayBlur}
+        value={displayDateValue}
+        onClick={() => !disabled && dateInputRef.current?.showPicker()}
         readOnly
-        placeholder={placeholder}
+        placeholder="dd/mm/yyyy"
         style={{
           ...style,
-          cursor: disabled ? 'not-allowed' : 'pointer'
+          width: '100%',
+          padding: '12px 16px',
+          border: '2px solid #e2e8f0',
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#374151',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          transition: 'all 0.2s ease',
+          outline: 'none',
+          backgroundColor: 'white'
         }}
         className={className}
         disabled={disabled}
       />
+      <label style={{
+        position: 'absolute',
+        top: '-8px',
+        left: '12px',
+        background: 'white',
+        padding: '0 4px',
+        fontSize: '12px',
+        color: '#64748b',
+        fontWeight: '500'
+      }}>
+        Ngày
+      </label>
     </div>
   );
 };

@@ -19,11 +19,21 @@ export const updateRequest = async (req: Request, res: Response) => {
             driver_phone,
             appointment_time,
             booking_bill,
+            dem_det,
             notes
         } = req.body;
 
         const files = req.files as Express.Multer.File[];
         const updatedBy = (req as any).user?._id;
+
+        // Debug log để kiểm tra dữ liệu nhận được
+        console.log('🔍 Backend updateRequest received data:', {
+            id,
+            dem_det,
+            container_no,
+            type,
+            appointment_time
+        });
 
         const existingRequest = await prisma.serviceRequest.findUnique({
             where: {
@@ -94,9 +104,18 @@ export const updateRequest = async (req: Request, res: Response) => {
                 driver_name: driver_name || existingRequest.driver_name,
                 driver_phone: driver_phone || existingRequest.driver_phone,
                 license_plate: license_plate || existingRequest.license_plate,
+                dem_det: dem_det !== undefined ? dem_det : existingRequest.dem_det,
                 updatedAt: new Date(),
                 attachments_count: existingRequest.attachments_count + (files ? files.length : 0)
             }
+        });
+
+        // Debug log để kiểm tra dữ liệu được lưu
+        console.log('💾 Backend updateRequest saved data:', {
+            id: updatedRequest.id,
+            container_no: updatedRequest.container_no,
+            dem_det: updatedRequest.dem_det,
+            updatedAt: updatedRequest.updatedAt
         });
 
         // Nếu booking_bill hoặc container_no được cập nhật, đồng bộ với SealUsageHistory

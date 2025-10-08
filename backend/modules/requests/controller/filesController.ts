@@ -102,6 +102,28 @@ export const getFiles = async (req: Request, res: Response) => {
     }
 };
 
+// Get ALL files for a request (including deleted) - for ManagerCont compatibility with Maintenance/Repairs
+export const getAllFiles = async (req: Request, res: Response) => {
+    try {
+        const { requestId } = req.params;
+
+        const result = await fileUploadService.getAllFiles(requestId);
+
+        if (result.success) {
+            res.status(200).json(result);
+        } else {
+            res.status(400).json(result);
+        }
+
+    } catch (error: any) {
+        console.error('Get all files error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi lấy danh sách file'
+        });
+    }
+};
+
 // Delete a file
 export const deleteFile = async (req: Request, res: Response) => {
     try {

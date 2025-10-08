@@ -5,6 +5,10 @@ export { default as Header } from './Header';
 export { default as Modal } from './Modal';
 export { default as SearchBar } from './SearchBar';
 
+// Input Components
+export { default as DateInput } from './DateInput';
+export { default as DateTimeInput } from './DateTimeInput';
+
 // Layout Components
 export { default as PageLayout } from './layout/PageLayout';
 

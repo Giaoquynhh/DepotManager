@@ -16,6 +16,7 @@ export interface CreateRequestData {
   driver_phone?: string;
   appointment_time?: string;
   booking_bill?: string; // Add booking_bill field
+  dem_det?: string; // Add dem_det field
   notes?: string;
   files?: File[];
 }
@@ -53,6 +54,7 @@ export const requestService = {
     if (data.driver_phone) formData.append('driver_phone', data.driver_phone);
     if (data.appointment_time) formData.append('appointment_time', data.appointment_time);
     if (data.booking_bill) formData.append('booking_bill', data.booking_bill); // Add booking_bill
+    if (data.dem_det) formData.append('dem_det', data.dem_det); // Add dem_det
     if (data.notes) formData.append('notes', data.notes);
     
     // Add files

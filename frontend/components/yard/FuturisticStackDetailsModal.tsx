@@ -157,11 +157,12 @@ export const FuturisticStackDetailsModal: React.FC<FuturisticStackDetailsModalPr
     }
   };
 
-  // Validate container input
+  // Validate container input - Tắt validation 4 ký tự tối thiểu
   const validateContainerInput = (tier: number, containerNo: string): {isValid: boolean, message: string} => {
-    if (!containerNo || containerNo.trim().length < 4) {
-      return { isValid: false, message: 'Vui lòng nhập số container hợp lệ (>= 4 ký tự)' };
-    }
+    // Tắt validation 4 ký tự tối thiểu - cho phép nhập container ngắn hơn
+    // if (!containerNo || containerNo.trim().length < 4) {
+    //   return { isValid: false, message: 'Vui lòng nhập số container hợp lệ (>= 4 ký tự)' };
+    // }
     
     if (isSystemAdmin) {
       return { isValid: true, message: '' };

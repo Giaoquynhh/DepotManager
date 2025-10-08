@@ -17,8 +17,9 @@ export const ContainerSearchForm: React.FC<ContainerSearchFormProps> = ({
   onSubmit,
   loading
 }) => {
-  const isContainerNoValid = containerNo.trim().length >= 4;
-  const showError = containerNo.trim().length > 0 && containerNo.trim().length < 4;
+  // Tắt validation 4 ký tự tối thiểu
+  const isContainerNoValid = containerNo.trim().length > 0;
+  const showError = false; // Tắt hiển thị lỗi validation 4 ký tự
 
   // Danh sách các vị trí cổng xe vào
   const gateLocations = [
@@ -52,9 +53,10 @@ export const ContainerSearchForm: React.FC<ContainerSearchFormProps> = ({
             {loading ? '🔍 Đang tìm...' : '🔍 Tìm kiếm'}
           </button>
         </div>
-        {showError && (
+        {/* Tắt hiển thị lỗi validation 4 ký tự */}
+        {/* {showError && (
           <p className="error-message">Container No phải có ít nhất 4 ký tự</p>
-        )}
+        )} */}
       </div>
 
       <div className="form-group">

@@ -2,6 +2,7 @@ import React from 'react';
 import type { EditLowerRequestData } from './EditLowerRequestModal.types';
 import type { Customer } from '../../../services/setupService';
 import DateTimeInput from '../../../components/DateTimeInput';
+import DateInput from '../../../components/DateInput';
 
 interface LowerRequestFormFieldsProps {
 	formData: EditLowerRequestData;
@@ -244,7 +245,29 @@ export const LowerRequestFormFields: React.FC<LowerRequestFormFieldsProps> = ({
 				</div>
 			</div>
 
-			{/* Row 7: Notes */}
+			{/* Row 7: DEM/DET */}
+			<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+				<div>
+					<DateInput
+						value={formData.demDet || ''}
+						onChange={(value) => handleInputChange('demDet', value)}
+						placeholder="dd/mm/yyyy"
+						style={{
+							width: '100%',
+							padding: '12px 16px',
+							border: '2px solid #e2e8f0',
+							borderRadius: '8px',
+							fontSize: '14px',
+							color: '#374151',
+							transition: 'all 0.2s ease',
+							outline: 'none',
+							backgroundColor: 'white'
+						}}
+					/>
+				</div>
+			</div>
+
+			{/* Row 8: Notes */}
 			<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
 				<div>
 					<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
