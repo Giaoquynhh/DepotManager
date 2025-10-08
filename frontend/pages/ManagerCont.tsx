@@ -1033,64 +1033,19 @@ export default function ManagerCont(){
           background: #4b5563;
         }
 
-        /* Specific styling for documents button */
-        .data-table .btn-light {
-          background: #f8f9fa !important;
-          color: #1e3a8a !important;
-          border: 1px solid #d1d5db !important;
-          font-weight: 500 !important;
-        }
-
-        .data-table .btn-light:hover {
-          background: #e5e7eb !important;
-          border-color: #9ca3af !important;
-          color: #1e40af !important;
-        }
+        /* Button styling được xử lý bởi gate.css */
 
         .table-section {
           margin-top: 1.5rem;
         }
 
-        .table-container {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
+        /* Xóa khung trắng bao quanh bảng */
 
         .table-wrapper {
           overflow-x: auto;
         }
 
-        .data-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.875rem;
-        }
-
-        .data-table th {
-          background: #f3f4f6;
-          padding: 0.75rem 0.5rem;
-          text-align: left;
-          font-weight: 600;
-          color: #374151;
-          border-bottom: 2px solid #e5e7eb;
-          white-space: nowrap;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .data-table td {
-          padding: 0.75rem 0.5rem;
-          border-bottom: 1px solid #e5e7eb;
-          vertical-align: middle;
-          white-space: nowrap;
-        }
-
-        .data-table tr:hover {
-          background: #f9fafb;
-        }
+        /* Sử dụng gate-table CSS từ gate.css */
 
         .status-badge {
           display: inline-block;
@@ -1215,16 +1170,10 @@ export default function ManagerCont(){
           }
         }
 
-        @media (max-width: 1200px) {
-          .data-table th,
-          .data-table td {
-            padding: 0.5rem 0.25rem;
-            font-size: 0.75rem;
-          }
-        }
+        /* Responsive CSS được xử lý bởi gate.css */
       `}</style>
       <Header />
-      <main className="container depot-requests">
+      <main className="container gate-page">
         {/* Page Header */}
         <div className="page-header modern-header">
           <div className="header-content">
@@ -1277,30 +1226,27 @@ export default function ManagerCont(){
         </div>
 
         {/* Table Section */}
-        <div className="table-section">
-          <div className="table-container">
-            
-            <div className="table-wrapper">
+        <div className="gate-table-container">
               {loading ? (
                 <div className="loading-container">
                   <div className="loading-spinner"></div>
                   <p>Đang tải dữ liệu...</p>
                 </div>
               ) : (
-                <table className="data-table">
+                <table className="gate-table">
                   <thead>
                     <tr>
-                      <th>Hãng tàu</th>
-                      <th>Số Cont</th>
-                      <th>Loại Cont</th>
-                      <th>Trạng thái</th>
+                      <th data-column="shipping-line">Hãng tàu</th>
+                      <th data-column="container">Số Cont</th>
+                      <th data-column="container-type">Loại Cont</th>
+                      <th data-column="status">Trạng thái</th>
                       <th style={{ display: 'none' }}>Trạng thái Request</th>
-                      <th>Hình ảnh</th>
-                      <th>Vị trí</th>
-                      <th>Số seal</th>
-                      <th>Khách hàng</th>
-                      <th>DEM/DET</th>
-                      <th>Hành động</th>
+                      <th data-column="images">Hình ảnh</th>
+                      <th data-column="position">Vị trí</th>
+                      <th data-column="seal">Số seal</th>
+                      <th data-column="customer">Khách hàng</th>
+                      <th data-column="dem-det">DEM/DET</th>
+                      <th data-column="actions">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1387,8 +1333,6 @@ export default function ManagerCont(){
                   </tbody>
                 </table>
               )}
-            </div>
-          </div>
         </div>
 
         {/* Pagination */}

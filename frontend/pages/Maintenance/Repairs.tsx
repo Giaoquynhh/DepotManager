@@ -259,7 +259,7 @@ export default function RepairsPage() {
   return (
     <>
       <Header />
-      <main className="container depot-requests">
+      <main className="container gate-page">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">
@@ -273,21 +273,21 @@ export default function RepairsPage() {
 
         <Card>
           <div style={{ overflow: 'auto' }}>
-            <table className="table" style={{ width: '100%', minWidth: '1800px' }}>
+            <table className="gate-table" style={{ width: '100%', minWidth: '1800px' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '150px', whiteSpace: 'nowrap' }}>Số yêu cầu</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>Số cont</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '100px', whiteSpace: 'nowrap' }}>Loại cont</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>Số xe</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '100px', whiteSpace: 'nowrap' }}>Tài xế</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '120px', whiteSpace: 'nowrap' }}>SDT tài xế</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '180px', whiteSpace: 'nowrap' }}>Trạng thái phiếu</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '200px', whiteSpace: 'nowrap' }}>Trạng thái cont</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '160px', whiteSpace: 'nowrap' }}>Thời gian bắt đầu</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', minWidth: '160px', whiteSpace: 'nowrap' }}>Thời gian kết thúc</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', minWidth: '300px', whiteSpace: 'nowrap' }}>Hình ảnh</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', minWidth: '200px', whiteSpace: 'nowrap' }}>Hành động</th>
+                  <th data-column="request-no">Số yêu cầu</th>
+                  <th data-column="container">Số container</th>
+                  <th data-column="container-type">Loại container</th>
+                  <th data-column="vehicle">Số xe</th>
+                  <th data-column="driver">Tài xế</th>
+                  <th data-column="driver-phone">SĐT tài xế</th>
+                  <th data-column="ticket-status">Trạng thái phiếu</th>
+                  <th data-column="container-status">Trạng thái container</th>
+                  <th data-column="start-time">Thời gian bắt đầu</th>
+                  <th data-column="end-time">Thời gian kết thúc</th>
+                  <th data-column="images">Hình ảnh</th>
+                  <th data-column="actions">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -574,7 +574,7 @@ export default function RepairsPage() {
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Trạng thái cont</label>
+                <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Trạng thái container</label>
                 <select
                   value={acceptModal.status}
                   onChange={(e) => setAcceptModal(prev => ({ ...prev, status: (e.target.value as 'GOOD' | 'NEED_REPAIR') }))}

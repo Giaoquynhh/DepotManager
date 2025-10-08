@@ -403,16 +403,38 @@
 .gate-table th[data-column="block"]::before { content: "🏗️"; }
 .gate-table th[data-column="slot"]::before { content: "📍"; }
 .gate-table th[data-column="checkInfo"]::before { content: "✅"; }
+.gate-table th[data-column="shipping-line"]::before { content: "🚢"; }
+.gate-table th[data-column="position"]::before { content: "📍"; }
+.gate-table th[data-column="seal"]::before { content: "🔒"; }
+.gate-table th[data-column="customer"]::before { content: "👥"; }
+.gate-table th[data-column="dem-det"]::before { content: "⏱️"; }
+.gate-table th[data-column="purchase-date"]::before { content: "📅"; }
+.gate-table th[data-column="purchase-quantity"]::before { content: "📦"; }
+.gate-table th[data-column="exported-quantity"]::before { content: "📤"; }
+.gate-table th[data-column="remaining-quantity"]::before { content: "📋"; }
+.gate-table th[data-column="unit-price"]::before { content: "💰"; }
+.gate-table th[data-column="total-amount"]::before { content: "💵"; }
+.gate-table th[data-column="pickup-location"]::before { content: "📍"; }
+.gate-table th[data-column="invoice-number"]::before { content: "🧾"; }
+.gate-table th[data-column="request-number"]::before { content: "📋"; }
+.gate-table th[data-column="request-type"]::before { content: "🔧"; }
+.gate-table th[data-column="tax-code"]::before { content: "🏢"; }
+.gate-table th[data-column="phone-number"]::before { content: "📞"; }
+.gate-table th[data-column="ticket-status"]::before { content: "🎫"; }
+.gate-table th[data-column="container-status"]::before { content: "📦"; }
+.gate-table th[data-column="start-time"]::before { content: "⏰"; }
+.gate-table th[data-column="end-time"]::before { content: "⏰"; }
 
 .gate-table th {
   background: var(--color-gray-50);
   padding: var(--space-4);
   text-align: left;
-  font-weight: var(--font-weight-semibold);
+  font-weight: 700; /* Thay đổi từ var(--font-weight-semibold) thành 700 (bold) để đồng bộ với LowerContainer */
   color: var(--color-gray-700);
   border-bottom: 2px solid var(--color-gray-200);
   font-size: 12px; /* Giảm từ var(--font-size-sm) xuống 12px */
   white-space: nowrap;
+  text-transform: uppercase; /* Làm cho header in HOA để đồng bộ với trang LowerContainer */
 }
 
 /* Chiều rộng cho các header cột cụ thể */
@@ -478,7 +500,7 @@
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-gray-100);
   color: var(--color-gray-700);
-  font-size: 11px; /* Giảm từ var(--font-size-sm) xuống 11px */
+  font-size: 18px; /* Tăng kích thước chữ lên 18px cho dễ đọc */
 }
 
 /* Đảm bảo các cột có chiều rộng phù hợp */

@@ -52,7 +52,7 @@ export default function LiftContainer() {
         }
       `}</style>
       <Header />
-      <main className="container depot-requests">
+      <main className="container gate-page">
         <div className="page-header modern-header">
           <div className="header-content">
             <div className="header-left">

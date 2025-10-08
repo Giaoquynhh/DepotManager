@@ -113,26 +113,18 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
         switch (status) {
             case 'NEW_REQUEST':
                 return '🆕 Thêm mới';
-            case 'PENDING':
-                return '⏳ Chờ xử lý';
-            case 'SCHEDULED':
-                return '📅 Đã lên lịch';
-            case 'FORWARDED':
-                return '📤 Đã chuyển tiếp';
-            case 'FORKLIFTING':
-                return '🟡 Đang nâng hạ';
             case 'GATE_IN':
                 return '🟢 Đã cho phép vào';
+            case 'FORKLIFTING':
+                return '🟡 Đang nâng hạ';
             case 'DONE_LIFTING':
+                return '✅ Nâng thành công';
+            case 'IN_CAR':
                 return '✅ Nâng thành công';
             case 'GATE_OUT':
                 return '🟣 Đã cho phép ra';
-            case 'IN_CAR':
-                return '✅ Nâng thành công';
             case 'GATE_REJECTED':
                 return '⛔ Đã từ chối';
-            case 'COMPLETED':
-                return '✅ Hoàn tất';
             default:
                 return status;
         }
@@ -185,7 +177,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                 });
                 
                 // Sắp xếp dữ liệu: record mới lên trên, record cũ xuống dưới
-                const sortedData = transformedData.sort((a, b) => {
+                const sortedData = transformedData.sort((a: LiftRequestRow, b: LiftRequestRow) => {
                     // Ưu tiên sắp xếp theo requestNo giảm dần (mới nhất lên trên)
                     if (a.requestNo && b.requestNo) {
                         return b.requestNo.localeCompare(a.requestNo);
@@ -226,6 +218,38 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
             fetchRequests();
         }
     }, [refreshTrigger]);
+
+    // State để lưu dữ liệu đã filter
+    const [filteredRows, setFilteredRows] = React.useState<LiftRequestRow[]>([]);
+
+    // Effect để filter dữ liệu theo status và search
+    React.useEffect(() => {
+        let filtered = [...rows];
+
+        // Filter theo status
+        if (localStatus && localStatus !== 'all') {
+            if (localStatus === 'DONE_LIFTING_OR_IN_CAR') {
+                // Gộp cả DONE_LIFTING và IN_CAR thành một trạng thái "Nâng thành công"
+                filtered = filtered.filter(row => row.status === 'DONE_LIFTING' || row.status === 'IN_CAR');
+            } else {
+                filtered = filtered.filter(row => row.status === localStatus);
+            }
+        }
+
+        // Filter theo search
+        if (localSearch && localSearch.trim()) {
+            const searchTerm = localSearch.trim().toLowerCase();
+            filtered = filtered.filter(row => 
+                row.containerNo.toLowerCase().includes(searchTerm) ||
+                row.requestNo.toLowerCase().includes(searchTerm) ||
+                row.customer.toLowerCase().includes(searchTerm) ||
+                row.driverName.toLowerCase().includes(searchTerm) ||
+                row.vehicleNumber.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        setFilteredRows(filtered);
+    }, [rows, localStatus, localSearch]);
 
     // Function để mở modal chỉnh sửa
     const handleUpdateClick = async (requestId: string) => {
@@ -518,13 +542,13 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 							value={localStatus}
 							onChange={(e) => setLocalStatus(e.target.value)}
 						>
-							<option value="all">{t('pages.requests.allStatuses')}</option>
-							<option value="PENDING">Chờ xử lý</option>
-							<option value="SCHEDULED">Đã lên lịch</option>
-							<option value="IN_PROGRESS">Đang thực hiện</option>
-							<option value="GATE_IN">Gate-in</option>
-							<option value="COMPLETED">Hoàn thành</option>
-							<option value="CANCELLED">Đã hủy</option>
+							<option value="all">Tất cả trạng thái</option>
+							<option value="NEW_REQUEST">🆕 Thêm mới</option>
+							<option value="GATE_IN">🟢 Đã cho phép vào</option>
+							<option value="FORKLIFTING">🟡 Đang nâng hạ</option>
+							<option value="DONE_LIFTING_OR_IN_CAR">✅ Nâng thành công</option>
+							<option value="GATE_OUT">🟣 Đã cho phép ra</option>
+							<option value="GATE_REJECTED">⛔ Đã từ chối</option>
 						</select>
 					</div>
 					{onCreateRequest && (
@@ -541,10 +565,10 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 			</div>
 
             <div className="gate-table-container">
-                {rows.length === 0 ? (
+                {filteredRows.length === 0 ? (
                     <div className="table-empty modern-empty">
                         <div className="empty-icon">📦⬆️</div>
-                        <p>Chưa có yêu cầu nâng container nào</p>
+                        <p>{rows.length === 0 ? 'Chưa có yêu cầu nâng container nào' : 'Không tìm thấy yêu cầu phù hợp'}</p>
                         <small>Không có yêu cầu nâng container nào để xử lý</small>
                     </div>
                 ) : (
@@ -552,31 +576,31 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: 1800 }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', color: '#0f172a' }}>
-                                    <th style={{...thStyle, minWidth: '100px'}}>Hãng tàu</th>
-                                    <th style={{...thStyle, minWidth: '150px'}}>Số yêu cầu</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Số Cont</th>
-                                    <th style={{...thStyle, minWidth: '100px'}}>Loại cont</th>
-                                    <th style={{...thStyle, minWidth: '140px'}}>Số Booking/Bill</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Loại dịch vụ</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Trạng thái reuse</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Khách hàng</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Nhà xe</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Số xe</th>
-                                    <th style={{...thStyle, minWidth: '100px'}}>Tài xế</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>SDT Tài xế</th>
-                                    <th style={{...thStyle, minWidth: '160px'}}>Thời gian hẹn</th>
-                                    <th style={{...thStyle, minWidth: '160px'}}>Giờ vào thực tế</th>
-                                    <th style={{...thStyle, minWidth: '160px'}}>Giờ ra thực tế</th>
-                                    <th style={{...thStyle, minWidth: '120px'}}>Tổng tiền</th>
-                                    <th style={{...thStyle, minWidth: '150px'}}>Trạng thái thanh toán</th>
-                                    <th style={{...thStyle, minWidth: '100px'}}>Chứng từ</th>
-                                    <th style={{...thStyle, minWidth: '150px'}}>Ghi chú</th>
-                                    <th style={{...thStyle, minWidth: '200px'}}>Hành động</th>
+                                    <th style={{...thStyle, minWidth: '100px'}} data-column="shipping-line">🚢 Hãng tàu</th>
+                                    <th style={{...thStyle, minWidth: '150px'}} data-column="request-no">📋 Số yêu cầu</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="container">📦 Số Cont</th>
+                                    <th style={{...thStyle, minWidth: '100px'}} data-column="container-type">🏷️ Loại cont</th>
+                                    <th style={{...thStyle, minWidth: '140px'}} data-column="booking-bill">📑 Số Booking/Bill</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="service-type">🔧 Loại dịch vụ</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="status">🔄 Trạng thái</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="reuse-status">♻️ Trạng thái reuse</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="customer">👥 Khách hàng</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="truck-company">🏢 Nhà xe</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="vehicle">🚚 Số xe</th>
+                                    <th style={{...thStyle, minWidth: '100px'}} data-column="driver">👤 Tài xế</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="driver-phone">📞 SDT Tài xế</th>
+                                    <th style={{...thStyle, minWidth: '160px'}} data-column="appointment">📅 Thời gian hẹn</th>
+                                    <th style={{...thStyle, minWidth: '160px'}} data-column="time-in">⏰ Giờ vào thực tế</th>
+                                    <th style={{...thStyle, minWidth: '160px'}} data-column="time-out">⏰ Giờ ra thực tế</th>
+                                    <th style={{...thStyle, minWidth: '120px'}} data-column="total-amount">💰 Tổng tiền</th>
+                                    <th style={{...thStyle, minWidth: '150px'}} data-column="payment-status">💳 Trạng thái thanh toán</th>
+                                    <th style={{...thStyle, minWidth: '100px'}} data-column="documents">📄 Chứng từ</th>
+                                    <th style={{...thStyle, minWidth: '150px'}} data-column="notes">📝 Ghi chú</th>
+                                    <th style={{...thStyle, minWidth: '200px'}} data-column="actions">⚙️ Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {rows.map((r) => (
+                                {filteredRows.map((r) => (
                                     <tr key={r.id} style={{ borderTop: '1px solid #f1f5f9' }}>
                                         <td style={{...tdStyle, minWidth: '100px'}}>{r.shippingLine}</td>
                                         <td style={{...tdStyle, minWidth: '150px'}}>{r.requestNo}</td>

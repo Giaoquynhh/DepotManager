@@ -186,7 +186,7 @@ export const createRequest = async (req: Request, res: Response) => {
                 lower_customer_id: lower_customer_id || null,
                 vehicle_company_id: vehicle_company_id || null,
                 eta: eta ? new Date(eta) : null,
-                status: status || 'PENDING',
+                status: status || 'NEW_REQUEST',
                 appointment_time: appointment_time ? new Date(appointment_time) : null,
                 appointment_note: notes,
                 booking_bill: booking_bill || null,
