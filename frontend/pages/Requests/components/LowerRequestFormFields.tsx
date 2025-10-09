@@ -248,6 +248,9 @@ export const LowerRequestFormFields: React.FC<LowerRequestFormFieldsProps> = ({
 			{/* Row 7: DEM/DET */}
 			<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
 				<div>
+					<label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
+						DEM/DET
+					</label>
 					<DateInput
 						value={formData.demDet || ''}
 						onChange={(value) => handleInputChange('demDet', value)}
