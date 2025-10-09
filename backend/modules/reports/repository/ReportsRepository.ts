@@ -166,6 +166,7 @@ export class ReportsRepository {
         ls.vehicle_company_id,
         COALESCE(ls.dem_det, c.dem_det) as dem_det,
         COALESCE(ls.seal_number, c.seal_number) as seal_number,
+        c.container_quality,
         ls.request_no
       FROM base_containers bc
       LEFT JOIN latest_sr ls ON ls.container_no = bc.container_no
@@ -199,6 +200,13 @@ export class ReportsRepository {
       LIMIT ${params.pageSize} OFFSET ${(params.page-1) * params.pageSize}
     `;
     
+    // Debug: Log raw data để kiểm tra container_quality
+    console.log('🔍 [DEBUG] Raw containers data sample:', raw.slice(0, 2).map(c => ({
+      container_no: c.container_no,
+      container_quality: c.container_quality,
+      service_status: c.service_status
+    })));
+
     // Lấy thông tin chi tiết từ các bảng liên quan
     const containersWithDetails = await Promise.all(
       raw.map(async (container: any) => {

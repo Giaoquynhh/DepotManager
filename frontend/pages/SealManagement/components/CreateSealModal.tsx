@@ -32,7 +32,7 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 		pickup_location: ''
 	});
 
-	const [errors, setErrors] = useState<Partial<SealFormData>>({});
+	const [errors, setErrors] = useState<Partial<Record<keyof SealFormData, string>>>({});
 
 	// Shipping lines
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
@@ -124,7 +124,7 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 	};
 
 	const validateForm = (): boolean => {
-		const newErrors: Partial<SealFormData> = {};
+		const newErrors: Partial<Record<keyof SealFormData, string>> = {};
 
 		if (!formData.shipping_company.trim()) {
 			newErrors.shipping_company = 'Hãng tàu là bắt buộc';
@@ -134,10 +134,18 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 		if (!formData.purchase_date.trim()) {
 			newErrors.purchase_date = 'Ngày mua là bắt buộc';
 		} else {
-			// Validate ISO date format
-			const date = new Date(formData.purchase_date);
-			if (isNaN(date.getTime())) {
-				newErrors.purchase_date = 'Ngày không hợp lệ';
+			// Validate date format (DD/MM/YYYY)
+			const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+			const match = formData.purchase_date.match(dateRegex);
+			if (!match) {
+				newErrors.purchase_date = 'Định dạng ngày không hợp lệ (dd/mm/yyyy)';
+			} else {
+				const [, day, month, year] = match;
+				const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+				if (isNaN(date.getTime()) || date.getDate() !== parseInt(day) || 
+					date.getMonth() !== parseInt(month) - 1 || date.getFullYear() !== parseInt(year)) {
+					newErrors.purchase_date = 'Ngày không hợp lệ';
+				}
 			}
 		}
 		if (!formData.quantity_purchased || formData.quantity_purchased <= 0) {
@@ -171,13 +179,20 @@ export const CreateSealModal: React.FC<CreateSealModalProps> = ({
 				const selectedShippingLine = shippingLines.find(line => line.id === formData.shipping_company);
 				const shippingCompanyName = selectedShippingLine ? selectedShippingLine.name : formData.shipping_company;
 
-				// DateInput đã trả về ISO format, chỉ cần sử dụng trực tiếp
-				const purchaseDate = formData.purchase_date;
+				// Chuyển đổi định dạng ngày từ DD/MM/YYYY sang ISO DateTime đầy đủ
+				let purchaseDate = formData.purchase_date;
+				if (purchaseDate && purchaseDate.includes('/')) {
+					const [day, month, year] = purchaseDate.split('/');
+					if (day && month && year) {
+						// Tạo ISO DateTime string với thời gian 00:00:00.000Z
+						purchaseDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00.000Z`;
+					}
+				}
 
 				const createData: CreateSealData = {
 					...formData,
 					shipping_company: shippingCompanyName, // Lưu tên hãng tàu vào database
-					purchase_date: purchaseDate, // Chuyển đổi thành DateTime đầy đủ
+					purchase_date: purchaseDate, // Định dạng ISO date string
 					quantity_exported: 0, // Mặc định là 0 cho seal mới
 					status: 'ACTIVE' // Mặc định là ACTIVE cho seal mới
 				};

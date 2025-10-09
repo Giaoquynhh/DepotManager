@@ -58,6 +58,8 @@ export default function GateActionButtons({
         return t('pages.gate.statusOptions.gateOut');
       case 'GATE_REJECTED':
         return t('pages.gate.statusOptions.gateRejected');
+      case 'REJECTED':
+        return t('pages.requests.filterOptions.rejected');
       case 'COMPLETED':
         return t('pages.gate.statusOptions.completed');
       default:

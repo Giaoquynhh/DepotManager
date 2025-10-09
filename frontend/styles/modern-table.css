@@ -271,6 +271,31 @@
   background: #FEE2E2 !important; /* Đỏ nhạt */
   color: #991B1B !important; /* Đỏ đậm */
   border: 1px solid #FCA5A5;
+  position: relative;
+  overflow: hidden;
+}
+
+.status-rejected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.status-rejected:hover {
+  background: #FECACA !important; /* Đỏ nhạt hơn khi hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(153, 27, 27, 0.2);
+  transition: all 0.2s ease;
 }
 
 .status-in-yard {

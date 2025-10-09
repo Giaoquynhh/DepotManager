@@ -164,7 +164,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
               type="text"
               value={searchParams.container_no}
               onChange={(e) => setSearchParams(prev => ({ ...prev, container_no: e.target.value, page: 1 }))}
-              placeholder="Tìm kiếm theo mã container..."
+              placeholder="Tìm kiếm theo số container..."
               style={{
                 width: '100%',
                 padding: 'var(--space-3)',

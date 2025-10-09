@@ -9,6 +9,8 @@ export default function LiftContainer() {
 	const { t } = useTranslation();
 	const { showSuccess, ToastContainer } = useToast();
 	const [localSearch, setLocalSearch] = React.useState('');
+	const [localRequestSearch, setLocalRequestSearch] = React.useState('');
+	const [localBookingSearch, setLocalBookingSearch] = React.useState('');
 	const [localType, setLocalType] = React.useState('all');
 	const [localStatus, setLocalStatus] = React.useState('all');
 	const [isCreateLiftModalOpen, setIsCreateLiftModalOpen] = React.useState(false);
@@ -67,6 +69,10 @@ export default function LiftContainer() {
 			<ExportRequest
 				localSearch={localSearch}
 				setLocalSearch={setLocalSearch}
+				localRequestSearch={localRequestSearch}
+				setLocalRequestSearch={setLocalRequestSearch}
+				localBookingSearch={localBookingSearch}
+				setLocalBookingSearch={setLocalBookingSearch}
 				localType={localType}
 				setLocalType={setLocalType}
 				localStatus={localStatus}

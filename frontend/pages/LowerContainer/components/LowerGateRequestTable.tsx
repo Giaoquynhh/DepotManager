@@ -60,6 +60,8 @@ export default function LowerGateRequestTable({ requests, loading, onRefresh, sh
         return 'Đã vào cổng';
       case 'NEW_REQUEST':
         return 'Đang tới';
+      case 'REJECTED':
+        return 'Đã từ chối';
       default:
         return status;
     }

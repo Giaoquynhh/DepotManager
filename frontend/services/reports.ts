@@ -33,6 +33,7 @@ export interface ContainerItem {
   customer?: any;
   seal_number?: string;
   dem_det?: string;
+  container_quality?: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
 }
 
 export interface ContainerListResponse {

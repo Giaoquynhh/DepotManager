@@ -162,10 +162,10 @@ class ContainerController {
         if (!container_no) continue;
 
         // Tìm ServiceRequest mới nhất cho container này (chỉ lấy request chưa bị xóa)
+        // KHÔNG filter theo shipping_line_id để tránh bỏ sót container IMPORT
         const latestServiceRequest = await prisma.serviceRequest.findFirst({
           where: { 
             container_no,
-            shipping_line_id,
             depot_deleted_at: null // Chỉ lấy request chưa bị soft-delete
           },
           orderBy: { createdAt: 'desc' },
@@ -183,8 +183,10 @@ class ContainerController {
         });
 
         // Kiểm tra điều kiện 2: IN_YARD hoặc GATE_OUT với type IMPORT và quality GOOD
+        // VÀ ServiceRequest phải thuộc hãng tàu được chọn
         if (latestServiceRequest && 
             latestServiceRequest.type === 'IMPORT' &&
+            latestServiceRequest.shipping_line_id === shipping_line_id &&
             (latestServiceRequest.status === 'IN_YARD' || latestServiceRequest.status === 'GATE_OUT')) {
           
           // 🔄 SỬA LOGIC: Kiểm tra container_quality từ bảng Container thay vì RepairTicket status
@@ -239,6 +241,13 @@ class ContainerController {
             latestServiceRequest.status === 'REJECTED') {
           
           console.log(`🔄 [Container Suggestion] Container ${container_no} có yêu cầu nâng bị hủy, kiểm tra khả năng nâng lại`);
+          console.log(`🔍 [Container Suggestion] Container ${container_no} - EXPORT REJECTED request details:`, {
+            request_id: latestServiceRequest.id,
+            status: latestServiceRequest.status,
+            type: latestServiceRequest.type,
+            shipping_line_id: latestServiceRequest.shipping_line_id,
+            requested_shipping_line_id: shipping_line_id
+          });
           
           // Tìm ServiceRequest IMPORT gần nhất để lấy thông tin container
           const importRequest = await prisma.serviceRequest.findFirst({
@@ -262,7 +271,7 @@ class ContainerController {
             }
           });
 
-          if (importRequest) {
+          if (importRequest && importRequest.shipping_line_id === shipping_line_id) {
             // 🔄 SỬA LOGIC: Kiểm tra container_quality từ bảng Container thay vì RepairTicket status
             const containerRecord = await prisma.$queryRaw<Array<{container_quality: string | null}>>`
               SELECT container_quality FROM "Container" WHERE container_no = ${container_no}
@@ -310,7 +319,70 @@ class ContainerController {
               console.log(`⚠️ [Container Suggestion] Container ${container_no} không có RepairTicket COMPLETE, không thể nâng lại`);
             }
           } else {
-            console.log(`⚠️ [Container Suggestion] Container ${container_no} không tìm thấy ServiceRequest IMPORT hợp lệ`);
+            if (!importRequest) {
+              console.log(`⚠️ [Container Suggestion] Container ${container_no} không tìm thấy ServiceRequest IMPORT hợp lệ`);
+              
+              // 🔄 BỔ SUNG LOGIC: Xử lý container EMPTY_IN_YARD có EXPORT REJECTED
+              // Tìm trong bảng Container để lấy thông tin container
+              const container = await prisma.container.findUnique({
+                where: { container_no },
+                include: {
+                  shipping_line: {
+                    select: { id: true, name: true, code: true }
+                  },
+                  container_type: {
+                    select: { id: true, code: true, description: true }
+                  },
+                  customer: {
+                    select: { id: true, name: true, code: true }
+                  }
+                }
+              });
+
+              if (container && container.shipping_line_id === shipping_line_id) {
+                console.log(`🔄 [Container Suggestion] Container ${container_no} là EMPTY_IN_YARD có EXPORT REJECTED, kiểm tra khả năng nâng lại`);
+                
+                // Kiểm tra container_quality
+                const containerQualityRecord = await prisma.$queryRaw<Array<{container_quality: string | null}>>`
+                  SELECT container_quality FROM "Container" WHERE container_no = ${container_no}
+                `;
+                
+                let isGoodQuality = false;
+                if (containerQualityRecord.length > 0 && containerQualityRecord[0].container_quality) {
+                  isGoodQuality = containerQualityRecord[0].container_quality === 'GOOD';
+                  console.log(`🔍 [Container Suggestion] Container ${container_no} (EMPTY_IN_YARD + EXPORT REJECTED) - container_quality: ${containerQualityRecord[0].container_quality} → isGoodQuality: ${isGoodQuality}`);
+                } else {
+                  // Fallback: Mặc định GOOD cho EMPTY_IN_YARD
+                  isGoodQuality = true;
+                  console.log(`🔍 [Container Suggestion] Container ${container_no} (EMPTY_IN_YARD + EXPORT REJECTED) - không có container_quality, mặc định GOOD`);
+                }
+
+                if (isGoodQuality) {
+                  console.log(`✅ [Container Suggestion] Container ${container_no} sẵn sàng để nâng lại (EMPTY_IN_YARD + EXPORT REJECTED)`);
+                  result.push({
+                    container_no,
+                    slot_code: yardContainer.slot?.code || '',
+                    block_code: yardContainer.slot?.block?.code || '',
+                    yard_name: yardContainer.slot?.block?.yard?.name || '',
+                    tier: yardContainer.tier,
+                    placed_at: yardContainer.placed_at,
+                    shipping_line: container.shipping_line,
+                    container_type: container.container_type,
+                    customer: container.customer,
+                    seal_number: container.seal_number,
+                    dem_det: container.dem_det,
+                    service_status: 'EMPTY_IN_YARD',
+                    request_type: 'SYSTEM_ADMIN_ADDED',
+                    container_quality: 'GOOD',
+                    note: 'Có thể nâng lại sau khi hủy yêu cầu trước đó (EMPTY_IN_YARD)'
+                  });
+                }
+              } else {
+                console.log(`⚠️ [Container Suggestion] Container ${container_no} không có Container record hoặc shipping_line_id không khớp`);
+              }
+            } else {
+              console.log(`⚠️ [Container Suggestion] Container ${container_no} có ServiceRequest IMPORT nhưng shipping_line_id không khớp (${importRequest.shipping_line_id} vs ${shipping_line_id})`);
+            }
           }
           continue;
         }
@@ -673,6 +745,16 @@ class ContainerController {
     try {
       const { container_no } = req.params;
       const { customer_id, shipping_line_id, container_type_id, seal_number, dem_det, container_quality } = req.body;
+      
+      // Debug log để kiểm tra request
+      console.log(`🔍 [DEBUG] updateContainerInfo called for ${container_no}:`, {
+        container_quality,
+        customer_id,
+        shipping_line_id,
+        container_type_id,
+        seal_number,
+        dem_det
+      });
 
       // Tìm ServiceRequest mới nhất cho container này
       const latestRequest = await prisma.serviceRequest.findFirst({
@@ -781,12 +863,25 @@ class ContainerController {
           console.log(`✅ Tạo mới Container record cho ${container_no} với quality: ${container_quality}`);
         } else {
           // Cập nhật Container record hiện có
+          console.log(`🔍 [DEBUG] Updating Container record for ${container_no}:`, {
+            containerRecordId: containerRecord.id,
+            currentQuality: containerRecord.container_quality,
+            newQuality: container_quality
+          });
+          
           await prisma.$executeRaw`
             UPDATE "Container" 
             SET container_quality = ${container_quality}, "updatedAt" = NOW()
             WHERE id = ${containerRecord.id}
           `;
           console.log(`✅ Cập nhật Container record cho ${container_no}: quality → ${container_quality}`);
+          
+          // Verify update
+          const updatedRecord = await prisma.container.findUnique({
+            where: { id: containerRecord.id },
+            select: { container_quality: true, updatedAt: true }
+          });
+          console.log(`🔍 [DEBUG] Verified update for ${container_no}:`, updatedRecord);
         }
 
         // Tìm RepairTicket mới nhất của container này
@@ -805,46 +900,18 @@ class ContainerController {
             orderBy: { createdAt: 'desc' }
           });
 
-          // Nếu ServiceRequest đã ở trạng thái IN_YARD hoặc GATE_OUT, KHÔNG cập nhật RepairTicket
-          if (serviceRequest && (serviceRequest.status === 'IN_YARD' || serviceRequest.status === 'GATE_OUT')) {
-            console.log(`🔒 Bảo vệ RepairTicket cho container ${container_no}: ServiceRequest đã ở trạng thái ${serviceRequest.status}, không cập nhật RepairTicket`);
-            console.log(`ℹ️ Container quality được cập nhật thành ${container_quality} nhưng RepairTicket giữ nguyên trạng thái ${latestRepairTicket.status}`);
-          } else {
-            // Chỉ cập nhật RepairTicket khi ServiceRequest chưa ở trạng thái cuối
-            let repairStatus: 'COMPLETE' | 'COMPLETE_NEEDREPAIR' | 'PENDING' = 'PENDING';
-            if (container_quality === 'GOOD') {
-              repairStatus = 'COMPLETE';
-            } else if (container_quality === 'NEED_REPAIR') {
-              repairStatus = 'COMPLETE_NEEDREPAIR';
-            }
-            
-            console.log(`🔄 Cập nhật RepairTicket cho container ${container_no}: ${latestRepairTicket.status} → ${repairStatus}`);
-            
-            await prisma.repairTicket.update({
-              where: { id: latestRepairTicket.id },
-              data: { 
-                status: repairStatus,
-                updatedAt: new Date()
-              }
-            });
-          }
-        } else if (container_quality === 'NEED_REPAIR') {
-          // Tạo RepairTicket mới nếu chưa có và cần sửa chữa
-          const code = `RT-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${Math.floor(Math.random()*1000)}`;
-          await prisma.repairTicket.create({
-            data: {
-              container_no,
-              status: 'COMPLETE_NEEDREPAIR',
-              problem_description: 'Container cần sửa chữa - Manual creation',
-              code,
-              created_by: req.user!._id,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          });
-        } else if (container_quality === 'GOOD') {
-          // Nếu container tốt và không có repair ticket, không cần làm gì
-          // Chỉ cần đảm bảo không có repair ticket nào đang pending
+          // 🔒 BẢO VỆ: KHÔNG cập nhật RepairTicket khi thay đổi container_quality từ ManagerCont
+          // RepairTicket chỉ nên được cập nhật thông qua quy trình kiểm tra container thực tế
+          // Không phải thông qua việc cập nhật trạng thái từ ManagerCont
+          console.log(`🔒 Bảo vệ RepairTicket cho container ${container_no}: Không cập nhật RepairTicket khi thay đổi container_quality từ ManagerCont`);
+          console.log(`ℹ️ Container quality được cập nhật thành ${container_quality} nhưng RepairTicket giữ nguyên trạng thái ${latestRepairTicket.status}`);
+          console.log(`ℹ️ RepairTicket chỉ nên được cập nhật thông qua quy trình kiểm tra container thực tế, không phải từ ManagerCont`);
+        } else {
+          // 🔒 BẢO VỆ: KHÔNG tự động tạo RepairTicket mới khi cập nhật container_quality
+          // RepairTicket chỉ nên được tạo thông qua quy trình kiểm tra container thực tế
+          // Không phải thông qua việc cập nhật trạng thái từ ManagerCont
+          console.log(`🔒 Bảo vệ: Không tự động tạo RepairTicket mới cho container ${container_no} khi cập nhật container_quality thành ${container_quality}`);
+          console.log(`ℹ️ Container quality được cập nhật thành ${container_quality} nhưng không tạo RepairTicket mới`);
         }
       }
 

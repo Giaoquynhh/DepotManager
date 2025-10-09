@@ -11,6 +11,7 @@ import { setupService, Customer } from '../services/setupService';
 import { containersApi } from '../services/containers';
 import { yardApi } from '../services/yard';
 import { reportsService, ContainerItem } from '../services/reports';
+// Force TypeScript refresh for ContainerItem interface
 import { sealsApi } from '../services/seals';
 import { api } from '../services/api';
 
@@ -115,7 +116,8 @@ export default function ManagerCont(){
       'DONE_LIFTING': 'Đã nâng xong',
       'GATE_OUT': 'Xe đã rời khỏi bãi',
       'IN_YARD': 'Đã hạ thành công', // Chỉ dành cho IMPORT
-      'EMPTY_IN_YARD': 'Container trong bãi'
+      'EMPTY_IN_YARD': 'Container trong bãi',
+      'REJECTED': 'Đã từ chối'
     };
     return map[status] || status;
   };
@@ -154,6 +156,7 @@ export default function ManagerCont(){
 
   // Dữ liệu bảng từ database
   const [tableData, setTableData] = React.useState<TableData[]>([]);
+  const [filteredData, setFilteredData] = React.useState<TableData[]>([]);
   const [allData, setAllData] = React.useState<TableData[]>([]); // Lưu tất cả dữ liệu để phân trang
   
   // State để theo dõi thời gian container mất vị trí
@@ -171,6 +174,35 @@ export default function ManagerCont(){
   React.useEffect(() => {
     setTableData(paginatedData);
   }, [paginatedData]);
+
+  // Effect để lọc dữ liệu theo status và search
+  React.useEffect(() => {
+    let filtered = [...tableData];
+
+    // Filter theo status
+    if (localStatus && localStatus !== 'all') {
+      filtered = filtered.filter(row => {
+        if (localStatus === 'GOOD') {
+          return row.containerQuality === 'GOOD';
+        } else if (localStatus === 'NEED_REPAIR') {
+          return row.containerQuality === 'NEED_REPAIR';
+        }
+        return true;
+      });
+    }
+
+    // Filter theo search
+    if (localSearch && localSearch.trim()) {
+      const searchTerm = localSearch.trim().toLowerCase();
+      filtered = filtered.filter(row => 
+        row.containerNumber.toLowerCase().includes(searchTerm) ||
+        row.shippingLine.toLowerCase().includes(searchTerm) ||
+        row.customer.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    setFilteredData(filtered);
+  }, [tableData, localStatus, localSearch]);
 
   // Force refresh when route changes to ensure fresh data
   React.useEffect(() => {
@@ -404,6 +436,16 @@ export default function ManagerCont(){
       const exportRequests = exportResponse?.data?.success ? (exportResponse.data.data || []) : [];
       let allRequests = [...importRequests, ...exportRequests];
       
+      // Debug: Log ServiceRequest data để kiểm tra container_quality
+      console.log('🔍 [DEBUG] ServiceRequest data sample:', allRequests.slice(0, 2).map(req => ({
+        container_no: req.container_no,
+        container_quality: req.container_quality,
+        status: req.status
+      })));
+      
+      // Tạo map để lưu container_quality từ Container data
+      const containerQualityMap = new Map<string, 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN'>();
+      
       // FIXED: Không return sớm khi không có requests để vẫn hiển thị container SYSTEM_ADMIN_ADDED (như SA11)
       // Trước đây, khi không có IMPORT/EXPORT requests, hàm sẽ return sớm và không hiển thị container do SystemAdmin thêm
       // Bây giờ vẫn tiếp tục xử lý để lấy emptyInYardContainers (SYSTEM_ADMIN_ADDED)
@@ -475,6 +517,21 @@ export default function ManagerCont(){
           });
           emptyInYardContainers = emptyResponse.data.items || [];
           console.log('📦 Containers in yard found:', emptyInYardContainers.length);
+          
+          // Debug: Log API response để kiểm tra container_quality
+          console.log('🔍 [DEBUG] API response sample:', emptyInYardContainers.slice(0, 2).map(item => ({
+            container_no: item.container_no,
+            container_quality: item.container_quality,
+            service_status: item.service_status
+          })));
+          
+          
+          // Lưu container_quality từ Container data vào map
+          emptyInYardContainers.forEach(container => {
+            if (container.container_quality) {
+              containerQualityMap.set(container.container_no, container.container_quality);
+            }
+          });
           console.log('📋 Container details:', emptyInYardContainers.map(c => ({
             container_no: c.container_no,
             service_status: c.service_status,
@@ -525,7 +582,9 @@ export default function ManagerCont(){
                console.log(`⚠️ Error fetching ServiceRequest for ${container.container_no}:`, error);
              }
              // Kiểm tra RepairTicket cho emptyInYard containers để giữ nguyên trạng thái
-             let containerQuality: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN' = 'GOOD'; // Mặc định GOOD
+             // 🔄 ƯU TIÊN: Sử dụng container_quality từ API trước, sau đó mới mặc định GOOD
+             let containerQuality: 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN' = container.container_quality || 'GOOD';
+             
              let repairTicketStatus: string | undefined = undefined;
              let repairTicketId: string | undefined = undefined;
              let repairImagesCount = 0;
@@ -537,12 +596,25 @@ export default function ManagerCont(){
                  repairTicketStatus = latest.status;
                  repairTicketId = latest.id;
                  
-                 // 🔄 ƯU TIÊN: Sử dụng container_quality từ database nếu có
-                 // Nếu không có, mới tính toán từ RepairTicket status
-                 if (container.container_quality) {
-                   containerQuality = container.container_quality as 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
-                   console.log(`📊 EmptyInYard: Sử dụng container_quality từ database cho ${container.container_no}: ${containerQuality}`);
-                 } else {
+                // 🔄 ƯU TIÊN: Sử dụng container_quality từ Container data nếu có
+                // Nếu không có, mới tính toán từ RepairTicket status
+                const containerQualityFromMap = containerQualityMap.get(container.container_no);
+                console.log(`🔍 [DEBUG] EmptyInYard processing ${container.container_no}:`, {
+                  container_quality_from_map: containerQualityFromMap,
+                  container_quality_from_container: container.container_quality,
+                  repairTicketStatus: repairTicketStatus
+                });
+                
+                
+                if (container.container_quality) {
+                  // Ưu tiên 1: Sử dụng container_quality từ container object (trực tiếp từ API)
+                  containerQuality = container.container_quality as 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
+                  console.log(`📊 EmptyInYard: Sử dụng container_quality từ container object cho ${container.container_no}: ${containerQuality}`);
+                } else if (containerQualityFromMap) {
+                  // Ưu tiên 2: Sử dụng container_quality từ Container data map
+                  containerQuality = containerQualityFromMap;
+                  console.log(`📊 EmptyInYard: Sử dụng container_quality từ Container data cho ${container.container_no}: ${containerQuality}`);
+                } else {
                    // Fallback: Tính toán từ RepairTicket status
                    if (repairTicketStatus === 'COMPLETE') {
                      containerQuality = 'GOOD';
@@ -698,13 +770,24 @@ export default function ManagerCont(){
                 const latest = tickets[0];
                 repairTicketId = latest.id;
                 repairTicketStatus = latest.status;
-                // 🔄 ƯU TIÊN: Sử dụng container_quality từ database nếu có
-                // Nếu không có, mới tính toán từ RepairTicket status
+                // 🔄 ƯU TIÊN: Sử dụng container_quality từ ServiceRequest trước, sau đó Container data, cuối cùng RepairTicket status
+                const containerQualityFromMap = containerQualityMap.get(request.container_no);
+                console.log(`🔍 [DEBUG] ServiceRequest processing ${request.container_no}:`, {
+                  container_quality_from_request: request.container_quality,
+                  container_quality_from_map: containerQualityFromMap,
+                  repairTicketStatus: repairTicketStatus
+                });
+                
                 if (request.container_quality) {
+                  // Ưu tiên 1: Sử dụng container_quality từ ServiceRequest (đã được backend cập nhật)
                   containerQuality = request.container_quality as 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
-                  console.log(`📊 Sử dụng container_quality từ database cho ${request.container_no}: ${containerQuality}`);
+                  console.log(`📊 Sử dụng container_quality từ ServiceRequest cho ${request.container_no}: ${containerQuality}`);
+                } else if (containerQualityFromMap) {
+                  // Ưu tiên 2: Sử dụng container_quality từ Container data
+                  containerQuality = containerQualityFromMap;
+                  console.log(`📊 Sử dụng container_quality từ Container data cho ${request.container_no}: ${containerQuality}`);
                 } else {
-                  // Fallback: Tính toán từ RepairTicket status
+                  // Ưu tiên 3: Fallback - Tính toán từ RepairTicket status
                   if (repairTicketStatus === 'COMPLETE') {
                     containerQuality = 'GOOD';
                   } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
@@ -732,14 +815,14 @@ export default function ManagerCont(){
               repairTicketStatus = undefined; // Không set status khi có lỗi
               console.log(`❌ Error fetching repair tickets for ${request.container_no}:`, error);
               console.log(`❌ Error details:`, {
-                message: error?.message,
-                stack: error?.stack,
-                response: error?.response?.data,
-                status: error?.response?.status,
+                message: (error as any)?.message,
+                stack: (error as any)?.stack,
+                response: (error as any)?.response?.data,
+                status: (error as any)?.response?.status,
                 config: {
-                  url: error?.config?.url,
-                  method: error?.config?.method,
-                  headers: error?.config?.headers
+                  url: (error as any)?.config?.url,
+                  method: (error as any)?.config?.method,
+                  headers: (error as any)?.config?.headers
                 }
               });
               console.log(`❌ Using GOOD status due to error`);
@@ -786,10 +869,10 @@ export default function ManagerCont(){
           } catch (error) {
             console.log(`❌ Error getting attachments for ${request.container_no}:`, error);
             console.log(`❌ Error details:`, {
-              message: error?.message,
-              response: error?.response?.data,
-              status: error?.response?.status,
-              url: error?.config?.url
+              message: (error as any)?.message,
+              response: (error as any)?.response?.data,
+              status: (error as any)?.response?.status,
+              url: (error as any)?.config?.url
             });
             // Fallback: Thử lấy từ request.attachments nếu có
             if (request.attachments && Array.isArray(request.attachments)) {
@@ -1151,8 +1234,11 @@ export default function ManagerCont(){
         }
 
         .status-hoàn-thành {
-          background: #d1fae5;
+          background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
           color: #065f46;
+          border: 1px solid #a7f3d0;
+          box-shadow: 0 1px 3px rgba(5, 95, 70, 0.1);
+          font-weight: 600;
         }
 
         .status-empty-in-yard {
@@ -1168,6 +1254,32 @@ export default function ManagerCont(){
         .status-unknown {
           background: #f3f4f6;
           color: #6b7280;
+        }
+
+        .status-cần-sửa-chữa {
+          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+          color: #dc2626;
+          border: 1px solid #fecaca;
+          box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+          font-weight: 600;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .status-cần-sửa-chữa::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { left: -100%; }
+          100% { left: 100%; }
         }
 
 
@@ -1298,8 +1410,8 @@ export default function ManagerCont(){
                   onChange={(e) => setLocalStatus(e.target.value)}
                 >
                   <option value="all">Tất cả trạng thái</option>
-                  <option value="active">Hoạt động</option>
-                  <option value="inactive">Không hoạt động</option>
+                  <option value="GOOD">Container tốt</option>
+                  <option value="NEED_REPAIR">Cần sửa chữa</option>
                 </select>
                 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', color: '#6b7280', fontSize: '14px' }}>
@@ -1339,14 +1451,14 @@ export default function ManagerCont(){
                     </tr>
                   </thead>
                   <tbody>
-                    {tableData.length === 0 ? (
+                    {filteredData.length === 0 ? (
                       <tr>
                         <td colSpan={11} className="no-data">
                           Không có dữ liệu
                         </td>
                       </tr>
                     ) : (
-                      tableData.map((row) => (
+                      filteredData.map((row) => (
                         <tr key={row.id}>
                           <td>{row.shippingLine}</td>
                           <td>{row.containerNumber}</td>
@@ -1361,6 +1473,7 @@ export default function ManagerCont(){
                                 statusLabel: statusLabel,
                                 badgeClass: badgeClass
                               });
+                              
                               return (
                                 <span className={`status-badge ${badgeClass}`}>
                                   {statusLabel}
@@ -1644,7 +1757,7 @@ export default function ManagerCont(){
                     <select
                       value={selectedShippingLineId}
                       onChange={(e) => setSelectedShippingLineId(e.target.value)}
-                      disabled={selectedRow.shippingLine && selectedRow.shippingLine.trim() !== ''}
+                      disabled={!!(selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '')}
                       style={{ 
                         width: '100%', 
                         padding: '8px 12px', 
@@ -1676,7 +1789,7 @@ export default function ManagerCont(){
                     <select
                       value={selectedContainerTypeId}
                       onChange={(e) => setSelectedContainerTypeId(e.target.value)}
-                      disabled={selectedRow.containerType && selectedRow.containerType.trim() !== ''}
+                      disabled={!!(selectedRow.containerType && selectedRow.containerType.trim() !== '')}
                       style={{ 
                         width: '100%', 
                         padding: '8px 12px', 

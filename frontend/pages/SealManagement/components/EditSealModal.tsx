@@ -59,9 +59,21 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 	// Load seal data when modal opens
 	useEffect(() => {
 		if (isOpen && seal) {
+			// Chuyển đổi từ ISO date sang DD/MM/YYYY cho DateInput
+			let displayDate = '';
+			if (seal.purchase_date) {
+				const date = new Date(seal.purchase_date);
+				if (!isNaN(date.getTime())) {
+					const day = String(date.getDate()).padStart(2, '0');
+					const month = String(date.getMonth() + 1).padStart(2, '0');
+					const year = date.getFullYear();
+					displayDate = `${day}/${month}/${year}`;
+				}
+			}
+			
 			setFormData({
 				shipping_company: seal.shipping_company, // Giữ nguyên tên hãng tàu
-				purchase_date: seal.purchase_date.split('T')[0],
+				purchase_date: displayDate,
 				quantity_purchased: seal.quantity_purchased,
 				unit_price: Number(seal.unit_price),
 				pickup_location: seal.pickup_location
@@ -97,6 +109,20 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		// Không validate hãng tàu vì không thể sửa
 		if (!formData.purchase_date.trim()) {
 			newErrors.purchase_date = 'Ngày mua là bắt buộc';
+		} else {
+			// Validate date format (DD/MM/YYYY)
+			const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+			const match = formData.purchase_date.match(dateRegex);
+			if (!match) {
+				newErrors.purchase_date = 'Định dạng ngày không hợp lệ (dd/mm/yyyy)';
+			} else {
+				const [, day, month, year] = match;
+				const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+				if (isNaN(date.getTime()) || date.getDate() !== parseInt(day) || 
+					date.getMonth() !== parseInt(month) - 1 || date.getFullYear() !== parseInt(year)) {
+					newErrors.purchase_date = 'Ngày không hợp lệ';
+				}
+			}
 		}
 		if (!formData.quantity_purchased || formData.quantity_purchased <= 0) {
 			newErrors.quantity_purchased = 'Số lượng mua phải lớn hơn 0';
@@ -125,8 +151,15 @@ export const EditSealModal: React.FC<EditSealModalProps> = ({
 		
 		if (validateForm()) {
 			try {
-				// Chuyển đổi ngày thành ISO-8601 DateTime đầy đủ
-				const purchaseDate = new Date(formData.purchase_date + 'T00:00:00.000Z').toISOString();
+				// Chuyển đổi định dạng ngày từ DD/MM/YYYY sang ISO DateTime đầy đủ
+				let purchaseDate = formData.purchase_date;
+				if (purchaseDate && purchaseDate.includes('/')) {
+					const [day, month, year] = purchaseDate.split('/');
+					if (day && month && year) {
+						// Tạo ISO DateTime string với thời gian 00:00:00.000Z
+						purchaseDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00.000Z`;
+					}
+				}
 
 				const updateData: UpdateSealData = {
 					// Không gửi shipping_company vì không thể sửa

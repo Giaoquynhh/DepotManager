@@ -292,6 +292,64 @@ function SealManagement() {
           </div>
         </div>
 
+        {/* Warning Alert for Empty Seals */}
+        {seals.some(seal => seal.quantity_remaining === 0) && (
+          <div style={{
+            background: seals.every(seal => seal.quantity_remaining === 0) 
+              ? 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)'
+              : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            border: seals.every(seal => seal.quantity_remaining === 0) 
+              ? '2px solid #ef4444'
+              : '2px solid #f59e0b',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: seals.every(seal => seal.quantity_remaining === 0)
+              ? '0 4px 6px rgba(239, 68, 68, 0.1)'
+              : '0 4px 6px rgba(245, 158, 11, 0.1)'
+          }}>
+            <div style={{
+              background: seals.every(seal => seal.quantity_remaining === 0) ? '#ef4444' : '#f59e0b',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{
+                fontWeight: '600',
+                color: seals.every(seal => seal.quantity_remaining === 0) ? '#dc2626' : '#92400e',
+                fontSize: '14px',
+                marginBottom: '2px'
+              }}>
+                {seals.every(seal => seal.quantity_remaining === 0) 
+                  ? '🚨 KHẨN CẤP: Tất cả seal đã hết!' 
+                  : 'Cảnh báo: Có seal đã hết'
+                }
+              </div>
+              <div style={{
+                color: seals.every(seal => seal.quantity_remaining === 0) ? '#dc2626' : '#92400e',
+                fontSize: '13px'
+              }}>
+                {seals.every(seal => seal.quantity_remaining === 0) 
+                  ? 'Tất cả hãng tàu đã hết seal. Hệ thống không thể xử lý request mới. Vui lòng tạo seal ngay lập tức!'
+                  : `${seals.filter(seal => seal.quantity_remaining === 0).length} hãng tàu đã hết seal. Vui lòng tạo seal mới để tiếp tục sử dụng.`
+                }
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Seals Table */}
         <div className="gate-table-container">
           <table className="gate-table" style={{minWidth:'1000px'}}>
@@ -322,7 +380,29 @@ function SealManagement() {
                       <td>{formatDate(seal.purchase_date)}</td>
                       <td>{formatNumber(seal.quantity_purchased)}</td>
                       <td>{formatNumber(seal.quantity_exported)}</td>
-                      <td>{formatNumber(seal.quantity_remaining)}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ 
+                            color: seal.quantity_remaining === 0 ? '#ef4444' : '#374151',
+                            fontWeight: seal.quantity_remaining === 0 ? '600' : 'normal'
+                          }}>
+                            {formatNumber(seal.quantity_remaining)}
+                          </span>
+                          {seal.quantity_remaining === 0 && (
+                            <span style={{
+                              background: '#fef2f2',
+                              color: '#dc2626',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              border: '1px solid #fecaca'
+                            }}>
+                              HẾT
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>{formatCurrency(seal.unit_price)}</td>
                       <td>{formatCurrency(seal.total_amount)}</td>
                       <td>{seal.pickup_location}</td>
@@ -330,7 +410,14 @@ function SealManagement() {
                         <button 
                           className="btn btn-sm btn-outline"
                           onClick={() => handleEdit(seal)}
-                          style={{padding:'4px 8px', fontSize:'12px'}}
+                          disabled={seal.quantity_remaining === 0}
+                          style={{
+                            padding:'4px 8px', 
+                            fontSize:'12px',
+                            opacity: seal.quantity_remaining === 0 ? 0.5 : 1,
+                            cursor: seal.quantity_remaining === 0 ? 'not-allowed' : 'pointer'
+                          }}
+                          title={seal.quantity_remaining === 0 ? 'Không thể sửa seal đã hết' : 'Sửa seal'}
                         >
                           Sửa
                         </button>
@@ -344,7 +431,14 @@ function SealManagement() {
                         <button 
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDelete(seal.id)}
-                          style={{padding:'4px 8px', fontSize:'12px'}}
+                          disabled={seal.quantity_remaining === 0}
+                          style={{
+                            padding:'4px 8px', 
+                            fontSize:'12px',
+                            opacity: seal.quantity_remaining === 0 ? 0.5 : 1,
+                            cursor: seal.quantity_remaining === 0 ? 'not-allowed' : 'pointer'
+                          }}
+                          title={seal.quantity_remaining === 0 ? 'Không thể xóa seal đã hết (cần giữ lịch sử)' : 'Xóa seal'}
                         >
                           Xóa
                         </button>

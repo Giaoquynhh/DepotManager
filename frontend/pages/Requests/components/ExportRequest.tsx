@@ -9,6 +9,10 @@ import { EditLiftRequestModal } from './EditLiftRequestModal';
 interface ExportRequestProps {
 	localSearch: string;
 	setLocalSearch: (search: string) => void;
+	localRequestSearch: string;
+	setLocalRequestSearch: (search: string) => void;
+	localBookingSearch: string;
+	setLocalBookingSearch: (search: string) => void;
 	localType: string;
 	setLocalType: (type: string) => void;
 	localStatus: string;
@@ -21,6 +25,10 @@ interface ExportRequestProps {
 export const ExportRequest: React.FC<ExportRequestProps> = ({
 	localSearch,
 	setLocalSearch,
+	localRequestSearch,
+	setLocalRequestSearch,
+	localBookingSearch,
+	setLocalBookingSearch,
 	localType,
 	setLocalType,
 	localStatus,
@@ -130,6 +138,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
             case 'GATE_OUT':
                 return '🟣 Đã cho phép ra';
             case 'GATE_REJECTED':
+                return '⛔ Đã từ chối';
+            case 'REJECTED':
                 return '⛔ Đã từ chối';
             default:
                 return status;
@@ -242,20 +252,35 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
             }
         }
 
-        // Filter theo search
+        // Filter theo tìm kiếm container
         if (localSearch && localSearch.trim()) {
             const searchTerm = localSearch.trim().toLowerCase();
             filtered = filtered.filter(row => 
                 row.containerNo.toLowerCase().includes(searchTerm) ||
-                row.requestNo.toLowerCase().includes(searchTerm) ||
                 row.customer.toLowerCase().includes(searchTerm) ||
                 row.driverName.toLowerCase().includes(searchTerm) ||
                 row.vehicleNumber.toLowerCase().includes(searchTerm)
             );
         }
 
+        // Filter theo tìm kiếm số yêu cầu
+        if (localRequestSearch && localRequestSearch.trim()) {
+            const requestSearchTerm = localRequestSearch.trim().toLowerCase();
+            filtered = filtered.filter(row => 
+                row.requestNo.toLowerCase().includes(requestSearchTerm)
+            );
+        }
+
+        // Filter theo tìm kiếm số Booking/Bill
+        if (localBookingSearch && localBookingSearch.trim()) {
+            const bookingSearchTerm = localBookingSearch.trim().toLowerCase();
+            filtered = filtered.filter(row => 
+                row.bookingBill.toLowerCase().includes(bookingSearchTerm)
+            );
+        }
+
         setFilteredRows(filtered);
-    }, [rows, localStatus, localSearch]);
+    }, [rows, localStatus, localSearch, localRequestSearch, localBookingSearch]);
 
     // Function để mở modal chỉnh sửa
     const handleUpdateClick = async (requestId: string) => {
@@ -605,10 +630,30 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 						<input
 							type="text"
 							className="search-input"
-							placeholder={t('pages.requests.searchPlaceholder')}
-							aria-label={t('pages.requests.searchPlaceholder')}
+							placeholder="📦 Tìm kiếm theo số container"
+							aria-label="Tìm kiếm theo số container"
 							value={localSearch}
 							onChange={(e) => setLocalSearch(e.target.value)}
+						/>
+					</div>
+					<div className="search-section">
+						<input
+							type="text"
+							className="search-input"
+							placeholder="📋 Tìm kiếm theo số yêu cầu"
+							aria-label="Tìm kiếm theo số yêu cầu"
+							value={localRequestSearch}
+							onChange={(e) => setLocalRequestSearch(e.target.value)}
+						/>
+					</div>
+					<div className="search-section">
+						<input
+							type="text"
+							className="search-input"
+							placeholder="📄 Tìm kiếm theo số Booking/Bill"
+							aria-label="Tìm kiếm theo số Booking/Bill"
+							value={localBookingSearch}
+							onChange={(e) => setLocalBookingSearch(e.target.value)}
 						/>
 					</div>
 					<div className="filter-group">

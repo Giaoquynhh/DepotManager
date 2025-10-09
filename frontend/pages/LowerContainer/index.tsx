@@ -42,6 +42,7 @@ export default function NewSubmenu() {
 	const { t } = useTranslation();
 	const { showSuccess, ToastContainer } = useToast();
 	const [localSearch, setLocalSearch] = React.useState('');
+	const [localRequestSearch, setLocalRequestSearch] = React.useState('');
 	const [localType, setLocalType] = React.useState('all');
 	const [localStatus, setLocalStatus] = React.useState('all');
 	const [refreshTrigger, setRefreshTrigger] = React.useState(0);
@@ -120,16 +121,24 @@ export default function NewSubmenu() {
       });
     }
 
-    // Filter theo tìm kiếm
+    // Filter theo tìm kiếm container
     if (localSearch && localSearch.trim()) {
       const searchTerm = localSearch.trim().toLowerCase();
-      console.log('🔍 Filtering by search term:', searchTerm);
+      console.log('🔍 Filtering by container search term:', searchTerm);
       filteredData = filteredData.filter(row => 
         row.containerNumber.toLowerCase().includes(searchTerm) ||
-        row.requestNumber.toLowerCase().includes(searchTerm) ||
         row.customer.toLowerCase().includes(searchTerm) ||
         row.driverName.toLowerCase().includes(searchTerm) ||
         row.truckNumber.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Filter theo tìm kiếm số yêu cầu
+    if (localRequestSearch && localRequestSearch.trim()) {
+      const requestSearchTerm = localRequestSearch.trim().toLowerCase();
+      console.log('🔍 Filtering by request search term:', requestSearchTerm);
+      filteredData = filteredData.filter(row => 
+        row.requestNumber.toLowerCase().includes(requestSearchTerm)
       );
     }
 
@@ -145,7 +154,7 @@ export default function NewSubmenu() {
 
     console.log('🔍 Filtered data count:', filteredData.length);
     setTableData(filteredData);
-  }, [allTableData, localStatus, localSearch]);
+  }, [allTableData, localStatus, localSearch, localRequestSearch]);
 
 
   const handleCreateNew = () => {
@@ -869,10 +878,20 @@ export default function NewSubmenu() {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Tìm kiếm theo mã container"
-                aria-label="Tìm kiếm theo mã container"
+                placeholder="📦 Tìm kiếm theo số container"
+                aria-label="Tìm kiếm theo số container"
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
+              />
+            </div>
+            <div className="search-section">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="📋 Tìm kiếm theo số yêu cầu"
+                aria-label="Tìm kiếm theo số yêu cầu"
+                value={localRequestSearch}
+                onChange={(e) => setLocalRequestSearch(e.target.value)}
               />
             </div>
             <div className="filter-group">
