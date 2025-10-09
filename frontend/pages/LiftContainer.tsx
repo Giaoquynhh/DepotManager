@@ -73,6 +73,7 @@ export default function LiftContainer() {
 				setLocalStatus={setLocalStatus}
 				refreshTrigger={refreshTrigger}
 				onCreateRequest={handleCreateRequest}
+				isReject={true}
 			/>
 
         {/* Create Lift Request Modal */}

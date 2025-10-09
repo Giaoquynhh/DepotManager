@@ -15,6 +15,7 @@ interface ExportRequestProps {
 	setLocalStatus: (status: string) => void;
 	refreshTrigger?: number;
 	onCreateRequest?: () => void;
+	isReject?: boolean; // Thêm prop để hỗ trợ chế độ "Hủy" thay vì "Xóa"
 }
 
 export const ExportRequest: React.FC<ExportRequestProps> = ({
@@ -25,7 +26,8 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
 	localStatus,
 	setLocalStatus,
 	refreshTrigger,
-	onCreateRequest
+	onCreateRequest,
+	isReject = false
 }) => {
 	const { t } = useTranslation();
 	const { showSuccess, showError, ToastContainer } = useToast();
@@ -61,6 +63,10 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
     const [processingIds, setProcessingIds] = React.useState<Set<string>>(new Set());
     const [showDeleteModal, setShowDeleteModal] = React.useState(false);
     const [deleteRequestId, setDeleteRequestId] = React.useState<string | null>(null);
+    // State cho chế độ hủy yêu cầu
+    const [showCancelModal, setShowCancelModal] = React.useState(false);
+    const [cancelRequestId, setCancelRequestId] = React.useState<string | null>(null);
+    const [cancelReason, setCancelReason] = React.useState<string>('');
     const [showEditModal, setShowEditModal] = React.useState(false);
     const [editRequestData, setEditRequestData] = React.useState<any>(null);
     const [showMoveToGateModal, setShowMoveToGateModal] = React.useState(false);
@@ -463,6 +469,76 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
         }
     };
 
+    // Function để mở modal hủy (chỉ khi isReject = true)
+    const handleCancelClick = (requestId: string) => {
+        setCancelRequestId(requestId);
+        setCancelReason(''); // Reset lý do hủy
+        setShowCancelModal(true);
+    };
+
+    // Function để xử lý hủy yêu cầu
+    const handleCancelRequest = async () => {
+        if (!cancelRequestId) return;
+        
+        setProcessingIds(prev => new Set(prev).add(cancelRequestId));
+        try {
+            console.log('Cancelling request:', cancelRequestId);
+            console.log('Cancel reason:', cancelReason);
+            
+            // Check if user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showError('🔐 Cần đăng nhập', 'Bạn cần đăng nhập để thực hiện hành động này', 3000);
+                setProcessingIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(cancelRequestId);
+                    return newSet;
+                });
+                setShowCancelModal(false);
+                return;
+            }
+            
+            // Gọi API để hủy request (cập nhật status thành REJECTED)
+            const response = await requestService.cancelRequest(cancelRequestId, cancelReason);
+            console.log('Cancel API response:', response);
+            
+            if (response.data.success) {
+                // Hiển thị thông báo thành công với toast notification
+                showSuccess(
+                    '❌ Yêu cầu đã được hủy thành công!',
+                    `Yêu cầu đã được đánh dấu là REJECTED\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
+                    4000
+                );
+                
+                // Refresh data after cancellation
+                fetchRequests();
+            } else {
+                showError('❌ Không thể hủy yêu cầu', response.data.message || 'Có lỗi xảy ra khi hủy yêu cầu', 4000);
+            }
+        } catch (error: any) {
+            console.error('Error cancelling request:', error);
+            if (error.response?.status === 401) {
+                showError('🔐 Phiên đăng nhập đã hết hạn', 'Vui lòng đăng nhập lại để tiếp tục', 4000);
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else {
+                showError('❌ Có lỗi xảy ra', 'Không thể hủy yêu cầu: ' + (error.response?.data?.message || error.message), 4000);
+            }
+        } finally {
+            setProcessingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(cancelRequestId);
+                return newSet;
+            });
+            setShowCancelModal(false);
+            setCancelRequestId(null);
+            setCancelReason('');
+        }
+    };
+
 
 	return (
 		<>
@@ -635,17 +711,18 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     display: 'inline-block',
                                                     width: '50px',
                                                     height: '24px',
-                                                    opacity: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 0.5 : 1,
-                                                    cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer'
+                                                    opacity: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'REJECTED') ? 0.5 : 1,
+                                                    cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'REJECTED') ? 'not-allowed' : 'pointer'
                                                 }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={r.reuseStatus || false}
-                                                        disabled={r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT'}
+                                                        disabled={r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'REJECTED'}
                                                         onChange={(e) => {
-                                                            if (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') {
+                                                            if (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'REJECTED') {
                                                                 const statusText = r.status === 'DONE_LIFTING' ? 'Nâng thành công' : 
-                                                                                   r.status === 'IN_CAR' ? 'IN_CAR' : 'GATE_OUT';
+                                                                                   r.status === 'IN_CAR' ? 'IN_CAR' : 
+                                                                                   r.status === 'GATE_OUT' ? 'GATE_OUT' : 'Bị từ chối';
                                                                 showError(
                                                                     'Không thể thay đổi trạng thái reuse',
                                                                     `Request đang ở trạng thái ${statusText}, không thể thay đổi reuse status`,
@@ -663,7 +740,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                     />
                                                     <span style={{
                                                         position: 'absolute',
-                                                        cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT') ? 'not-allowed' : 'pointer',
+                                                        cursor: (r.status === 'DONE_LIFTING' || r.status === 'IN_CAR' || r.status === 'GATE_OUT' || r.status === 'REJECTED') ? 'not-allowed' : 'pointer',
                                                         top: 0,
                                                         left: 0,
                                                         right: 0,
@@ -887,16 +964,16 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                                 </button>
                                             )}
 
-                                            {/* Nút xóa - chỉ hiển thị khi status là NEW_REQUEST */}
+                                            {/* Nút xóa/hủy - chỉ hiển thị khi status là NEW_REQUEST */}
                                             {r.status === 'NEW_REQUEST' && (
                                                 <button 
                                                     type="button" 
                                                     className="btn btn-danger" 
                                                     style={{ padding: '6px 10px', fontSize: 12 }}
-                                                    onClick={() => handleDeleteClick(r.id)}
+                                                    onClick={() => isReject ? handleCancelClick(r.id) : handleDeleteClick(r.id)}
                                                     disabled={processingIds.has(r.id) || loading}
                                                 >
-                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : 'Xóa'}
+                                                    {processingIds.has(r.id) ? 'Đang xử lý...' : (isReject ? 'Hủy' : 'Xóa')}
                                                 </button>
                                             )}
                                         </td>
@@ -1029,6 +1106,166 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                                 }}
                             >
                                 {processingIds.has(deleteRequestId || '') ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Confirmation Modal - chỉ hiển thị khi isReject = true */}
+            {isReject && showCancelModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        maxWidth: '500px',
+                        width: '90%',
+                        textAlign: 'center',
+                        animation: 'modalSlideIn 0.2s ease-out'
+                    }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: '#fef3c7',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 24px',
+                            fontSize: '32px',
+                            color: '#f59e0b'
+                        }}>
+                            ⚠️
+                        </div>
+                        
+                        <h3 style={{
+                            margin: '0 0 12px 0',
+                            color: '#1f2937',
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            lineHeight: '1.2'
+                        }}>
+                            Xác nhận hủy yêu cầu
+                        </h3>
+                        
+                        <p style={{
+                            margin: '0 0 16px 0',
+                            color: '#6b7280',
+                            fontSize: '14px',
+                            lineHeight: '1.5'
+                        }}>
+                            Bạn có chắc chắn muốn hủy yêu cầu này?<br/>
+                            <strong style={{ color: '#f59e0b' }}>Yêu cầu sẽ được đánh dấu là REJECTED.</strong>
+                        </p>
+
+                        {/* Input lý do hủy */}
+                        <div style={{
+                            margin: '16px 0',
+                            textAlign: 'left'
+                        }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151'
+                            }}>
+                                Lý do hủy <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <textarea
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                placeholder="Nhập lý do hủy yêu cầu..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                        
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            justifyContent: 'center'
+                        }}>
+                            <button
+                                onClick={() => {
+                                    setShowCancelModal(false);
+                                    setCancelRequestId(null);
+                                    setCancelReason('');
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #d1d5db',
+                                    background: 'white',
+                                    color: '#374151',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '80px'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.background = '#f9fafb';
+                                    e.currentTarget.style.borderColor = '#9ca3af';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.background = 'white';
+                                    e.currentTarget.style.borderColor = '#d1d5db';
+                                }}
+                            >
+                                Đóng
+                            </button>
+                            
+                            <button
+                                onClick={handleCancelRequest}
+                                disabled={processingIds.has(cancelRequestId || '') || !cancelReason.trim()}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: 'none',
+                                    background: (processingIds.has(cancelRequestId || '') || !cancelReason.trim()) ? '#9ca3af' : '#f59e0b',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: (processingIds.has(cancelRequestId || '') || !cancelReason.trim()) ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    minWidth: '80px'
+                                }}
+                                onMouseOver={(e) => {
+                                    if (!processingIds.has(cancelRequestId || '') && cancelReason.trim()) {
+                                        e.currentTarget.style.background = '#d97706';
+                                    }
+                                }}
+                                onMouseOut={(e) => {
+                                    if (!processingIds.has(cancelRequestId || '') && cancelReason.trim()) {
+                                        e.currentTarget.style.background = '#f59e0b';
+                                    }
+                                }}
+                            >
+                                {processingIds.has(cancelRequestId || '') ? 'Đang hủy...' : 'Xác nhận hủy'}
                             </button>
                         </div>
                     </div>

@@ -284,6 +284,7 @@ model Container {
   id              String    @id @default(cuid())
   container_no    String    @unique
   status          String    @default("EMPTY_IN_YARD")
+  container_quality String? // GOOD, NEED_REPAIR, UNKNOWN
   customer_id     String?
   shipping_line_id String?
   container_type_id String?
@@ -302,6 +303,7 @@ model Container {
   @@index([container_no])
   @@index([status])
   @@index([customer_id])
+  @@index([container_quality])
 }
 
 model ContainerMeta {

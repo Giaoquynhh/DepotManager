@@ -537,12 +537,21 @@ export default function ManagerCont(){
                  repairTicketStatus = latest.status;
                  repairTicketId = latest.id;
                  
-                 if (repairTicketStatus === 'COMPLETE') {
-                   containerQuality = 'GOOD';
-                 } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
-                   containerQuality = 'NEED_REPAIR';
+                 // 🔄 ƯU TIÊN: Sử dụng container_quality từ database nếu có
+                 // Nếu không có, mới tính toán từ RepairTicket status
+                 if (container.container_quality) {
+                   containerQuality = container.container_quality as 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
+                   console.log(`📊 EmptyInYard: Sử dụng container_quality từ database cho ${container.container_no}: ${containerQuality}`);
                  } else {
-                   containerQuality = 'UNKNOWN';
+                   // Fallback: Tính toán từ RepairTicket status
+                   if (repairTicketStatus === 'COMPLETE') {
+                     containerQuality = 'GOOD';
+                   } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
+                     containerQuality = 'NEED_REPAIR';
+                   } else {
+                     containerQuality = 'UNKNOWN';
+                   }
+                   console.log(`📊 EmptyInYard: Tính toán container_quality từ RepairTicket cho ${container.container_no}: ${repairTicketStatus} → ${containerQuality}`);
                  }
                  
                  // Lấy số lượng ảnh kiểm tra
@@ -689,14 +698,21 @@ export default function ManagerCont(){
                 const latest = tickets[0];
                 repairTicketId = latest.id;
                 repairTicketStatus = latest.status;
-                // Áp dụng logic: if repairTicket.status == COMPLETE then "Container tốt" else "Cần sửa chữa"
-                // Chỉ áp dụng cho IMPORT requests
-                if (repairTicketStatus === 'COMPLETE') {
-                  containerQuality = 'GOOD';
-                } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
-                  containerQuality = 'NEED_REPAIR';
+                // 🔄 ƯU TIÊN: Sử dụng container_quality từ database nếu có
+                // Nếu không có, mới tính toán từ RepairTicket status
+                if (request.container_quality) {
+                  containerQuality = request.container_quality as 'GOOD' | 'NEED_REPAIR' | 'UNKNOWN';
+                  console.log(`📊 Sử dụng container_quality từ database cho ${request.container_no}: ${containerQuality}`);
                 } else {
-                  containerQuality = 'UNKNOWN';
+                  // Fallback: Tính toán từ RepairTicket status
+                  if (repairTicketStatus === 'COMPLETE') {
+                    containerQuality = 'GOOD';
+                  } else if (repairTicketStatus === 'COMPLETE_NEEDREPAIR' || repairTicketStatus === 'COMPLETE_NEED_REPAIR') {
+                    containerQuality = 'NEED_REPAIR';
+                  } else {
+                    containerQuality = 'UNKNOWN';
+                  }
+                  console.log(`📊 Tính toán container_quality từ RepairTicket cho ${request.container_no}: ${repairTicketStatus} → ${containerQuality}`);
                 }
                 console.log(`✅ Selected repair ticket for ${request.container_no}: ID=${latest.id}, Status=${latest.status}, Quality=${containerQuality}`);
                 try {
@@ -1908,6 +1924,40 @@ export default function ManagerCont(){
                            return item;
                          });
                         setAllData(updatedAllData);
+                        
+                        // 🔄 Cập nhật tableData để hiển thị ngay lập tức
+                        const updatedTableData = tableData.map(item => {
+                          if (item.containerNumber === selectedRow.containerNumber) {
+                            const updatedItem = { ...item };
+                            
+                            // Cập nhật các trường tương tự như allData
+                            if (selectedCustomerId && selectedCustomerId !== '') {
+                              const customerName = customers.find(c => c.id === selectedCustomerId)?.name;
+                              if (customerName) {
+                                updatedItem.customer = customerName;
+                              }
+                            }
+                            if (selectedShippingLineId && selectedShippingLineId !== '') {
+                              updatedItem.shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId)?.name || item.shippingLine;
+                            }
+                            if (selectedContainerTypeId && selectedContainerTypeId !== '') {
+                              updatedItem.containerType = containerTypes.find(ct => ct.id === selectedContainerTypeId)?.code || item.containerType;
+                            }
+                            if (selectedStatus && selectedStatus !== '') {
+                              updatedItem.containerQuality = selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN";
+                            }
+                            if (selectedSealNumber && selectedSealNumber.trim() !== '') {
+                              updatedItem.sealNumber = selectedSealNumber;
+                            }
+                            if (selectedDemDet && selectedDemDet.trim() !== '') {
+                              updatedItem.demDet = selectedDemDet;
+                            }
+                            
+                            return updatedItem;
+                          }
+                          return item;
+                        });
+                        setTableData(updatedTableData);
                         
                         // Không cần refresh data từ server vì đã cập nhật local state
                         // await fetchImportRequests(); // Comment out để tránh ghi đè local state

@@ -39,11 +39,28 @@ export const getRequests = async (req: any, res: any) => {
             take: parseInt(limit)
         });
 
+        // 🔄 BỔ SUNG: Lấy container_quality từ bảng Container cho mỗi request
+        const requestsWithContainerQuality = await Promise.all(
+            requests.map(async (request) => {
+                if (request.container_no) {
+                    const container = await prisma.container.findFirst({
+                        where: { container_no: request.container_no },
+                        select: { container_quality: true }
+                    });
+                    return {
+                        ...request,
+                        container_quality: container?.container_quality || null
+                    };
+                }
+                return request;
+            })
+        );
+
         const total = await prisma.serviceRequest.count({ where });
 
         res.json({
             success: true,
-            data: requests,
+            data: requestsWithContainerQuality,
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
