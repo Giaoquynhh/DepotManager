@@ -132,3 +132,5 @@ graph TD
 - **Backward compatibility**: Logic fallback đảm bảo container cũ vẫn hoạt động
 - **Performance**: Không ảnh hưởng đến hiệu suất vì chỉ thêm 1 trường vào SELECT
 - **Data consistency**: Ưu tiên `container_quality` từ database thay vì tính toán từ RepairTicket
+
+

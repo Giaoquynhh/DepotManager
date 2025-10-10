@@ -5,6 +5,7 @@ import { requestService } from '../../../services/requests';
 import { generateNewRequestNumber } from '../../../utils/requestNumberGenerator';
 import { containersApi } from '../../../services/containers';
 import DateTimeInput from '../../../components/DateTimeInput';
+import { CustomAlertDialog } from '../../../components/CustomAlertDialog';
 
 export interface ContainerSearchResult {
 	container_no: string;
@@ -85,6 +86,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 	const [containerWarning, setContainerWarning] = useState<string>('');
 	const [containerValidationError, setContainerValidationError] = useState<string>('');
 	const [isContainerFromDropdown, setIsContainerFromDropdown] = useState<boolean>(false);
+
+	// Alert dialog state
+	const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
+	const [alertDialogData, setAlertDialogData] = useState<{
+		title: string;
+		message: string;
+		onConfirm: () => void;
+	}>({
+		title: '',
+		message: '',
+		onConfirm: () => {}
+	});
 
 	// Shipping lines (from Setup page)
 	const [shippingLines, setShippingLines] = useState<ShippingLine[]>([]);
@@ -361,7 +374,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 					const containerInUse = existingRequests.find((request: any) => 
 						request.container_no === containerNumber.trim() && 
 						request.status !== 'GATE_OUT' && 
-						request.status !== 'GATE_REJECTED'
+						request.status !== 'GATE_REJECTED' &&
+						request.status !== 'REJECTED' // Loại trừ request bị hủy
 					);
 					
 					if (containerInUse) {
@@ -576,20 +590,97 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		return Object.keys(newErrors).length === 0;
 	};
 
+	// Function to proceed with submit after user confirms
+	const proceedWithSubmit = async () => {
+		try {
+			setIsUploading(true);
+			
+			// Generate request number automatically for EXPORT (nâng container)
+			const requestNumber = await generateNewRequestNumber('export');
+			
+			// Prepare data for API with auto-generated request number
+			const requestData = {
+				type: 'EXPORT', // Yêu cầu nâng container phải là EXPORT
+				request_no: requestNumber, // Add auto-generated request number
+				status: 'NEW_REQUEST', // Trạng thái ban đầu là NEW_REQUEST cho yêu cầu nâng container
+				container_no: formData.containerNumber,
+				eta: formData.appointmentTime,
+				shipping_line_id: formData.shippingLine || undefined,
+				container_type_id: formData.containerType || undefined,
+				customer_id: formData.customer || undefined,
+				vehicle_company_id: formData.vehicleCompany || undefined,
+				license_plate: formData.vehicleNumber,
+				driver_name: formData.driver,
+				driver_phone: formData.driverPhone,
+				appointment_time: formData.appointmentTime,
+				booking_bill: formData.bookingBill, // Add booking/bill field
+				notes: formData.notes,
+				files: formData.documents || []
+			};
+
+			// Call API to create request with files
+			const response = await requestService.createRequest(requestData);
+			
+			if (response.data.success) {
+				// Success - call parent onSubmit with response data including request number
+				onSubmit({
+					...formData,
+					requestNo: requestNumber // Include auto-generated request number
+				});
+				
+				// Hiển thị thông báo thành công với cảnh báo nếu cần
+				if (!formData.containerNumber?.trim()) {
+					console.warn('✅ Yêu cầu đã được tạo thành công nhưng chưa có số container. Vui lòng cập nhật sau.');
+				}
+				
+				// Reset form
+				setFormData({
+					shippingLine: '',
+					bookingBill: '',
+					containerNumber: '',
+					containerType: '',
+					serviceType: 'Nâng container',
+					customer: '',
+					vehicleCompany: '',
+					vehicleNumber: '',
+					driver: '',
+					driverPhone: '',
+					appointmentTime: '',
+					documents: [],
+					notes: ''
+				});
+				setSelectedCustomerName('');
+				setUploadedFiles([]);
+				setContainerWarning(''); // Clear container warning
+				onClose();
+			} else {
+				alert('Có lỗi xảy ra: ' + response.data.message);
+			}
+		} catch (error: any) {
+			console.error('Create request error:', error);
+			alert('Có lỗi xảy ra khi tạo yêu cầu: ' + (error.response?.data?.message || error.message));
+		} finally {
+			setIsUploading(false);
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		
 		if (validateForm()) {
 			// Hiển thị cảnh báo nếu không có số container
 			if (!formData.containerNumber?.trim()) {
-				const shouldContinue = window.confirm(
-					'⚠️ Cảnh báo: Bạn chưa nhập số container.\n\n' +
-					'Bạn có thể tạo yêu cầu trước và cập nhật số container sau.\n\n' +
-					'Bạn có muốn tiếp tục tạo yêu cầu không?'
-				);
-				if (!shouldContinue) {
-					return;
-				}
+				// Hiển thị custom alert dialog thay vì window.confirm
+				setAlertDialogData({
+					title: 'Cảnh báo',
+					message: 'Bạn chưa nhập số container.\n\nBạn có thể tạo yêu cầu trước và cập nhật số container sau.\n\nBạn có muốn tiếp tục tạo yêu cầu không?',
+					onConfirm: () => {
+						setShowAlertDialog(false);
+						proceedWithSubmit();
+					}
+				});
+				setShowAlertDialog(true);
+				return;
 			} else {
 				// Kiểm tra container number có độ dài hợp lý không
 				if (formData.containerNumber.trim().length < 4) {
@@ -615,78 +706,8 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				}
 			}
 			
-			try {
-				setIsUploading(true);
-				
-                // Generate request number automatically for EXPORT (nâng container)
-                const requestNumber = await generateNewRequestNumber('export');
-				
-            // Prepare data for API with auto-generated request number
-            const requestData = {
-                type: 'EXPORT', // Yêu cầu nâng container phải là EXPORT
-                request_no: requestNumber, // Add auto-generated request number
-                status: 'NEW_REQUEST', // Trạng thái ban đầu là NEW_REQUEST cho yêu cầu nâng container
-                container_no: formData.containerNumber,
-                eta: formData.appointmentTime,
-                shipping_line_id: formData.shippingLine || undefined,
-                container_type_id: formData.containerType || undefined,
-                customer_id: formData.customer || undefined,
-                vehicle_company_id: formData.vehicleCompany || undefined,
-                license_plate: formData.vehicleNumber,
-                driver_name: formData.driver,
-                driver_phone: formData.driverPhone,
-                appointment_time: formData.appointmentTime,
-                booking_bill: formData.bookingBill, // Add booking/bill field
-                notes: formData.notes,
-                files: formData.documents || []
-            };
-
-				// Debug logging
-
-				// Call API to create request with files
-				const response = await requestService.createRequest(requestData);
-				
-				if (response.data.success) {
-					// Success - call parent onSubmit with response data including request number
-					onSubmit({
-						...formData,
-						requestNo: requestNumber // Include auto-generated request number
-					});
-					
-					// Hiển thị thông báo thành công với cảnh báo nếu cần
-					if (!formData.containerNumber?.trim()) {
-						console.warn('✅ Yêu cầu đã được tạo thành công nhưng chưa có số container. Vui lòng cập nhật sau.');
-					}
-					
-					// Reset form
-					setFormData({
-						shippingLine: '',
-						bookingBill: '',
-						containerNumber: '',
-						containerType: '',
-						serviceType: 'Nâng container',
-						customer: '',
-						vehicleCompany: '',
-						vehicleNumber: '',
-						driver: '',
-						driverPhone: '',
-						appointmentTime: '',
-						documents: [],
-						notes: ''
-					});
-					setSelectedCustomerName('');
-					setUploadedFiles([]);
-					setContainerWarning(''); // Clear container warning
-					onClose();
-				} else {
-					alert('Có lỗi xảy ra: ' + response.data.message);
-				}
-			} catch (error: any) {
-				console.error('Create request error:', error);
-				alert('Có lỗi xảy ra khi tạo yêu cầu: ' + (error.response?.data?.message || error.message));
-			} finally {
-				setIsUploading(false);
-			}
+			// Proceed with submit after validation
+			await proceedWithSubmit();
 		}
 	};
 
@@ -713,6 +734,7 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 		setUploadedFiles([]);
 		setPreviewUrls([]);
 		setIsContainerTypeDisabled(false);
+		setShowAlertDialog(false); // Reset alert dialog state
 		onClose();
 	};
 
@@ -2027,6 +2049,18 @@ export const CreateLiftRequestModal: React.FC<CreateLiftRequestModalProps> = ({
 				</form>
 			</div>
 		</div>
+
+		{/* Custom Alert Dialog */}
+		<CustomAlertDialog
+			visible={showAlertDialog}
+			title={alertDialogData.title}
+			message={alertDialogData.message}
+			confirmText="Tiếp tục"
+			cancelText="Hủy"
+			onConfirm={alertDialogData.onConfirm}
+			onCancel={() => setShowAlertDialog(false)}
+			type="warning"
+		/>
 		</>
 	);
 };

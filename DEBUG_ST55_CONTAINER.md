@@ -132,3 +132,5 @@ Container    | ST55         | NEED_REPAIR       | EMPTY_IN_YARD | ...      | ...
 3. **Test API response** với scripts
 4. **Kiểm tra frontend logs** khi F5
 5. **Báo cáo kết quả** để tiếp tục debug
+
+

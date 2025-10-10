@@ -10,7 +10,38 @@ class ContainerController {
     try {
       const { container_no } = req.params;
       
-      // Ưu tiên tìm trong ServiceRequest trước (dữ liệu mới nhất)
+      // 🔄 LOGIC MỚI: Ưu tiên Container model (thông tin hiện tại) thay vì ServiceRequest (lịch sử)
+      // Vì Container model lưu thông tin hiện tại của container, ServiceRequest lưu lịch sử
+      const container = await prisma.container.findUnique({
+        where: { container_no },
+        include: {
+          customer: {
+            select: { id: true, name: true, code: true }
+          },
+          shipping_line: {
+            select: { id: true, name: true, code: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
+          }
+        }
+      });
+
+      if (container) {
+        return res.json({
+          success: true,
+          data: {
+            container_no,
+            customer: container.customer,
+            shipping_line: container.shipping_line,
+            container_type: container.container_type,
+            seal_number: container.seal_number,
+            dem_det: container.dem_det
+          }
+        });
+      }
+
+      // Fallback: tìm trong ServiceRequest nếu không có trong Container model
       const latestRequest = await prisma.serviceRequest.findFirst({
         where: { container_no },
         orderBy: { createdAt: 'desc' },
@@ -37,39 +68,6 @@ class ContainerController {
             container_type: latestRequest.container_type,
             seal_number: latestRequest.seal_number,
             dem_det: latestRequest.dem_det
-          }
-        });
-      }
-
-      // Fallback: tìm trong Container model (cho EMPTY_IN_YARD)
-      const container = await prisma.container.findUnique({
-        where: { container_no },
-        include: {
-          customer: {
-            select: { id: true, name: true, code: true }
-          },
-          shipping_line: {
-            select: { id: true, name: true, code: true }
-          },
-          container_type: {
-            select: { id: true, code: true, description: true }
-          }
-        }
-      });
-
-      if (container) {
-        return res.json({
-          success: true,
-          data: {
-            container_no,
-            customer: container.customer,
-            shipping_line: container.shipping_line,
-            container_type: container.container_type,
-            seal_number: container.seal_number,
-            dem_det: container.dem_det,
-            yard_name: container.yard_name,
-            block_code: container.block_code,
-            slot_code: container.slot_code
           }
         });
       }
@@ -756,6 +754,28 @@ class ContainerController {
         dem_det
       });
 
+      // 🔒 VALIDATION: Kiểm tra nếu đang cập nhật customer_id và container có yêu cầu LiftContainer active
+      if (customer_id) {
+        const activeLiftRequest = await prisma.serviceRequest.findFirst({
+          where: {
+            container_no,
+            type: 'EXPORT', // LiftContainer request
+            status: {
+              notIn: ['REJECTED', 'GATE_OUT', 'GATE_REJECTED'] // Loại trừ các trạng thái đã kết thúc
+            }
+          }
+        });
+
+        if (activeLiftRequest) {
+          console.log(`🚫 [VALIDATION] Container ${container_no} có yêu cầu LiftContainer active (ID: ${activeLiftRequest.id}, Status: ${activeLiftRequest.status})`);
+          return res.status(400).json({
+            success: false,
+            message: `Không thể cập nhật khách hàng cho container ${container_no} vì đã có yêu cầu nâng container đang hoạt động (Trạng thái: ${activeLiftRequest.status})`
+          });
+        }
+        console.log(`✅ [VALIDATION] Container ${container_no} không có yêu cầu LiftContainer active, cho phép cập nhật khách hàng`);
+      }
+
       // Tìm ServiceRequest mới nhất cho container này
       const latestRequest = await prisma.serviceRequest.findFirst({
         where: { container_no },
@@ -765,86 +785,52 @@ class ContainerController {
       let updatedRequest = null;
       let customer = null;
 
-      if (latestRequest) {
-        // Cập nhật thông tin ServiceRequest nếu có
-        updatedRequest = await prisma.serviceRequest.update({
-          where: { id: latestRequest.id },
-          data: {
-            ...(customer_id && { customer_id }),
-            ...(shipping_line_id && { shipping_line_id }),
-            ...(container_type_id && { container_type_id }),
-            ...(seal_number !== undefined && { seal_number }),
-            ...(dem_det !== undefined && { dem_det }),
-            updatedAt: new Date()
-          },
-          include: {
-            customer: {
-              select: { id: true, name: true, code: true }
-            },
-            shipping_line: {
-              select: { id: true, name: true, code: true }
-            },
-            container_type: {
-              select: { id: true, code: true, description: true }
-            }
-          }
-        });
-        customer = updatedRequest.customer;
-        
-        // BỔ SUNG: Cập nhật tất cả ServiceRequest của container này để đảm bảo tính nhất quán
-        if (customer_id || shipping_line_id || container_type_id || seal_number !== undefined || dem_det !== undefined) {
-          await prisma.serviceRequest.updateMany({
-            where: { container_no },
-            data: {
-              ...(customer_id && { customer_id }),
-              ...(shipping_line_id && { shipping_line_id }),
-              ...(container_type_id && { container_type_id }),
-              ...(seal_number !== undefined && { seal_number }),
-              ...(dem_det !== undefined && { dem_det }),
-              updatedAt: new Date()
-            }
-          });
-          console.log(`✅ Đã cập nhật customer_id, shipping_line_id, container_type_id, seal_number và dem_det cho tất cả ServiceRequest của container ${container_no}`);
-        }
-      } else {
-        // Container không có ServiceRequest - chỉ cập nhật Container model
-        const containerData: any = {
+      // 🔄 BỔ SUNG: LUÔN LUÔN cập nhật Container model để lưu thông tin vĩnh viễn
+      const containerData: any = {
+        updatedAt: new Date()
+      };
+
+      if (customer_id) containerData.customer_id = customer_id;
+      if (shipping_line_id) containerData.shipping_line_id = shipping_line_id;
+      if (container_type_id) containerData.container_type_id = container_type_id;
+      if (seal_number !== undefined) containerData.seal_number = seal_number;
+      if (dem_det !== undefined) containerData.dem_det = dem_det;
+      if (container_quality) containerData.container_quality = container_quality;
+
+      // Upsert Container record để đảm bảo thông tin được lưu vĩnh viễn
+      const updatedContainer = await prisma.container.upsert({
+        where: { container_no },
+        update: containerData,
+        create: {
           container_no,
           status: 'EMPTY_IN_YARD',
           created_by: req.user!._id,
-          updatedAt: new Date()
-        };
-
-        if (customer_id) containerData.customer_id = customer_id;
-        if (shipping_line_id) containerData.shipping_line_id = shipping_line_id;
-        if (container_type_id) containerData.container_type_id = container_type_id;
-        if (seal_number !== undefined) containerData.seal_number = seal_number;
-        if (dem_det !== undefined) containerData.dem_det = dem_det;
-
-        // Upsert Container record
-        const container = await prisma.container.upsert({
-          where: { container_no },
-          update: containerData,
-          create: {
-            ...containerData,
-            createdAt: new Date()
+          ...containerData,
+          createdAt: new Date()
+        },
+        include: {
+          customer: {
+            select: { id: true, name: true, code: true }
           },
-          include: {
-            customer: {
-              select: { id: true, name: true, code: true }
-            },
-            shipping_line: {
-              select: { id: true, name: true, code: true }
-            },
-            container_type: {
-              select: { id: true, code: true, description: true }
-            }
+          shipping_line: {
+            select: { id: true, name: true, code: true }
+          },
+          container_type: {
+            select: { id: true, code: true, description: true }
           }
-        });
+        }
+      });
+      customer = updatedContainer.customer;
+      console.log(`✅ Đã cập nhật Container model cho ${container_no} với customer_id: ${customer_id}`);
 
-        customer = container.customer;
-        updatedRequest = null; // Không có ServiceRequest để cập nhật
-      }
+      // 🔄 LOGIC MỚI: ManagerCont CHỈ cập nhật Container model, KHÔNG động vào ServiceRequest
+      // Vì:
+      // 1. Container model lưu thông tin hiện tại của container
+      // 2. ServiceRequest lưu lịch sử yêu cầu (không nên thay đổi từ ManagerCont)
+      // 3. Khi tạo yêu cầu mới, nó sẽ lấy thông tin từ Container model
+      console.log(`🔍 [LOGIC] ManagerCont CHỈ cập nhật Container model cho ${container_no}`);
+      console.log(`✅ [LOGIC] KHÔNG cập nhật ServiceRequest để bảo vệ lịch sử yêu cầu`);
+      updatedRequest = null; // Không cập nhật ServiceRequest
 
       // Cập nhật container_quality
       if (container_quality) {
@@ -921,10 +907,10 @@ class ContainerController {
         data: {
           container_no,
           customer: customer,
-          shipping_line: updatedRequest?.shipping_line || null,
-          container_type: updatedRequest?.container_type || null,
-          seal_number: updatedRequest?.seal_number || null,
-          dem_det: updatedRequest?.dem_det || null
+          shipping_line: updatedContainer?.shipping_line || null,
+          container_type: updatedContainer?.container_type || null,
+          seal_number: updatedContainer?.seal_number || null,
+          dem_det: updatedContainer?.dem_det || null
         }
       });
 

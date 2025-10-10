@@ -202,7 +202,7 @@ export default function PermissionsPage(){
   const { data: users } = useSWR(isAllowed ? ['/users?role=&page=1&limit=100'] : null, ([u]) => fetcher(u));
 
   const roleOptions: AppRole[] = useMemo(()=>[
-    'TechnicalDepartment','Accountant','Driver','Security','Dispatcher'
+    'SystemAdmin','TechnicalDepartment','Accountant','Driver','Security','Dispatcher'
   ], []);
 
   // Group catalog by group for rendering
@@ -252,6 +252,7 @@ export default function PermissionsPage(){
     const permissionTranslations: Record<string, Record<'vi' | 'en', string>> = {
       'users_partners.view': { vi: 'Người dùng/Đối tác', en: 'Users/Partners' },
       'permissions.manage': { vi: 'Phân quyền', en: 'Permissions' },
+      'setup.manage': { vi: 'Thiết lập hệ thống', en: 'System Setup' },
       'account.view': { vi: 'Tài khoản', en: 'Account' },
       'requests.depot': { vi: 'Yêu cầu (Depot)', en: 'Request (Depot)' },
       'requests.customer': { vi: 'Yêu cầu (Khách hàng)', en: 'Request (Customer)' },
@@ -260,7 +261,8 @@ export default function PermissionsPage(){
       'containers.manage': { vi: 'Quản lý container', en: 'Container Management' },
       'forklift.view': { vi: 'Xe nâng', en: 'Forklift' },
       'maintenance.repairs': { vi: 'Bảo trì - Phiếu sửa chữa', en: 'Maintenance - Repair Tickets' },
-      
+      'seals.manage': { vi: 'Quản lý Seal', en: 'Seal Management' },
+      'statistics.view': { vi: 'Thống kê tổng quan', en: 'Statistics Overview' },
       'finance.invoices': { vi: 'Tài chính - Hóa đơn', en: 'Finance - Invoices' },
       'driver.dashboard': { vi: 'Bảng điều khiển tài xế', en: 'Driver Dashboard' }
     };

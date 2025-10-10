@@ -39,17 +39,25 @@ export const getRequests = async (req: any, res: any) => {
             take: parseInt(limit)
         });
 
-        // 🔄 BỔ SUNG: Lấy container_quality từ bảng Container cho mỗi request
+        // 🔄 BỔ SUNG: Lấy container_quality và rejected customer info từ bảng Container cho mỗi request
         const requestsWithContainerQuality = await Promise.all(
             requests.map(async (request) => {
                 if (request.container_no) {
                     const container = await prisma.container.findFirst({
                         where: { container_no: request.container_no },
-                        select: { container_quality: true }
+                        select: { 
+                            container_quality: true,
+                            rejected_customer_id: true,
+                            rejected_customer_name: true,
+                            rejected_at: true
+                        }
                     });
                     return {
                         ...request,
-                        container_quality: container?.container_quality || null
+                        container_quality: container?.container_quality || null,
+                        rejected_customer_id: container?.rejected_customer_id || null,
+                        rejected_customer_name: container?.rejected_customer_name || null,
+                        rejected_at: container?.rejected_at || null
                     };
                 }
                 return request;

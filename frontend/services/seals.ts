@@ -131,5 +131,36 @@ export const sealsApi = {
   getUsageHistory: async (sealId: string): Promise<SealUsageHistoryItem[]> => {
     const response = await api.get(`/seals/${sealId}/usage-history`);
     return response.data.data;
-  }
+  },
+
+  // Update seal usage history
+    updateSealUsageHistory: async (
+      shippingCompany: string,
+      oldSealNumber: string,
+      newSealNumber: string,
+      containerNumber?: string,
+      requestId?: string
+    ): Promise<SealUsageHistoryItem> => {
+      const response = await api.post('/seals/update-usage-history', {
+        shipping_company: shippingCompany,
+        old_seal_number: oldSealNumber,
+        new_seal_number: newSealNumber,
+        container_number: containerNumber,
+        request_id: requestId
+      });
+      return response.data.data;
+    },
+
+    removeSealFromHistory: async (
+      shippingCompany: string,
+      sealNumber: string,
+      containerNumber: string
+    ): Promise<any> => {
+      const response = await api.post('/seals/remove-from-history', {
+        shipping_company: shippingCompany,
+        seal_number: sealNumber,
+        container_number: containerNumber
+      });
+      return response.data.data;
+    }
 };

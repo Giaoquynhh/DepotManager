@@ -296,6 +296,10 @@ model Container {
   created_by      String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  // Thêm cột để lưu lịch sử khách hàng bị từ chối
+  rejected_customer_id     String?
+  rejected_customer_name   String?
+  rejected_at              DateTime?
   customer        Customer? @relation(fields: [customer_id], references: [id])
   shipping_line   ShippingLine? @relation(fields: [shipping_line_id], references: [id])
   container_type  ContainerType? @relation(fields: [container_type_id], references: [id])

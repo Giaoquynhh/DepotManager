@@ -9,7 +9,7 @@ interface DocumentsUploaderProps<T = EditLiftRequestData | EditLowerRequestData>
 	existingFiles: ExistingFile[];
 }
 
-export const DocumentsUploader: React.FC<DocumentsUploaderProps> = ({ formData, setFormData, existingFiles }) => {
+export const DocumentsUploader = <T extends EditLiftRequestData | EditLowerRequestData>({ formData, setFormData, existingFiles }: DocumentsUploaderProps<T>) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

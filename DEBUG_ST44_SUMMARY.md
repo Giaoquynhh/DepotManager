@@ -109,3 +109,5 @@ ST44         | OCCUPIED  | NULL
 3. **`DEBUG_ST44_SUMMARY.md`** - Tài liệu này
 
 **Hãy chạy SQL queries và kiểm tra ManagerCont page, sau đó báo cáo kết quả!** 🚀
+
+

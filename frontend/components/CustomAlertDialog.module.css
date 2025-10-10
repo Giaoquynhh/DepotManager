@@ -1,0 +1,258 @@
+/* Custom Alert Dialog Styles */
+.customAlertBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.customAlertDialog {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid var(--border-color, #fbbf24);
+}
+
+.customAlertHeader {
+  background: var(--bg-color, #fef3c7);
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-color, #fbbf24);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.customAlertIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--icon-bg, #fef3c7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 2px solid var(--border-color, #fbbf24);
+  flex-shrink: 0;
+}
+
+.customAlertTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.customAlertBody {
+  padding: 24px;
+}
+
+.customAlertMessage {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.customAlertActions {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.customAlertButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.customAlertButton:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.customAlertButton:hover:before {
+  left: 100%;
+}
+
+.customAlertButtonCancel {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.customAlertButtonCancel:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.customAlertButtonConfirm {
+  background: var(--primary-color, #f59e0b);
+  color: white;
+  border: 1px solid var(--primary-color, #f59e0b);
+}
+
+.customAlertButtonConfirm:hover {
+  background: var(--primary-color-hover, #d97706);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--primary-shadow, rgba(245, 158, 11, 0.4));
+}
+
+.customAlertButton:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .customAlertDialog {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .customAlertHeader {
+    padding: 16px 20px 12px;
+  }
+  
+  .customAlertIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .customAlertTitle {
+    font-size: 16px;
+  }
+  
+  .customAlertBody {
+    padding: 20px;
+  }
+  
+  .customAlertMessage {
+    font-size: 14px;
+  }
+  
+  .customAlertActions {
+    padding: 12px 20px 20px;
+    flex-direction: column;
+  }
+  
+  .customAlertButton {
+    width: 100%;
+    padding: 14px 24px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .customAlertDialog {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .customAlertTitle {
+    color: #f9fafb;
+  }
+  
+  .customAlertMessage {
+    color: #d1d5db;
+  }
+  
+  .customAlertButtonCancel {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+  
+  .customAlertButtonCancel:hover {
+    background: #4b5563;
+    color: #f9fafb;
+  }
+}
+
+/* Alert Type Variants */
+.customAlertDialog.warning {
+  --primary-color: #f59e0b;
+  --primary-color-hover: #d97706;
+  --primary-shadow: rgba(245, 158, 11, 0.4);
+  --bg-color: #fef3c7;
+  --border-color: #fbbf24;
+  --icon-bg: #fef3c7;
+}
+
+.customAlertDialog.error {
+  --primary-color: #ef4444;
+  --primary-color-hover: #dc2626;
+  --primary-shadow: rgba(239, 68, 68, 0.4);
+  --bg-color: #fee2e2;
+  --border-color: #fca5a5;
+  --icon-bg: #fee2e2;
+}
+
+.customAlertDialog.success {
+  --primary-color: #10b981;
+  --primary-color-hover: #059669;
+  --primary-shadow: rgba(16, 185, 129, 0.4);
+  --bg-color: #d1fae5;
+  --border-color: #6ee7b7;
+  --icon-bg: #d1fae5;
+}
+
+.customAlertDialog.info {
+  --primary-color: #3b82f6;
+  --primary-color-hover: #2563eb;
+  --primary-shadow: rgba(59, 130, 246, 0.4);
+  --bg-color: #dbeafe;
+  --border-color: #93c5fd;
+  --icon-bg: #dbeafe;
+}

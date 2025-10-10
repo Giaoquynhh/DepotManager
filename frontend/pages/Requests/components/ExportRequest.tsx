@@ -1214,7 +1214,7 @@ export const ExportRequest: React.FC<ExportRequestProps> = ({
                             lineHeight: '1.5'
                         }}>
                             Bạn có chắc chắn muốn hủy yêu cầu này?<br/>
-                            <strong style={{ color: '#f59e0b' }}>Yêu cầu sẽ được đánh dấu là REJECTED.</strong>
+                            <strong style={{ color: '#f59e0b' }}>Yêu cầu sẽ được đánh dấu là đã từ chối.</strong>
                         </p>
 
                         {/* Input lý do hủy */}

@@ -406,7 +406,7 @@ function SealManagement() {
                       <td>{formatCurrency(seal.unit_price)}</td>
                       <td>{formatCurrency(seal.total_amount)}</td>
                       <td>{seal.pickup_location}</td>
-                      <td style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+                      <td style={{display:'flex', gap:6, flexWrap:'wrap', justifyContent:'center'}}>
                         <button 
                           className="btn btn-sm btn-outline"
                           onClick={() => handleEdit(seal)}

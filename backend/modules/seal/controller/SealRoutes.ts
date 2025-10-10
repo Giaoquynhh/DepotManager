@@ -38,6 +38,17 @@ router.get('/:id/usage-history',
   controller.getUsageHistory
 );
 
+// Update seal usage history
+router.post('/update-usage-history',
+  authenticate,
+  controller.updateSealUsageHistory
+);
+
+router.post('/remove-from-history',
+  authenticate,
+  controller.removeSealFromHistory
+);
+
 // Get seal by ID
 router.get('/:id', 
   authenticate, 

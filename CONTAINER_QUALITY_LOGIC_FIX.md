@@ -135,3 +135,5 @@ graph TD
 - **Backward compatibility**: Logic fallback đảm bảo container cũ vẫn hoạt động
 - **Performance**: Map lookup O(1) nên không ảnh hưởng hiệu suất
 - **Debug**: Console logs giúp theo dõi luồng dữ liệu
+
+

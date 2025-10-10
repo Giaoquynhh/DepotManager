@@ -124,11 +124,11 @@ export const updateRequest = async (req: Request, res: Response) => {
                 if (bookingBillChanged && newBookingBill) {
                     console.log(`🔄 Cập nhật booking_number trong SealUsageHistory cho container: ${existingRequest.container_no}, booking: ${newBookingBill}`);
                     
-                    // Cập nhật tất cả SealUsageHistory có container_number tương ứng
+                    // Cập nhật TẤT CẢ SealUsageHistory có container_number tương ứng (bao gồm cả record đã có booking cũ)
                     const updatedSealHistory = await prisma.sealUsageHistory.updateMany({
                         where: {
-                            container_number: existingRequest.container_no,
-                            booking_number: null // Chỉ cập nhật những record chưa có booking_number
+                            container_number: existingRequest.container_no
+                            // Bỏ điều kiện booking_number: null để cập nhật tất cả record
                         },
                         data: {
                             booking_number: newBookingBill

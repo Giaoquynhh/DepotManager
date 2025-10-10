@@ -209,6 +209,106 @@ export class SealController {
       });
     }
   }
+
+  async updateSealUsageHistory(req: AuthRequest, res: Response) {
+    try {
+      const { 
+        shipping_company, 
+        old_seal_number, 
+        new_seal_number, 
+        container_number, 
+        request_id 
+      } = req.body;
+      const userId = req.user!._id;
+
+      if (!shipping_company || !old_seal_number || !new_seal_number) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping company, old seal number, and new seal number are required'
+        });
+      }
+
+      const result = await service.updateSealUsageHistory(
+        shipping_company,
+        userId,
+        old_seal_number,
+        new_seal_number,
+        container_number,
+        request_id
+      );
+
+      // Audit log
+      await audit(userId, 'SEAL_USAGE_UPDATED', 'SEAL_USAGE', result.id, {
+        shipping_company,
+        old_seal_number,
+        new_seal_number,
+        container_number
+      });
+
+      return res.json({
+        success: true,
+        message: 'Seal usage history updated successfully',
+        data: result
+      });
+    } catch (error: any) {
+      console.error('Error updating seal usage history:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to update seal usage history'
+      });
+    }
+  }
+
+  async removeSealFromHistory(req: AuthRequest, res: Response) {
+    try {
+      const {
+        shipping_company,
+        seal_number,
+        container_number
+      } = req.body;
+      const userId = req.user!._id;
+
+      if (!shipping_company || !seal_number || !container_number) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping company, seal number, and container number are required'
+        });
+      }
+
+      const result = await service.removeSealFromHistory(
+        shipping_company,
+        userId,
+        seal_number,
+        container_number
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          message: 'Seal usage history not found or belongs to different shipping company'
+        });
+      }
+
+      // Audit log
+      await audit(userId, 'SEAL_REMOVED_FROM_HISTORY', 'SEAL_USAGE', '', {
+        shipping_company,
+        seal_number,
+        container_number
+      });
+
+      return res.json({
+        success: true,
+        message: 'Seal removed from history successfully',
+        data: result
+      });
+    } catch (error: any) {
+      console.error('Error removing seal from history:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to remove seal from history'
+      });
+    }
+  }
 }
 
 export default new SealController();

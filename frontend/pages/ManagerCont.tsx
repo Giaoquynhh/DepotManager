@@ -23,7 +23,9 @@ interface TableData {
   containerType: string; // Loại Cont
   status: string; // Trạng thái
   repairTicketStatus?: string; // Trạng thái phiếu sửa chữa (nếu có)
-  customer: string; // Khách hàng
+  customer: string; // Khách hàng hiện tại
+  rejectedCustomer?: string; // Khách hàng bị từ chối
+  rejectedAt?: string; // Thời gian bị từ chối
   documents: string; // Chứng từ
   documentsCount?: number; // Số lượng chứng từ
   repairImagesCount?: number; // Số lượng ảnh kiểm tra
@@ -361,16 +363,107 @@ export default function ManagerCont(){
   const [selectedStatus, setSelectedStatus] = React.useState<string>('');
   const [selectedSealNumber, setSelectedSealNumber] = React.useState<string>('');
   const [selectedDemDet, setSelectedDemDet] = React.useState<string>('');
+  const [hasActiveLiftRequest, setHasActiveLiftRequest] = React.useState<boolean>(false);
+  
+  // Seal availability states
+  const [sealAvailability, setSealAvailability] = React.useState<{[key: string]: boolean}>({});
+  const [checkingSealAvailability, setCheckingSealAvailability] = React.useState<boolean>(false);
+
+  // Function to check seal availability for a shipping company
+  const checkSealAvailability = async (shippingCompanyName: string): Promise<boolean> => {
+    try {
+      // Get list of seals to check availability without actually consuming them
+      const sealsResponse = await sealsApi.list({ 
+        shipping_company: shippingCompanyName,
+        page: 1,
+        pageSize: 1000 
+      });
+      
+      // Check if there are any seals with quantity_remaining > 0
+      const availableSeals = sealsResponse.items.filter(seal => 
+        seal.shipping_company.toLowerCase().includes(shippingCompanyName.toLowerCase()) &&
+        seal.quantity_remaining > 0 &&
+        seal.status === 'ACTIVE'
+      );
+      
+      return availableSeals.length > 0;
+    } catch (error: any) {
+      console.error('Error checking seal availability:', error);
+      // For errors, assume seal is available (don't block user)
+      return true;
+    }
+  };
+
+  // Function to check seal availability when shipping line changes
+  const handleShippingLineChange = async (shippingLineId: string) => {
+    setSelectedShippingLineId(shippingLineId);
+    
+    if (shippingLineId) {
+      setCheckingSealAvailability(true);
+      const shippingLine = shippingLines.find(sl => sl.id === shippingLineId);
+      if (shippingLine) {
+        const isAvailable = await checkSealAvailability(shippingLine.name);
+        setSealAvailability(prev => ({
+          ...prev,
+          [shippingLine.name]: isAvailable
+        }));
+      }
+      setCheckingSealAvailability(false);
+    }
+  };
 
   const handleUpdateInfo = async (row: TableData) => {
     setSelectedRow(row);
     setIsUpdateModalOpen(true);
     setSelectedCustomerId(''); // Reset customer selection
+    
+    // Check seal availability for existing shipping line if available
+    if (row.shippingLine && row.shippingLine.trim() !== '') {
+      setCheckingSealAvailability(true);
+      try {
+        const isAvailable = await checkSealAvailability(row.shippingLine);
+        setSealAvailability(prev => ({
+          ...prev,
+          [row.shippingLine]: isAvailable
+        }));
+      } catch (error) {
+        console.error('Error checking seal availability for existing shipping line:', error);
+      } finally {
+        setCheckingSealAvailability(false);
+      }
+    }
     setSelectedShippingLineId(''); // Reset shipping line selection
     setSelectedContainerTypeId(''); // Reset container type selection
     setSelectedStatus(row.containerQuality || 'GOOD'); // Set initial status
     setSelectedSealNumber(row.sealNumber || ''); // Set initial seal number
     setSelectedDemDet(row.demDet === 'Không có' ? '' : row.demDet || ''); // Set initial DEM/DET
+    
+    // 🔒 VALIDATION: Kiểm tra container có yêu cầu LiftContainer active không
+    try {
+      console.log(`🔍 [VALIDATION] Checking for active LiftContainer requests for container: ${row.containerNumber}`);
+      const liftRequestsRes = await requestService.getRequests('EXPORT');
+      
+      if (liftRequestsRes.data.success && liftRequestsRes.data.data) {
+        const activeLiftRequest = liftRequestsRes.data.data.find((request: any) => 
+          request.container_no === row.containerNumber &&
+          request.type === 'EXPORT' &&
+          !['REJECTED', 'GATE_OUT', 'GATE_REJECTED'].includes(request.status)
+        );
+        
+        if (activeLiftRequest) {
+          console.log(`🚫 [VALIDATION] Container ${row.containerNumber} có yêu cầu LiftContainer active (Status: ${activeLiftRequest.status})`);
+          setHasActiveLiftRequest(true);
+        } else {
+          console.log(`✅ [VALIDATION] Container ${row.containerNumber} không có yêu cầu LiftContainer active`);
+          setHasActiveLiftRequest(false);
+        }
+      } else {
+        setHasActiveLiftRequest(false);
+      }
+    } catch (error) {
+      console.error('Error checking active LiftContainer requests:', error);
+      setHasActiveLiftRequest(false);
+    }
     
     // Fetch customers, shipping lines, and container types when opening modal
     try {
@@ -903,6 +996,8 @@ export default function ManagerCont(){
             containerType: request.container_type?.code || '',
             status: request.status === 'DONE_LIFTING' ? 'GATE_OUT' : (request.status || ''),
             customer: request.customer?.name || '', // Hiển thị customer cho cả IMPORT và EXPORT
+            rejectedCustomer: request.rejected_customer_name || '', // Thêm thông tin khách hàng bị từ chối
+            rejectedAt: request.rejected_at || '', // Thêm thời gian bị từ chối
             documents: documentsList.map((att: any) => att.file_name).join(', '),
             documentsCount,
             repairImagesCount,
@@ -952,6 +1047,8 @@ export default function ManagerCont(){
               containerType: request.container_type?.code || '',
               status: request.status || '',
               customer: request.customer?.name || '', // Hiển thị customer cho cả IMPORT và EXPORT
+              rejectedCustomer: request.rejected_customer_name || '', // Thêm thông tin khách hàng bị từ chối
+              rejectedAt: request.rejected_at || '', // Thêm thời gian bị từ chối
               documents: '',
               documentsCount: 0,
               repairImagesCount: 0,
@@ -1515,7 +1612,21 @@ export default function ManagerCont(){
                             </div>
                           </td>
                           <td>{row.sealNumber || 'Không có'}</td>
-                          <td>{row.customer || ''}</td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span>{row.customer || 'Chưa có khách hàng'}</span>
+                              {row.rejectedCustomer && (
+                                <small style={{ color: '#dc2626', fontSize: '11px' }}>
+                                  Đã từ chối: {row.rejectedCustomer}
+                                  {row.rejectedAt && (
+                                    <span style={{ color: '#6b7280' }}>
+                                      {' '}({new Date(row.rejectedAt).toLocaleDateString('vi-VN')})
+                                    </span>
+                                  )}
+                                </small>
+                              )}
+                            </div>
+                          </td>
                           <td>{row.demDet || ''}</td>
                           <td>
                             <button
@@ -1728,6 +1839,8 @@ export default function ManagerCont(){
               setSelectedStatus('');
               setSelectedSealNumber('');
               setSelectedDemDet('');
+              setSealAvailability({});
+              setCheckingSealAvailability(false);
             }}
           >
             <div
@@ -1746,6 +1859,8 @@ export default function ManagerCont(){
                     setSelectedStatus('');
                     setSelectedSealNumber('');
                     setSelectedDemDet('');
+                    setSealAvailability({});
+                    setCheckingSealAvailability(false);
                   }} 
                   style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
                 >×</button>
@@ -1756,7 +1871,7 @@ export default function ManagerCont(){
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Hãng tàu</label>
                     <select
                       value={selectedShippingLineId}
-                      onChange={(e) => setSelectedShippingLineId(e.target.value)}
+                      onChange={(e) => handleShippingLineChange(e.target.value)}
                       disabled={!!(selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '')}
                       style={{ 
                         width: '100%', 
@@ -1782,6 +1897,84 @@ export default function ManagerCont(){
                         ? '🔒 Không thể chỉnh sửa hãng tàu (đã có dữ liệu)' 
                         : 'Có thể cập nhật hãng tàu mới'}
                     </div>
+                    
+                    {/* Seal availability warning */}
+                    {((selectedShippingLineId && !(selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '')) || 
+                      (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '')) && (
+                      <div style={{ marginTop: 8 }}>
+                        {checkingSealAvailability ? (
+                          <div style={{ 
+                            padding: '8px 12px', 
+                            backgroundColor: '#f3f4f6', 
+                            border: '1px solid #d1d5db', 
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            color: '#6b7280',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <div style={{
+                              width: '12px',
+                              height: '12px',
+                              border: '2px solid #e5e7eb',
+                              borderTop: '2px solid #3b82f6',
+                              borderRadius: '50%',
+                              animation: 'spin 1s linear infinite'
+                            }}></div>
+                            Đang kiểm tra seal...
+                          </div>
+                        ) : (
+                          (() => {
+                            // Determine which shipping line to check
+                            let shippingLineName = '';
+                            if (selectedShippingLineId) {
+                              const shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId);
+                              shippingLineName = shippingLine?.name || '';
+                            } else if (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') {
+                              shippingLineName = selectedRow.shippingLine;
+                            }
+                            
+                            const isAvailable = shippingLineName ? sealAvailability[shippingLineName] : true;
+                            
+                            if (isAvailable === false) {
+                              return (
+                                <div style={{ 
+                                  padding: '8px 12px', 
+                                  backgroundColor: '#fef2f2', 
+                                  border: '1px solid #fecaca', 
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  color: '#dc2626',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}>
+                                  ⚠️ <strong>Cảnh báo:</strong> Hãng tàu này đã hết seal! Vui lòng tạo seal mới trước khi cập nhật.
+                                </div>
+                              );
+                            } else if (isAvailable === true) {
+                              return (
+                                <div style={{ 
+                                  padding: '8px 12px', 
+                                  backgroundColor: '#f0fdf4', 
+                                  border: '1px solid #bbf7d0', 
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  color: '#16a34a',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}>
+                                  ✅ Seal còn sẵn sàng cho hãng tàu này
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div>
@@ -1821,13 +2014,17 @@ export default function ManagerCont(){
                     <select
                       value={selectedCustomerId}
                       onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      disabled={hasActiveLiftRequest}
                       style={{ 
                         width: '100%', 
                         padding: '8px 12px', 
                         border: '1px solid #d1d5db', 
                         borderRadius: 6,
                         maxHeight: '200px',
-                        overflowY: 'auto'
+                        overflowY: 'auto',
+                        backgroundColor: hasActiveLiftRequest ? '#f9fafb' : 'white',
+                        color: hasActiveLiftRequest ? '#6b7280' : '#374151',
+                        cursor: hasActiveLiftRequest ? 'not-allowed' : 'pointer'
                       }}
                     >
                       <option value="">{selectedRow.customer || 'Chưa có khách hàng'}</option>
@@ -1837,8 +2034,13 @@ export default function ManagerCont(){
                         </option>
                       ))}
                     </select>
-                    <div style={{ marginTop: 4, fontSize: '12px', color: '#6b7280' }}>
-                      {selectedCustomerId ? 'Sẽ cập nhật khách hàng khi lưu' : 'Giữ nguyên khách hàng hiện tại'}
+                    <div style={{ marginTop: 4, fontSize: '12px', color: hasActiveLiftRequest ? '#dc2626' : '#6b7280' }}>
+                      {hasActiveLiftRequest 
+                        ? '🔒 Không thể cập nhật khách hàng (container đã có yêu cầu nâng đang hoạt động)' 
+                        : selectedCustomerId 
+                          ? 'Sẽ cập nhật khách hàng khi lưu' 
+                          : 'Giữ nguyên khách hàng hiện tại'
+                      }
                     </div>
                   </div>
                    <div>
@@ -1909,6 +2111,37 @@ export default function ManagerCont(){
               <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button 
                   className="btn btn-primary"
+                  disabled={(() => {
+                    // Disable button if seal is not available for shipping line
+                    let shippingLineName = '';
+                    if (selectedShippingLineId) {
+                      const shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId);
+                      shippingLineName = shippingLine?.name || '';
+                    } else if (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') {
+                      shippingLineName = selectedRow.shippingLine;
+                    }
+                    
+                    if (shippingLineName && sealAvailability[shippingLineName] === false) {
+                      return true;
+                    }
+                    return false;
+                  })()}
+                  style={{
+                    opacity: (() => {
+                      let shippingLineName = '';
+                      if (selectedShippingLineId) {
+                        const shippingLine = shippingLines.find(sl => sl.id === selectedShippingLineId);
+                        shippingLineName = shippingLine?.name || '';
+                      } else if (selectedRow.shippingLine && selectedRow.shippingLine.trim() !== '') {
+                        shippingLineName = selectedRow.shippingLine;
+                      }
+                      
+                      if (shippingLineName && sealAvailability[shippingLineName] === false) {
+                        return 0.5;
+                      }
+                      return 1;
+                    })()
+                  }}
                   onClick={async () => {
                     try {
                       if (selectedRow?.containerNumber) {
@@ -1927,8 +2160,13 @@ export default function ManagerCont(){
                         console.log('  selectedDemDet:', selectedDemDet, 'vs selectedRow.demDet:', selectedRow.demDet);
                         console.log('  Container Number:', selectedRow.containerNumber);
                         
-                        // Luôn cập nhật nếu có giá trị được chọn (không cần so sánh)
+                        // 🔒 VALIDATION: Kiểm tra nếu đang cập nhật khách hàng và có yêu cầu LiftContainer active
                         if (selectedCustomerId && selectedCustomerId !== '') {
+                          if (hasActiveLiftRequest) {
+                            console.log(`🚫 [VALIDATION] Không thể cập nhật khách hàng cho container ${selectedRow.containerNumber} vì có yêu cầu LiftContainer active`);
+                            showError('Không thể cập nhật khách hàng!', `Container ${selectedRow.containerNumber} đã có yêu cầu nâng container đang hoạt động. Vui lòng hủy yêu cầu trước khi cập nhật khách hàng.`, 5000);
+                            return;
+                          }
                           updateData.customer_id = selectedCustomerId;
                         }
                         if (selectedShippingLineId && selectedShippingLineId !== '') {
@@ -1940,8 +2178,9 @@ export default function ManagerCont(){
                         if (selectedStatus && selectedStatus !== '') {
                           updateData.container_quality = selectedStatus;
                         }
-                        if (selectedSealNumber && selectedSealNumber.trim() !== '') {
-                          // Cho phép cập nhật seal number mà không cần bắt buộc có hãng tàu
+                        // Xử lý seal number - bao gồm cả trường hợp xóa (để trống)
+                        if (selectedSealNumber !== undefined) {
+                          // Cho phép cập nhật seal number (có thể là giá trị mới hoặc rỗng để xóa)
                           updateData.seal_number = selectedSealNumber;
                         }
                         if (selectedDemDet && selectedDemDet.trim() !== '') {
@@ -1973,8 +2212,8 @@ export default function ManagerCont(){
                         
                         console.log('✅ API call successful, response data:', response.data);
 
-                        // Cập nhật số lượng đã xuất seal nếu có nhập số seal mới và có hãng tàu
-                        if (selectedSealNumber && selectedSealNumber !== selectedRow.sealNumber && selectedSealNumber.trim() !== '') {
+                        // Xử lý seal number - bao gồm cả trường hợp thêm mới, cập nhật và xóa
+                        if (selectedSealNumber !== undefined) {
                           try {
                             // Lấy tên hãng tàu từ selectedShippingLineId hoặc từ selectedRow
                             let shippingCompanyName = '';
@@ -1986,19 +2225,48 @@ export default function ManagerCont(){
                             }
 
                             if (shippingCompanyName) {
-                              console.log('🔄 Updating seal exported quantity for shipping company:', shippingCompanyName);
-                              await sealsApi.incrementExportedQuantity(
-                                shippingCompanyName,
-                                selectedSealNumber,
-                                selectedRow.containerNumber,
-                                selectedRow.id // Sử dụng request ID để lấy booking từ ServiceRequest
-                              );
-                              console.log('✅ Seal exported quantity updated successfully');
+                              const hasOldSeal = selectedRow.sealNumber && selectedRow.sealNumber.trim() !== '';
+                              const hasNewSeal = selectedSealNumber && selectedSealNumber.trim() !== '';
+
+                              if (hasOldSeal && hasNewSeal) {
+                                // Có seal cũ và seal mới - cập nhật lịch sử
+                                console.log('🔄 Updating seal usage history:', selectedRow.sealNumber, '→', selectedSealNumber);
+                                await sealsApi.updateSealUsageHistory(
+                                  shippingCompanyName,
+                                  selectedRow.sealNumber!, // Non-null assertion vì đã kiểm tra hasOldSeal
+                                  selectedSealNumber,
+                                  selectedRow.containerNumber,
+                                  selectedRow.id
+                                );
+                                console.log('✅ Seal usage history updated successfully');
+                              } else if (!hasOldSeal && hasNewSeal) {
+                                // Không có seal cũ, có seal mới - tạo mới
+                                console.log('🔄 Creating new seal usage history for shipping company:', shippingCompanyName);
+                                await sealsApi.incrementExportedQuantity(
+                                  shippingCompanyName,
+                                  selectedSealNumber,
+                                  selectedRow.containerNumber,
+                                  selectedRow.id
+                                );
+                                console.log('✅ New seal usage history created successfully');
+                              } else if (hasOldSeal && !hasNewSeal) {
+                                // Có seal cũ, không có seal mới - xóa seal khỏi lịch sử
+                                console.log('🗑️ Removing seal from usage history:', selectedRow.sealNumber);
+                                await sealsApi.removeSealFromHistory(
+                                  shippingCompanyName,
+                                  selectedRow.sealNumber!, // Non-null assertion vì đã kiểm tra hasOldSeal
+                                  selectedRow.containerNumber
+                                );
+                                console.log('✅ Seal removed from history successfully');
+                              } else {
+                                // Không có seal cũ và seal mới - không làm gì
+                                console.log('ℹ️ No seal changes detected');
+                              }
                             } else {
                               console.log('ℹ️ Seal number updated but no shipping company found - skipping seal quantity update');
                             }
                           } catch (sealError: any) {
-                            console.error('❌ Error updating seal exported quantity:', sealError);
+                            console.error('❌ Error updating seal usage:', sealError);
                             // Không hiển thị lỗi seal để không làm gián đoạn quá trình cập nhật container
                             // Chỉ log để debug
                           }
@@ -2025,7 +2293,8 @@ export default function ManagerCont(){
                              if (selectedStatus && selectedStatus !== '') {
                                updatedItem.containerQuality = selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN";
                              }
-                             if (selectedSealNumber && selectedSealNumber.trim() !== '') {
+                             // Cập nhật seal number - bao gồm cả trường hợp xóa (để trống)
+                             if (selectedSealNumber !== undefined) {
                                updatedItem.sealNumber = selectedSealNumber;
                              }
                              if (selectedDemDet && selectedDemDet.trim() !== '') {
@@ -2059,7 +2328,8 @@ export default function ManagerCont(){
                             if (selectedStatus && selectedStatus !== '') {
                               updatedItem.containerQuality = selectedStatus as "GOOD" | "NEED_REPAIR" | "UNKNOWN";
                             }
-                            if (selectedSealNumber && selectedSealNumber.trim() !== '') {
+                            // Cập nhật seal number - bao gồm cả trường hợp xóa (để trống)
+                            if (selectedSealNumber !== undefined) {
                               updatedItem.sealNumber = selectedSealNumber;
                             }
                             if (selectedDemDet && selectedDemDet.trim() !== '') {
@@ -2072,8 +2342,10 @@ export default function ManagerCont(){
                         });
                         setTableData(updatedTableData);
                         
-                        // Không cần refresh data từ server vì đã cập nhật local state
-                        // await fetchImportRequests(); // Comment out để tránh ghi đè local state
+                        // 🔄 BỔ SUNG: Gọi lại fetchImportRequests để đảm bảo dữ liệu đồng bộ với server
+                        // Điều này đảm bảo rằng khi user refresh trang (F5), dữ liệu vẫn được hiển thị đúng
+                        console.log('🔄 Refreshing data from server to ensure consistency...');
+                        await fetchImportRequests();
                         
                         const updatedFields = [];
                         if (selectedCustomerId && selectedCustomerId !== '') updatedFields.push('khách hàng');
@@ -2096,6 +2368,9 @@ export default function ManagerCont(){
                       setSelectedStatus('');
                       setSelectedSealNumber('');
                       setSelectedDemDet('');
+                      setHasActiveLiftRequest(false);
+                      setSealAvailability({});
+                      setCheckingSealAvailability(false);
                     } catch (error) {
                       console.error('❌ Error updating container:', error);
                       showError('Có lỗi xảy ra khi cập nhật thông tin!', undefined, 3000);

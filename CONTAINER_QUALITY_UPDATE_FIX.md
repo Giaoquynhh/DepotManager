@@ -92,3 +92,5 @@ console.log(`ℹ️ RepairTicket chỉ nên được cập nhật thông qua quy
 - RepairTicket chỉ nên được tạo thông qua quy trình kiểm tra container thực tế (từ trang Maintenance/Repairs)
 - Việc cập nhật `container_quality` từ ManagerCont chỉ để quản lý trạng thái hiển thị, không ảnh hưởng đến RepairTicket
 - Logic này đảm bảo tính nhất quán và tránh tạo ra dữ liệu không mong muốn
+
+

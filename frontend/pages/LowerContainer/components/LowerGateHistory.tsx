@@ -314,7 +314,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Mã Container
+                      📦 MÃ CONTAINER
                     </th>
                     <th style={{
                       padding: 'var(--space-4)',
@@ -324,7 +324,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Loại yêu cầu
+                      🔧 LOẠI YÊU CẦU
                     </th>
                     <th style={{
                       padding: 'var(--space-4)',
@@ -334,7 +334,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Tên tài xế
+                      👤 TÊN TÀI XẾ
                     </th>
                     <th style={{
                       padding: 'var(--space-4)',
@@ -344,7 +344,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Biển số xe
+                      🚚 BIỂN SỐ XE
                     </th>
                     <th style={{
                       padding: 'var(--space-4)',
@@ -354,7 +354,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Thời gian vào
+                      ⏰ THỜI GIAN VÀO
                     </th>
                     <th style={{
                       padding: 'var(--space-4)',
@@ -364,7 +364,7 @@ export default function LowerGateHistory({}: LowerGateHistoryProps) {
                       color: 'var(--color-gray-700)',
                       borderBottom: '1px solid var(--color-gray-200)'
                     }}>
-                      Thời gian ra
+                      ⏰ THỜI GIAN RA
                     </th>
                   </tr>
                 </thead>
